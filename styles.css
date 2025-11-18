@@ -88,13 +88,17 @@ a {
 }
 
 section {
-    padding: clamp(4rem, 8vh, 6rem) 0;
+    min-height: 100vh;
+    padding: clamp(4rem, 8vh, 7rem) 0;
     position: relative;
+    display: flex;
+    align-items: center;
 }
 
 .container {
     width: min(1200px, 90vw);
     margin: 0 auto;
+    flex: 1;
 }
 
 .section-heading {
@@ -332,14 +336,9 @@ section {
 .hero {
     background: var(--gradient-hero);
     color: #fff;
-    /* NO min-height! Let content determine height */
-    /* Extend to absolute top of viewport - seamless background */
     position: relative;
-    /* Pull section all the way to top - aggressive negative margin */
-    margin-top: -200px;
-    /* Add the margin back as padding so content starts in right place */
-    padding-top: calc(200px + clamp(6rem, 12vh, 12rem));
-    padding-bottom: clamp(4rem, 8vh, 8rem);
+    margin-top: 0;
+    padding: clamp(5rem, 10vh, 9rem) 0;
     isolation: isolate;
 }
 
@@ -619,9 +618,9 @@ section {
     margin-bottom: 0.5rem;
 }
 
-/* How it works - Redesigned */
+/* How it works - Premium Redesign */
 .how-it-works {
-    background: linear-gradient(135deg, rgba(138, 123, 255, 0.03) 0%, rgba(255, 107, 74, 0.03) 100%);
+    background: linear-gradient(180deg, #fafbfc 0%, #ffffff 100%);
     position: relative;
     overflow: hidden;
 }
@@ -629,51 +628,65 @@ section {
 .how-it-works::before {
     content: '';
     position: absolute;
-    top: -50%;
-    right: -10%;
-    width: 600px;
-    height: 600px;
-    background: radial-gradient(circle, rgba(255, 107, 74, 0.08), transparent 70%);
-    border-radius: 50%;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 1px;
+    height: 100%;
+    background: linear-gradient(180deg, transparent 0%, rgba(15, 28, 46, 0.06) 20%, rgba(15, 28, 46, 0.06) 80%, transparent 100%);
     pointer-events: none;
 }
 
 .steps-flow {
     display: flex;
     flex-direction: column;
-    gap: 2rem;
-    max-width: 900px;
-    margin: 0 auto 3rem;
+    gap: 1px;
+    max-width: 1000px;
+    margin: 0 auto 5rem;
     position: relative;
+    background: rgba(15, 28, 46, 0.04);
+    border-radius: var(--radius-xl);
+    overflow: hidden;
+    border: 1px solid rgba(15, 28, 46, 0.06);
 }
 
 .step-card {
     display: grid;
     grid-template-columns: auto 1fr;
-    gap: 2rem;
-    padding: 2.5rem;
-    background: #fff;
-    border-radius: var(--radius-xl);
-    border: 1px solid var(--stroke);
-    box-shadow: 0 20px 60px rgba(15, 28, 46, 0.08);
+    gap: 3rem;
+    padding: 4rem 3.5rem;
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
     position: relative;
-    transition: all 300ms ease;
+    transition: all 400ms cubic-bezier(0.4, 0, 0.2, 1);
+    border: none;
+}
+
+.step-card:first-child {
+    border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+}
+
+.step-card:last-child {
+    border-radius: 0 0 var(--radius-xl) var(--radius-xl);
 }
 
 .step-card:hover {
-    transform: translateX(8px);
-    box-shadow: 0 25px 70px rgba(15, 28, 46, 0.12);
-    border-color: rgba(255, 107, 74, 0.2);
+    background: rgba(255, 255, 255, 0.95);
+    transform: scale(1.01);
+    z-index: 2;
 }
 
 .step-card::before {
     content: '';
     position: absolute;
-    inset: 0;
-    border-radius: inherit;
-    background: linear-gradient(135deg, rgba(255, 107, 74, 0.03), rgba(138, 123, 255, 0.03));
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: linear-gradient(180deg, var(--primary), var(--accent));
     opacity: 0;
-    transition: opacity 300ms ease;
+    transition: opacity 400ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .step-card:hover::before {
