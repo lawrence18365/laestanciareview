@@ -183,7 +183,7 @@ section {
 /* Navbar */
 .navbar {
     position: sticky;
-    top: 1.25rem;
+    top: 1rem;
     z-index: 30;
     padding: 0 1rem;
     background: transparent;
@@ -192,8 +192,8 @@ section {
 }
 
 .navbar.scrolled .nav-pill {
-    box-shadow: 0 18px 40px rgba(6, 10, 22, 0.35);
-    border-color: rgba(255, 255, 255, 0.18);
+    box-shadow: 0 14px 30px rgba(5, 8, 15, 0.35);
+    border-color: rgba(255, 255, 255, 0.12);
 }
 
 .navbar.nav-hidden {
@@ -206,55 +206,52 @@ section {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 1rem;
+    gap: 0.5rem;
     flex-wrap: wrap;
     width: 100%;
-    padding: 0.75rem 1.4rem;
+    padding: 0.55rem 1.2rem;
     border-radius: 999px;
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    background: rgba(2, 6, 16, 0.8);
-    backdrop-filter: blur(26px);
-    box-shadow: 0 24px 70px rgba(2, 6, 16, 0.35);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(2, 5, 10, 0.75);
+    backdrop-filter: blur(22px);
+    box-shadow: 0 12px 35px rgba(2, 5, 10, 0.35);
     color: #fff;
 }
 
 .nav-brand {
     display: flex;
     align-items: center;
-    gap: 0.6rem;
+    gap: 0.3rem;
     flex-wrap: wrap;
-    font-size: 0.9rem;
+    font-size: 0.85rem;
     flex: 1 1 auto;
     min-width: 180px;
 }
 
 .nav-brand-title {
-    font-weight: 600;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-}
-
-.nav-brand-tag {
-    color: rgba(255, 255, 255, 0.6);
     font-weight: 500;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.65);
 }
 
 .nav-pill-links {
     display: flex;
     align-items: center;
-    gap: 1rem;
+    gap: 0.9rem;
     flex-wrap: wrap;
     justify-content: center;
     flex: 2 1 auto;
 }
 
 .nav-link {
-    font-weight: 600;
-    color: rgba(255, 255, 255, 0.7);
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.65);
     position: relative;
     padding-bottom: 0.35rem;
-    font-size: 0.95rem;
-    letter-spacing: 0.02em;
+    font-size: 0.9rem;
+    letter-spacing: 0.04em;
     transition: color 150ms ease, opacity 150ms ease;
 }
 
@@ -267,11 +264,10 @@ section {
     position: absolute;
     left: 50%;
     bottom: 0;
-    width: 18px;
-    height: 2px;
-    background: linear-gradient(120deg, var(--accent), var(--primary));
+    width: 14px;
+    height: 1px;
+    background: rgba(255, 255, 255, 0.8);
     transform: translateX(-50%) scaleX(0);
-    transform-origin: center;
     transition: transform 200ms ease;
 }
 
@@ -287,53 +283,49 @@ section {
     justify-content: flex-end;
 }
 
-.language-switcher {
+.language-inline {
     display: flex;
-    padding: 0.15rem;
-    border-radius: 999px;
-    gap: 0.25rem;
-    background: rgba(255, 255, 255, 0.08);
-    border: 1px solid rgba(255, 255, 255, 0.12);
+    gap: 0.2rem;
+    align-items: center;
 }
 
-.language-switcher.minimal {
-    background: rgba(255, 255, 255, 0.05);
+.language-inline .lang-btn {
+    background: transparent;
+    border: none;
+    font-size: 0.8rem;
+    letter-spacing: 0.08em;
+    color: rgba(255, 255, 255, 0.45);
+    padding: 0.2rem 0.35rem;
+    border-radius: 6px;
+    transition: color 150ms ease;
+}
+
+.language-inline .lang-btn.active {
+    color: #fff;
 }
 
 .lang-btn {
     border: none;
     background: transparent;
-    padding: 0.35rem 0.9rem;
-    border-radius: 999px;
-    font-weight: 600;
-    font-size: 0.85rem;
-    color: rgba(255, 255, 255, 0.65);
     cursor: pointer;
-    transition: background 150ms ease, color 150ms ease;
-}
-
-.lang-btn.active {
-    background: #fff;
-    color: var(--secondary);
-    box-shadow: 0 6px 16px rgba(10, 26, 47, 0.12);
 }
 
 .btn-pill {
-    padding: 0.65rem 1.4rem;
-    background: rgba(255, 255, 255, 0.1);
+    padding: 0.4rem 0.95rem;
+    background: transparent;
     border: 1px solid rgba(255, 255, 255, 0.35);
     color: #fff;
     border-radius: 999px;
-    font-weight: 600;
-    letter-spacing: 0.04em;
+    font-weight: 500;
+    letter-spacing: 0.15em;
     text-transform: uppercase;
-    font-size: 0.85rem;
-    transition: background 150ms ease, border-color 150ms ease;
+    font-size: 0.75rem;
+    transition: border-color 150ms ease, color 150ms ease;
 }
 
 .btn-pill:hover {
-    background: rgba(255, 255, 255, 0.18);
-    border-color: rgba(255, 255, 255, 0.5);
+    color: rgba(255, 255, 255, 0.85);
+    border-color: rgba(255, 255, 255, 0.55);
 }
 
 /* Hero - Let content breathe, don't force viewport height */
@@ -343,14 +335,12 @@ section {
     /* NO min-height! Let content determine height */
     /* Extend to absolute top of viewport - seamless background */
     position: relative;
-    /* Pull entire section to top of viewport */
-    margin-top: calc(-1 * max(1.5rem, 2vh));
-    padding-top: clamp(10rem, 18vh, 18rem);
+    /* Pull section all the way to top - aggressive negative margin */
+    margin-top: -200px;
+    /* Add the margin back as padding so content starts in right place */
+    padding-top: calc(200px + clamp(6rem, 12vh, 12rem));
     padding-bottom: clamp(4rem, 8vh, 8rem);
     isolation: isolate;
-    /* Ensure smooth rendering */
-    background-attachment: scroll;
-    background-size: 100% 100%;
 }
 
 /* Subtle gradient fade to next section */
