@@ -2,15 +2,30 @@
 const translations = {
     en: {
         // Navigation
-        'nav-cta': 'Book a Demo',
+        'nav-cta': 'Demo',
+        'nav-tagline': 'Feedback OS for Hospitality',
+        'nav-link-how': 'How It Works',
+        'nav-link-benefits': 'Benefits',
+        'nav-link-faq': 'FAQ',
 
         // Hero
-        'hero-title': 'Turn Every Table Into a 5-Star Review',
-        'hero-subtitle': 'NFC review cards + live dashboard for restaurants. Guests tap, rate, and you get more 5-star Google reviews while catching unhappy diners in private, before they hit your public rating.',
-        'hero-cta-primary': 'See How It Works',
-        'hero-cta-secondary': 'Learn More',
+        'hero-eyebrow': 'RateTap Command Cloud',
+        'hero-release': 'Reputation Control Suite',
+        'hero-title': 'Command Guest Sentiment Across Every Dining Room',
+        'hero-subtitle': 'RateTap distills review capture, escalation, and executive reporting into a single calm signal so COOs, GMs, and ownership stay aligned in seconds.',
+        'hero-cta-primary': 'View Platform',
+        'hero-cta-secondary': 'Download Overview',
+        'hero-trust': 'Trusted by restaurants running 100+ covers nightly',
+        'metric-1-label': 'Review volume',
+        'metric-2-label': 'Faster follow-ups',
+        'metric-3-label': 'Guests saved privately',
+        'hero-card-label-1': 'Tonight\'s floor',
+        'hero-card-label-2': 'Staff competing',
+        'hero-card-label-3': 'Alerts resolved',
+        'hero-card-label-4': 'Google-ready guests',
 
         // Problem Section
+        'problem-tag': '01 · The gap',
         'problem-title': 'Running a great restaurant isn\'t enough anymore',
         'problem-intro': 'Your online rating decides whether guests ever walk in the door.',
         'problem-1-title': 'Staff forget to ask',
@@ -23,6 +38,7 @@ const translations = {
         'problem-4-text': 'No data on trends, no way to spot issues before they become patterns.',
 
         // How It Works
+        'how-tag': '02 · Playbook',
         'how-title': 'How It Works',
         'how-subtitle': 'Three simple steps to transform your team into a review-generating machine',
         'step-1-title': 'Give each staff member an NFC card',
@@ -33,6 +49,7 @@ const translations = {
         'step-3-text': 'Happy guests are encouraged to post on Google. Unhappy guests share issues privately so you can respond. You see live data, leaderboards, and trends in your dashboard.',
 
         // Benefits
+        'benefits-tag': '03 · Outcomes',
         'benefits-title': 'Why Restaurant Owners Choose RateTap',
         'benefit-1-title': 'More good reviews, without nagging',
         'benefit-1-text': 'Your team already talks to every table. Now they have a simple, non-awkward way to ask for reviews that actually gets used.',
@@ -44,6 +61,7 @@ const translations = {
         'benefit-4-text': 'Track review count, average rating, and staff performance over time. See the impact of training, new menus, or policy changes.',
 
         // Features
+        'features-tag': '04 · Platform',
         'features-title': 'Everything You Need to Build Your Reputation',
         'feature-1': 'Individual NFC cards for each staff member',
         'feature-2': 'Branded review page (logo, colors, custom domain)',
@@ -57,6 +75,7 @@ const translations = {
         'feature-10': 'Works with any modern smartphone—no app needed',
 
         // FAQ
+        'faq-tag': '05 · Answers',
         'faq-title': 'Frequently Asked Questions',
         'faq-1-q': 'Will our staff actually use it?',
         'faq-1-a': 'Every card is tied to a specific person, and you can see who gets reviews. Owners usually run simple contests ("Most reviews this month wins X") and adoption goes way up.',
@@ -72,6 +91,7 @@ const translations = {
         'faq-6-a': 'Absolutely. The dashboard lets you filter and compare performance across all your locations from one place.',
 
         // Founder Note
+        'founder-tag': 'From the team',
         'founder-title': 'Why We Built This',
         'founder-text': '"I built this after watching friends in the industry get hammered by one bad Google review they never saw coming. Staff were doing great work, but nobody was actually asking for reviews in a consistent way. This fixes that."',
         'founder-name': '— The RateTap Team',
@@ -86,15 +106,30 @@ const translations = {
     },
     es: {
         // Navigation
-        'nav-cta': 'Reserva una Demo',
+        'nav-cta': 'Demo',
+        'nav-tagline': 'Sistema de feedback para hospitalidad',
+        'nav-link-how': 'Cómo funciona',
+        'nav-link-benefits': 'Beneficios',
+        'nav-link-faq': 'Preguntas',
 
         // Hero
-        'hero-title': 'Convierte Cada Mesa en una Reseña de 5 Estrellas',
-        'hero-subtitle': 'Tarjetas NFC de reseñas + dashboard en vivo para restaurantes. Los clientes tocan, califican, y obtienes más reseñas de 5 estrellas en Google mientras capturas clientes insatisfechos en privado, antes de que afecten tu calificación pública.',
-        'hero-cta-primary': 'Ver Cómo Funciona',
-        'hero-cta-secondary': 'Saber Más',
+        'hero-eyebrow': 'Nube de Comando RateTap',
+        'hero-release': 'Suite de Control de Reputación',
+        'hero-title': 'Dirige el Sentir de los Huéspedes en Cada Comedor',
+        'hero-subtitle': 'RateTap condensa la captura de reseñas, las escalaciones y los reportes ejecutivos en una señal tranquila para mantener alineados a COOs, GMs y propietarios en segundos.',
+        'hero-cta-primary': 'Ver Plataforma',
+        'hero-cta-secondary': 'Descargar Resumen',
+        'hero-trust': 'Confiado por restaurantes con más de 100 cubiertos por noche',
+        'metric-1-label': 'Volumen de reseñas',
+        'metric-2-label': 'Seguimientos más rápidos',
+        'metric-3-label': 'Clientes salvados en privado',
+        'hero-card-label-1': 'Piso de hoy',
+        'hero-card-label-2': 'Staff compitiendo',
+        'hero-card-label-3': 'Alertas resueltas',
+        'hero-card-label-4': 'Clientes listos para Google',
 
         // Problem Section
+        'problem-tag': '01 · La brecha',
         'problem-title': 'Tener un gran restaurante ya no es suficiente',
         'problem-intro': 'Tu calificación en línea decide si los clientes entran por la puerta.',
         'problem-1-title': 'El personal olvida preguntar',
@@ -107,6 +142,7 @@ const translations = {
         'problem-4-text': 'Sin datos sobre tendencias, sin forma de detectar problemas antes de que se conviertan en patrones.',
 
         // How It Works
+        'how-tag': '02 · Metodología',
         'how-title': 'Cómo Funciona',
         'how-subtitle': 'Tres pasos simples para transformar tu equipo en una máquina generadora de reseñas',
         'step-1-title': 'Dale a cada miembro del personal una tarjeta NFC',
@@ -117,6 +153,7 @@ const translations = {
         'step-3-text': 'Los clientes felices son alentados a publicar en Google. Los clientes insatisfechos comparten sus problemas en privado para que puedas responder. Ves datos en vivo, tablas de clasificación y tendencias en tu dashboard.',
 
         // Benefits
+        'benefits-tag': '03 · Resultados',
         'benefits-title': 'Por Qué los Dueños de Restaurantes Eligen RateTap',
         'benefit-1-title': 'Más buenas reseñas, sin insistir',
         'benefit-1-text': 'Tu equipo ya habla con cada mesa. Ahora tienen una forma simple y no incómoda de pedir reseñas que realmente se usa.',
@@ -128,6 +165,7 @@ const translations = {
         'benefit-4-text': 'Rastrea el conteo de reseñas, calificación promedio y desempeño del personal a lo largo del tiempo. Ve el impacto de capacitación, nuevos menús o cambios de política.',
 
         // Features
+        'features-tag': '04 · Plataforma',
         'features-title': 'Todo lo Que Necesitas para Construir Tu Reputación',
         'feature-1': 'Tarjetas NFC individuales para cada miembro del personal',
         'feature-2': 'Página de reseñas personalizada (logo, colores, dominio personalizado)',
@@ -141,6 +179,7 @@ const translations = {
         'feature-10': 'Funciona con cualquier smartphone moderno—sin necesidad de app',
 
         // FAQ
+        'faq-tag': '05 · Respuestas',
         'faq-title': 'Preguntas Frecuentes',
         'faq-1-q': '¿Nuestro personal realmente lo usará?',
         'faq-1-a': 'Cada tarjeta está vinculada a una persona específica, y puedes ver quién obtiene reseñas. Los dueños usualmente organizan concursos simples ("Más reseñas este mes gana X") y la adopción aumenta mucho.',
@@ -156,6 +195,7 @@ const translations = {
         'faq-6-a': 'Absolutamente. El dashboard te permite filtrar y comparar el desempeño en todas tus ubicaciones desde un solo lugar.',
 
         // Founder Note
+        'founder-tag': 'Del equipo',
         'founder-title': 'Por Qué Construimos Esto',
         'founder-text': '"Construí esto después de ver a amigos en la industria ser destrozados por una mala reseña de Google que nunca vieron venir. El personal estaba haciendo un gran trabajo, pero nadie estaba pidiendo reseñas de manera consistente. Esto lo soluciona."',
         'founder-name': '— El Equipo de RateTap',
@@ -232,15 +272,23 @@ document.addEventListener('DOMContentLoaded', () => {
     let lastScroll = 0;
     const navbar = document.querySelector('.navbar');
 
-    window.addEventListener('scroll', () => {
-        const currentScroll = window.pageYOffset;
+    if (navbar) {
+        window.addEventListener('scroll', () => {
+            const currentScroll = window.pageYOffset;
 
-        if (currentScroll > 100) {
-            navbar.classList.add('scrolled');
-        } else {
-            navbar.classList.remove('scrolled');
-        }
+            if (currentScroll > 120) {
+                navbar.classList.add('scrolled');
+            } else {
+                navbar.classList.remove('scrolled');
+            }
 
-        lastScroll = currentScroll;
-    });
+            if (currentScroll > lastScroll && currentScroll > 200) {
+                navbar.classList.add('nav-hidden');
+            } else {
+                navbar.classList.remove('nav-hidden');
+            }
+
+            lastScroll = currentScroll;
+        });
+    }
 });
