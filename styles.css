@@ -332,15 +332,12 @@ section {
 .hero {
     background: var(--gradient-hero);
     color: #fff;
-    /* NO min-height! Let content determine height */
-    /* Extend to absolute top of viewport - seamless background */
     position: relative;
-    /* Pull section all the way to top - aggressive negative margin */
-    margin-top: -200px;
-    /* Add the margin back as padding so content starts in right place */
-    padding-top: calc(200px + clamp(6rem, 12vh, 12rem));
+    /* Simple, predictable padding */
+    padding-top: clamp(8rem, 14vh, 14rem);
     padding-bottom: clamp(4rem, 8vh, 8rem);
     isolation: isolate;
+    /* No min-height - let content flow naturally */
 }
 
 /* Subtle gradient fade to next section */
@@ -1117,8 +1114,9 @@ section {
     }
 
     .hero {
-        /* Account for -200px margin + desired padding */
-        padding-top: calc(200px + clamp(15rem, 20vh, 20rem));
+        /* More generous padding on large screens */
+        padding-top: clamp(12rem, 18vh, 18rem);
+        padding-bottom: clamp(5rem, 10vh, 10rem);
     }
 }
 
