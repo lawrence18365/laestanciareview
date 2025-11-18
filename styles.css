@@ -1019,7 +1019,8 @@ section {
     }
 
     .hero {
-        padding-top: clamp(8rem, 12vh, 12rem);
+        /* Account for -200px margin + desired padding */
+        padding-top: calc(200px + clamp(15rem, 20vh, 20rem));
     }
 }
 
