@@ -88,7 +88,8 @@ a {
 }
 
 section {
-    padding: clamp(4rem, 8vh, 6rem) 0;
+    /* Consistent vertical rhythm - NO fixed heights */
+    padding: clamp(5rem, 10vh, 8rem) 0;
     position: relative;
 }
 
@@ -328,16 +329,19 @@ section {
     border-color: rgba(255, 255, 255, 0.55);
 }
 
-/* Hero - Let content breathe, don't force viewport height */
+/* Hero - Proper viewport handling */
 .hero {
     background: var(--gradient-hero);
     color: #fff;
     position: relative;
-    /* Simple, predictable padding */
-    padding-top: clamp(8rem, 14vh, 14rem);
-    padding-bottom: clamp(4rem, 8vh, 8rem);
+    /* Only the hero gets min-height, accounting for navbar (~80px) */
+    min-height: calc(100vh - 80px);
+    /* Flexbox centering instead of absolute positioning */
+    display: flex;
+    align-items: center;
+    /* Breathing room via padding, NOT margins */
+    padding: clamp(6rem, 8vh, 8rem) 0 clamp(4rem, 6vh, 6rem);
     isolation: isolate;
-    /* No min-height - let content flow naturally */
 }
 
 /* Subtle gradient fade to next section */
@@ -1107,24 +1111,23 @@ section {
 }
 
 /* Responsive */
-/* Desktop/Laptop optimizations */
+/* Desktop - more generous spacing */
 @media (min-width: 1400px) {
-    .hero-grid {
-        gap: 4rem;
+    .hero {
+        padding: clamp(8rem, 10vh, 10rem) 0 clamp(6rem, 8vh, 8rem);
     }
 
-    .hero {
-        /* More generous padding on large screens */
-        padding-top: clamp(12rem, 18vh, 18rem);
-        padding-bottom: clamp(5rem, 10vh, 10rem);
+    .hero-grid {
+        gap: 5rem;
     }
 }
 
-/* Tablet and smaller laptops */
+/* Tablet and smaller laptops - tighter spacing */
 @media (max-width: 992px) {
     .hero {
-        padding-top: clamp(5rem, 8vh, 7rem);
-        padding-bottom: clamp(3rem, 5vh, 5rem);
+        /* Remove min-height on smaller screens */
+        min-height: auto;
+        padding: clamp(5rem, 8vh, 8rem) 0 clamp(3rem, 5vh, 5rem);
     }
 
     .hero-grid {
