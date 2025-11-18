@@ -11,16 +11,21 @@
     <!-- Navigation -->
     <nav class="navbar">
         <div class="container">
-            <div class="nav-content">
-                <div class="logo">
-                    <h1>RateTap</h1>
+            <div class="nav-pill" role="navigation" aria-label="Primary">
+                <div class="nav-brand">
+                    <span class="nav-brand-title">RateTap</span>
                 </div>
-                <div class="nav-right">
-                    <div class="language-switcher">
+                <div class="nav-pill-links">
+                    <a href="#demo" class="nav-link" data-i18n="nav-link-how">How It Works</a>
+                    <a href="#benefits" class="nav-link" data-i18n="nav-link-benefits">Benefits</a>
+                    <a href="#faq" class="nav-link" data-i18n="nav-link-faq">FAQ</a>
+                </div>
+                <div class="nav-pill-actions">
+                    <div class="language-inline">
                         <button class="lang-btn active" data-lang="en">EN</button>
                         <button class="lang-btn" data-lang="es">ES</button>
                     </div>
-                    <a href="#contact" class="btn btn-primary" data-i18n="nav-cta">Book a Demo</a>
+                    <a href="#contact" class="btn btn-pill" data-i18n="nav-cta">Demo</a>
                 </div>
             </div>
         </div>
@@ -29,12 +34,52 @@
     <!-- Hero Section -->
     <section class="hero">
         <div class="container">
-            <div class="hero-content">
-                <h1 class="hero-title" data-i18n="hero-title">Turn Every Table Into a 5-Star Review</h1>
-                <p class="hero-subtitle" data-i18n="hero-subtitle">NFC review cards + live dashboard for restaurants. Guests tap, rate, and you get more 5-star Google reviews while catching unhappy diners in private, before they hit your public rating.</p>
-                <div class="hero-cta">
-                    <a href="#demo" class="btn btn-large btn-primary" data-i18n="hero-cta-primary">See How It Works</a>
-                    <a href="#features" class="btn btn-large btn-secondary" data-i18n="hero-cta-secondary">Learn More</a>
+            <div class="hero-grid">
+                <div class="hero-content">
+                    <div class="hero-intro">
+                        <span class="hero-eyebrow" data-i18n="hero-eyebrow">RateTap Command Cloud</span>
+                        <span class="hero-release-pill" data-i18n="hero-release">Reputation Control Suite</span>
+                    </div>
+                    <h1 class="hero-title" data-i18n="hero-title">Command Guest Sentiment Across Every Dining Room</h1>
+                    <p class="hero-subtitle" data-i18n="hero-subtitle">RateTap distills review capture, escalation, and executive reporting into a single calm signal so COOs, GMs, and ownership stay aligned in seconds.</p>
+                    <div class="hero-actions">
+                        <a href="#demo" class="btn btn-primary" data-i18n="hero-cta-primary">View Platform</a>
+                        <a href="#features" class="btn btn-link" data-i18n="hero-cta-secondary">Download Overview</a>
+                    </div>
+                    <div class="hero-meta">
+                        <div class="hero-meta-item">
+                            <span>Enterprise retention</span>
+                            <strong>98%</strong>
+                        </div>
+                        <div class="hero-meta-item">
+                            <span>Properties live</span>
+                            <strong>120+</strong>
+                        </div>
+                        <div class="hero-meta-item">
+                            <span>Average sentiment</span>
+                            <strong>4.9 ★</strong>
+                        </div>
+                    </div>
+                </div>
+                <div class="hero-visual">
+                    <div class="hero-preview">
+                        <div class="hero-preview-header">
+                            <p class="preview-label">Live signal</p>
+                            <span class="status-pill">Portfolio</span>
+                        </div>
+                        <div class="hero-preview-meter">
+                            <strong>4.9 ★</strong>
+                            <span>Sentiment</span>
+                            <p>+12% vs. last quarter</p>
+                        </div>
+                        <div class="hero-preview-image">
+                            <img src="graphic_sales.jpeg" alt="RateTap dashboard preview" loading="lazy">
+                        </div>
+                        <div class="hero-preview-note">
+                            <span>Escalations resolved</span>
+                            <strong>14</strong>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -43,8 +88,11 @@
     <!-- The Problem Section -->
     <section class="problem-section">
         <div class="container">
-            <h2 class="section-title" data-i18n="problem-title">Running a great restaurant isn't enough anymore</h2>
-            <p class="section-intro" data-i18n="problem-intro">Your online rating decides whether guests ever walk in the door.</p>
+            <div class="section-heading text-center">
+                <span class="section-tag" data-i18n="problem-tag">01 · The gap</span>
+                <h2 class="section-title" data-i18n="problem-title">Running a great restaurant isn't enough anymore</h2>
+                <p class="section-intro" data-i18n="problem-intro">Your online rating decides whether guests ever walk in the door.</p>
+            </div>
 
             <div class="problem-grid">
                 <div class="problem-card">
@@ -74,41 +122,117 @@
     <!-- How It Works Section -->
     <section class="how-it-works" id="demo">
         <div class="container">
-            <h2 class="section-title" data-i18n="how-title">How It Works</h2>
-            <p class="section-intro" data-i18n="how-subtitle">Three simple steps to transform your team into a review-generating machine</p>
+            <div class="section-heading text-center">
+                <span class="section-tag" data-i18n="how-tag">02 · Playbook</span>
+                <h2 class="section-title" data-i18n="how-title">How It Works</h2>
+                <p class="section-intro" data-i18n="how-subtitle">Three simple steps to transform your team into a review-generating machine</p>
+            </div>
 
-            <div class="steps">
-                <div class="step">
-                    <div class="step-number">1</div>
-                    <div class="step-content">
-                        <h3 data-i18n="step-1-title">Give each staff member an NFC card</h3>
-                        <p data-i18n="step-1-text">They keep it in their check presenter or pocket. When it's time to drop the bill, they say: "Hey, if you had a good time, would you mind tapping this and leaving us a quick review?"</p>
+            <div class="steps-flow">
+                <!-- Step 1 -->
+                <div class="step-card">
+                    <div class="step-visual">
+                        <div class="step-icon-wrapper">
+                            <svg class="step-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                <rect x="2" y="3" width="20" height="14" rx="2" stroke-width="2"/>
+                                <path d="M8 21h8" stroke-width="2" stroke-linecap="round"/>
+                                <path d="M12 17v4" stroke-width="2" stroke-linecap="round"/>
+                                <circle cx="12" cy="10" r="3" stroke-width="2"/>
+                            </svg>
+                            <div class="step-badge">01</div>
+                        </div>
+                    </div>
+                    <div class="step-details">
+                        <h3 class="step-title" data-i18n="step-1-title">Give each staff member an NFC card</h3>
+                        <p class="step-description" data-i18n="step-1-text">They keep it in their check presenter or pocket. When it's time to drop the bill, they say: "Hey, if you had a good time, would you mind tapping this and leaving us a quick review?"</p>
+                        <div class="step-highlight">
+                            <span class="highlight-label">What happens:</span>
+                            <span class="highlight-text">Staff present card → Guest taps phone → Magic begins</span>
+                        </div>
                     </div>
                 </div>
 
-                <div class="step">
-                    <div class="step-number">2</div>
-                    <div class="step-content">
-                        <h3 data-i18n="step-2-title">Guest taps, rates, and leaves feedback</h3>
-                        <p data-i18n="step-2-text">They land on your branded page (no app needed), tap a star rating and can add a quick comment. You get the rating, comment, which staff member asked, and when.</p>
+                <!-- Flow Arrow -->
+                <div class="flow-connector">
+                    <svg viewBox="0 0 24 24" fill="none">
+                        <path d="M5 12h14m-6-6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </div>
+
+                <!-- Step 2 -->
+                <div class="step-card">
+                    <div class="step-visual">
+                        <div class="step-icon-wrapper">
+                            <svg class="step-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                            <div class="step-badge">02</div>
+                        </div>
+                    </div>
+                    <div class="step-details">
+                        <h3 class="step-title" data-i18n="step-2-title">Guest taps, rates, and leaves feedback</h3>
+                        <p class="step-description" data-i18n="step-2-text">They land on your branded page (no app needed), tap a star rating and can add a quick comment. You get the rating, comment, which staff member asked, and when.</p>
+                        <div class="step-highlight">
+                            <span class="highlight-label">Data captured:</span>
+                            <span class="highlight-text">Rating • Comment • Staff ID • Timestamp • Table info</span>
+                        </div>
                     </div>
                 </div>
 
-                <div class="step">
-                    <div class="step-number">3</div>
-                    <div class="step-content">
-                        <h3 data-i18n="step-3-title">You get more reviews + fewer surprises</h3>
-                        <p data-i18n="step-3-text">Happy guests are encouraged to post on Google. Unhappy guests share issues privately so you can respond. You see live data, leaderboards, and trends in your dashboard.</p>
+                <!-- Flow Arrow -->
+                <div class="flow-connector">
+                    <svg viewBox="0 0 24 24" fill="none">
+                        <path d="M5 12h14m-6-6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </div>
+
+                <!-- Step 3 -->
+                <div class="step-card">
+                    <div class="step-visual">
+                        <div class="step-icon-wrapper">
+                            <svg class="step-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                <path d="M3 3v18h18" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M18 17l-5-5-4 4-4-4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                            <div class="step-badge">03</div>
+                        </div>
                     </div>
+                    <div class="step-details">
+                        <h3 class="step-title" data-i18n="step-3-title">You get more reviews + fewer surprises</h3>
+                        <p class="step-description" data-i18n="step-3-text">Happy guests are encouraged to post on Google. Unhappy guests share issues privately so you can respond. You see live data, leaderboards, and trends in your dashboard.</p>
+                        <div class="step-highlight">
+                            <span class="highlight-label">Smart routing:</span>
+                            <span class="highlight-text">5★ → Google • 1-4★ → Private manager alert</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Process Summary -->
+            <div class="process-summary">
+                <div class="summary-stat">
+                    <strong>10 sec</strong>
+                    <span>Average completion time</span>
+                </div>
+                <div class="summary-stat">
+                    <strong>0 apps</strong>
+                    <span>Required to download</span>
+                </div>
+                <div class="summary-stat">
+                    <strong>100%</strong>
+                    <span>Branded experience</span>
                 </div>
             </div>
         </div>
     </section>
 
     <!-- Benefits Section -->
-    <section class="benefits" id="features">
+    <section class="benefits" id="benefits">
         <div class="container">
-            <h2 class="section-title" data-i18n="benefits-title">Why Restaurant Owners Choose RateTap</h2>
+            <div class="section-heading text-center">
+                <span class="section-tag" data-i18n="benefits-tag">03 · Outcomes</span>
+                <h2 class="section-title" data-i18n="benefits-title">Why Restaurant Owners Choose RateTap</h2>
+            </div>
 
             <div class="benefits-grid">
                 <div class="benefit-card">
@@ -139,11 +263,15 @@
     </section>
 
     <!-- Features List Section -->
-    <section class="features-list">
+    <section class="features-list" id="features">
         <div class="container">
-            <h2 class="section-title" data-i18n="features-title">Everything You Need to Build Your Reputation</h2>
+            <div class="section-heading text-center">
+                <span class="section-tag" data-i18n="features-tag">04 · Platform</span>
+                <h2 class="section-title" data-i18n="features-title">Everything You Need to Build Your Reputation</h2>
+            </div>
 
-            <div class="features-two-col">
+            <div class="features-panel">
+                <div class="features-two-col">
                 <div class="features-column">
                     <ul class="feature-list">
                         <li data-i18n="feature-1">Individual NFC cards for each staff member</li>
@@ -153,23 +281,27 @@
                         <li data-i18n="feature-5">Private feedback routing to manager email</li>
                     </ul>
                 </div>
-                <div class="features-column">
-                    <ul class="feature-list">
-                        <li data-i18n="feature-6">Live dashboard with filters and export</li>
-                        <li data-i18n="feature-7">Staff leaderboard and performance metrics</li>
-                        <li data-i18n="feature-8">Multi-location support</li>
-                        <li data-i18n="feature-9">Daily/weekly summary emails</li>
-                        <li data-i18n="feature-10">Works with any modern smartphone—no app needed</li>
-                    </ul>
+                    <div class="features-column">
+                        <ul class="feature-list">
+                            <li data-i18n="feature-6">Live dashboard with filters and export</li>
+                            <li data-i18n="feature-7">Staff leaderboard and performance metrics</li>
+                            <li data-i18n="feature-8">Multi-location support</li>
+                            <li data-i18n="feature-9">Daily/weekly summary emails</li>
+                            <li data-i18n="feature-10">Works with any modern smartphone—no app needed</li>
+                        </ul>
+                    </div>
                 </div>
             </div>
         </div>
     </section>
 
     <!-- FAQ Section -->
-    <section class="faq">
+    <section class="faq" id="faq">
         <div class="container">
-            <h2 class="section-title" data-i18n="faq-title">Frequently Asked Questions</h2>
+            <div class="section-heading text-center">
+                <span class="section-tag" data-i18n="faq-tag">05 · Answers</span>
+                <h2 class="section-title" data-i18n="faq-title">Frequently Asked Questions</h2>
+            </div>
 
             <div class="faq-grid">
                 <div class="faq-item">
@@ -209,7 +341,10 @@
     <section class="founder-note">
         <div class="container">
             <div class="founder-content">
-                <h2 data-i18n="founder-title">Why We Built This</h2>
+                <div class="section-heading">
+                    <span class="section-tag" data-i18n="founder-tag">From the team</span>
+                    <h2 data-i18n="founder-title">Why We Built This</h2>
+                </div>
                 <p data-i18n="founder-text">"I built this after watching friends in the industry get hammered by one bad Google review they never saw coming. Staff were doing great work, but nobody was actually asking for reviews in a consistent way. This fixes that."</p>
                 <p class="founder-name" data-i18n="founder-name">— The RateTap Team</p>
             </div>
@@ -219,17 +354,35 @@
     <!-- CTA Section -->
     <section class="final-cta" id="contact">
         <div class="container">
-            <h2 class="cta-title" data-i18n="cta-title">Ready to turn your team into a 5-star review machine?</h2>
-            <p class="cta-subtitle" data-i18n="cta-subtitle">Book a 10-minute demo and see RateTap in action</p>
-            <a href="mailto:hello@ratetap.com" class="btn btn-large btn-white" data-i18n="cta-button">Book Your Demo</a>
+            <div class="cta-grid">
+                <div class="cta-content">
+                    <h2 class="cta-title" data-i18n="cta-title">Ready to turn your team into a 5-star review machine?</h2>
+                    <p class="cta-subtitle" data-i18n="cta-subtitle">Book a 10-minute demo and see RateTap in action</p>
+                    <a href="mailto:hello@ratetap.com" class="btn btn-large btn-white" data-i18n="cta-button">Book Your Demo</a>
 
-            <div class="social-links">
-                <a href="https://www.instagram.com/ratetapmx" target="_blank" rel="noopener" class="social-link">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
-                    </svg>
-                    @ratetapmx
-                </a>
+                    <div class="social-links">
+                        <a href="https://www.instagram.com/ratetapmx" target="_blank" rel="noopener" class="social-link">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+                            </svg>
+                            @ratetapmx
+                        </a>
+                    </div>
+                </div>
+                <div class="cta-panel">
+                    <div class="cta-metric">
+                        <span data-i18n="metric-1-label">Review volume</span>
+                        <strong>+32%</strong>
+                    </div>
+                    <div class="cta-metric">
+                        <span data-i18n="metric-2-label">Faster follow-ups</span>
+                        <strong>5x</strong>
+                    </div>
+                    <div class="cta-metric">
+                        <span data-i18n="metric-3-label">Guests saved privately</span>
+                        <strong>41</strong>
+                    </div>
+                </div>
             </div>
         </div>
     </section>
