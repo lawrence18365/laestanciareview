@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rastrea Desempeño de Meseros y Análisis de Personal | RateTap</title>
+    <meta name="description" content="Rastrea el desempeño de los meseros y análisis del personal con RateTap. Identifica a los mejores, realiza concursos y mejora el servicio con nuestro dashboard en tiempo real.">
+    <meta name="keywords" content="rastrear desempeño meseros, análisis personal restaurante, rastreo desempeño servidores, dashboard empleados restaurante">
+    
+    <!-- Hreflang Tags -->
+    <link rel="alternate" hreflang="en" href="../track-waiter-performance-dashboard.html" />
+    <link rel="alternate" hreflang="es-MX" href="track-waiter-performance-dashboard.html" />
+    
+    <!-- Open Graph / Social Media -->
+    <meta property="og:title" content="Rastrea Desempeño de Meseros y Análisis de Personal | RateTap">
+    <meta property="og:description" content="Deja de adivinar. Sabe exactamente quiénes son tus mejores meseros con nuestro dashboard de rastreo de desempeño.">
+    <meta property="og:type" content="website">
+    <meta property="og:image" content="https://ratetap.com/hero.png">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="../logo.png">
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Styles -->
+    <link rel="stylesheet" href="../styles.css">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar" id="navbar">
+        <div class="nav-container">
+            <div class="nav-brand">
+                <img src="../logo.png" alt="RateTap" class="nav-logo">
+                <span class="nav-tagline">Convierte Cada Mesa en una Reseña de 5 Estrellas</span>
+            </div>
+            
+            <div class="nav-menu" id="nav-menu">
+                <a href="get-more-google-reviews-restaurants.html" class="nav-link">Inicio</a>
+                <a href="nfc-google-review-cards-for-restaurants.html" class="nav-link">Tarjetas NFC</a>
+                <a href="stop-bad-restaurant-reviews.html" class="nav-link">Defensa de Reputación</a>
+            </div>
+            
+            <div class="nav-actions">
+                <div class="language-switcher">
+                    <a href="../track-waiter-performance-dashboard.html" class="lang-btn" data-lang="en">EN</a>
+                    <button class="lang-btn active" data-lang="es">ES</button>
+                </div>
+                <a href="#contact" class="btn btn-primary nav-cta">Ver Demo</a>
+            </div>
+            
+            <button class="nav-toggle" id="nav-toggle">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero" id="hero">
+        <div class="hero-container">
+            <div class="hero-content">
+                <div class="hero-eyebrow">Inteligencia de Desempeño del Personal</div>
+                <h1 class="hero-title">
+                    Deja de Adivinar. Sabe Exactamente Quiénes Son Tus Mejores Meseros.
+                </h1>
+                <p class="hero-subtitle">
+                    Nuestro dashboard rastrea cada toque y reseña por empleado. Identifica a los mejores, detecta necesidades de capacitación y realiza concursos de reseñas que realmente funcionen.
+                </p>
+                
+                <div class="hero-metrics">
+                    <div class="metric">
+                        <div class="metric-number">#1</div>
+                        <div class="metric-label">Tablas de Líderes</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-number">Real</div>
+                        <div class="metric-label">Análisis en Tiempo</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-number">$$$</div>
+                        <div class="metric-label">Rastreo de Incentivos</div>
+                    </div>
+                </div>
+                
+                <div class="hero-cta">
+                    <a href="#contact" class="btn btn-primary btn-large">
+                        Empezar a Rastrear
+                    </a>
+                    <a href="#how-it-works" class="btn btn-secondary btn-large">
+                        Ver El Dashboard
+                    </a>
+                </div>
+                
+                <div class="hero-trust">
+                    Usado por gerentes para otorgar más de $1M en bonos
+                </div>
+            </div>
+            
+            <div class="hero-visual">
+                <div class="nfc-card-showcase">
+                    <div class="nfc-card">
+                        <div class="card-icon">📱</div>
+                        <div class="card-text">Toca para Reseñar</div>
+                    </div>
+                    <div class="phone-mockup">
+                        <div class="screen">
+                            <div class="review-interface">
+                                <div class="stars">⭐⭐⭐⭐⭐</div>
+                                <div class="review-text">"¡Excelente servicio de Sara!"</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Problem Section -->
+    <section class="problem" id="problem">
+        <div class="container">
+            <div class="section-header">
+                <div class="section-tag">EL PROBLEMA</div>
+                <h2 class="section-title">
+                    La "Caja Negra" del Servicio
+                </h2>
+                <p class="section-subtitle">
+                    Puedes rastrear ventas, costos de comida y mano de obra. ¿Por qué no puedes rastrear la métrica más importante: Satisfacción del Cliente?
+                </p>
+            </div>
+            
+            <div class="problem-grid">
+                <div class="problem-card">
+                    <div class="problem-icon">🤷</div>
+                    <h3>¿Quién es Realmente Bueno?</h3>
+                    <p>Crees que conoces a tus mejores meseros, pero ¿tienes datos? A menudo, el personal más tranquilo obtiene las mejores reseñas, mientras que las "estrellas" molestan a los invitados.</p>
+                </div>
+                
+                <div class="problem-card">
+                    <div class="problem-icon">🏆</div>
+                    <h3>Concursos Vacíos</h3>
+                    <p>Pedir al personal que "consiga más reseñas" sin herramientas de rastreo es desmotivador. Necesitan ver su puntuación en una tabla de líderes para que les importe.</p>
+                </div>
+                
+                <div class="problem-card">
+                    <div class="problem-icon">🎓</div>
+                    <h3>Brechas de Capacitación</h3>
+                    <p>Un mesero puede ser genial vendiendo pero terrible en hospitalidad. Nuestro feedback privado revela estas necesidades de capacitación ocultas al instante.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- How It Works -->
+    <section class="how-it-works" id="how-it-works">
+        <div class="container">
+            <div class="section-header">
+                <div class="section-tag">IMPULSADO POR DATOS</div>
+                <h2 class="section-title">Cómo Funciona "El Bucle de Desempeño"</h2>
+                <p class="section-subtitle">
+                    Convierte la recolección de reseñas en un deporte de equipo competitivo.
+                </p>
+            </div>
+            
+            <div class="steps-container">
+                <div class="step">
+                    <div class="step-number">1</div>
+                    <div class="step-content">
+                        <h3>100% Atribución</h3>
+                        <p>
+                            No más adivinanzas. Cada tarjeta NFC está vinculada digitalmente a un perfil de empleado específico. Cada toque, reseña y queja se asigna automáticamente a la persona correcta.
+                        </p>
+                        <div class="step-detail">
+                            <strong>Rastreo:</strong> IDs de Servidor Individuales
+                        </div>
+                    </div>
+                    <div class="step-visual">
+                        <div class="nfc-card-demo">
+                            <div class="staff-card">
+                                <div class="staff-photo"></div>
+                                <div class="staff-name">ID: #8492</div>
+                                <div class="staff-role">Vinculado a: Sara M.</div>
+                                <div class="tap-icon">📡 Rastreo Activo</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="step">
+                    <div class="step-number">2</div>
+                    <div class="step-content">
+                        <h3>Recolección de Datos Granular</h3>
+                        <p>
+                            No solo rastreamos estrellas. Rastreamos "Toques" (Tasa de Petición) vs. "Reseñas" (Tasa de Conversión). Esto te dice quién está pidiendo pero no conectando, y quién no está pidiendo en absoluto.
+                        </p>
+                        <div class="step-detail">
+                            <strong>Métricas:</strong> Toques, % Conversión, Puntuación NPS
+                        </div>
+                    </div>
+                    <div class="step-visual">
+                        <div class="dashboard-preview">
+                            <div class="analytics-card">
+                                <div class="metric-row">
+                                    <span>Toques Totales:</span>
+                                    <span style="color: #6366f1; font-weight: bold;">452</span>
+                                </div>
+                                <div class="metric-row">
+                                    <span>Reseñas:</span>
+                                    <span style="color: #10b981; font-weight: bold;">128</span>
+                                </div>
+                                <div class="metric-row">
+                                    <span>Conversión:</span>
+                                    <span style="color: #f59e0b; font-weight: bold;">28.3%</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="step">
+                    <div class="step-number">3</div>
+                    <div class="step-content">
+                        <h3>La Tabla de Líderes en Vivo</h3>
+                        <p>
+                            Gamifica tu turno. Los gerentes ven una vista maestra. El personal puede ver sus propias estadísticas en su teléfono. Realiza concursos semanales de "Más Reseñas de 5 Estrellas" y mira cómo sube tu calificación.
+                        </p>
+                        <div class="step-detail">
+                            <strong>Resultado:</strong> equipo motivado, mayores ingresos
+                        </div>
+                    </div>
+                    <div class="step-visual">
+                        <div class="phone-interface">
+                            <div class="screen-demo">
+                                <div class="rating-prompt" style="justify-content: flex-start; padding-top: 2rem;">
+                                    <div style="width: 100%; border-bottom: 1px solid #eee; padding-bottom: 0.5rem; margin-bottom: 0.5rem; display: flex; justify-content: space-between;">
+                                        <strong>1. Sara M.</strong>
+                                        <span style="color: #10b981;">48 ★</span>
+                                    </div>
+                                    <div style="width: 100%; border-bottom: 1px solid #eee; padding-bottom: 0.5rem; margin-bottom: 0.5rem; display: flex; justify-content: space-between;">
+                                        <strong>2. Miguel T.</strong>
+                                        <span style="color: #10b981;">32 ★</span>
+                                    </div>
+                                    <div style="width: 100%; padding-bottom: 0.5rem; margin-bottom: 0.5rem; display: flex; justify-content: space-between; color: #9ca3af;">
+                                        <strong>3. Jessica</strong>
+                                        <span>12 ★</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Benefits -->
+    <section class="benefits" id="benefits">
+        <div class="container">
+            <div class="section-header">
+                <h2 class="section-title">Por Qué los Restaurantes Aman RateTap</h2>
+                <p class="section-subtitle">
+                    Resultados reales de restaurantes reales usando nuestro sistema de reseñas NFC
+                </p>
+            </div>
+            
+            <div class="benefits-grid">
+                <div class="benefit-card">
+                    <div class="benefit-icon">🚀</div>
+                    <h3>3x Más Reseñas en Google</h3>
+                    <p>Los restaurantes ven un aumento promedio del 300% en reseñas de Google dentro de 60 días de implementar RateTap.</p>
+                    <div class="benefit-stat">
+                        <strong>Aumento promedio:</strong> 127 a 381 reseñas
+                    </div>
+                </div>
+                
+                <div class="benefit-card">
+                    <div class="benefit-icon">🛡️</div>
+                    <h3>Protege Tu Reputación</h3>
+                    <p>El 85% del feedback negativo se captura en privado, dándote la oportunidad de arreglar problemas antes de que lleguen a Google.</p>
+                    <div class="benefit-stat">
+                        <strong>Resolución:</strong> 23 problemas resueltos/mes
+                    </div>
+                </div>
+                
+                <div class="benefit-card">
+                    <div class="benefit-icon">📈</div>
+                    <h3>Rastreo de Desempeño del Personal</h3>
+                    <p>Sabe exactamente quién está construyendo tu reputación y quién necesita capacitación con métricas de desempeño individuales.</p>
+                    <div class="benefit-stat">
+                        <strong>Mejor desempeño:</strong> Sara M. - 4.8★ promedio
+                    </div>
+                </div>
+                
+                <div class="benefit-card">
+                    <div class="benefit-icon">⚡</div>
+                    <h3>Sistema de Alertas Instantáneas</h3>
+                    <p>Recibe notificaciones inmediatas cuando surjan problemas, para que puedas responder rápidamente y resolver problemas.</p>
+                    <div class="benefit-stat">
+                        <strong>Tiempo respuesta:</strong> Menos de 5 minutos
+                    </div>
+                </div>
+                
+                <div class="benefit-card">
+                    <div class="benefit-icon">💰</div>
+                    <h3>Aumenta los Ingresos</h3>
+                    <p>Calificaciones más altas en Google significan más clientes. Cada estrella adicional aumenta los ingresos entre 5-9%.</p>
+                    <div class="benefit-stat">
+                        <strong>Aumento ingresos:</strong> $47K anuales
+                    </div>
+                </div>
+                
+                <div class="benefit-card">
+                    <div class="benefit-icon">🎯</div>
+                    <h3>Implementación Fácil</h3>
+                    <p>La configuración toma 30 minutos. Sin descargas de aplicaciones, sin capacitación compleja. Al personal le encanta lo simple que es.</p>
+                    <div class="benefit-stat">
+                        <strong>Tiempo total:</strong> 30 minutos
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features -->
+    <section class="features" id="features">
+        <div class="container">
+            <div class="section-header">
+                <h2 class="section-title">Todo lo Que Necesitas para Tener Éxito</h2>
+                <p class="section-subtitle">
+                    Características poderosas diseñadas específicamente para operaciones de restaurantes
+                </p>
+            </div>
+            
+            <div class="features-grid">
+                <div class="feature-category">
+                    <h3 class="category-title">Tecnología NFC</h3>
+                    <div class="feature-list">
+                        <div class="feature-item">
+                            <div class="feature-icon">📱</div>
+                            <div class="feature-content">
+                                <h4>No Se Necesita App</h4>
+                                <p>Los clientes simplemente tocan la tarjeta NFC con su teléfono: funciona con todos los smartphones modernos</p>
+                            </div>
+                        </div>
+                        <div class="feature-item">
+                            <div class="feature-icon">👤</div>
+                            <div class="feature-content">
+                                <h4>Tarjetas Personalizadas</h4>
+                                <p>Cada miembro del personal obtiene una tarjeta única con su nombre y foto</p>
+                            </div>
+                        </div>
+                        <div class="feature-item">
+                            <div class="feature-icon">🔒</div>
+                            <div class="feature-content">
+                                <h4>Seguro y Privado</h4>
+                                <p>No se almacenan datos personales en las tarjetas, totalmente compatible con GDPR</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="feature-category">
+                    <h3 class="category-title">Enrutamiento Inteligente</h3>
+                    <div class="feature-list">
+                        <div class="feature-item">
+                            <div class="feature-icon">⭐</div>
+                            <div class="feature-content">
+                                <h4>Tubería de 5 Estrellas</h4>
+                                <p>Los clientes felices son alentados a publicar en Google inmediatamente</p>
+                            </div>
+                        </div>
+                        <div class="feature-item">
+                            <div class="feature-icon">📝</div>
+                            <div class="feature-content">
+                                <h4>Feedback Privado</h4>
+                                <p>Las reseñas de 4 estrellas e inferiores van directamente a la gerencia</p>
+                            </div>
+                        </div>
+                        <div class="feature-item">
+                            <div class="feature-icon">⚡</div>
+                            <div class="feature-content">
+                                <h4>Alertas Instantáneas</h4>
+                                <p>Notificaciones en tiempo real cuando los problemas necesitan atención</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="feature-category">
+                    <h3 class="category-title">Dashboard de Análisis</h3>
+                    <div class="feature-list">
+                        <div class="feature-item">
+                            <div class="feature-icon">📊</div>
+                            <div class="feature-content">
+                                <h4>Desempeño del Personal</h4>
+                                <p>Rastrea las tasas de reseñas y calificaciones promedio de cada miembro del personal</p>
+                            </div>
+                        </div>
+                        <div class="feature-item">
+                            <div class="feature-icon">📈</div>
+                            <div class="feature-content">
+                                <h4>Análisis de Tendencias</h4>
+                                <p>Detecta patrones en el feedback antes de que se conviertan en problemas</p>
+                            </div>
+                        </div>
+                        <div class="feature-item">
+                            <div class="feature-icon">📱</div>
+                            <div class="feature-content">
+                                <h4>Acceso Móvil</h4>
+                                <p>Revisa tu dashboard desde cualquier lugar, en cualquier momento</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FAQ -->
+    <section class="faq" id="faq">
+        <div class="container">
+            <div class="section-header">
+                <h2 class="section-title">Preguntas Frecuentes</h2>
+                <p class="section-subtitle">
+                    Todo lo que necesitas saber sobre RateTap
+                </p>
+            </div>
+            
+            <div class="faq-grid">
+                <div class="faq-item">
+                    <div class="faq-question">
+                        <h3>¿Cuánto cuesta?</h3>
+                        <div class="faq-toggle">+</div>
+                    </div>
+                    <div class="faq-answer">
+                        <p>
+                            RateTap comienza en $99/mes para hasta 10 miembros del personal, incluyendo tarjetas NFC, acceso al dashboard y reseñas ilimitadas. Las tarjetas de personal adicional cuestan $5/mes cada una. También ofrecemos planes anuales con 2 meses gratis.
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="faq-item">
+                    <div class="faq-question">
+                        <h3>¿Cuánto tiempo toma la configuración?</h3>
+                        <div class="faq-toggle">+</div>
+                    </div>
+                    <div class="faq-answer">
+                        <p>
+                            La configuración es increíblemente rápida. Una vez que te registras, enviamos tus tarjetas NFC dentro de 2 días hábiles. La configuración del dashboard toma unos 15 minutos, y la capacitación del personal toma 5 minutos por persona. La mayoría de los restaurantes están completamente operativos dentro de una semana.
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="faq-item">
+                    <div class="faq-question">
+                        <h3>¿Los clientes necesitan descargar una aplicación?</h3>
+                        <div class="faq-toggle">+</div>
+                    </div>
+                    <div class="faq-answer">
+                        <p>
+                            ¡No se requiere aplicación! Los clientes simplemente tocan la tarjeta NFC con su smartphone (funciona con todos los iPhones y dispositivos Android modernos). Son llevados directamente a una página de reseñas optimizada para móviles en su navegador web.
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="faq-item">
+                    <div class="faq-question">
+                        <h3>¿Qué pasa con las reseñas negativas?</h3>
+                        <div class="faq-toggle">+</div>
+                    </div>
+                    <div class="faq-answer">
+                        <p>
+                            Las reseñas de 4 estrellas e inferiores se enrutan privadamente a la gerencia a través de nuestro dashboard. Recibes alertas instantáneas para que puedas responder rápidamente y resolver problemas antes de que lleguen a Google.
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="faq-item">
+                    <div class="faq-question">
+                        <h3>¿Puedo rastrear el desempeño individual del personal?</h3>
+                        <div class="faq-toggle">+</div>
+                    </div>
+                    <div class="faq-answer">
+                        <p>
+                            ¡Absolutamente! Cada tarjeta NFC es única para el miembro del personal. Puedes ver cuántas reseñas genera cada persona, su calificación promedio, tasas de respuesta y tendencias a lo largo del tiempo.
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="faq-item">
+                    <div class="faq-question">
+                        <h3>¿Qué pasa si una tarjeta NFC se pierde o daña?</h3>
+                        <div class="faq-toggle">+</div>
+                    </div>
+                    <div class="faq-answer">
+                        <p>
+                            ¡No hay problema! Podemos desactivar las tarjetas perdidas instantáneamente y enviar repuestos dentro de 24 horas. Tus datos están seguros, y no hay riesgo de seguridad ya que no se almacena información personal en las tarjetas mismas.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="cta" id="contact">
+        <div class="container">
+            <div class="cta-content">
+                <h2 class="cta-title">
+                    ¿Listo para Transformar la Reputación de Tu Restaurante?
+                </h2>
+                <p class="cta-subtitle">
+                    Únete a cientos de restaurantes usando RateTap para capturar más reseñas, prevenir feedback negativo y rastrear el desempeño del personal.
+                </p>
+                
+                <div class="cta-features">
+                    <div class="cta-feature">
+                        <div class="feature-check">✓</div>
+                        <span>Prueba gratis de 30 días</span>
+                    </div>
+                    <div class="cta-feature">
+                        <div class="feature-check">✓</div>
+                        <span>Asistencia de configuración incluida</span>
+                    </div>
+                    <div class="cta-feature">
+                        <div class="feature-check">✓</div>
+                        <span>Cancela en cualquier momento</span>
+                    </div>
+                </div>
+                
+                <div class="cta-form">
+                    <form id="contact-form">
+                        <div class="form-group">
+                            <input type="text" id="restaurant-name" name="restaurant-name" placeholder="Nombre del Restaurante" required>
+                        </div>
+                        <div class="form-group">
+                            <input type="text" id="your-name" name="your-name" placeholder="Tu Nombre" required>
+                        </div>
+                        <div class="form-group">
+                            <input type="email" id="email" name="email" placeholder="Correo Electrónico" required>
+                        </div>
+                        <div class="form-group">
+                            <input type="tel" id="phone" name="phone" placeholder="Número de Teléfono">
+                        </div>
+                        <div class="form-group">
+                            <input type="number" id="staff-count" name="staff-count" placeholder="Número de Personal" min="1" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-large">
+                            Empezar Mi Prueba Gratis
+                        </button>
+                    </form>
+                </div>
+                
+                <div class="cta-alternative">
+                    <p>¿Prefieres hablar primero?</p>
+                    <a href="tel:+1-555-RATETAP" class="phone-link">Llama (555) RATETAP</a>
+                    <span class="or">o</span>
+                    <a href="mailto:hello@ratetap.com" class="email-link">hello@ratetap.com</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-brand">
+                    <img src="../logo.png" alt="RateTap" class="footer-logo">
+                    <p class="footer-tagline">
+                        Convierte Cada Mesa en una Reseña de 5 Estrellas
+                    </p>
+                </div>
+                
+                <div class="footer-links">
+                    <div class="footer-column">
+                        <h4>Producto</h4>
+                        <a href="#how-it-works">Cómo Funciona</a>
+                        <a href="#features">Características</a>
+                        <a href="#benefits">Beneficios</a>
+                        <a href="#pricing">Precios</a>
+                    </div>
+                    
+                    <div class="footer-column">
+                        <h4>Empresa</h4>
+                        <a href="#about">Acerca de</a>
+                        <a href="#contact">Contacto</a>
+                        <a href="#support">Soporte</a>
+                        <a href="#blog">Blog</a>
+                    </div>
+                    
+                    <div class="footer-column">
+                        <h4>Legal</h4>
+                        <a href="#privacy">Política de Privacidad</a>
+                        <a href="#terms">Términos de Servicio</a>
+                        <a href="#gdpr">GDPR</a>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="footer-bottom">
+                <p>
+                    © 2025 RateTap. Todos los derechos reservados.
+                </p>
+                <div class="footer-social">
+                    <a href="https://instagram.com/ratetapmx" target="_blank" aria-label="Instagram">📸</a>
+                    <a href="#" target="_blank" aria-label="Twitter">🐦</a>
+                    <a href="#" target="_blank" aria-label="LinkedIn">💼</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="../script.js"></script>
+</body>
+</html>
