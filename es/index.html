@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RateTap - Turn Every Table into a 5-Star Review with NFC Cards</title>
-    <meta name="description" content="Transform your restaurant's reputation with NFC cards that capture reviews at the table. Happy guests go to Google, unhappy ones give private feedback to managers.">
+    <title>RateTap - Convierte cada mesa en una reseña de 5 estrellas con tarjetas NFC</title>
+    <meta name="description" content="Transforme la reputación de su restaurante con tarjetas NFC que capturan reseñas en la mesa. Clientes felices van a Google, los insatisfechos dan comentarios privados a los gerentes.">
     
     <!-- Fonts & Icons -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -13,7 +13,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <!-- Styles -->
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="../styles.css">
 </head>
 <body>
 
@@ -26,18 +26,18 @@
             </a>
             
             <div class="nav-menu" id="nav-menu">
-                <a href="#how-it-works" class="nav-link" data-i18n="nav-link-how">How It Works</a>
-                <a href="#benefits" class="nav-link" data-i18n="nav-link-benefits">Benefits</a>
-                <a href="#features" class="nav-link" data-i18n="nav-link-features">Features</a>
-                <a href="#faq" class="nav-link" data-i18n="nav-link-faq">FAQ</a>
+                <a href="#how-it-works" class="nav-link" data-i18n="nav-link-how">Cómo funciona</a>
+                <a href="#benefits" class="nav-link" data-i18n="nav-link-benefits">Beneficios</a>
+                <a href="#features" class="nav-link" data-i18n="nav-link-features">Características</a>
+                <a href="#faq" class="nav-link" data-i18n="nav-link-faq">Preguntas frecuentes</a>
             </div>
             
             <div class="nav-actions">
                 <div class="language-switcher">
-                    <button class="lang-btn active" data-lang="en">EN</button>
-                    <button class="lang-btn" data-lang="es">ES</button>
+                    <button class="lang-btn" onclick="window.location.href='../index.html'">EN</button>
+                    <button class="lang-btn active" data-lang="es">ES</button>
                 </div>
-                <a href="#contact" class="btn btn-primary" data-i18n="nav-cta">Get Started</a>
+                <a href="#contact" class="btn btn-primary" data-i18n="nav-cta">Empezar</a>
                 <button class="nav-toggle" id="nav-toggle"><i class="fa-solid fa-bars"></i></button>
             </div>
         </div>
@@ -51,29 +51,29 @@
 
         <div class="container grid-2">
             <div class="hero-content">
-                <span class="hero-eyebrow" data-i18n="hero-eyebrow">Restaurant Review Revolution</span>
-                <h1 data-i18n="hero-title">Turn Every Table into a 5-Star Review</h1>
+                <span class="hero-eyebrow" data-i18n="hero-eyebrow">Revolución en Reseñas de Restaurantes</span>
+                <h1 data-i18n="hero-title">Convierte cada mesa en una reseña de 5 estrellas</h1>
                 <p data-i18n="hero-subtitle">
-                    Give each staff member a unique NFC card. Happy guests leave Google reviews instantly. Unhappy ones give private feedback directly to you.
+                    Dé a cada miembro del personal una tarjeta NFC única. Los clientes felices dejan reseñas en Google al instante. Los insatisfechos dan comentarios privados directamente a usted.
                 </p>
                 
                 <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
-                    <a href="#contact" class="btn btn-primary" data-i18n="hero-cta-primary">Start Free Trial</a>
-                    <a href="#how-it-works" class="btn btn-secondary" data-i18n="hero-cta-secondary">How It Works</a>
+                    <a href="#contact" class="btn btn-primary" data-i18n="hero-cta-primary">Prueba Gratis</a>
+                    <a href="#how-it-works" class="btn btn-secondary" data-i18n="hero-cta-secondary">Cómo funciona</a>
                 </div>
                 
                 <div class="hero-metrics">
                     <div class="metric">
                         <div class="metric-number highlight">3x</div>
-                        <div class="metric-label" data-i18n="metric-1-label">More Reviews</div>
+                        <div class="metric-label" data-i18n="metric-1-label">Más Reseñas</div>
                     </div>
                     <div class="metric">
                         <div class="metric-number highlight-2">85%</div>
-                        <div class="metric-label" data-i18n="metric-2-label">Issues Resolved</div>
+                        <div class="metric-label" data-i18n="metric-2-label">Problemas Resueltos</div>
                     </div>
                     <div class="metric">
                         <div class="metric-number highlight-3">24/7</div>
-                        <div class="metric-label" data-i18n="metric-3-label">Monitoring</div>
+                        <div class="metric-label" data-i18n="metric-3-label">Monitoreo</div>
                     </div>
                 </div>
             </div>
@@ -87,15 +87,15 @@
                         <i class="fa-solid fa-star" style="color: #FBBF24; font-size: 2rem; margin: 0.5rem;"></i>
                         <i class="fa-solid fa-star" style="color: #FBBF24; font-size: 2rem; margin: 0.5rem;"></i>
                         <i class="fa-solid fa-star" style="color: #FBBF24; font-size: 2rem; margin: 0.5rem;"></i>
-                        <h3 style="margin-top: 1rem; margin-bottom: 0.5rem;">"Excellent Service!"</h3>
-                        <p style="font-size: 0.9rem; margin-bottom: 0;">Verified Guest Review</p>
+                        <h3 style="margin-top: 1rem; margin-bottom: 0.5rem;">"¡Excelente Servicio!"</h3>
+                        <p style="font-size: 0.9rem; margin-bottom: 0;">Reseña Verificada</p>
                     </div>
                     
                     <div style="position: absolute; bottom: -20px; right: -20px; background: var(--primary); color: white; padding: 1.5rem; border-radius: 1rem; display: flex; align-items: center; gap: 1rem;">
                         <i class="fa-solid fa-wifi fa-2x"></i>
                         <div>
-                            <div style="font-weight: 700;">NFC Enabled</div>
-                            <div style="font-size: 0.8rem; opacity: 0.9;">Tap to Review</div>
+                            <div style="font-weight: 700;">NFC Habilitado</div>
+                            <div style="font-size: 0.8rem; opacity: 0.9;">Toca para Reseñar</div>
                         </div>
                     </div>
                 </div>
@@ -107,34 +107,34 @@
     <section class="section bg-muted" id="problem">
         <div class="container">
             <div class="text-center" style="max-width: 700px; margin: 0 auto 4rem;">
-                <span class="hero-eyebrow" style="color: var(--text-muted);" data-i18n="problem-tag">THE PROBLEM</span>
-                <h2 data-i18n="problem-title">You're Losing Reviews & Missing Feedback</h2>
-                <p data-i18n="problem-subtitle">Traditional review requests don't work. Staff forget, unhappy guests complain publicly, and you fly blind.</p>
+                <span class="hero-eyebrow" style="color: var(--text-muted);" data-i18n="problem-tag">EL PROBLEMA</span>
+                <h2 data-i18n="problem-title">Estás Perdiendo Reseñas y Comentarios</h2>
+                <p data-i18n="problem-subtitle">Las solicitudes tradicionales no funcionan. El personal olvida, los clientes insatisfechos se quejan públicamente, y usted vuela a ciegas.</p>
             </div>
             
             <div class="grid-4">
                 <div class="card">
                     <div class="card-icon"><i class="fa-solid fa-user-xmark"></i></div>
-                    <h3 data-i18n="problem-1-title">Staff Forget</h3>
-                    <p data-i18n="problem-1-text">Even your best servers forget to ask during the rush. You miss 90% of happy customers.</p>
+                    <h3 data-i18n="problem-1-title">El Personal Olvida</h3>
+                    <p data-i18n="problem-1-text">Incluso sus mejores meseros olvidan pedir durante la hora pico. Pierdes el 90% de los clientes felices.</p>
                 </div>
                 
                 <div class="card">
                     <div class="card-icon"><i class="fa-solid fa-bullhorn"></i></div>
-                    <h3 data-i18n="problem-2-title">Public Complaints</h3>
-                    <p data-i18n="problem-2-text">Unhappy guests go straight to Google. One bad review costs you 30 potential covers.</p>
+                    <h3 data-i18n="problem-2-title">Quejas Públicas</h3>
+                    <p data-i18n="problem-2-text">Clientes insatisfechos van directo a Google. Una mala reseña le cuesta 30 cubiertos potenciales.</p>
                 </div>
                 
                 <div class="card">
                     <div class="card-icon"><i class="fa-solid fa-chart-line-down"></i></div>
-                    <h3 data-i18n="problem-3-title">No Data</h3>
-                    <p data-i18n="problem-3-text">Who is your best server? Who needs training? You have no way to measure performance.</p>
+                    <h3 data-i18n="problem-3-title">Sin Datos</h3>
+                    <p data-i18n="problem-3-text">¿Quién es su mejor mesero? ¿Quién necesita entrenamiento? No tiene forma de medir el rendimiento.</p>
                 </div>
                 
                 <div class="card">
                     <div class="card-icon"><i class="fa-solid fa-eye-slash"></i></div>
-                    <h3 data-i18n="problem-4-title">Flying Blind</h3>
-                    <p data-i18n="problem-4-text">No early warning system. You only find out about problems days after they happen.</p>
+                    <h3 data-i18n="problem-4-title">Volando a Ciegas</h3>
+                    <p data-i18n="problem-4-text">Sin sistema de alerta temprana. Solo se entera de los problemas días después de que suceden.</p>
                 </div>
             </div>
         </div>
@@ -145,31 +145,31 @@
         <div class="container">
             <div class="grid-2">
                 <div>
-                    <span class="hero-eyebrow" data-i18n="benefits-title">WHY RATETAP</span>
-                    <h2>Real Results for Restaurants</h2>
-                    <p class="mb-8" data-i18n="benefits-subtitle">We don't just get you reviews; we give you a complete reputation management system.</p>
+                    <span class="hero-eyebrow" data-i18n="benefits-title">POR QUÉ RATETAP</span>
+                    <h2>Resultados Reales para Restaurantes</h2>
+                    <p class="mb-8" data-i18n="benefits-subtitle">No solo le conseguimos reseñas; le damos un sistema completo de gestión de reputación.</p>
                     
                     <div class="feature-list-item">
                         <div class="feature-list-icon"><i class="fa-solid fa-rocket"></i></div>
                         <div>
-                            <h4 data-i18n="benefit-1-title">3x More Google Reviews</h4>
-                            <p data-i18n="benefit-1-text">Frictionless tapping means more guests actually leave reviews before they leave the table.</p>
+                            <h4 data-i18n="benefit-1-title">3x Más Reseñas en Google</h4>
+                            <p data-i18n="benefit-1-text">Tocar sin fricción significa que más clientes realmente dejan reseñas antes de irse de la mesa.</p>
                         </div>
                     </div>
                     
                     <div class="feature-list-item">
                         <div class="feature-list-icon"><i class="fa-solid fa-shield-halved"></i></div>
                         <div>
-                            <h4 data-i18n="benefit-2-title">Feedback Protection</h4>
-                            <p data-i18n="benefit-2-text">Capture negative feedback privately. Solve the issue instantly, keep your public rating high.</p>
+                            <h4 data-i18n="benefit-2-title">Protección de Comentarios</h4>
+                            <p data-i18n="benefit-2-text">Capture comentarios negativos en privado. Resuelva el problema al instante, mantenga alta su calificación pública.</p>
                         </div>
                     </div>
                     
                     <div class="feature-list-item">
                         <div class="feature-list-icon"><i class="fa-solid fa-users-viewfinder"></i></div>
                         <div>
-                            <h4 data-i18n="benefit-3-title">Staff Accountability</h4>
-                            <p data-i18n="benefit-3-text">Know exactly who is generating reviews. Gamify the process and reward top performers.</p>
+                            <h4 data-i18n="benefit-3-title">Responsabilidad del Personal</h4>
+                            <p data-i18n="benefit-3-text">Sepa exactamente quién está generando reseñas. Gamifique el proceso y recompense a los mejores.</p>
                         </div>
                     </div>
                 </div>
@@ -177,7 +177,7 @@
                 <div style="background: var(--bg-muted); padding: 3rem; border-radius: var(--radius-lg);">
                     <div style="background: white; padding: 2rem; border-radius: var(--radius-md); margin-bottom: 2rem;">
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-                            <strong>Reviews This Month</strong>
+                            <strong>Reseñas Este Mes</strong>
                             <span style="color: var(--secondary); font-weight: 700;">+342%</span>
                         </div>
                         <div style="height: 10px; background: var(--bg-muted); border-radius: 99px; overflow: hidden;">
@@ -187,8 +187,8 @@
                     
                     <div style="background: white; padding: 2rem; border-radius: var(--radius-md);">
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-                            <strong>Private Feedback Resolved</strong>
-                            <span style="color: var(--accent); font-weight: 700;">24 Cases</span>
+                            <strong>Comentarios Privados Resueltos</strong>
+                            <span style="color: var(--accent); font-weight: 700;">24 Casos</span>
                         </div>
                         <div style="height: 10px; background: var(--bg-muted); border-radius: 99px; overflow: hidden;">
                             <div style="width: 65%; height: 100%; background: var(--accent);"></div>
@@ -203,27 +203,27 @@
     <section class="section bg-muted" id="how-it-works">
         <div class="container">
             <div class="text-center mb-8">
-                <span class="hero-eyebrow" data-i18n="how-tag">SIMPLE PROCESS</span>
-                <h2 data-i18n="how-title">3 Steps to 5 Stars</h2>
+                <span class="hero-eyebrow" data-i18n="how-tag">PROCESO SIMPLE</span>
+                <h2 data-i18n="how-title">3 Pasos para 5 Estrellas</h2>
             </div>
             
             <div class="grid-3">
                 <div class="step-card" style="flex-direction: column; gap: 1rem;">
                     <div class="step-number">1</div>
-                    <h3 data-i18n="step-1-title">Staff Tap</h3>
-                    <p data-i18n="step-1-text">Server presents the NFC card with the check. "Tap to let us know how we did!"</p>
+                    <h3 data-i18n="step-1-title">Toque del Personal</h3>
+                    <p data-i18n="step-1-text">El mesero presenta la tarjeta NFC con la cuenta. "¡Toque para decirnos cómo lo hicimos!"</p>
                 </div>
                 
                 <div class="step-card" style="flex-direction: column; gap: 1rem;">
                     <div class="step-number">2</div>
-                    <h3 data-i18n="step-2-title">Smart Route</h3>
-                    <p data-i18n="step-2-text">5 stars? Go to Google. 4 stars or less? Go to a private feedback form.</p>
+                    <h3 data-i18n="step-2-title">Ruta Inteligente</h3>
+                    <p data-i18n="step-2-text">¿5 estrellas? Va a Google. ¿4 estrellas o menos? Va a un formulario de comentarios privado.</p>
                 </div>
                 
                 <div class="step-card" style="flex-direction: column; gap: 1rem;">
                     <div class="step-number">3</div>
-                    <h3 data-i18n="step-3-title">You Grow</h3>
-                    <p data-i18n="step-3-text">Watch your Google ranking climb and handle issues privately in real-time.</p>
+                    <h3 data-i18n="step-3-title">Usted Crece</h3>
+                    <p data-i18n="step-3-text">Vea subir su ranking en Google y maneje problemas en privado en tiempo real.</p>
                 </div>
             </div>
         </div>
@@ -232,16 +232,16 @@
     <!-- Testimonials -->
     <section class="section bg-white" id="testimonials">
         <div class="container">
-            <h2 class="text-center mb-8" data-i18n="testimonials-title">What Owners Say</h2>
+            <h2 class="text-center mb-8" data-i18n="testimonials-title">Lo Que Dicen los Dueños</h2>
             <div class="grid-3">
                 <div class="card" style="background: var(--bg-white); border: 2px solid var(--bg-muted);">
                     <div style="color: #FBBF24; margin-bottom: 1rem;">
                         <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i>
                     </div>
-                    <p style="font-style: italic;" data-i18n="testimonial-1-text">"We went from 127 to 384 reviews in 3 months. The private feedback saved us from public complaints multiple times."</p>
+                    <p style="font-style: italic;" data-i18n="testimonial-1-text">"Pasamos de 127 a 384 reseñas en 3 meses. Los comentarios privados nos salvaron de quejas públicas varias veces."</p>
                     <div style="margin-top: auto; padding-top: 1rem; font-weight: 700;">
                         <div data-i18n="testimonial-1-name">Maria Rodriguez</div>
-                        <div style="font-size: 0.875rem; color: var(--text-light);" data-i18n="testimonial-1-role">Owner, Casa Miguel</div>
+                        <div style="font-size: 0.875rem; color: var(--text-light);" data-i18n="testimonial-1-role">Dueña, Casa Miguel</div>
                     </div>
                 </div>
                 
@@ -249,10 +249,10 @@
                     <div style="color: #FBBF24; margin-bottom: 1rem;">
                         <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i>
                     </div>
-                    <p style="font-style: italic;" data-i18n="testimonial-2-text">"The staff tracking is a game changer. My servers compete to get the most mentions now."</p>
+                    <p style="font-style: italic;" data-i18n="testimonial-2-text">"El seguimiento del personal cambia el juego. Mis meseros compiten para obtener más menciones ahora."</p>
                     <div style="margin-top: auto; padding-top: 1rem; font-weight: 700;">
                         <div data-i18n="testimonial-2-name">David Chen</div>
-                        <div style="font-size: 0.875rem; color: var(--text-light);" data-i18n="testimonial-2-role">GM, The Waterfront</div>
+                        <div style="font-size: 0.875rem; color: var(--text-light);" data-i18n="testimonial-2-role">Gerente General, The Waterfront</div>
                     </div>
                 </div>
                 
@@ -260,10 +260,10 @@
                     <div style="color: #FBBF24; margin-bottom: 1rem;">
                         <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i>
                     </div>
-                    <p style="font-style: italic;" data-i18n="testimonial-3-text">"Setup took 10 minutes. No app for guests to download. Just tap and done. Brilliant."</p>
+                    <p style="font-style: italic;" data-i18n="testimonial-3-text">"La configuración tomó 10 minutos. Sin app para que los clientes descarguen. Solo toque y listo. Brillante."</p>
                     <div style="margin-top: auto; padding-top: 1rem; font-weight: 700;">
                         <div data-i18n="testimonial-3-name">Jennifer Walsh</div>
-                        <div style="font-size: 0.875rem; color: var(--text-light);" data-i18n="testimonial-3-role">Owner, Bistro 42</div>
+                        <div style="font-size: 0.875rem; color: var(--text-light);" data-i18n="testimonial-3-role">Dueña, Bistro 42</div>
                     </div>
                 </div>
             </div>
@@ -274,36 +274,36 @@
     <section class="section bg-muted" id="faq">
         <div class="container" style="max-width: 800px;">
             <div class="text-center mb-8">
-                <h2 data-i18n="faq-title">Common Questions</h2>
+                <h2 data-i18n="faq-title">Preguntas Comunes</h2>
             </div>
             
             <div class="faq-item">
                 <button class="faq-question">
-                    <span data-i18n="faq-1-question">How much does it cost?</span>
+                    <span data-i18n="faq-1-question">¿Cuánto cuesta?</span>
                     <i class="fa-solid fa-chevron-down"></i>
                 </button>
                 <div class="faq-answer">
-                    <p data-i18n="faq-1-answer">RateTap starts at $99/month for up to 10 staff members. Additional cards are $5. Annual plans get 2 months free.</p>
+                    <p data-i18n="faq-1-answer">RateTap comienza en $99/mes para hasta 10 miembros del personal. Tarjetas adicionales cuestan $5. Los planes anuales obtienen 2 meses gratis.</p>
                 </div>
             </div>
             
             <div class="faq-item">
                 <button class="faq-question">
-                    <span data-i18n="faq-2-question">Do guests need an app?</span>
+                    <span data-i18n="faq-2-question">¿Los clientes necesitan una app?</span>
                     <i class="fa-solid fa-chevron-down"></i>
                 </button>
                 <div class="faq-answer">
-                    <p data-i18n="faq-2-answer">No. Guests just tap their phone on the NFC card (iPhone or Android) and it opens in their browser instantly.</p>
+                    <p data-i18n="faq-2-answer">No. Los clientes solo tocan su teléfono en la tarjeta NFC (iPhone o Android) y se abre en su navegador al instante.</p>
                 </div>
             </div>
             
             <div class="faq-item">
                 <button class="faq-question">
-                    <span data-i18n="faq-3-question">What about negative reviews?</span>
+                    <span data-i18n="faq-3-question">¿Qué pasa con las reseñas negativas?</span>
                     <i class="fa-solid fa-chevron-down"></i>
                 </button>
                 <div class="faq-answer">
-                    <p data-i18n="faq-3-answer">Negative reviews (4 stars or less) are routed to a private form that emails you directly. They don't go to Google.</p>
+                    <p data-i18n="faq-3-answer">Las reseñas negativas (4 estrellas o menos) se envían a un formulario privado que le envía un correo electrónico directamente. No van a Google.</p>
                 </div>
             </div>
         </div>
@@ -313,35 +313,35 @@
     <section class="section bg-primary" id="contact" style="color: white;">
         <div class="container grid-2">
             <div>
-                <h2 style="color: white;" data-i18n="cta-title">Ready to Transform Your Reputation?</h2>
-                <p style="color: rgba(255,255,255,0.9);" data-i18n="cta-subtitle">Join hundreds of restaurants using RateTap today. 30-day money back guarantee.</p>
+                <h2 style="color: white;" data-i18n="cta-title">¿Listo para Transformar su Reputación?</h2>
+                <p style="color: rgba(255,255,255,0.9);" data-i18n="cta-subtitle">Únase a cientos de restaurantes usando RateTap hoy. Garantía de devolución de dinero de 30 días.</p>
                 <ul class="mb-8">
-                    <li style="margin-bottom: 0.5rem;"><i class="fa-solid fa-check" style="margin-right: 0.5rem;"></i> <span data-i18n="cta-feature-1">Free Setup</span></li>
-                    <li style="margin-bottom: 0.5rem;"><i class="fa-solid fa-check" style="margin-right: 0.5rem;"></i> <span data-i18n="cta-feature-2">Cancel Anytime</span></li>
-                    <li style="margin-bottom: 0.5rem;"><i class="fa-solid fa-check" style="margin-right: 0.5rem;"></i> <span data-i18n="cta-feature-3">24/7 Support</span></li>
+                    <li style="margin-bottom: 0.5rem;"><i class="fa-solid fa-check" style="margin-right: 0.5rem;"></i> <span data-i18n="cta-feature-1">Configuración Gratis</span></li>
+                    <li style="margin-bottom: 0.5rem;"><i class="fa-solid fa-check" style="margin-right: 0.5rem;"></i> <span data-i18n="cta-feature-2">Cancele en Cualquier Momento</span></li>
+                    <li style="margin-bottom: 0.5rem;"><i class="fa-solid fa-check" style="margin-right: 0.5rem;"></i> <span data-i18n="cta-feature-3">Soporte 24/7</span></li>
                 </ul>
             </div>
             
             <div style="background: white; padding: 2.5rem; border-radius: var(--radius-lg); color: var(--text-main);">
                 <form id="contact-form" style="display: flex; flex-direction: column; gap: 1rem;">
-                    <h3 style="margin-bottom: 0.5rem;" data-i18n="form-submit">Get Started</h3>
+                    <h3 style="margin-bottom: 0.5rem;" data-i18n="form-submit">Empezar</h3>
                     
                     <div style="display: flex; flex-direction: column; gap: 0.5rem;">
-                        <label style="font-weight: 600; font-size: 0.9rem;">Restaurant Name</label>
+                        <label style="font-weight: 600; font-size: 0.9rem;">Nombre del Restaurante</label>
                         <input type="text" id="restaurant-name" required placeholder="Joe's Diner" style="padding: 0.75rem; border: 2px solid var(--border); border-radius: var(--radius-md); font-family: inherit;">
                     </div>
                     
                     <div style="display: flex; flex-direction: column; gap: 0.5rem;">
-                        <label style="font-weight: 600; font-size: 0.9rem;">Your Name</label>
+                        <label style="font-weight: 600; font-size: 0.9rem;">Su Nombre</label>
                         <input type="text" id="your-name" required placeholder="Joe Smith" style="padding: 0.75rem; border: 2px solid var(--border); border-radius: var(--radius-md); font-family: inherit;">
                     </div>
                     
                     <div style="display: flex; flex-direction: column; gap: 0.5rem;">
-                        <label style="font-weight: 600; font-size: 0.9rem;">Email</label>
+                        <label style="font-weight: 600; font-size: 0.9rem;">Correo Electrónico</label>
                         <input type="email" id="email" required placeholder="joe@example.com" style="padding: 0.75rem; border: 2px solid var(--border); border-radius: var(--radius-md); font-family: inherit;">
                     </div>
                     
-                    <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">Start Trial</button>
+                    <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">Iniciar Prueba</button>
                 </form>
             </div>
         </div>
@@ -355,35 +355,35 @@
                     <h4 style="display: flex; align-items: center; gap: 0.5rem;">
                         <i class="fa-solid fa-nfc-symbol"></i> RateTap
                     </h4>
-                    <p style="font-size: 0.9rem; color: var(--text-light);" data-i18n="footer-tagline">Turn tables into 5-star reviews.</p>
+                    <p style="font-size: 0.9rem; color: var(--text-light);" data-i18n="footer-tagline">Convierta mesas en reseñas de 5 estrellas.</p>
                 </div>
                 <div>
-                    <h4 data-i18n="footer-product">Product</h4>
+                    <h4 data-i18n="footer-product">Producto</h4>
                     <ul style="display: flex; flex-direction: column; gap: 0.5rem;">
-                        <li><a href="#features" data-i18n="footer-features">Features</a></li>
-                        <li><a href="#pricing" data-i18n="footer-pricing">Pricing</a></li>
-                        <li><a href="#how-it-works" data-i18n="footer-how">How it Works</a></li>
+                        <li><a href="#features" data-i18n="footer-features">Características</a></li>
+                        <li><a href="#pricing" data-i18n="footer-pricing">Precios</a></li>
+                        <li><a href="#how-it-works" data-i18n="footer-how">Cómo funciona</a></li>
                     </ul>
                 </div>
                 <div>
-                    <h4 data-i18n="footer-company">Company</h4>
+                    <h4 data-i18n="footer-company">Empresa</h4>
                     <ul style="display: flex; flex-direction: column; gap: 0.5rem;">
-                        <li><a href="#about" data-i18n="footer-about">About</a></li>
+                        <li><a href="#about" data-i18n="footer-about">Acerca de</a></li>
                         <li><a href="#blog" data-i18n="footer-blog">Blog</a></li>
-                        <li><a href="#contact" data-i18n="footer-contact">Contact</a></li>
+                        <li><a href="#contact" data-i18n="footer-contact">Contacto</a></li>
                     </ul>
                 </div>
                 <div>
                     <h4 data-i18n="footer-legal">Legal</h4>
                     <ul style="display: flex; flex-direction: column; gap: 0.5rem;">
-                        <li><a href="#" data-i18n="footer-privacy">Privacy</a></li>
-                        <li><a href="#" data-i18n="footer-terms">Terms</a></li>
+                        <li><a href="#" data-i18n="footer-privacy">Privacidad</a></li>
+                        <li><a href="#" data-i18n="footer-terms">Términos</a></li>
                     </ul>
                 </div>
             </div>
             
             <div class="footer-bottom">
-                <span data-i18n="footer-copyright">&copy; 2026 RateTap. All rights reserved.</span>
+                <span data-i18n="footer-copyright">&copy; 2026 RateTap. Todos los derechos reservados.</span>
                 <div style="display: flex; gap: 1rem;">
                     <a href="#"><i class="fa-brands fa-twitter"></i></a>
                     <a href="#"><i class="fa-brands fa-instagram"></i></a>
@@ -393,6 +393,6 @@
         </div>
     </footer>
 
-    <script src="script.js"></script>
+    <script src="../script.js"></script>
 </body>
 </html>

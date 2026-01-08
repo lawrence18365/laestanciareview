@@ -5,25 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Stop Bad Restaurant Reviews & Protect Your Rating | RateTap</title>
     <meta name="description" content="Stop bad restaurant reviews before they go public. Our smart filter captures negative feedback privately so you can fix issues and protect your Google rating.">
-    <meta name="keywords" content="stop bad restaurant reviews, remove negative google reviews, reputation management restaurant, review gating">
     
-    <!-- Hreflang Tags -->
-    <link rel="alternate" hreflang="en" href="stop-bad-restaurant-reviews.html" />
-    <link rel="alternate" hreflang="es-MX" href="es/stop-bad-restaurant-reviews.html" />
-
-    <!-- Open Graph / Social Media -->
-    <meta property="og:title" content="Stop Bad Restaurant Reviews & Protect Your Rating | RateTap">
-    <meta property="og:description" content="Stop bad restaurant reviews before they go public. Our smart filter captures negative feedback privately.">
-    <meta property="og:type" content="website">
-    <meta property="og:image" content="https://ratetap.com/hero.png">
-    
-    <!-- Favicon -->
-    <link rel="icon" type="image/png" href="logo.png">
-    
-    <!-- Fonts -->
+    <!-- Fonts & Icons -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <!-- Styles -->
     <link rel="stylesheet" href="styles.css">
@@ -32,10 +19,10 @@
     <!-- Navigation -->
     <nav class="navbar" id="navbar">
         <div class="nav-container">
-            <div class="nav-brand">
-                <img src="logo.png" alt="RateTap" class="nav-logo">
-                <span class="nav-tagline" data-i18n="nav-tagline">Turn Every Table into a 5-Star Review</span>
-            </div>
+            <a href="index.html" class="nav-brand">
+                <i class="fa-solid fa-nfc-symbol fa-lg"></i>
+                RateTap
+            </a>
             
             <div class="nav-menu" id="nav-menu">
                 <a href="get-more-google-reviews-restaurants.html" class="nav-link">Home</a>
@@ -48,71 +35,51 @@
                     <button class="lang-btn active" data-lang="en">EN</button>
                     <a href="es/stop-bad-restaurant-reviews.html" class="lang-btn" data-lang="es">ES</a>
                 </div>
-                <a href="#contact" class="btn btn-primary nav-cta" data-i18n="nav-cta">Protect My Brand</a>
+                <a href="#contact" class="btn btn-primary" data-i18n="nav-cta">Protect My Brand</a>
+                <button class="nav-toggle" id="nav-toggle"><i class="fa-solid fa-bars"></i></button>
             </div>
-            
-            <button class="nav-toggle" id="nav-toggle">
-                <span></span>
-                <span></span>
-                <span></span>
-            </button>
         </div>
     </nav>
 
     <!-- Hero Section -->
     <section class="hero" id="hero">
-        <div class="hero-container">
+        <div class="shape shape-circle" style="top: -10%; left: -5%; width: 600px; height: 600px; color: var(--bg-muted);"></div>
+        
+        <div class="container grid-2">
             <div class="hero-content">
-                <div class="hero-eyebrow" data-i18n="hero-eyebrow">Reputation Defense System</div>
-                <h1 class="hero-title" data-i18n="hero-title">
-                    Stop Bad Reviews Before They Reach Google
-                </h1>
-                <p class="hero-subtitle" data-i18n="hero-subtitle">
-                    One bad night shouldn't ruin your reputation. Our smart filtering system captures negative feedback privately, giving you a chance to fix the issue. Only 5-star experiences go public.
+                <span class="hero-eyebrow" data-i18n="hero-eyebrow">Reputation Defense System</span>
+                <h1 data-i18n="hero-title">Stop Bad Reviews Before They Reach Google</h1>
+                <p data-i18n="hero-subtitle">
+                    One bad night shouldn't ruin your reputation. Our smart filtering system captures negative feedback privately. Only 5-star experiences go public.
                 </p>
+                
+                <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                    <a href="#contact" class="btn btn-primary" data-i18n="hero-cta-primary">Protect My Reputation</a>
+                    <a href="#how-it-works" class="btn btn-secondary" data-i18n="hero-cta-secondary">See The Filter</a>
+                </div>
                 
                 <div class="hero-metrics">
                     <div class="metric">
-                        <div class="metric-number">100%</div>
+                        <div class="metric-number highlight">100%</div>
                         <div class="metric-label" data-i18n="metric-1-label">Private Complaints</div>
                     </div>
                     <div class="metric">
-                        <div class="metric-number">4.8★</div>
+                        <div class="metric-number highlight-2">4.8★</div>
                         <div class="metric-label" data-i18n="metric-2-label">Avg. Rating Increase</div>
                     </div>
                     <div class="metric">
-                        <div class="metric-number">24/7</div>
+                        <div class="metric-number highlight-3">24/7</div>
                         <div class="metric-label" data-i18n="metric-3-label">Alert System</div>
                     </div>
-                </div>
-                
-                <div class="hero-cta">
-                    <a href="#contact" class="btn btn-primary btn-large" data-i18n="hero-cta-primary">
-                        Protect My Reputation
-                    </a>
-                    <a href="#how-it-works" class="btn btn-secondary btn-large" data-i18n="hero-cta-secondary">
-                        See The Filter
-                    </a>
-                </div>
-                
-                <div class="hero-trust" data-i18n="hero-trust">
-                    Prevented 50,000+ negative reviews this year
                 </div>
             </div>
             
             <div class="hero-visual">
-                <div class="nfc-card-showcase">
-                    <div class="nfc-card">
-                        <div class="card-icon">📱</div>
-                        <div class="card-text">Tap to Review</div>
-                    </div>
-                    <div class="phone-mockup">
-                        <div class="screen">
-                            <div class="review-interface">
-                                <div class="stars">⭐⭐⭐⭐⭐</div>
-                                <div class="review-text">"Excellent service from Sarah!"</div>
-                            </div>
-                        </div>
+                <!-- Visual: Shield Concept -->
+                <div style="background: var(--bg-muted); padding: 3rem; border-radius: 50%; width: 400px; height: 400px; display: flex; align-items: center; justify-content: center; position: relative;">
+                    <i class="fa-solid fa-shield-halved" style="font-size: 10rem; color: white;"></i>
+                    <div style="position: absolute; top: 20%; right: 10%; background: white; padding: 1rem; border-radius: 0.5rem; box-shadow: 0 4px 0 rgba(0,0,0,0.05);">
+                        <i class="fa-solid fa-check" style="color: var(--secondary);"></i> <strong>Bad Review Blocked</strong>
                     </div>
                 </div>
             </div>
@@ -120,33 +87,29 @@
     </section>
 
     <!-- Problem Section -->
-    <section class="problem" id="problem">
+    <section class="section bg-white" id="problem">
         <div class="container">
-            <div class="section-header">
-                <div class="section-tag" data-i18n="problem-tag">THE PROBLEM</div>
-                <h2 class="section-title" data-i18n="problem-title">
-                    The High Cost of Bad Reviews
-                </h2>
-                <p class="section-subtitle" data-i18n="problem-subtitle">
-                    A bad reputation kills revenue. You need a firewall between unhappy guests and the internet.
-                </p>
+            <div class="text-center mb-8">
+                <span class="hero-eyebrow" style="color: var(--text-muted);" data-i18n="problem-tag">THE PROBLEM</span>
+                <h2 data-i18n="problem-title">The High Cost of Bad Reviews</h2>
+                <p data-i18n="problem-subtitle">A bad reputation kills revenue. You need a firewall between unhappy guests and the internet.</p>
             </div>
             
-            <div class="problem-grid">
-                <div class="problem-card">
-                    <div class="problem-icon">📉</div>
+            <div class="grid-3">
+                <div class="card">
+                    <div class="card-icon"><i class="fa-solid fa-star-half-stroke"></i></div>
                     <h3 data-i18n="problem-1-title">The 1-Star Nightmare</h3>
                     <p data-i18n="problem-1-text">A single 1-star review can drop your average rating significantly. Recovering takes weeks of perfect 5-star reviews.</p>
                 </div>
                 
-                <div class="problem-card">
-                    <div class="problem-icon">⚖️</div>
+                <div class="card">
+                    <div class="card-icon"><i class="fa-solid fa-scale-unbalanced"></i></div>
                     <h3 data-i18n="problem-2-title">Unfair Feedback</h3>
                     <p data-i18n="problem-2-text">Cold soup? Slow service? Mistakes happen. But they shouldn't live on your Google profile forever. Fix them privately.</p>
                 </div>
                 
-                <div class="problem-card">
-                    <div class="problem-icon">⏳</div>
+                <div class="card">
+                    <div class="card-icon"><i class="fa-regular fa-clock"></i></div>
                     <h3 data-i18n="problem-3-title">No Second Chance</h3>
                     <p data-i18n="problem-3-text">Once a customer posts publicly, it's too late. RateTap gives you the chance to catch them *before* they leave the building.</p>
                 </div>
@@ -155,458 +118,97 @@
     </section>
 
     <!-- How It Works -->
-    <section class="how-it-works" id="how-it-works">
+    <section class="section bg-muted" id="how-it-works">
         <div class="container">
-            <div class="section-header">
-                <div class="section-tag" data-i18n="how-tag">SMART PROTECTION</div>
-                <h2 class="section-title" data-i18n="how-title">How The "Review Filter" Works</h2>
-                <p class="section-subtitle" data-i18n="how-subtitle">
-                    Automated gatekeeping that ensures only your best side is shown to the world.
-                </p>
+            <div class="text-center mb-8">
+                <span class="hero-eyebrow" data-i18n="how-tag">SMART PROTECTION</span>
+                <h2 data-i18n="how-title">How The "Review Filter" Works</h2>
             </div>
             
-            <div class="steps-container">
-                <div class="step">
+            <div class="grid-3">
+                <div class="step-card" style="flex-direction: column;">
                     <div class="step-number">1</div>
-                    <div class="step-content">
-                        <h3 data-i18n="step-1-title">The Trigger</h3>
-                        <p data-i18n="step-1-text">
-                            The process starts like any other review. The guest taps the NFC card or scans the code. They see a simple question: "How was your experience?"
-                        </p>
-                        <div class="step-detail">
-                            <strong>Interface:</strong> Clean, simple, and branded to you.
-                        </div>
-                    </div>
-                    <div class="step-visual">
-                        <div class="phone-interface">
-                            <div class="screen-demo">
-                                <div class="rating-prompt">
-                                    <div class="question">How was your dinner?</div>
-                                    <div class="star-rating">⭐⭐⭐⭐⭐</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                    <h3 data-i18n="step-1-title">The Trigger</h3>
+                    <p data-i18n="step-1-text">Guest taps the NFC card. "How was your experience?"</p>
                 </div>
                 
-                <div class="step">
-                    <div class="step-number">2</div>
-                    <div class="step-content">
-                        <h3 data-i18n="step-2-title">The Smart Gate</h3>
-                        <p data-i18n="step-2-text">
-                            This is where the magic happens. We intercept the rating <strong>before</strong> it goes to Google. The path splits based on their sentiment.
-                        </p>
-                        <div class="step-detail">
-                            <strong>Logic:</strong> 1-3 Stars = Private | 4-5 Stars = Public
-                        </div>
-                    </div>
-                    <div class="step-visual">
-                        <div class="dashboard-preview">
-                            <div class="analytics-card" style="display: flex; gap: 1rem; align-items: center; justify-content: center;">
-                                <div style="text-align: center;">
-                                    <div style="font-size: 2rem;">⭐⭐⭐⭐⭐</div>
-                                    <div style="color: #10b981; font-weight: bold;">➔ GOOGLE</div>
-                                </div>
-                                <div style="height: 50px; width: 1px; background: #e5e7eb;"></div>
-                                <div style="text-align: center;">
-                                    <div style="font-size: 2rem;">⭐⭐</div>
-                                    <div style="color: #ef4444; font-weight: bold;">➔ MANAGER</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                <div class="step-card" style="flex-direction: column; border: 2px solid var(--primary);">
+                    <div class="step-number" style="color: var(--primary);">2</div>
+                    <h3 data-i18n="step-2-title">The Smart Gate</h3>
+                    <p data-i18n="step-2-text"><strong>1-3 Stars</strong> = Private Form.<br><strong>4-5 Stars</strong> = Google Maps.</p>
                 </div>
                 
-                <div class="step">
+                <div class="step-card" style="flex-direction: column;">
                     <div class="step-number">3</div>
-                    <div class="step-content">
-                        <h3 data-i18n="step-3-title">The Protection</h3>
-                        <p data-i18n="step-3-text">
-                            Unhappy guests vent in a private form sent instantly to your phone. You fix the problem, they feel heard, and your Google rating stays pristine.
-                        </p>
-                        <div class="step-detail">
-                            <strong>Outcome:</strong> Crisis averted. Reputation saved.
-                        </div>
-                    </div>
-                    <div class="step-visual">
-                        <div class="phone-interface">
-                            <div class="screen-demo">
-                                <div class="rating-prompt">
-                                    <div class="question">We're sorry!</div>
-                                    <div class="comment-box">Please tell us how we can fix this...</div>
-                                    <button class="btn btn-primary" style="margin-top: 1rem; font-size: 0.8rem; padding: 0.5rem 1rem;">Send to Manager</button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                    <h3 data-i18n="step-3-title">The Protection</h3>
+                    <p data-i18n="step-3-text">Unhappy guests vent privately to you. You fix it. Your public rating stays pristine.</p>
                 </div>
             </div>
         </div>
     </section>
 
     <!-- Benefits -->
-    <section class="benefits" id="benefits">
+    <section class="section" id="benefits">
         <div class="container">
-            <div class="section-header">
-                <h2 class="section-title" data-i18n="benefits-title">Why Restaurants Love RateTap</h2>
-                <p class="section-subtitle" data-i18n="benefits-subtitle">
-                    Real results from real restaurants using our NFC review system
-                </p>
+            <div class="text-center mb-8">
+                <h2 data-i18n="benefits-title">Why Restaurants Love RateTap</h2>
             </div>
             
-            <div class="benefits-grid">
-                <div class="benefit-card">
-                    <div class="benefit-icon">🚀</div>
+            <div class="grid-3">
+                <div class="card">
+                    <div class="card-icon"><i class="fa-solid fa-arrow-trend-up"></i></div>
                     <h3 data-i18n="benefit-1-title">3x More Google Reviews</h3>
-                    <p data-i18n="benefit-1-text">Restaurants see an average 300% increase in Google reviews within 60 days of implementing RateTap.</p>
-                    <div class="benefit-stat">
-                        <strong>Average increase:</strong> 127 to 381 reviews
-                    </div>
+                    <p data-i18n="benefit-1-text">Restaurants see an average 300% increase in Google reviews within 60 days.</p>
                 </div>
                 
-                <div class="benefit-card">
-                    <div class="benefit-icon">🛡️</div>
-                    <h3 data-i18n="benefit-2-title">Protect Your Reputation</h3>
-                    <p data-i18n="benefit-2-text">85% of negative feedback is captured privately, giving you a chance to fix issues before they hit Google.</p>
-                    <div class="benefit-stat">
-                        <strong>Issue resolution:</strong> 23 problems solved monthly
-                    </div>
+                <div class="card">
+                    <div class="card-icon"><i class="fa-solid fa-user-shield"></i></div>
+                    <h3 data-i18n="benefit-2-title">Reputation Shield</h3>
+                    <p data-i18n="benefit-2-text">85% of negative feedback is captured privately, giving you a chance to fix issues.</p>
                 </div>
                 
-                <div class="benefit-card">
-                    <div class="benefit-icon">📈</div>
-                    <h3 data-i18n="benefit-3-title">Staff Performance Tracking</h3>
-                    <p data-i18n="benefit-3-text">Know exactly who's building your reputation and who needs coaching with individual performance metrics.</p>
-                    <div class="benefit-stat">
-                        <strong>Top performer:</strong> Sarah M. - 4.8★ average
-                    </div>
-                </div>
-                
-                <div class="benefit-card">
-                    <div class="benefit-icon">⚡</div>
-                    <h3 data-i18n="benefit-4-title">Instant Alert System</h3>
-                    <p data-i18n="benefit-4-text">Get immediate notifications when issues arise, so you can respond before the guest leaves or posts publicly.</p>
-                    <div class="benefit-stat">
-                        <strong>Response time:</strong> Under 5 minutes
-                    </div>
-                </div>
-                
-                <div class="benefit-card">
-                    <div class="benefit-icon">💰</div>
-                    <h3 data-i18n="benefit-5-title">Boost Revenue</h3>
-                    <p data-i18n="benefit-5-text">Higher Google ratings mean more customers. Each additional star increases revenue by 5-9%.</p>
-                    <div class="benefit-stat">
-                        <strong>Revenue increase:</strong> $47K annually
-                    </div>
-                </div>
-                
-                <div class="benefit-card">
-                    <div class="benefit-icon">🎯</div>
-                    <h3 data-i18n="benefit-6-title">Easy Implementation</h3>
-                    <p data-i18n="benefit-6-text">Setup takes 30 minutes. No app downloads, no complex training. Staff love how simple it is.</p>
-                    <div class="benefit-stat">
-                        <strong>Setup time:</strong> 30 minutes total
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Features -->
-    <section class="features" id="features">
-        <div class="container">
-            <div class="section-header">
-                <h2 class="section-title" data-i18n="features-title">Everything You Need to Succeed</h2>
-                <p class="section-subtitle" data-i18n="features-subtitle">
-                    Powerful features designed specifically for restaurant operations
-                </p>
-            </div>
-            
-            <div class="features-grid">
-                <div class="feature-category">
-                    <h3 class="category-title" data-i18n="category-1-title">NFC Technology</h3>
-                    <div class="feature-list">
-                        <div class="feature-item">
-                            <div class="feature-icon">📱</div>
-                            <div class="feature-content">
-                                <h4 data-i18n="feature-1-1-title">No App Required</h4>
-                                <p data-i18n="feature-1-1-text">Guests simply tap with their phone - works with all modern smartphones</p>
-                            </div>
-                        </div>
-                        <div class="feature-item">
-                            <div class="feature-icon">👤</div>
-                            <div class="feature-content">
-                                <h4 data-i18n="feature-1-2-title">Personalized Cards</h4>
-                                <p data-i18n="feature-1-2-text">Each staff member gets a unique card with their name and photo</p>
-                            </div>
-                        </div>
-                        <div class="feature-item">
-                            <div class="feature-icon">🔒</div>
-                            <div class="feature-content">
-                                <h4 data-i18n="feature-1-3-title">Secure & Private</h4>
-                                <p data-i18n="feature-1-3-text">No personal data stored on cards, fully GDPR compliant</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="feature-category">
-                    <h3 class="category-title" data-i18n="category-2-title">Smart Routing</h3>
-                    <div class="feature-list">
-                        <div class="feature-item">
-                            <div class="feature-icon">⭐</div>
-                            <div class="feature-content">
-                                <h4 data-i18n="feature-2-1-title">5-Star Pipeline</h4>
-                                <p data-i18n="feature-2-1-text">Happy guests are encouraged to post on Google immediately</p>
-                            </div>
-                        </div>
-                        <div class="feature-item">
-                            <div class="feature-icon">📝</div>
-                            <div class="feature-content">
-                                <h4 data-i18n="feature-2-2-title">Private Feedback</h4>
-                                <p data-i18n="feature-2-2-text">4-star and below reviews go directly to management</p>
-                            </div>
-                        </div>
-                        <div class="feature-item">
-                            <div class="feature-icon">⚡</div>
-                            <div class="feature-content">
-                                <h4 data-i18n="feature-2-3-title">Instant Alerts</h4>
-                                <p data-i18n="feature-2-3-text">Real-time notifications when issues need attention</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="feature-category">
-                    <h3 class="category-title" data-i18n="category-3-title">Analytics Dashboard</h3>
-                    <div class="feature-list">
-                        <div class="feature-item">
-                            <div class="feature-icon">📊</div>
-                            <div class="feature-content">
-                                <h4 data-i18n="feature-3-1-title">Staff Performance</h4>
-                                <p data-i18n="feature-3-1-text">Track individual staff review rates and average ratings</p>
-                            </div>
-                        </div>
-                        <div class="feature-item">
-                            <div class="feature-icon">📈</div>
-                            <div class="feature-content">
-                                <h4 data-i18n="feature-3-2-title">Trend Analysis</h4>
-                                <p data-i18n="feature-3-2-text">Spot patterns in feedback before they become problems</p>
-                            </div>
-                        </div>
-                        <div class="feature-item">
-                            <div class="feature-icon">📱</div>
-                            <div class="feature-content">
-                                <h4 data-i18n="feature-3-3-title">Mobile Access</h4>
-                                <p data-i18n="feature-3-3-text">Check your dashboard from anywhere, anytime</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Testimonials -->
-    <section class="testimonials" id="testimonials">
-        <div class="container">
-            <div class="section-header">
-                <h2 class="section-title" data-i18n="testimonials-title">What Restaurant Owners Say</h2>
-            </div>
-            
-            <div class="testimonials-grid">
-                <div class="testimonial-card">
-                    <div class="testimonial-content">
-                        <div class="stars">⭐⭐⭐⭐⭐</div>
-                        <p data-i18n="testimonial-1-text">
-                            "RateTap transformed our review game. We went from 127 to 384 Google reviews in 3 months. The private feedback feature saved us from at least a dozen public negative reviews."
-                        </p>
-                    </div>
-                    <div class="testimonial-author">
-                        <div class="author-info">
-                            <strong data-i18n="testimonial-1-name">Maria Rodriguez</strong>
-                            <span data-i18n="testimonial-1-role">Owner, Casa Miguel</span>
-                        </div>
-                        <div class="restaurant-logo">🍽️</div>
-                    </div>
-                </div>
-                
-                <div class="testimonial-card">
-                    <div class="testimonial-content">
-                        <div class="stars">⭐⭐⭐⭐⭐</div>
-                        <p data-i18n="testimonial-2-text">
-                            "The staff performance tracking is incredible. I can see exactly who's asking for reviews and their success rate. It's become a fun competition that boosted our entire team's performance."
-                        </p>
-                    </div>
-                    <div class="testimonial-author">
-                        <div class="author-info">
-                            <strong data-i18n="testimonial-2-name">David Chen</strong>
-                            <span data-i18n="testimonial-2-role">GM, The Waterfront</span>
-                        </div>
-                        <div class="restaurant-logo">🌊</div>
-                    </div>
-                </div>
-                
-                <div class="testimonial-card">
-                    <div class="testimonial-content">
-                        <div class="stars">⭐⭐⭐⭐⭐</div>
-                        <p data-i18n="testimonial-3-text">
-                            "Setup was incredibly easy. The NFC cards work perfectly, and our customers love how simple it is. We're capturing 5x more feedback than before."
-                        </p>
-                    </div>
-                    <div class="testimonial-author">
-                        <div class="author-info">
-                            <strong data-i18n="testimonial-3-name">Jennifer Walsh</strong>
-                            <span data-i18n="testimonial-3-role">Owner, Bistro 42</span>
-                        </div>
-                        <div class="restaurant-logo">🥂</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- FAQ -->
-    <section class="faq" id="faq">
-        <div class="container">
-            <div class="section-header">
-                <h2 class="section-title" data-i18n="faq-title">Frequently Asked Questions</h2>
-                <p class="section-subtitle" data-i18n="faq-subtitle">
-                    Everything you need to know about RateTap
-                </p>
-            </div>
-            
-            <div class="faq-grid">
-                <div class="faq-item">
-                    <div class="faq-question">
-                        <h3 data-i18n="faq-1-question">How much does it cost?</h3>
-                        <div class="faq-toggle">+</div>
-                    </div>
-                    <div class="faq-answer">
-                        <p data-i18n="faq-1-answer">
-                            RateTap starts at $99/month for up to 10 staff members, including NFC cards, dashboard access, and unlimited reviews. Additional staff cards are $5/month each. We also offer annual plans with 2 months free.
-                        </p>
-                    </div>
-                </div>
-                
-                <div class="faq-item">
-                    <div class="faq-question">
-                        <h3 data-i18n="faq-2-question">How long does setup take?</h3>
-                        <div class="faq-toggle">+</div>
-                    </div>
-                    <div class="faq-answer">
-                        <p data-i18n="faq-2-answer">
-                            Setup is incredibly fast. Once you sign up, we ship your NFC cards within 2 business days. The dashboard setup takes about 15 minutes, and staff training takes 5 minutes per person. Most restaurants are fully operational within a week.
-                        </p>
-                    </div>
-                </div>
-                
-                <div class="faq-item">
-                    <div class="faq-question">
-                        <h3 data-i18n="faq-3-question">Do guests need to download an app?</h3>
-                        <div class="faq-toggle">+</div>
-                    </div>
-                    <div class="faq-answer">
-                        <p data-i18n="faq-3-answer">
-                            No app required! Guests simply tap the NFC card with their smartphone (works with all modern iPhones and Android devices). They're taken directly to a mobile-optimized review page in their web browser.
-                        </p>
-                    </div>
-                </div>
-                
-                <div class="faq-item">
-                    <div class="faq-question">
-                        <h3 data-i18n="faq-4-question">What happens with negative reviews?</h3>
-                        <div class="faq-toggle">+</div>
-                    </div>
-                    <div class="faq-answer">
-                        <p data-i18n="faq-4-answer">
-                            Reviews of 4 stars and below are routed privately to management through our dashboard. You get instant alerts so you can respond quickly and resolve issues before they become public Google reviews.
-                        </p>
-                    </div>
-                </div>
-                
-                <div class="faq-item">
-                    <div class="faq-question">
-                        <h3 data-i18n="faq-5-question">Can I track individual staff performance?</h3>
-                        <div class="faq-toggle">+</div>
-                    </div>
-                    <div class="faq-answer">
-                        <p data-i18n="faq-5-answer">
-                            Absolutely! Each NFC card is unique to the staff member. You can see how many reviews each person generates, their average rating, response rates, and trends over time. It's perfect for performance reviews and incentive programs.
-                        </p>
-                    </div>
-                </div>
-                
-                <div class="faq-item">
-                    <div class="faq-question">
-                        <h3 data-i18n="faq-6-question">What if an NFC card gets lost or damaged?</h3>
-                        <div class="faq-toggle">+</div>
-                    </div>
-                    <div class="faq-answer">
-                        <p data-i18n="faq-6-answer">
-                            No problem! We can deactivate lost cards instantly and ship replacements within 24 hours. Your data is safe, and there's no security risk since no personal information is stored on the cards themselves.
-                        </p>
-                    </div>
+                <div class="card">
+                    <div class="card-icon"><i class="fa-solid fa-bolt"></i></div>
+                    <h3 data-i18n="benefit-4-title">Instant Alerts</h3>
+                    <p data-i18n="benefit-4-text">Get immediate notifications when issues arise, so you can respond before the guest leaves.</p>
                 </div>
             </div>
         </div>
     </section>
 
     <!-- CTA Section -->
-    <section class="cta" id="contact">
-        <div class="container">
-            <div class="cta-content">
-                <h2 class="cta-title" data-i18n="cta-title">
-                    Ready to Transform Your Restaurant's Reputation?
-                </h2>
-                <p class="cta-subtitle" data-i18n="cta-subtitle">
-                    Join hundreds of restaurants using RateTap to capture more reviews, prevent negative feedback, and track staff performance.
-                </p>
-                
-                <div class="cta-features">
-                    <div class="cta-feature">
-                        <div class="feature-check">✓</div>
-                        <span data-i18n="cta-feature-1">Free 30-day trial</span>
+    <section class="section bg-primary" id="contact" style="color: white;">
+        <div class="container grid-2">
+            <div>
+                <h2 style="color: white;" data-i18n="cta-title">Ready to Transform Your Reputation?</h2>
+                <p style="color: rgba(255,255,255,0.9);" data-i18n="cta-subtitle">Join hundreds of restaurants using RateTap to capture more reviews, prevent negative feedback, and track staff performance.</p>
+                <ul class="mb-8">
+                    <li><i class="fa-solid fa-check"></i> Free 30-day trial</li>
+                    <li><i class="fa-solid fa-check"></i> Cancel anytime</li>
+                </ul>
+            </div>
+            
+            <div style="background: white; padding: 2.5rem; border-radius: var(--radius-lg); color: var(--text-main);">
+                <form id="contact-form" style="display: flex; flex-direction: column; gap: 1rem;">
+                    <h3 style="margin-bottom: 0.5rem;" data-i18n="form-submit">Get Started</h3>
+                    
+                    <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                        <label style="font-weight: 600; font-size: 0.9rem;">Restaurant Name</label>
+                        <input type="text" id="restaurant-name" required placeholder="Restaurant Name" style="padding: 0.75rem; border: 2px solid var(--border); border-radius: var(--radius-md);">
                     </div>
-                    <div class="cta-feature">
-                        <div class="feature-check">✓</div>
-                        <span data-i18n="cta-feature-2">Setup assistance included</span>
+                    
+                    <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                        <label style="font-weight: 600; font-size: 0.9rem;">Email</label>
+                        <input type="email" id="email" required placeholder="Email Address" style="padding: 0.75rem; border: 2px solid var(--border); border-radius: var(--radius-md);">
                     </div>
-                    <div class="cta-feature">
-                        <div class="feature-check">✓</div>
-                        <span data-i18n="cta-feature-3">Cancel anytime</span>
+                    
+                    <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                        <label style="font-weight: 600; font-size: 0.9rem;">Phone</label>
+                        <input type="tel" id="phone" placeholder="Phone Number" style="padding: 0.75rem; border: 2px solid var(--border); border-radius: var(--radius-md);">
                     </div>
-                </div>
-                
-                <div class="cta-form">
-                    <form id="contact-form">
-                        <div class="form-group">
-                            <input type="text" id="restaurant-name" name="restaurant-name" placeholder="Restaurant Name" required data-i18n-placeholder="form-restaurant-placeholder">
-                        </div>
-                        <div class="form-group">
-                            <input type="text" id="your-name" name="your-name" placeholder="Your Name" required data-i18n-placeholder="form-name-placeholder">
-                        </div>
-                        <div class="form-group">
-                            <input type="email" id="email" name="email" placeholder="Email Address" required data-i18n-placeholder="form-email-placeholder">
-                        </div>
-                        <div class="form-group">
-                            <input type="tel" id="phone" name="phone" placeholder="Phone Number" data-i18n-placeholder="form-phone-placeholder">
-                        </div>
-                        <div class="form-group">
-                            <input type="number" id="staff-count" name="staff-count" placeholder="Number of Staff" min="1" required data-i18n-placeholder="form-staff-placeholder">
-                        </div>
-                        <button type="submit" class="btn btn-primary btn-large" data-i18n="form-submit">
-                            Start My Free Trial
-                        </button>
-                    </form>
-                </div>
-                
-                <div class="cta-alternative">
-                    <p data-i18n="cta-alternative">Prefer to talk first?</p>
-                    <a href="tel:+1-555-RATETAP" class="phone-link">Call (555) RATETAP</a>
-                    <span class="or" data-i18n="or">or</span>
-                    <a href="mailto:hello@ratetap.com" class="email-link">hello@ratetap.com</a>
-                </div>
+                    
+                    <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">Start My Free Trial</button>
+                </form>
             </div>
         </div>
     </section>
@@ -614,48 +216,43 @@
     <!-- Footer -->
     <footer class="footer">
         <div class="container">
-            <div class="footer-content">
-                <div class="footer-brand">
-                    <img src="logo.png" alt="RateTap" class="footer-logo">
-                    <p class="footer-tagline" data-i18n="footer-tagline">
-                        Turn Every Table into a 5-Star Review
-                    </p>
+            <div class="grid-4" style="align-items: flex-start;">
+                <div>
+                    <h4 style="display: flex; align-items: center; gap: 0.5rem;">
+                        <i class="fa-solid fa-nfc-symbol"></i> RateTap
+                    </h4>
+                    <p style="font-size: 0.9rem; color: var(--text-light);" data-i18n="footer-tagline">Turn tables into 5-star reviews.</p>
                 </div>
-                
-                <div class="footer-links">
-                    <div class="footer-column">
-                        <h4 data-i18n="footer-product">Product</h4>
-                        <a href="#how-it-works" data-i18n="footer-how">How It Works</a>
-                        <a href="#features" data-i18n="footer-features">Features</a>
-                        <a href="#benefits" data-i18n="footer-benefits">Benefits</a>
-                        <a href="#pricing" data-i18n="footer-pricing">Pricing</a>
-                    </div>
-                    
-                    <div class="footer-column">
-                        <h4 data-i18n="footer-company">Company</h4>
-                        <a href="#about" data-i18n="footer-about">About</a>
-                        <a href="#contact" data-i18n="footer-contact">Contact</a>
-                        <a href="#support" data-i18n="footer-support">Support</a>
-                        <a href="#blog" data-i18n="footer-blog">Blog</a>
-                    </div>
-                    
-                    <div class="footer-column">
-                        <h4 data-i18n="footer-legal">Legal</h4>
-                        <a href="#privacy" data-i18n="footer-privacy">Privacy Policy</a>
-                        <a href="#terms" data-i18n="footer-terms">Terms of Service</a>
-                        <a href="#gdpr" data-i18n="footer-gdpr">GDPR</a>
-                    </div>
+                <div>
+                    <h4 data-i18n="footer-product">Product</h4>
+                    <ul style="display: flex; flex-direction: column; gap: 0.5rem;">
+                        <li><a href="#how-it-works" data-i18n="footer-how">How It Works</a></li>
+                        <li><a href="#features" data-i18n="footer-features">Features</a></li>
+                        <li><a href="#pricing" data-i18n="footer-pricing">Pricing</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 data-i18n="footer-company">Company</h4>
+                    <ul style="display: flex; flex-direction: column; gap: 0.5rem;">
+                        <li><a href="#about" data-i18n="footer-about">About</a></li>
+                        <li><a href="#contact" data-i18n="footer-contact">Contact</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 data-i18n="footer-legal">Legal</h4>
+                    <ul style="display: flex; flex-direction: column; gap: 0.5rem;">
+                        <li><a href="#" data-i18n="footer-privacy">Privacy Policy</a></li>
+                        <li><a href="#" data-i18n="footer-terms">Terms of Service</a></li>
+                    </ul>
                 </div>
             </div>
             
             <div class="footer-bottom">
-                <p data-i18n="footer-copyright">
-                    © 2025 RateTap. All rights reserved.
-                </p>
-                <div class="footer-social">
-                    <a href="https://instagram.com/ratetapmx" target="_blank" aria-label="Instagram">📸</a>
-                    <a href="#" target="_blank" aria-label="Twitter">🐦</a>
-                    <a href="#" target="_blank" aria-label="LinkedIn">💼</a>
+                <p data-i18n="footer-copyright">© 2025 RateTap. All rights reserved.</p>
+                <div style="display: flex; gap: 1rem;">
+                    <a href="#"><i class="fa-brands fa-instagram"></i></a>
+                    <a href="#"><i class="fa-brands fa-twitter"></i></a>
+                    <a href="#"><i class="fa-brands fa-linkedin"></i></a>
                 </div>
             </div>
         </div>
