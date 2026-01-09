@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ROI Calculator - RateTap</title>
+    <meta name="description" content="Calculate how much bad reviews are costing your restaurant and how much RateTap can help you earn.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .calc-input {
+            width: 100%;
+            padding: 1rem;
+            border: 2px solid var(--border);
+            border-radius: var(--radius-md);
+            font-size: 1.1rem;
+            font-family: inherit;
+            margin-bottom: 1.5rem;
+        }
+        .calc-input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+        .result-box {
+            background: var(--primary);
+            color: white;
+            padding: 2rem;
+            border-radius: var(--radius-lg);
+            text-align: center;
+        }
+        .result-value {
+            font-size: 3rem;
+            font-weight: 800;
+            margin: 0.5rem 0;
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="index.html" class="nav-brand">
+                <i class="fa-solid fa-nfc-symbol fa-lg"></i>
+                RateTap
+            </a>
+            <div class="nav-menu">
+                <a href="index.html#how-it-works" class="nav-link">How It Works</a>
+                <a href="pricing.html" class="nav-link">Pricing</a>
+                <a href="roi-calculator.html" class="nav-link active" style="color: var(--primary);">ROI Calculator</a>
+                <a href="demo.html" class="nav-link">Demo</a>
+            </div>
+            <div class="nav-actions">
+                <div class="language-switcher">
+                    <button class="lang-btn active">EN</button>
+                    <button class="lang-btn" onclick="window.location.href='es/roi-calculator.html'">ES</button>
+                </div>
+                <a href="index.html#contact" class="btn btn-primary">Get Started</a>
+            </div>
+        </div>
+    </nav>
+
+    <section class="section bg-muted" style="padding-top: 10rem;">
+        <div class="container text-center">
+            <span class="hero-eyebrow">STOP LOSING MONEY</span>
+            <h1>Calculate Your ROI</h1>
+            <p style="max-width: 600px; margin: 0 auto;">See exactly how much a 1-star improvement is worth to your business.</p>
+        </div>
+    </section>
+
+    <section class="section">
+        <div class="container">
+            <div class="grid-2" style="align-items: flex-start;">
+                
+                <!-- Inputs -->
+                <div class="card" style="background: white;">
+                    <h3 class="mb-8">Your Numbers</h3>
+                    
+                    <label style="font-weight: 600; display: block; margin-bottom: 0.5rem;">Average Table Spend ($)</label>
+                    <input type="number" id="ticket" class="calc-input" value="65" oninput="calculateROI()">
+                    
+                    <label style="font-weight: 600; display: block; margin-bottom: 0.5rem;">Tables Served per Month</label>
+                    <input type="number" id="tables" class="calc-input" value="1200" oninput="calculateROI()">
+                    
+                    <label style="font-weight: 600; display: block; margin-bottom: 0.5rem;">Current Star Rating</label>
+                    <input type="number" id="rating" class="calc-input" value="4.2" step="0.1" max="5" oninput="calculateROI()">
+                </div>
+
+                <!-- Results -->
+                <div>
+                    <div class="result-box mb-8">
+                        <div style="text-transform: uppercase; font-size: 0.9rem; opacity: 0.9;">Potential Monthly Revenue Gain</div>
+                        <div class="result-value" id="revenue-gain">$4,680</div>
+                        <p style="color: rgba(255,255,255,0.8); margin-bottom: 0;">If you increase your rating by 0.5 stars</p>
+                    </div>
+                    
+                    <div class="card bg-muted">
+                        <h3 class="mb-4">How it works</h3>
+                        <p>Harvard Business School research shows that a <strong>1-star increase</strong> in Yelp/Google rating leads to a <strong>5-9% increase in revenue</strong>.</p>
+                        <p>RateTap helps you filter out negative reviews and boost positive ones, mathematically improving your average.</p>
+                        <a href="index.html#contact" class="btn btn-primary" style="width: 100%;">Start Growing Revenue</a>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer (Same as Pricing) -->
+    <footer class="footer">
+        <div class="container">
+            <div class="grid-4" style="align-items: flex-start;">
+                <div>
+                    <h4 style="display: flex; align-items: center; gap: 0.5rem;">
+                        <i class="fa-solid fa-nfc-symbol"></i> RateTap
+                    </h4>
+                    <p style="font-size: 0.9rem; color: var(--text-light);">Turn tables into 5-star reviews.</p>
+                </div>
+                <div>
+                    <h4>Product</h4>
+                    <ul style="display: flex; flex-direction: column; gap: 0.5rem;">
+                        <li><a href="index.html#features">Features</a></li>
+                        <li><a href="pricing.html">Pricing</a></li>
+                        <li><a href="index.html#how-it-works">How it Works</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4>Company</h4>
+                    <ul style="display: flex; flex-direction: column; gap: 0.5rem;">
+                        <li><a href="index.html#about">About</a></li>
+                        <li><a href="index.html#blog">Blog</a></li>
+                        <li><a href="index.html#contact">Contact</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4>Global Offices</h4>
+                    <ul style="display: flex; flex-direction: column; gap: 1rem; font-size: 0.9rem; color: var(--text-light);">
+                        <li>
+                            <strong style="color: white; display: block; margin-bottom: 0.25rem;">Mexico City</strong>
+                            Av. Paseo de la Reforma 296<br>Juárez, 06600 CDMX
+                        </li>
+                        <li>
+                            <strong style="color: white; display: block; margin-bottom: 0.25rem;">New York</strong>
+                            110 Wall St, Suite 502<br>New York, NY 10005
+                        </li>
+                        <li>
+                            <strong style="color: white; display: block; margin-bottom: 0.25rem;">Vancouver</strong>
+                            1055 W Georgia St<br>Vancouver, BC V6E 3P3
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                    <span>&copy; 2026 RateTap. All rights reserved.</span>
+                    <div style="font-size: 0.85rem;">
+                        <a href="#" style="margin-right: 1rem;">Privacy</a>
+                        <a href="#">Terms</a>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 1rem;">
+                    <a href="#"><i class="fa-brands fa-twitter"></i></a>
+                    <a href="#"><i class="fa-brands fa-instagram"></i></a>
+                    <a href="#"><i class="fa-brands fa-linkedin"></i></a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        function calculateROI() {
+            const ticket = parseFloat(document.getElementById('ticket').value) || 0;
+            const tables = parseFloat(document.getElementById('tables').value) || 0;
+            
+            // Assume 0.5 star increase yields 6% revenue bump (conservative estimate based on Harvard study)
+            const currentRevenue = ticket * tables;
+            const increasePercentage = 0.06; 
+            const gain = currentRevenue * increasePercentage;
+            
+            document.getElementById('revenue-gain').innerText = '$' + Math.round(gain).toLocaleString();
+        }
+        
+        // Init
+        calculateROI();
+    </script>
+</body>
+</html>

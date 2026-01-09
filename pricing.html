@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pricing - RateTap</title>
+    <meta name="description" content="Simple, transparent pricing for restaurants. Start growing your reviews today.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="index.html" class="nav-brand">
+                <i class="fa-solid fa-nfc-symbol fa-lg"></i>
+                RateTap
+            </a>
+            <div class="nav-menu">
+                <a href="index.html#how-it-works" class="nav-link">How It Works</a>
+                <a href="pricing.html" class="nav-link active" style="color: var(--primary);">Pricing</a>
+                <a href="roi-calculator.html" class="nav-link">ROI Calculator</a>
+                <a href="demo.html" class="nav-link">Demo</a>
+            </div>
+            <div class="nav-actions">
+                <div class="language-switcher">
+                    <button class="lang-btn active">EN</button>
+                    <button class="lang-btn" onclick="window.location.href='es/pricing.html'">ES</button>
+                </div>
+                <a href="index.html#contact" class="btn btn-primary">Get Started</a>
+            </div>
+        </div>
+    </nav>
+
+    <section class="section bg-muted" style="padding-top: 10rem;">
+        <div class="container text-center">
+            <span class="hero-eyebrow">PLANS FOR EVERY SIZE</span>
+            <h1>Simple, Transparent Pricing</h1>
+            <p style="max-width: 600px; margin: 0 auto;">No hidden fees. No long-term contracts. Change plans anytime.</p>
+        </div>
+    </section>
+
+    <section class="section">
+        <div class="container">
+            <div class="grid-3">
+                <!-- Starter -->
+                <div class="card" style="border: 2px solid var(--border); background: white;">
+                    <div class="mb-4">
+                        <h3 style="margin-bottom: 0.5rem;">Starter</h3>
+                        <p style="font-size: 0.9rem;">Perfect for small cafes & food trucks.</p>
+                    </div>
+                    <div style="font-size: 3rem; font-weight: 800; color: var(--text-main); margin-bottom: 2rem;">
+                        $99<span style="font-size: 1rem; color: var(--text-muted); font-weight: 500;">/mo</span>
+                    </div>
+                    <ul style="margin-bottom: 2rem; display: flex; flex-direction: column; gap: 0.75rem;">
+                        <li><i class="fa-solid fa-check" style="color: var(--secondary); margin-right: 0.5rem;"></i> Up to 5 Staff Cards</li>
+                        <li><i class="fa-solid fa-check" style="color: var(--secondary); margin-right: 0.5rem;"></i> Google Review Routing</li>
+                        <li><i class="fa-solid fa-check" style="color: var(--secondary); margin-right: 0.5rem;"></i> Basic Email Support</li>
+                    </ul>
+                    <a href="index.html#contact" class="btn btn-secondary" style="width: 100%; margin-top: auto;">Start Free Trial</a>
+                </div>
+
+                <!-- Growth (Popular) -->
+                <div class="card" style="border: 2px solid var(--primary); position: relative; background: white;">
+                    <div style="position: absolute; top: 0; left: 50%; transform: translate(-50%, -50%); background: var(--primary); color: white; padding: 0.25rem 1rem; border-radius: 99px; font-size: 0.8rem; font-weight: 700;">MOST POPULAR</div>
+                    <div class="mb-4">
+                        <h3 style="margin-bottom: 0.5rem; color: var(--primary);">Growth</h3>
+                        <p style="font-size: 0.9rem;">For busy restaurants & bars.</p>
+                    </div>
+                    <div style="font-size: 3rem; font-weight: 800; color: var(--text-main); margin-bottom: 2rem;">
+                        $199<span style="font-size: 1rem; color: var(--text-muted); font-weight: 500;">/mo</span>
+                    </div>
+                    <ul style="margin-bottom: 2rem; display: flex; flex-direction: column; gap: 0.75rem;">
+                        <li><i class="fa-solid fa-check" style="color: var(--primary); margin-right: 0.5rem;"></i> <strong>Up to 20 Staff Cards</strong></li>
+                        <li><i class="fa-solid fa-check" style="color: var(--primary); margin-right: 0.5rem;"></i> <strong>Private Feedback Form</strong></li>
+                        <li><i class="fa-solid fa-check" style="color: var(--primary); margin-right: 0.5rem;"></i> Staff Leaderboard</li>
+                        <li><i class="fa-solid fa-check" style="color: var(--primary); margin-right: 0.5rem;"></i> Priority Support</li>
+                    </ul>
+                    <a href="index.html#contact" class="btn btn-primary" style="width: 100%; margin-top: auto;">Start Free Trial</a>
+                </div>
+
+                <!-- Enterprise -->
+                <div class="card" style="border: 2px solid var(--text-main); background: var(--text-main); color: white;">
+                    <div class="mb-4">
+                        <h3 style="margin-bottom: 0.5rem; color: white;">Enterprise</h3>
+                        <p style="font-size: 0.9rem; color: var(--text-light);">For chains & hospitality groups.</p>
+                    </div>
+                    <div style="font-size: 3rem; font-weight: 800; color: white; margin-bottom: 2rem;">
+                        Custom
+                    </div>
+                    <ul style="margin-bottom: 2rem; display: flex; flex-direction: column; gap: 0.75rem;">
+                        <li><i class="fa-solid fa-check" style="color: white; margin-right: 0.5rem;"></i> Unlimited Staff Cards</li>
+                        <li><i class="fa-solid fa-check" style="color: white; margin-right: 0.5rem;"></i> Custom Branding</li>
+                        <li><i class="fa-solid fa-check" style="color: white; margin-right: 0.5rem;"></i> API Access</li>
+                        <li><i class="fa-solid fa-check" style="color: white; margin-right: 0.5rem;"></i> Dedicated Account Manager</li>
+                    </ul>
+                    <a href="demo.html" class="btn btn-outline" style="width: 100%; margin-top: auto; border-color: white; color: white;">Contact Sales</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="grid-4" style="align-items: flex-start;">
+                <div>
+                    <h4 style="display: flex; align-items: center; gap: 0.5rem;">
+                        <i class="fa-solid fa-nfc-symbol"></i> RateTap
+                    </h4>
+                    <p style="font-size: 0.9rem; color: var(--text-light);">Turn tables into 5-star reviews.</p>
+                </div>
+                <div>
+                    <h4>Product</h4>
+                    <ul style="display: flex; flex-direction: column; gap: 0.5rem;">
+                        <li><a href="index.html#features">Features</a></li>
+                        <li><a href="pricing.html">Pricing</a></li>
+                        <li><a href="index.html#how-it-works">How it Works</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4>Company</h4>
+                    <ul style="display: flex; flex-direction: column; gap: 0.5rem;">
+                        <li><a href="index.html#about">About</a></li>
+                        <li><a href="index.html#blog">Blog</a></li>
+                        <li><a href="index.html#contact">Contact</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4>Global Offices</h4>
+                    <ul style="display: flex; flex-direction: column; gap: 1rem; font-size: 0.9rem; color: var(--text-light);">
+                        <li>
+                            <strong style="color: white; display: block; margin-bottom: 0.25rem;">Mexico City</strong>
+                            Av. Paseo de la Reforma 296<br>Juárez, 06600 CDMX
+                        </li>
+                        <li>
+                            <strong style="color: white; display: block; margin-bottom: 0.25rem;">New York</strong>
+                            110 Wall St, Suite 502<br>New York, NY 10005
+                        </li>
+                        <li>
+                            <strong style="color: white; display: block; margin-bottom: 0.25rem;">Vancouver</strong>
+                            1055 W Georgia St<br>Vancouver, BC V6E 3P3
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                    <span>&copy; 2026 RateTap. All rights reserved.</span>
+                    <div style="font-size: 0.85rem;">
+                        <a href="#" style="margin-right: 1rem;">Privacy</a>
+                        <a href="#">Terms</a>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 1rem;">
+                    <a href="#"><i class="fa-brands fa-twitter"></i></a>
+                    <a href="#"><i class="fa-brands fa-instagram"></i></a>
+                    <a href="#"><i class="fa-brands fa-linkedin"></i></a>
+                </div>
+            </div>
+        </div>
+    </footer>
+</body>
+</html>

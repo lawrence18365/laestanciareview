@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Precios - RateTap</title>
+    <meta name="description" content="Precios simples y transparentes para restaurantes. Comience a aumentar sus reseñas hoy.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../styles.css">
+</head>
+<body>
+
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="index.html" class="nav-brand">
+                <i class="fa-solid fa-nfc-symbol fa-lg"></i>
+                RateTap
+            </a>
+            <div class="nav-menu">
+                <a href="index.html#how-it-works" class="nav-link">Cómo funciona</a>
+                <a href="pricing.html" class="nav-link active" style="color: var(--primary);">Precios</a>
+                <a href="roi-calculator.html" class="nav-link">Calculadora ROI</a>
+                <a href="demo.html" class="nav-link">Demo</a>
+            </div>
+            <div class="nav-actions">
+                <div class="language-switcher">
+                    <button class="lang-btn" onclick="window.location.href='../pricing.html'">EN</button>
+                    <button class="lang-btn active">ES</button>
+                </div>
+                <a href="index.html#contact" class="btn btn-primary">Empezar</a>
+            </div>
+        </div>
+    </nav>
+
+    <section class="section bg-muted" style="padding-top: 10rem;">
+        <div class="container text-center">
+            <span class="hero-eyebrow">PLANES PARA CADA TAMAÑO</span>
+            <h1>Precios Simples y Transparentes</h1>
+            <p style="max-width: 600px; margin: 0 auto;">Sin cargos ocultos. Sin contratos a largo plazo. Cambie de plan en cualquier momento.</p>
+        </div>
+    </section>
+
+    <section class="section">
+        <div class="container">
+            <div class="grid-3">
+                <!-- Starter -->
+                <div class="card" style="border: 2px solid var(--border); background: white;">
+                    <div class="mb-4">
+                        <h3 style="margin-bottom: 0.5rem;">Inicial</h3>
+                        <p style="font-size: 0.9rem;">Perfecto para cafeterías pequeñas y food trucks.</p>
+                    </div>
+                    <div style="font-size: 3rem; font-weight: 800; color: var(--text-main); margin-bottom: 2rem;">
+                        $99<span style="font-size: 1rem; color: var(--text-muted); font-weight: 500;">/mes</span>
+                    </div>
+                    <ul style="margin-bottom: 2rem; display: flex; flex-direction: column; gap: 0.75rem;">
+                        <li><i class="fa-solid fa-check" style="color: var(--secondary); margin-right: 0.5rem;"></i> Hasta 5 Tarjetas de Personal</li>
+                        <li><i class="fa-solid fa-check" style="color: var(--secondary); margin-right: 0.5rem;"></i> Enrutamiento de Reseñas Google</li>
+                        <li><i class="fa-solid fa-check" style="color: var(--secondary); margin-right: 0.5rem;"></i> Soporte por Email Básico</li>
+                    </ul>
+                    <a href="index.html#contact" class="btn btn-secondary" style="width: 100%; margin-top: auto;">Iniciar Prueba Gratis</a>
+                </div>
+
+                <!-- Growth (Popular) -->
+                <div class="card" style="border: 2px solid var(--primary); position: relative; background: white;">
+                    <div style="position: absolute; top: 0; left: 50%; transform: translate(-50%, -50%); background: var(--primary); color: white; padding: 0.25rem 1rem; border-radius: 99px; font-size: 0.8rem; font-weight: 700;">MÁS POPULAR</div>
+                    <div class="mb-4">
+                        <h3 style="margin-bottom: 0.5rem; color: var(--primary);">Crecimiento</h3>
+                        <p style="font-size: 0.9rem;">Para restaurantes y bares ocupados.</p>
+                    </div>
+                    <div style="font-size: 3rem; font-weight: 800; color: var(--text-main); margin-bottom: 2rem;">
+                        $199<span style="font-size: 1rem; color: var(--text-muted); font-weight: 500;">/mes</span>
+                    </div>
+                    <ul style="margin-bottom: 2rem; display: flex; flex-direction: column; gap: 0.75rem;">
+                        <li><i class="fa-solid fa-check" style="color: var(--primary); margin-right: 0.5rem;"></i> <strong>Hasta 20 Tarjetas</strong></li>
+                        <li><i class="fa-solid fa-check" style="color: var(--primary); margin-right: 0.5rem;"></i> <strong>Formulario Privado</strong></li>
+                        <li><i class="fa-solid fa-check" style="color: var(--primary); margin-right: 0.5rem;"></i> Tabla de Clasificación</li>
+                        <li><i class="fa-solid fa-check" style="color: var(--primary); margin-right: 0.5rem;"></i> Soporte Prioritario</li>
+                    </ul>
+                    <a href="index.html#contact" class="btn btn-primary" style="width: 100%; margin-top: auto;">Iniciar Prueba Gratis</a>
+                </div>
+
+                <!-- Enterprise -->
+                <div class="card" style="border: 2px solid var(--text-main); background: var(--text-main); color: white;">
+                    <div class="mb-4">
+                        <h3 style="margin-bottom: 0.5rem; color: white;">Empresarial</h3>
+                        <p style="font-size: 0.9rem; color: var(--text-light);">Para cadenas y grupos.</p>
+                    </div>
+                    <div style="font-size: 3rem; font-weight: 800; color: white; margin-bottom: 2rem;">
+                        Personalizado
+                    </div>
+                    <ul style="margin-bottom: 2rem; display: flex; flex-direction: column; gap: 0.75rem;">
+                        <li><i class="fa-solid fa-check" style="color: white; margin-right: 0.5rem;"></i> Tarjetas Ilimitadas</li>
+                        <li><i class="fa-solid fa-check" style="color: white; margin-right: 0.5rem;"></i> Marca Personalizada</li>
+                        <li><i class="fa-solid fa-check" style="color: white; margin-right: 0.5rem;"></i> Acceso a API</li>
+                        <li><i class="fa-solid fa-check" style="color: white; margin-right: 0.5rem;"></i> Gerente de Cuenta Dedicado</li>
+                    </ul>
+                    <a href="demo.html" class="btn btn-outline" style="width: 100%; margin-top: auto; border-color: white; color: white;">Contactar Ventas</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="grid-4" style="align-items: flex-start;">
+                <div>
+                    <h4 style="display: flex; align-items: center; gap: 0.5rem;">
+                        <i class="fa-solid fa-nfc-symbol"></i> RateTap
+                    </h4>
+                    <p style="font-size: 0.9rem; color: var(--text-light);">Convierta mesas en reseñas de 5 estrellas.</p>
+                </div>
+                <div>
+                    <h4>Producto</h4>
+                    <ul style="display: flex; flex-direction: column; gap: 0.5rem;">
+                        <li><a href="index.html#features">Características</a></li>
+                        <li><a href="pricing.html">Precios</a></li>
+                        <li><a href="index.html#how-it-works">Cómo funciona</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4>Empresa</h4>
+                    <ul style="display: flex; flex-direction: column; gap: 0.5rem;">
+                        <li><a href="index.html#about">Acerca de</a></li>
+                        <li><a href="index.html#blog">Blog</a></li>
+                        <li><a href="index.html#contact">Contacto</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4>Oficinas Globales</h4>
+                    <ul style="display: flex; flex-direction: column; gap: 1rem; font-size: 0.9rem; color: var(--text-light);">
+                        <li>
+                            <strong style="color: white; display: block; margin-bottom: 0.25rem;">Ciudad de México</strong>
+                            Av. Paseo de la Reforma 296<br>Juárez, 06600 CDMX
+                        </li>
+                        <li>
+                            <strong style="color: white; display: block; margin-bottom: 0.25rem;">Nueva York</strong>
+                            110 Wall St, Suite 502<br>New York, NY 10005
+                        </li>
+                        <li>
+                            <strong style="color: white; display: block; margin-bottom: 0.25rem;">Vancouver</strong>
+                            1055 W Georgia St<br>Vancouver, BC V6E 3P3
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                    <span>&copy; 2026 RateTap. Todos los derechos reservados.</span>
+                    <div style="font-size: 0.85rem;">
+                        <a href="#" style="margin-right: 1rem;">Privacidad</a>
+                        <a href="#">Términos</a>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 1rem;">
+                    <a href="#"><i class="fa-brands fa-twitter"></i></a>
+                    <a href="#"><i class="fa-brands fa-instagram"></i></a>
+                    <a href="#"><i class="fa-brands fa-linkedin"></i></a>
+                </div>
+            </div>
+        </div>
+    </footer>
+</body>
+</html>
