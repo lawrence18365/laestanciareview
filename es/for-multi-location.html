@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RateTap para Restaurantes Multi-Ubicación y Franquicias</title>
+    <meta name="description" content="Gestiona la reputación de todas tus ubicaciones de restaurantes desde un solo panel. Compara rendimiento, estandariza la excelencia, identifica problemas antes de que se propaguen.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../styles.css">
+</head>
+<body>
+
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="index.html" class="nav-brand">
+                <i class="fa-solid fa-nfc-symbol fa-lg"></i>
+                RateTap
+            </a>
+            <div class="nav-menu">
+                <a href="index.html#how-it-works" class="nav-link">Cómo Funciona</a>
+                <a href="pricing.html" class="nav-link">Precios</a>
+                <a href="case-studies.html" class="nav-link">Casos de Éxito</a>
+                <a href="for-multi-location.html" class="nav-link active" style="color: var(--primary);">Multi-Ubicación</a>
+            </div>
+            <div class="nav-actions">
+                <div class="language-switcher">
+                    <button class="lang-btn" onclick="window.location.href='../for-multi-location.html'">EN</button>
+                    <button class="lang-btn active">ES</button>
+                </div>
+                <a href="demo.html" class="btn btn-primary">Agendar Demo</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero -->
+    <section class="section bg-muted" style="padding-top: 10rem;">
+        <div class="container grid-2">
+            <div>
+                <span class="hero-eyebrow">MULTI-UBICACIÓN Y FRANQUICIAS</span>
+                <h1>Un Solo Panel.<br>Todas Las Ubicaciones.<br>Visibilidad Total.</h1>
+                <p style="font-size: 1.25rem; margin-bottom: 2rem;">Deja de jugar a apagar incendios con problemas de reputación. Ve todas tus ubicaciones en un solo lugar. Compara rendimiento. Detecta problemas antes de que se propaguen.</p>
+                <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                    <a href="demo.html" class="btn btn-primary">Ver Demo Empresarial</a>
+                    <a href="#contact" class="btn btn-secondary">Contactar Ventas</a>
+                </div>
+            </div>
+            <div style="background: white; padding: 2rem; border-radius: var(--radius-lg);">
+                <h4 style="margin-bottom: 1rem; color: var(--text-muted);">Vista General del Portafolio</h4>
+                <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                    <div style="background: var(--bg-muted); padding: 1rem; border-radius: var(--radius-md); display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <strong>Centro</strong>
+                            <div style="font-size: 0.875rem; color: var(--text-muted);">142 reseñas este mes</div>
+                        </div>
+                        <div style="text-align: right;">
+                            <div style="font-weight: 700; color: var(--secondary);">4.8</div>
+                            <div style="color: #FBBF24; font-size: 0.75rem;"><i class="fa-solid fa-arrow-up"></i> +0.2</div>
+                        </div>
+                    </div>
+                    <div style="background: var(--bg-muted); padding: 1rem; border-radius: var(--radius-md); display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <strong>Polanco</strong>
+                            <div style="font-size: 0.875rem; color: var(--text-muted);">98 reseñas este mes</div>
+                        </div>
+                        <div style="text-align: right;">
+                            <div style="font-weight: 700; color: var(--secondary);">4.6</div>
+                            <div style="color: #FBBF24; font-size: 0.75rem;"><i class="fa-solid fa-arrow-up"></i> +0.3</div>
+                        </div>
+                    </div>
+                    <div style="background: #FEF2F2; padding: 1rem; border-radius: var(--radius-md); display: flex; justify-content: space-between; align-items: center; border: 2px solid #FECACA;">
+                        <div>
+                            <strong>Santa Fe</strong>
+                            <div style="font-size: 0.875rem; color: #991B1B;">3 alertas negativas</div>
+                        </div>
+                        <div style="text-align: right;">
+                            <div style="font-weight: 700; color: #EF4444;">4.1</div>
+                            <div style="color: #EF4444; font-size: 0.75rem;"><i class="fa-solid fa-arrow-down"></i> -0.1</div>
+                        </div>
+                    </div>
+                    <div style="background: var(--bg-muted); padding: 1rem; border-radius: var(--radius-md); display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <strong>Aeropuerto</strong>
+                            <div style="font-size: 0.875rem; color: var(--text-muted);">76 reseñas este mes</div>
+                        </div>
+                        <div style="text-align: right;">
+                            <div style="font-weight: 700; color: var(--secondary);">4.7</div>
+                            <div style="color: var(--text-muted); font-size: 0.75rem;">—</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- The Multi-Location Problem -->
+    <section class="section">
+        <div class="container">
+            <div class="text-center mb-8" style="max-width: 700px; margin: 0 auto;">
+                <span class="hero-eyebrow" style="color: var(--text-muted);">EL DESAFÍO MULTI-UBICACIÓN</span>
+                <h2>Más Ubicaciones = Más Puntos Ciegos</h2>
+                <p>No puedes estar en todas partes. Pero los problemas en una ubicación pueden dañar toda tu marca.</p>
+            </div>
+
+            <div class="grid-3">
+                <div class="card">
+                    <div class="card-icon"><i class="fa-solid fa-chart-mixed"></i></div>
+                    <h3>Rendimiento Inconsistente</h3>
+                    <p>Tu ubicación estrella opera a 4.8. La más nueva está estancada en 3.9. Necesitas entender por qué—rápido.</p>
+                </div>
+                <div class="card">
+                    <div class="card-icon"><i class="fa-solid fa-virus"></i></div>
+                    <h3>Los Problemas Se Propagan</h3>
+                    <p>Un problema de servicio en una ubicación se convierte en historia viral. De repente todas tus ubicaciones están manchadas.</p>
+                </div>
+                <div class="card">
+                    <div class="card-icon"><i class="fa-solid fa-binoculars"></i></div>
+                    <h3>Sin Vista Central</h3>
+                    <p>¿Entrando a Google para cada ubicación? ¿Pidiendo actualizaciones semanales a los gerentes? Hay una mejor manera.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Enterprise Features -->
+    <section class="section bg-muted">
+        <div class="container">
+            <div class="text-center mb-8">
+                <span class="hero-eyebrow">FUNCIONES EMPRESARIALES</span>
+                <h2>Construido para Escalar</h2>
+            </div>
+
+            <div class="grid-2" style="gap: 2rem;">
+                <div class="feature-list-item" style="background: white; padding: 2rem; border-radius: var(--radius-lg);">
+                    <div class="feature-list-icon"><i class="fa-solid fa-building"></i></div>
+                    <div>
+                        <h4>Panel Unificado</h4>
+                        <p>Ve todas las ubicaciones de un vistazo. Calificaciones, volumen de reseñas, alertas, tendencias—todo en un lugar.</p>
+                    </div>
+                </div>
+
+                <div class="feature-list-item" style="background: white; padding: 2rem; border-radius: var(--radius-lg);">
+                    <div class="feature-list-icon"><i class="fa-solid fa-scale-balanced"></i></div>
+                    <div>
+                        <h4>Comparación de Ubicaciones</h4>
+                        <p>Compara ubicaciones entre sí. ¿Qué está haciendo el equipo del Centro que Santa Fe no? Ahora puedes ver los datos.</p>
+                    </div>
+                </div>
+
+                <div class="feature-list-item" style="background: white; padding: 2rem; border-radius: var(--radius-lg);">
+                    <div class="feature-list-icon"><i class="fa-solid fa-user-gear"></i></div>
+                    <div>
+                        <h4>Acceso Por Roles</h4>
+                        <p>Corporativo ve todo. Gerentes regionales ven su territorio. Gerentes de ubicación ven su local. Cada quien obtiene exactamente lo que necesita.</p>
+                    </div>
+                </div>
+
+                <div class="feature-list-item" style="background: white; padding: 2rem; border-radius: var(--radius-lg);">
+                    <div class="feature-list-icon"><i class="fa-solid fa-bell"></i></div>
+                    <div>
+                        <h4>Alertas de Escalamiento</h4>
+                        <p>Problemas serios escalan automáticamente. Una caída de calificación en cualquier ubicación dispara alertas a equipos regionales y corporativos.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Enterprise Pricing -->
+    <section class="section">
+        <div class="container" style="max-width: 800px;">
+            <div style="background: white; padding: 3rem; border-radius: var(--radius-lg); text-align: center; border: 1px solid var(--border);">
+                <span class="hero-eyebrow">PRECIOS EMPRESARIALES</span>
+                <h2>Planes Personalizados para 3+ Ubicaciones</h2>
+                <p style="margin-bottom: 2rem;">Descuentos por volumen, soporte dedicado, y funciones personalizadas. Construyamos un plan que se ajuste a tu operación.</p>
+
+                <div class="grid-3" style="margin-bottom: 2rem; text-align: left;">
+                    <div>
+                        <h4 style="margin-bottom: 0.5rem;">3-10 Ubicaciones</h4>
+                        <ul style="font-size: 0.9rem; color: var(--text-muted);">
+                            <li>15% descuento por volumen</li>
+                            <li>Panel unificado</li>
+                            <li>Soporte por email</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h4 style="margin-bottom: 0.5rem;">10-50 Ubicaciones</h4>
+                        <ul style="font-size: 0.9rem; color: var(--text-muted);">
+                            <li>25% descuento por volumen</li>
+                            <li>Gerente de cuenta dedicado</li>
+                            <li>Revisiones trimestrales</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h4 style="margin-bottom: 0.5rem;">50+ Ubicaciones</h4>
+                        <ul style="font-size: 0.9rem; color: var(--text-muted);">
+                            <li>Precios personalizados</li>
+                            <li>Acceso API</li>
+                            <li>Opciones marca blanca</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <a href="demo.html" class="btn btn-primary">Obtener Cotización Empresarial</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA -->
+    <section class="section bg-primary" id="contact" style="color: white;">
+        <div class="container text-center">
+            <h2 style="color: white;">Hablemos de Tu Portafolio</h2>
+            <p style="color: rgba(255,255,255,0.9); max-width: 500px; margin: 0 auto 2rem;">Cuéntanos sobre tus ubicaciones. Te mostraremos exactamente cómo funcionaría RateTap en toda tu operación.</p>
+            <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+                <a href="demo.html" class="btn" style="background: white; color: var(--primary);">Agendar Demo Empresarial</a>
+                <a href="case-studies.html" class="btn btn-outline" style="border-color: white; color: white;">Ver Casos de Éxito</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="grid-4" style="align-items: flex-start;">
+                <div>
+                    <h4 style="display: flex; align-items: center; gap: 0.5rem;">
+                        <i class="fa-solid fa-nfc-symbol"></i> RateTap
+                    </h4>
+                    <p style="font-size: 0.9rem; color: var(--text-light);">Convierte mesas en reseñas 5 estrellas.</p>
+                </div>
+                <div>
+                    <h4>Producto</h4>
+                    <ul style="display: flex; flex-direction: column; gap: 0.5rem;">
+                        <li><a href="index.html#features">Características</a></li>
+                        <li><a href="pricing.html">Precios</a></li>
+                        <li><a href="roi-calculator.html">Calculadora ROI</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4>Por Rol</h4>
+                    <ul style="display: flex; flex-direction: column; gap: 0.5rem;">
+                        <li><a href="for-owners.html">Para Dueños</a></li>
+                        <li><a href="for-gms.html">Para Gerentes</a></li>
+                        <li><a href="for-multi-location.html">Multi-Ubicación</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4>Oficinas Globales</h4>
+                    <ul style="display: flex; flex-direction: column; gap: 1rem; font-size: 0.9rem; color: var(--text-light);">
+                        <li>
+                            <strong style="color: white; display: block; margin-bottom: 0.25rem;">Ciudad de México</strong>
+                            Av. Paseo de la Reforma 296<br>Juárez, 06600 CDMX
+                        </li>
+                        <li>
+                            <strong style="color: white; display: block; margin-bottom: 0.25rem;">Nueva York</strong>
+                            110 Wall St, Suite 502<br>New York, NY 10005
+                        </li>
+                        <li>
+                            <strong style="color: white; display: block; margin-bottom: 0.25rem;">Vancouver</strong>
+                            1055 W Georgia St<br>Vancouver, BC V6E 3P3
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                    <span>&copy; 2026 RateTap. Todos los derechos reservados.</span>
+                    <div style="font-size: 0.85rem;">
+                        <a href="#" style="margin-right: 1rem;">Privacidad</a>
+                        <a href="#">Términos</a>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 1rem;">
+                    <a href="#"><i class="fa-brands fa-twitter"></i></a>
+                    <a href="#"><i class="fa-brands fa-instagram"></i></a>
+                    <a href="#"><i class="fa-brands fa-linkedin"></i></a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="../script.js"></script>
+</body>
+</html>

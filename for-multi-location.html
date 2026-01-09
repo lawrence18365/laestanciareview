@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RateTap for Multi-Location Restaurants & Franchises</title>
+    <meta name="description" content="Manage reputation across all your restaurant locations from one dashboard. Compare performance, standardize excellence, identify problems before they spread.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="index.html" class="nav-brand">
+                <i class="fa-solid fa-nfc-symbol fa-lg"></i>
+                RateTap
+            </a>
+            <div class="nav-menu">
+                <a href="index.html#how-it-works" class="nav-link">How It Works</a>
+                <a href="pricing.html" class="nav-link">Pricing</a>
+                <a href="case-studies.html" class="nav-link">Case Studies</a>
+                <a href="for-multi-location.html" class="nav-link active" style="color: var(--primary);">Multi-Location</a>
+            </div>
+            <div class="nav-actions">
+                <div class="language-switcher">
+                    <button class="lang-btn active">EN</button>
+                    <button class="lang-btn" onclick="window.location.href='es/for-multi-location.html'">ES</button>
+                </div>
+                <a href="demo.html" class="btn btn-primary">Book Demo</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero -->
+    <section class="section bg-muted" style="padding-top: 10rem;">
+        <div class="container grid-2">
+            <div>
+                <span class="hero-eyebrow">MULTI-LOCATION & FRANCHISE</span>
+                <h1>One Dashboard.<br>Every Location.<br>Total Visibility.</h1>
+                <p style="font-size: 1.25rem; margin-bottom: 2rem;">Stop playing whack-a-mole with reputation issues. See all your locations in one place. Compare performance. Catch problems before they spread.</p>
+                <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                    <a href="demo.html" class="btn btn-primary">See Enterprise Demo</a>
+                    <a href="#contact" class="btn btn-secondary">Contact Sales</a>
+                </div>
+            </div>
+            <div style="background: white; padding: 2rem; border-radius: var(--radius-lg);">
+                <h4 style="margin-bottom: 1rem; color: var(--text-muted);">Portfolio Overview</h4>
+                <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                    <div style="background: var(--bg-muted); padding: 1rem; border-radius: var(--radius-md); display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <strong>Downtown</strong>
+                            <div style="font-size: 0.875rem; color: var(--text-muted);">142 reviews this month</div>
+                        </div>
+                        <div style="text-align: right;">
+                            <div style="font-weight: 700; color: var(--secondary);">4.8</div>
+                            <div style="color: #FBBF24; font-size: 0.75rem;"><i class="fa-solid fa-arrow-up"></i> +0.2</div>
+                        </div>
+                    </div>
+                    <div style="background: var(--bg-muted); padding: 1rem; border-radius: var(--radius-md); display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <strong>Midtown</strong>
+                            <div style="font-size: 0.875rem; color: var(--text-muted);">98 reviews this month</div>
+                        </div>
+                        <div style="text-align: right;">
+                            <div style="font-weight: 700; color: var(--secondary);">4.6</div>
+                            <div style="color: #FBBF24; font-size: 0.75rem;"><i class="fa-solid fa-arrow-up"></i> +0.3</div>
+                        </div>
+                    </div>
+                    <div style="background: #FEF2F2; padding: 1rem; border-radius: var(--radius-md); display: flex; justify-content: space-between; align-items: center; border: 2px solid #FECACA;">
+                        <div>
+                            <strong>Westside</strong>
+                            <div style="font-size: 0.875rem; color: #991B1B;">3 negative alerts</div>
+                        </div>
+                        <div style="text-align: right;">
+                            <div style="font-weight: 700; color: #EF4444;">4.1</div>
+                            <div style="color: #EF4444; font-size: 0.75rem;"><i class="fa-solid fa-arrow-down"></i> -0.1</div>
+                        </div>
+                    </div>
+                    <div style="background: var(--bg-muted); padding: 1rem; border-radius: var(--radius-md); display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <strong>Airport</strong>
+                            <div style="font-size: 0.875rem; color: var(--text-muted);">76 reviews this month</div>
+                        </div>
+                        <div style="text-align: right;">
+                            <div style="font-weight: 700; color: var(--secondary);">4.7</div>
+                            <div style="color: var(--text-muted); font-size: 0.75rem;">—</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- The Multi-Location Problem -->
+    <section class="section">
+        <div class="container">
+            <div class="text-center mb-8" style="max-width: 700px; margin: 0 auto;">
+                <span class="hero-eyebrow" style="color: var(--text-muted);">THE MULTI-LOCATION CHALLENGE</span>
+                <h2>More Locations = More Blind Spots</h2>
+                <p>You can't be everywhere. But problems at one location can damage your entire brand.</p>
+            </div>
+
+            <div class="grid-3">
+                <div class="card">
+                    <div class="card-icon"><i class="fa-solid fa-chart-mixed"></i></div>
+                    <h3>Inconsistent Performance</h3>
+                    <p>Your flagship runs at 4.8. Your newest location is stuck at 3.9. You need to understand why—fast.</p>
+                </div>
+                <div class="card">
+                    <div class="card-icon"><i class="fa-solid fa-virus"></i></div>
+                    <h3>Problems Spread</h3>
+                    <p>One location's service issue becomes a viral story. Suddenly all your locations are tainted.</p>
+                </div>
+                <div class="card">
+                    <div class="card-icon"><i class="fa-solid fa-binoculars"></i></div>
+                    <h3>No Central View</h3>
+                    <p>Logging into Google for each location? Asking GMs for weekly updates? There's a better way.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Enterprise Features -->
+    <section class="section bg-muted">
+        <div class="container">
+            <div class="text-center mb-8">
+                <span class="hero-eyebrow">ENTERPRISE FEATURES</span>
+                <h2>Built for Scale</h2>
+            </div>
+
+            <div class="grid-2" style="gap: 2rem;">
+                <div class="feature-list-item" style="background: white; padding: 2rem; border-radius: var(--radius-lg);">
+                    <div class="feature-list-icon"><i class="fa-solid fa-building"></i></div>
+                    <div>
+                        <h4>Unified Dashboard</h4>
+                        <p>See all locations at a glance. Ratings, review volume, alerts, trends—everything in one place. Drill down to any location with one click.</p>
+                    </div>
+                </div>
+
+                <div class="feature-list-item" style="background: white; padding: 2rem; border-radius: var(--radius-lg);">
+                    <div class="feature-list-icon"><i class="fa-solid fa-scale-balanced"></i></div>
+                    <div>
+                        <h4>Location Comparison</h4>
+                        <p>Benchmark locations against each other. What's the Downtown team doing that Westside isn't? Now you can see the data.</p>
+                    </div>
+                </div>
+
+                <div class="feature-list-item" style="background: white; padding: 2rem; border-radius: var(--radius-lg);">
+                    <div class="feature-list-icon"><i class="fa-solid fa-user-gear"></i></div>
+                    <div>
+                        <h4>Role-Based Access</h4>
+                        <p>Corporate sees everything. Regional managers see their territory. GMs see their location. Everyone gets exactly what they need.</p>
+                    </div>
+                </div>
+
+                <div class="feature-list-item" style="background: white; padding: 2rem; border-radius: var(--radius-lg);">
+                    <div class="feature-list-icon"><i class="fa-solid fa-bell"></i></div>
+                    <div>
+                        <h4>Escalation Alerts</h4>
+                        <p>Serious issues automatically escalate. A rating drop at any location triggers alerts to regional and corporate teams.</p>
+                    </div>
+                </div>
+
+                <div class="feature-list-item" style="background: white; padding: 2rem; border-radius: var(--radius-lg);">
+                    <div class="feature-list-icon"><i class="fa-solid fa-code"></i></div>
+                    <div>
+                        <h4>API Access</h4>
+                        <p>Connect RateTap to your existing systems. Pull data into your BI tools, POS analytics, or custom dashboards.</p>
+                    </div>
+                </div>
+
+                <div class="feature-list-item" style="background: white; padding: 2rem; border-radius: var(--radius-lg);">
+                    <div class="feature-list-icon"><i class="fa-solid fa-palette"></i></div>
+                    <div>
+                        <h4>Custom Branding</h4>
+                        <p>White-label the guest experience. Your brand, your colors, your messaging. Guests never see "RateTap."</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Use Case: Franchise -->
+    <section class="section">
+        <div class="container grid-2">
+            <div>
+                <span class="hero-eyebrow" style="color: var(--text-muted);">FRANCHISE OPERATIONS</span>
+                <h2>Give Franchisees the Tools to Succeed</h2>
+                <p class="mb-4">Franchisees want to perform. They just need the right system.</p>
+
+                <ul style="display: flex; flex-direction: column; gap: 1rem;">
+                    <li style="display: flex; gap: 1rem; align-items: flex-start;">
+                        <i class="fa-solid fa-check-circle" style="color: var(--secondary); margin-top: 0.25rem;"></i>
+                        <div>
+                            <strong>Standardized Excellence</strong>
+                            <p style="margin: 0.25rem 0 0; color: var(--text-muted);">Every franchisee uses the same system. Consistent guest experience across the brand.</p>
+                        </div>
+                    </li>
+                    <li style="display: flex; gap: 1rem; align-items: flex-start;">
+                        <i class="fa-solid fa-check-circle" style="color: var(--secondary); margin-top: 0.25rem;"></i>
+                        <div>
+                            <strong>Healthy Competition</strong>
+                            <p style="margin: 0.25rem 0 0; color: var(--text-muted);">Leaderboards across franchise network. Top performers get recognized.</p>
+                        </div>
+                    </li>
+                    <li style="display: flex; gap: 1rem; align-items: flex-start;">
+                        <i class="fa-solid fa-check-circle" style="color: var(--secondary); margin-top: 0.25rem;"></i>
+                        <div>
+                            <strong>Early Intervention</strong>
+                            <p style="margin: 0.25rem 0 0; color: var(--text-muted);">Spot struggling locations before they damage the brand. Step in with support, not blame.</p>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+            <div style="background: var(--bg-muted); padding: 2rem; border-radius: var(--radius-lg);">
+                <h4 style="margin-bottom: 1.5rem;">Franchise Leaderboard</h4>
+                <div style="display: flex; flex-direction: column; gap: 1rem;">
+                    <div style="background: white; padding: 1rem; border-radius: var(--radius-md); display: flex; align-items: center; gap: 1rem;">
+                        <div style="background: #FBBF24; color: white; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700;">1</div>
+                        <div style="flex: 1;">
+                            <strong>Harbor District</strong>
+                            <div style="font-size: 0.875rem; color: var(--text-muted);">Owner: J. Martinez</div>
+                        </div>
+                        <div style="text-align: right;">
+                            <div style="font-weight: 700;">4.9</div>
+                            <div style="font-size: 0.75rem; color: var(--secondary);">+187 reviews</div>
+                        </div>
+                    </div>
+                    <div style="background: white; padding: 1rem; border-radius: var(--radius-md); display: flex; align-items: center; gap: 1rem;">
+                        <div style="background: #9CA3AF; color: white; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700;">2</div>
+                        <div style="flex: 1;">
+                            <strong>University Ave</strong>
+                            <div style="font-size: 0.875rem; color: var(--text-muted);">Owner: S. Kim</div>
+                        </div>
+                        <div style="text-align: right;">
+                            <div style="font-weight: 700;">4.8</div>
+                            <div style="font-size: 0.75rem; color: var(--secondary);">+156 reviews</div>
+                        </div>
+                    </div>
+                    <div style="background: white; padding: 1rem; border-radius: var(--radius-md); display: flex; align-items: center; gap: 1rem;">
+                        <div style="background: #CD7F32; color: white; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700;">3</div>
+                        <div style="flex: 1;">
+                            <strong>Tech Park</strong>
+                            <div style="font-size: 0.875rem; color: var(--text-muted);">Owner: R. Patel</div>
+                        </div>
+                        <div style="text-align: right;">
+                            <div style="font-weight: 700;">4.7</div>
+                            <div style="font-size: 0.75rem; color: var(--secondary);">+134 reviews</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Enterprise Pricing -->
+    <section class="section bg-muted">
+        <div class="container" style="max-width: 800px;">
+            <div style="background: white; padding: 3rem; border-radius: var(--radius-lg); text-align: center;">
+                <span class="hero-eyebrow">ENTERPRISE PRICING</span>
+                <h2>Custom Plans for 3+ Locations</h2>
+                <p style="margin-bottom: 2rem;">Volume discounts, dedicated support, and custom features. Let's build a plan that fits your operation.</p>
+
+                <div class="grid-3" style="margin-bottom: 2rem; text-align: left;">
+                    <div>
+                        <h4 style="margin-bottom: 0.5rem;">3-10 Locations</h4>
+                        <ul style="font-size: 0.9rem; color: var(--text-muted);">
+                            <li>15% volume discount</li>
+                            <li>Unified dashboard</li>
+                            <li>Email support</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h4 style="margin-bottom: 0.5rem;">10-50 Locations</h4>
+                        <ul style="font-size: 0.9rem; color: var(--text-muted);">
+                            <li>25% volume discount</li>
+                            <li>Dedicated account manager</li>
+                            <li>Quarterly reviews</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h4 style="margin-bottom: 0.5rem;">50+ Locations</h4>
+                        <ul style="font-size: 0.9rem; color: var(--text-muted);">
+                            <li>Custom pricing</li>
+                            <li>API access</li>
+                            <li>White-label options</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <a href="demo.html" class="btn btn-primary">Get Enterprise Quote</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA -->
+    <section class="section bg-primary" id="contact" style="color: white;">
+        <div class="container text-center">
+            <h2 style="color: white;">Let's Talk About Your Portfolio</h2>
+            <p style="color: rgba(255,255,255,0.9); max-width: 500px; margin: 0 auto 2rem;">Tell us about your locations. We'll show you exactly how RateTap would work across your operation.</p>
+            <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+                <a href="demo.html" class="btn" style="background: white; color: var(--primary);">Book Enterprise Demo</a>
+                <a href="case-studies.html" class="btn btn-outline" style="border-color: white; color: white;">See Case Studies</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="grid-4" style="align-items: flex-start;">
+                <div>
+                    <h4 style="display: flex; align-items: center; gap: 0.5rem;">
+                        <i class="fa-solid fa-nfc-symbol"></i> RateTap
+                    </h4>
+                    <p style="font-size: 0.9rem; color: var(--text-light);">Turn tables into 5-star reviews.</p>
+                </div>
+                <div>
+                    <h4>Product</h4>
+                    <ul style="display: flex; flex-direction: column; gap: 0.5rem;">
+                        <li><a href="index.html#features">Features</a></li>
+                        <li><a href="pricing.html">Pricing</a></li>
+                        <li><a href="roi-calculator.html">ROI Calculator</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4>By Role</h4>
+                    <ul style="display: flex; flex-direction: column; gap: 0.5rem;">
+                        <li><a href="for-owners.html">For Owners</a></li>
+                        <li><a href="for-gms.html">For GMs</a></li>
+                        <li><a href="for-multi-location.html">Multi-Location</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4>Global Offices</h4>
+                    <ul style="display: flex; flex-direction: column; gap: 1rem; font-size: 0.9rem; color: var(--text-light);">
+                        <li>
+                            <strong style="color: white; display: block; margin-bottom: 0.25rem;">Mexico City</strong>
+                            Av. Paseo de la Reforma 296<br>Juárez, 06600 CDMX
+                        </li>
+                        <li>
+                            <strong style="color: white; display: block; margin-bottom: 0.25rem;">New York</strong>
+                            110 Wall St, Suite 502<br>New York, NY 10005
+                        </li>
+                        <li>
+                            <strong style="color: white; display: block; margin-bottom: 0.25rem;">Vancouver</strong>
+                            1055 W Georgia St<br>Vancouver, BC V6E 3P3
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                    <span>&copy; 2026 RateTap. All rights reserved.</span>
+                    <div style="font-size: 0.85rem;">
+                        <a href="#" style="margin-right: 1rem;">Privacy</a>
+                        <a href="#">Terms</a>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 1rem;">
+                    <a href="#"><i class="fa-brands fa-twitter"></i></a>
+                    <a href="#"><i class="fa-brands fa-instagram"></i></a>
+                    <a href="#"><i class="fa-brands fa-linkedin"></i></a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>
