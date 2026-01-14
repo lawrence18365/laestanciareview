@@ -5,7 +5,30 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>RateTap - Turn Every Table into a 5-Star Review with NFC Cards</title>
     <meta name="description" content="Transform your restaurant's reputation with NFC cards that capture reviews at the table. Happy guests go to Google, unhappy ones give private feedback to managers.">
-    
+
+    <!-- Canonical & Hreflang -->
+    <link rel="canonical" href="https://ratetap.com/index.html" />
+    <link rel="alternate" hreflang="en-US" href="https://ratetap.com/index.html" />
+    <link rel="alternate" hreflang="es-MX" href="https://ratetap.com/es/index.html" />
+    <link rel="alternate" hreflang="x-default" href="https://ratetap.com/index.html" />
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://ratetap.com/index.html" />
+    <meta property="og:title" content="RateTap - Turn Every Table into a 5-Star Review with NFC Cards" />
+    <meta property="og:description" content="Transform your restaurant's reputation with NFC cards that capture reviews at the table. Happy guests go to Google, unhappy ones give private feedback to managers." />
+    <meta property="og:image" content="https://ratetap.com/assets/og-image.png" />
+    <meta property="og:locale" content="en_US" />
+    <meta property="og:locale:alternate" content="es_MX" />
+    <meta property="og:site_name" content="RateTap" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:site" content="@ratetap" />
+    <meta name="twitter:title" content="RateTap - Turn Every Table into a 5-Star Review with NFC Cards" />
+    <meta name="twitter:description" content="Transform your restaurant's reputation with NFC cards that capture reviews at the table. Happy guests go to Google, unhappy ones give private feedback to managers." />
+    <meta name="twitter:image" content="https://ratetap.com/assets/og-image.png" />
+
     <!-- Fonts & Icons -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -14,6 +37,149 @@
     
     <!-- Styles -->
     <link rel="stylesheet" href="styles.css">
+
+    <!-- Structured Data -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@graph": [
+            {
+                "@type": "Organization",
+                "@id": "https://ratetap.com/#organization",
+                "name": "RateTap",
+                "url": "https://ratetap.com",
+                "logo": {
+                    "@type": "ImageObject",
+                    "url": "https://ratetap.com/assets/logo.png"
+                },
+                "description": "Restaurant review management software with NFC cards that capture Google reviews at the table.",
+                "sameAs": [
+                    "https://twitter.com/ratetap",
+                    "https://instagram.com/ratetap",
+                    "https://linkedin.com/company/ratetap"
+                ],
+                "contactPoint": [
+                    {
+                        "@type": "ContactPoint",
+                        "telephone": "+1-800-RATETAP",
+                        "contactType": "sales",
+                        "areaServed": ["US", "MX", "CA"],
+                        "availableLanguage": ["English", "Spanish"]
+                    }
+                ]
+            },
+            {
+                "@type": "WebSite",
+                "@id": "https://ratetap.com/#website",
+                "url": "https://ratetap.com",
+                "name": "RateTap",
+                "publisher": {"@id": "https://ratetap.com/#organization"},
+                "inLanguage": ["en-US", "es-MX"]
+            },
+            {
+                "@type": "SoftwareApplication",
+                "name": "RateTap",
+                "applicationCategory": "BusinessApplication",
+                "operatingSystem": "Web, iOS, Android",
+                "offers": {
+                    "@type": "Offer",
+                    "price": "99.00",
+                    "priceCurrency": "USD",
+                    "priceValidUntil": "2026-12-31"
+                },
+                "aggregateRating": {
+                    "@type": "AggregateRating",
+                    "ratingValue": "4.9",
+                    "ratingCount": "384"
+                },
+                "description": "NFC card software for restaurants to increase Google reviews and track staff performance."
+            },
+            {
+                "@type": "FAQPage",
+                "mainEntity": [
+                    {
+                        "@type": "Question",
+                        "name": "How much does RateTap cost?",
+                        "acceptedAnswer": {
+                            "@type": "Answer",
+                            "text": "RateTap starts at $99/month for up to 10 staff members. Additional cards are $5. Annual plans get 2 months free."
+                        }
+                    },
+                    {
+                        "@type": "Question",
+                        "name": "Do guests need an app to use RateTap?",
+                        "acceptedAnswer": {
+                            "@type": "Answer",
+                            "text": "No. Guests just tap their phone on the NFC card (iPhone or Android) and it opens in their browser instantly."
+                        }
+                    },
+                    {
+                        "@type": "Question",
+                        "name": "What about negative reviews?",
+                        "acceptedAnswer": {
+                            "@type": "Answer",
+                            "text": "Negative reviews (4 stars or less) are routed to a private form that emails you directly. They don't go to Google."
+                        }
+                    }
+                ]
+            },
+            {
+                "@type": "LocalBusiness",
+                "name": "RateTap - Mexico City",
+                "address": {
+                    "@type": "PostalAddress",
+                    "streetAddress": "Av. Paseo de la Reforma 296",
+                    "addressLocality": "Ciudad de Mexico",
+                    "addressRegion": "CDMX",
+                    "postalCode": "06600",
+                    "addressCountry": "MX"
+                },
+                "geo": {
+                    "@type": "GeoCoordinates",
+                    "latitude": "19.4326",
+                    "longitude": "-99.1332"
+                },
+                "areaServed": "Mexico"
+            },
+            {
+                "@type": "LocalBusiness",
+                "name": "RateTap - New York",
+                "address": {
+                    "@type": "PostalAddress",
+                    "streetAddress": "110 Wall St, Suite 502",
+                    "addressLocality": "New York",
+                    "addressRegion": "NY",
+                    "postalCode": "10005",
+                    "addressCountry": "US"
+                },
+                "geo": {
+                    "@type": "GeoCoordinates",
+                    "latitude": "40.7128",
+                    "longitude": "-74.0060"
+                },
+                "areaServed": "United States"
+            },
+            {
+                "@type": "LocalBusiness",
+                "name": "RateTap - Vancouver",
+                "address": {
+                    "@type": "PostalAddress",
+                    "streetAddress": "1055 W Georgia St",
+                    "addressLocality": "Vancouver",
+                    "addressRegion": "BC",
+                    "postalCode": "V6E 3P3",
+                    "addressCountry": "CA"
+                },
+                "geo": {
+                    "@type": "GeoCoordinates",
+                    "latitude": "49.2827",
+                    "longitude": "-123.1207"
+                },
+                "areaServed": "Canada"
+            }
+        ]
+    }
+    </script>
 </head>
 <body>
 

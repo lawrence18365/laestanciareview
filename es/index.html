@@ -5,7 +5,30 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>RateTap - Convierte cada mesa en una reseña de 5 estrellas con tarjetas NFC</title>
     <meta name="description" content="Transforme la reputación de su restaurante con tarjetas NFC que capturan reseñas en la mesa. Clientes felices van a Google, los insatisfechos dan comentarios privados a los gerentes.">
-    
+
+    <!-- Canonical & Hreflang -->
+    <link rel="canonical" href="https://ratetap.com/es/index.html" />
+    <link rel="alternate" hreflang="en-US" href="https://ratetap.com/index.html" />
+    <link rel="alternate" hreflang="es-MX" href="https://ratetap.com/es/index.html" />
+    <link rel="alternate" hreflang="x-default" href="https://ratetap.com/index.html" />
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://ratetap.com/es/index.html" />
+    <meta property="og:title" content="RateTap - Convierte cada mesa en una reseña de 5 estrellas con tarjetas NFC" />
+    <meta property="og:description" content="Transforme la reputación de su restaurante con tarjetas NFC que capturan reseñas en la mesa. Clientes felices van a Google, los insatisfechos dan comentarios privados a los gerentes." />
+    <meta property="og:image" content="https://ratetap.com/assets/og-image.png" />
+    <meta property="og:locale" content="es_MX" />
+    <meta property="og:locale:alternate" content="en_US" />
+    <meta property="og:site_name" content="RateTap" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:site" content="@ratetap" />
+    <meta name="twitter:title" content="RateTap - Convierte cada mesa en una reseña de 5 estrellas con tarjetas NFC" />
+    <meta name="twitter:description" content="Transforme la reputación de su restaurante con tarjetas NFC que capturan reseñas en la mesa." />
+    <meta name="twitter:image" content="https://ratetap.com/assets/og-image.png" />
+
     <!-- Fonts & Icons -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -14,6 +37,55 @@
     
     <!-- Styles -->
     <link rel="stylesheet" href="../styles.css">
+
+    <!-- Structured Data -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@graph": [
+            {
+                "@type": "Organization",
+                "@id": "https://ratetap.com/#organization",
+                "name": "RateTap",
+                "url": "https://ratetap.com",
+                "logo": {"@type": "ImageObject", "url": "https://ratetap.com/assets/logo.png"},
+                "description": "Software de gestión de reseñas para restaurantes con tarjetas NFC.",
+                "sameAs": ["https://twitter.com/ratetap", "https://instagram.com/ratetap", "https://linkedin.com/company/ratetap"],
+                "contactPoint": [{"@type": "ContactPoint", "telephone": "+52-55-RATETAP", "contactType": "sales", "areaServed": ["MX", "US"], "availableLanguage": ["Spanish", "English"]}]
+            },
+            {
+                "@type": "WebPage",
+                "@id": "https://ratetap.com/es/index.html",
+                "url": "https://ratetap.com/es/index.html",
+                "name": "RateTap - Convierte cada mesa en una reseña de 5 estrellas",
+                "isPartOf": {"@id": "https://ratetap.com/#website"},
+                "inLanguage": "es-MX"
+            },
+            {
+                "@type": "SoftwareApplication",
+                "name": "RateTap",
+                "applicationCategory": "BusinessApplication",
+                "operatingSystem": "Web, iOS, Android",
+                "offers": {"@type": "Offer", "price": "99.00", "priceCurrency": "USD"},
+                "description": "Software de tarjetas NFC para restaurantes para aumentar reseñas en Google."
+            },
+            {
+                "@type": "FAQPage",
+                "mainEntity": [
+                    {"@type": "Question", "name": "¿Cuánto cuesta RateTap?", "acceptedAnswer": {"@type": "Answer", "text": "RateTap comienza en $99/mes para hasta 10 miembros del personal. Tarjetas adicionales cuestan $5."}},
+                    {"@type": "Question", "name": "¿Los clientes necesitan una app?", "acceptedAnswer": {"@type": "Answer", "text": "No. Los clientes solo tocan su teléfono en la tarjeta NFC y se abre en su navegador al instante."}},
+                    {"@type": "Question", "name": "¿Qué pasa con las reseñas negativas?", "acceptedAnswer": {"@type": "Answer", "text": "Las reseñas negativas se envían a un formulario privado que le envía un correo electrónico directamente."}}
+                ]
+            },
+            {
+                "@type": "LocalBusiness",
+                "name": "RateTap - Ciudad de México",
+                "address": {"@type": "PostalAddress", "streetAddress": "Av. Paseo de la Reforma 296", "addressLocality": "Ciudad de Mexico", "addressRegion": "CDMX", "postalCode": "06600", "addressCountry": "MX"},
+                "areaServed": "Mexico"
+            }
+        ]
+    }
+    </script>
 </head>
 <body>
 

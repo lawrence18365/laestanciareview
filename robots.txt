@@ -1,0 +1,11 @@
+# robots.txt for ratetap.com
+# Last updated: 2026-01-13
+
+User-agent: *
+Allow: /
+
+# Sitemap location
+Sitemap: https://ratetap.com/sitemap.xml
+
+# Crawl-delay for polite crawling
+Crawl-delay: 1
