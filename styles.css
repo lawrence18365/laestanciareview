@@ -170,7 +170,9 @@ img {
     border-radius: var(--radius-md);
     cursor: pointer;
     border: none;
-    transition: transform 0.2s ease, background-color 0.2s ease;
+    transition: transform 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+    position: relative;
+    overflow: hidden;
 }
 
 .btn:active {
@@ -184,6 +186,7 @@ img {
 .btn-primary:hover {
     background-color: var(--primary-dark);
     transform: scale(1.05);
+    box-shadow: 0 0 20px rgba(59, 130, 246, 0.5); /* Glow Effect */
 }
 
 .btn-secondary {
@@ -493,80 +496,16 @@ img {
 .mb-4 { margin-bottom: 1rem; }
 .mb-8 { margin-bottom: 2rem; }
 
-/* Revamped Hero with Fullscreen Background */
-.hero.hero-fullscreen-bg {
-    position: relative;
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
-    color: white; /* Default text color for hero */
-    border-bottom: none; /* Remove any border if present */
-}
-
-/* Dark Overlay */
-.hero.hero-fullscreen-bg::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.6); /* Dark overlay */
-    z-index: 1;
-}
-
-/* Ensure content is above overlay */
-.hero.hero-fullscreen-bg .container {
-    position: relative;
-    z-index: 2;
-}
-
-/* Text overrides */
-.hero.hero-fullscreen-bg h1,
-.hero.hero-fullscreen-bg p {
-    color: white;
-    text-shadow: 0 2px 4px rgba(0,0,0,0.3);
-}
-
-.hero.hero-fullscreen-bg .hero-eyebrow {
-    color: #60A5FA; /* Lighter blue for visibility */
-    text-shadow: 0 1px 2px rgba(0,0,0,0.3);
-}
-
-/* Metrics adjustment */
-.hero.hero-fullscreen-bg .hero-metrics {
-    border-top-color: rgba(255, 255, 255, 0.2);
-    justify-content: center; /* Center metrics */
-}
-
-.hero.hero-fullscreen-bg .metric-number {
-    color: white;
-}
-
-.hero.hero-fullscreen-bg .metric-label {
-    color: rgba(255, 255, 255, 0.8);
-}
-
-/* Button adjustment for better visibility */
-.hero.hero-fullscreen-bg .btn-secondary {
-    background-color: white;
-    color: var(--text-main);
-    border: none;
-}
-.hero.hero-fullscreen-bg .btn-secondary:hover {
-    background-color: #f0f0f0;
-}
-
 /* =========================================
-   TRANSPARENT HEADER & ENHANCED HERO (10x Better)
+   TRANSPARENT HEADER & ENHANCED HERO (2026 Style)
    ========================================= */
 
 /* Navbar Transparency Logic */
 .navbar.navbar-transparent {
     background: transparent;
     border-bottom: none;
-    transition: background-color 0.3s ease, border-color 0.3s ease, padding 0.3s ease;
-    padding-top: 1rem; /* Extra padding for initial view */
+    transition: background-color 0.4s cubic-bezier(0.4, 0, 0.2, 1), padding 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    padding-top: 1.5rem; /* Extra padding for initial view */
 }
 
 .navbar.navbar-transparent.scrolled {
@@ -585,22 +524,26 @@ img {
     color: #60A5FA; /* Light Blue */
 }
 
+/* Glassy Button in Header */
 .navbar.navbar-transparent .btn-primary {
-    background: white;
+    background: rgba(255, 255, 255, 0.9);
     color: var(--primary);
     box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+    backdrop-filter: blur(4px);
 }
 
 .navbar.navbar-transparent .btn-primary:hover {
-    background: #f8fafc;
+    background: #FFFFFF;
     transform: translateY(-1px);
+    box-shadow: 0 0 15px rgba(255, 255, 255, 0.4);
 }
 
 /* Scrolled State for Transparent Navbar */
 .navbar.navbar-transparent.scrolled {
-    background: rgba(255,255,255,0.98);
+    background: rgba(255,255,255,0.95);
     border-bottom: 1px solid var(--border);
     box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+    backdrop-filter: blur(10px); /* Frosted glass effect */
 }
 
 .navbar.navbar-transparent.scrolled .nav-link { color: var(--text-muted); text-shadow: none; }
@@ -623,11 +566,63 @@ img {
     }
 }
 
-/* Hero Animations (Fade In Up) */
+/* Revamped Hero with Parallax & Effects */
+.hero.hero-fullscreen-bg {
+    position: relative;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    color: white;
+    border-bottom: none;
+    /* Parallax base style */
+    background-attachment: fixed; /* Simple CSS parallax */
+}
+
+/* Dark Overlay with Gradient */
+.hero.hero-fullscreen-bg::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(to bottom, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.7) 100%);
+    z-index: 1;
+}
+
+/* Ensure content is above overlay */
+.hero.hero-fullscreen-bg .container {
+    position: relative;
+    z-index: 2;
+}
+
+/* Gradient Text for Main Heading */
+.gradient-text {
+    background: linear-gradient(135deg, #FFFFFF 0%, #BFDBFE 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    display: inline-block;
+}
+
+/* Text overrides */
+.hero.hero-fullscreen-bg p {
+    color: rgba(255, 255, 255, 0.9);
+    text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+
+.hero.hero-fullscreen-bg .hero-eyebrow {
+    color: #93C5FD; /* Lighter blue */
+    text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+    letter-spacing: 0.1em;
+}
+
+/* Hero Animations (Fade In Up with Stagger) */
 @keyframes fadeInUp {
     from {
         opacity: 0;
-        transform: translate3d(0, 30px, 0);
+        transform: translate3d(0, 40px, 0);
     }
     to {
         opacity: 1;
@@ -635,34 +630,83 @@ img {
     }
 }
 
-.hero-fullscreen-bg .hero-eyebrow { animation: fadeInUp 0.8s ease-out forwards; opacity: 0; }
-.hero-fullscreen-bg h1 { animation: fadeInUp 0.8s ease-out 0.2s forwards; opacity: 0; }
-.hero-fullscreen-bg p { animation: fadeInUp 0.8s ease-out 0.4s forwards; opacity: 0; }
-.hero-fullscreen-bg .btn { animation: fadeInUp 0.8s ease-out 0.6s forwards; opacity: 0; }
-.hero-fullscreen-bg .hero-metrics { animation: fadeInUp 0.8s ease-out 0.8s forwards; opacity: 0; }
+.hero-fullscreen-bg .hero-eyebrow { animation: fadeInUp 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; opacity: 0; }
+.hero-fullscreen-bg h1 { animation: fadeInUp 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) 0.1s forwards; opacity: 0; }
+.hero-fullscreen-bg p { animation: fadeInUp 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) 0.2s forwards; opacity: 0; }
+.hero-fullscreen-bg .btn { animation: fadeInUp 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) 0.3s forwards; opacity: 0; }
+.hero-fullscreen-bg .hero-metrics { animation: fadeInUp 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) 0.4s forwards; opacity: 0; }
 
 /* Enhanced Hero Spacing & Metrics */
 .hero-fullscreen-bg .hero-content {
-    padding-top: 4rem; /* Give it space from the transparent header */
+    padding-top: 6rem;
+}
+
+/* Floating Animation for Metrics */
+@keyframes float {
+    0% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
+    100% { transform: translateY(0px); }
 }
 
 /* Glassmorphism Metrics */
-.hero-fullscreen-bg .metric {
-    background: rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    padding: 1rem 2rem;
-    border-radius: var(--radius-lg);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    transition: transform 0.3s ease;
+.hero-fullscreen-bg .hero-metrics {
+    border-top: none; /* Removed line for cleaner look */
+    justify-content: center;
 }
 
+.hero-fullscreen-bg .metric {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    padding: 1.5rem 2.5rem;
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease, background 0.3s ease;
+    animation: float 6s ease-in-out infinite;
+}
+
+/* Stagger the float animation */
+.hero-fullscreen-bg .metric:nth-child(2) { animation-delay: 2s; }
+.hero-fullscreen-bg .metric:nth-child(3) { animation-delay: 4s; }
+
 .hero-fullscreen-bg .metric:hover {
-    transform: translateY(-5px);
-    background: rgba(255, 255, 255, 0.15);
+    background: rgba(255, 255, 255, 0.1);
+    transform: translateY(-5px) scale(1.05);
+    border-color: rgba(255, 255, 255, 0.3);
 }
 
 .hero-fullscreen-bg .metric-number {
-    font-size: 3rem; /* Bigger numbers */
-    text-shadow: 0 2px 10px rgba(0,0,0,0.2);
+    color: white;
+    font-size: 3.5rem; /* Massive numbers trend */
+    line-height: 1;
+    margin-bottom: 0.5rem;
+    background: linear-gradient(to bottom, #FFFFFF 0%, #E0F2FE 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.hero-fullscreen-bg .metric-label {
+    color: rgba(255, 255, 255, 0.7);
+    font-weight: 500;
+    letter-spacing: 0.05em;
+}
+
+/* Scroll Indicator */
+.scroll-indicator {
+    position: absolute;
+    bottom: 2rem;
+    left: 50%;
+    transform: translateX(-50%);
+    color: white;
+    opacity: 0.7;
+    animation: bounce 2s infinite;
+    z-index: 2;
+    font-size: 1.5rem;
+}
+
+@keyframes bounce {
+    0%, 20%, 50%, 80%, 100% { transform: translateX(-50%) translateY(0); }
+    40% { transform: translateX(-50%) translateY(-10px); }
+    60% { transform: translateX(-50%) translateY(-5px); }
 }

@@ -218,13 +218,23 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // Header Scroll Effect
+    // Header Scroll Effect & Parallax
     const navbar = document.getElementById('navbar');
+    const hero = document.getElementById('hero');
+    
     function handleScroll() {
-        if (window.scrollY > 50) {
+        const scrollY = window.scrollY;
+        
+        // Navbar transparency
+        if (scrollY > 50) {
             navbar.classList.add('scrolled');
         } else {
             navbar.classList.remove('scrolled');
+        }
+        
+        // Simple Parallax for Hero Background
+        if (hero) {
+            hero.style.backgroundPositionY = `${scrollY * 0.5}px`;
         }
     }
     window.addEventListener('scroll', handleScroll);
