@@ -504,12 +504,13 @@ img {
 .navbar.navbar-transparent {
     background: transparent;
     border-bottom: none;
-    transition: background-color 0.4s cubic-bezier(0.4, 0, 0.2, 1), padding 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: background-color 0.4s cubic-bezier(0.4, 0, 0.2, 1), padding 0.4s cubic-bezier(0.4, 0, 0.2, 1), transform 0.3s ease-in-out;
     padding-top: 1.5rem; /* Extra padding for initial view */
 }
 
-.navbar.navbar-transparent.scrolled {
-    padding-top: 0; /* Revert to normal padding */
+/* Hide Navbar on Scroll Down */
+.navbar.navbar-transparent.nav-hidden {
+    transform: translateY(-100%);
 }
 
 .navbar.navbar-transparent .nav-link,
@@ -524,7 +525,7 @@ img {
     color: #60A5FA; /* Light Blue */
 }
 
-/* Glassy Button in Header */
+/* Glassy Button in Header (Always visible when header is shown) */
 .navbar.navbar-transparent .btn-primary {
     background: rgba(255, 255, 255, 0.9);
     color: var(--primary);
@@ -537,22 +538,6 @@ img {
     transform: translateY(-1px);
     box-shadow: 0 0 15px rgba(255, 255, 255, 0.4);
 }
-
-/* Scrolled State for Transparent Navbar */
-.navbar.navbar-transparent.scrolled {
-    background: rgba(255,255,255,0.95);
-    border-bottom: 1px solid var(--border);
-    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
-    backdrop-filter: blur(10px); /* Frosted glass effect */
-}
-
-.navbar.navbar-transparent.scrolled .nav-link { color: var(--text-muted); text-shadow: none; }
-.navbar.navbar-transparent.scrolled .nav-link:hover { color: var(--primary); }
-.navbar.navbar-transparent.scrolled .nav-brand { color: var(--primary); text-shadow: none; }
-.navbar.navbar-transparent.scrolled .nav-toggle { color: var(--text-main); text-shadow: none; }
-.navbar.navbar-transparent.scrolled .lang-btn { color: var(--text-light); text-shadow: none; }
-.navbar.navbar-transparent.scrolled .lang-btn.active { color: var(--primary); }
-.navbar.navbar-transparent.scrolled .btn-primary { background: var(--primary); color: white; }
 
 /* Mobile Menu Reset for Transparent Navbar */
 @media (max-width: 768px) {

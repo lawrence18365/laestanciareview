@@ -221,20 +221,23 @@ document.addEventListener('DOMContentLoaded', () => {
     // Header Scroll Effect & Parallax
     const navbar = document.getElementById('navbar');
     const hero = document.getElementById('hero');
+    let lastScrollY = window.scrollY;
     
     function handleScroll() {
-        const scrollY = window.scrollY;
+        const currentScrollY = window.scrollY;
         
-        // Navbar transparency
-        if (scrollY > 50) {
-            navbar.classList.add('scrolled');
+        // Header Hide/Show Logic (Always Transparent)
+        // Hide when scrolling down, show when scrolling up
+        if (currentScrollY > lastScrollY && currentScrollY > 100) {
+            navbar.classList.add('nav-hidden');
         } else {
-            navbar.classList.remove('scrolled');
+            navbar.classList.remove('nav-hidden');
         }
+        lastScrollY = currentScrollY;
         
         // Simple Parallax for Hero Background
         if (hero) {
-            hero.style.backgroundPositionY = `${scrollY * 0.5}px`;
+            hero.style.backgroundPositionY = `${currentScrollY * 0.5}px`;
         }
     }
     window.addEventListener('scroll', handleScroll);
