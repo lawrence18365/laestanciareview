@@ -239,4 +239,26 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     window.addEventListener('scroll', handleScroll);
     handleScroll(); // Check initial state
+
+    // Mouse Move Parallax for Hero Metrics (3D Depth Effect)
+    if (hero) {
+        hero.addEventListener('mousemove', (e) => {
+            const moveX = (e.clientX - window.innerWidth / 2) * 0.01;
+            const moveY = (e.clientY - window.innerHeight / 2) * 0.01;
+            
+            const metrics = document.querySelectorAll('.hero-fullscreen-bg .metric');
+            metrics.forEach((metric, index) => {
+                const depth = (index + 1) * 2; // Different depth for each card
+                metric.style.transform = `translate(${moveX * depth}px, ${moveY * depth}px)`;
+            });
+        });
+        
+        // Reset on mouse leave
+        hero.addEventListener('mouseleave', () => {
+             const metrics = document.querySelectorAll('.hero-fullscreen-bg .metric');
+             metrics.forEach(metric => {
+                 metric.style.transform = 'translate(0, 0)';
+             });
+        });
+    }
 });
