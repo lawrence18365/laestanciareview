@@ -244,10 +244,10 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         lastScrollY = currentScrollY;
         
-        // Simple Parallax for Hero Background
-        if (hero) {
-            hero.style.backgroundPositionY = `${currentScrollY * 0.5}px`;
-        }
+        // Simple Parallax for Hero Background - DISABLED for Fixed Effect
+        // if (hero) {
+        //    hero.style.backgroundPositionY = `${currentScrollY * 0.5}px`;
+        // }
     }
     window.addEventListener('scroll', handleScroll);
     handleScroll(); // Check initial state
