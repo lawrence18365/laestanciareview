@@ -576,6 +576,7 @@ img {
     border-bottom: none;
     /* Parallax base style */
     background-attachment: fixed; /* Simple CSS parallax */
+    min-height: 100dvh; /* Dynamic Viewport Height for mobile perfection */
 }
 
 /* Dark Overlay with Gradient */
@@ -653,6 +654,7 @@ img {
 /* Enhanced Hero Spacing & Metrics */
 .hero-fullscreen-bg .hero-content {
     padding-top: 6rem;
+    container-type: inline-size; /* Enable container queries */
 }
 
 /* Floating Animation for Metrics */
