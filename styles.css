@@ -603,7 +603,6 @@ img {
 
 /* Enhanced Hero Spacing & Metrics */
 .hero-fullscreen-bg .hero-content {
-    padding-top: clamp(4rem, 10vh, 8rem); /* Responsive padding */
     display: flex;
     flex-direction: column;
     justify-content: center;
