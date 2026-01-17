@@ -166,6 +166,12 @@ function handleFormSubmit(event) {
 function toggleMobileMenu() {
     const navMenu = document.querySelector('.nav-menu');
     navMenu.classList.toggle('active');
+    
+    // Toggle menu-open class on navbar to prevent hiding on scroll
+    const navbar = document.getElementById('navbar');
+    if (navbar) {
+        navbar.classList.toggle('menu-open');
+    }
 }
 
 // Initialize
@@ -228,7 +234,10 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Header Hide/Show Logic (Always Transparent)
         // Hide when scrolling down, show when scrolling up
-        if (currentScrollY > lastScrollY && currentScrollY > 100) {
+        // BUT: Keep visible if menu is open
+        const isMenuOpen = navbar.classList.contains('menu-open');
+        
+        if (!isMenuOpen && currentScrollY > lastScrollY && currentScrollY > 100) {
             navbar.classList.add('nav-hidden');
         } else {
             navbar.classList.remove('nav-hidden');
