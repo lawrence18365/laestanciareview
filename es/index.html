@@ -109,6 +109,9 @@
             </div>
             
             <div class="nav-actions">
+                <button class="search-btn" id="search-toggle" aria-label="Buscar">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                </button>
                 <div class="language-switcher">
                     <button class="lang-btn" onclick="window.location.href='../index.html'">EN</button>
                     <button class="lang-btn active" data-lang="es">ES</button>
@@ -462,6 +465,17 @@
             </div>
         </div>
     </footer>
+
+    <!-- Search Overlay -->
+    <div class="search-overlay" id="search-overlay">
+        <button class="search-close" id="search-close" aria-label="Cerrar Búsqueda">
+            <i class="fa-solid fa-xmark"></i>
+        </button>
+        <div class="search-container">
+            <input type="text" class="search-input" placeholder="Escribe para buscar..." aria-label="Buscar">
+            <button class="search-submit"><i class="fa-solid fa-arrow-right"></i></button>
+        </div>
+    </div>
 
     <script src="../script.js"></script>
 </body>
