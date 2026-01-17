@@ -3,20 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pricing - RateTap</title>
-    <meta name="description" content="Simple, transparent pricing for restaurants. Start growing your reviews today.">
+    <title>Restaurant Review Software Pricing | RateTap - Plans from $99/mo</title>
+    <meta name="description" content="Transparent pricing for RateTap restaurant review software. Plans start at $99/month with NFC cards included. No contracts, cancel anytime. Compare Starter, Growth & Enterprise plans.">
+    <meta name="keywords" content="restaurant review software pricing, RateTap pricing, review management cost, restaurant reputation software price, NFC review cards cost">
 
     <!-- Canonical & Hreflang -->
-    <link rel="canonical" href="https://ratetap.com/pricing.html" />
-    <link rel="alternate" hreflang="en-US" href="https://ratetap.com/pricing.html" />
-    <link rel="alternate" hreflang="es-MX" href="https://ratetap.com/es/pricing.html" />
-    <link rel="alternate" hreflang="x-default" href="https://ratetap.com/pricing.html" />
+    <link rel="canonical" href="https://ratetap.com/pricing" />
+    <link rel="alternate" hreflang="en-US" href="https://ratetap.com/pricing" />
+    <link rel="alternate" hreflang="es-MX" href="https://ratetap.com/es/pricing" />
+    <link rel="alternate" hreflang="x-default" href="https://ratetap.com/pricing" />
+
+    <!-- Preload Critical Assets -->
+    <link rel="preload" href="styles.css" as="style">
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" as="style">
 
     <!-- Open Graph -->
     <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://ratetap.com/pricing.html" />
-    <meta property="og:title" content="Pricing - RateTap" />
-    <meta property="og:description" content="Simple, transparent pricing for restaurants. Start growing your reviews today." />
+    <meta property="og:url" content="https://ratetap.com/pricing" />
+    <meta property="og:title" content="Restaurant Review Software Pricing | RateTap - Plans from $99/mo" />
+    <meta property="og:description" content="Transparent pricing for RateTap restaurant review software. Plans start at $99/month with NFC cards included. No contracts, cancel anytime." />
     <meta property="og:image" content="https://ratetap.com/assets/og-image.png" />
     <meta property="og:locale" content="en_US" />
     <meta property="og:locale:alternate" content="es_MX" />
@@ -25,8 +30,8 @@
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:site" content="@ratetap" />
-    <meta name="twitter:title" content="Pricing - RateTap" />
-    <meta name="twitter:description" content="Simple, transparent pricing for restaurants. Start growing your reviews today." />
+    <meta name="twitter:title" content="Restaurant Review Software Pricing | RateTap" />
+    <meta name="twitter:description" content="Transparent pricing for RateTap. Plans start at $99/month with NFC cards included. No contracts, cancel anytime." />
     <meta name="twitter:image" content="https://ratetap.com/assets/og-image.png" />
 
     <!-- Fonts & Icons -->
@@ -41,9 +46,16 @@
     {
         "@context": "https://schema.org",
         "@type": "WebPage",
-        "name": "Pricing - RateTap",
+        "name": "Restaurant Review Software Pricing | RateTap",
+        "breadcrumb": {
+            "@type": "BreadcrumbList",
+            "itemListElement": [
+                {"@type": "ListItem", "position": 1, "name": "Home", "item": "https://ratetap.com/"},
+                {"@type": "ListItem", "position": 2, "name": "Pricing", "item": "https://ratetap.com/pricing"}
+            ]
+        },
         "description": "Simple, transparent pricing for restaurants. Start growing your reviews today.",
-        "url": "https://ratetap.com/pricing.html",
+        "url": "https://ratetap.com/pricing",
         "isPartOf": {"@id": "https://ratetap.com/#website"},
         "inLanguage": "en-US",
         "mainEntity": {
@@ -81,22 +93,22 @@
 
     <nav class="navbar">
         <div class="nav-container">
-            <a href="index.html" class="nav-brand">
-                <i class="fa-solid fa-nfc-symbol fa-lg"></i>
+            <a href="/" class="nav-brand">
+                <i class="fa-solid fa-nfc-symbol fa-lg" aria-label="NFC Symbol"></i>
                 RateTap
             </a>
             <div class="nav-menu">
-                <a href="index.html#how-it-works" class="nav-link">How It Works</a>
-                <a href="pricing.html" class="nav-link active" style="color: var(--primary);">Pricing</a>
-                <a href="roi-calculator.html" class="nav-link">ROI Calculator</a>
-                <a href="demo.html" class="nav-link">Demo</a>
+                <a href="/#how-it-works" class="nav-link">How It Works</a>
+                <a href="pricing" class="nav-link active" style="color: var(--primary);">Pricing</a>
+                <a href="roi-calculator" class="nav-link">ROI Calculator</a>
+                <a href="demo" class="nav-link">Demo</a>
             </div>
             <div class="nav-actions">
                 <div class="language-switcher">
                     <button class="lang-btn active">EN</button>
-                    <button class="lang-btn" onclick="window.location.href='es/pricing.html'">ES</button>
+                    <button class="lang-btn" onclick="window.location.href='es/pricing'">ES</button>
                 </div>
-                <a href="index.html#contact" class="btn btn-primary">Get Started</a>
+                <a href="/#contact" class="btn btn-primary">Get Started</a>
             </div>
         </div>
     </nav>
@@ -106,6 +118,7 @@
             <span class="hero-eyebrow">PLANS FOR EVERY SIZE</span>
             <h1>Simple, Transparent Pricing</h1>
             <p style="max-width: 600px; margin: 0 auto;">No hidden fees. No long-term contracts. Change plans anytime.</p>
+            <p style="max-width: 600px; margin: 1rem auto 0; font-size: 0.9rem; color: var(--text-muted);"><i class="fa-solid fa-tag" style="margin-right: 0.5rem;"></i>Volume discounts available for 10+ locations</p>
         </div>
     </section>
 
@@ -126,7 +139,7 @@
                         <li><i class="fa-solid fa-check" style="color: var(--secondary); margin-right: 0.5rem;"></i> Google Review Routing</li>
                         <li><i class="fa-solid fa-check" style="color: var(--secondary); margin-right: 0.5rem;"></i> Basic Email Support</li>
                     </ul>
-                    <a href="index.html#contact" class="btn btn-secondary" style="width: 100%; margin-top: auto;">Start Free Trial</a>
+                    <a href="/#contact" class="btn btn-secondary" style="width: 100%; margin-top: auto;">Start Free Trial</a>
                 </div>
 
                 <!-- Growth (Popular) -->
@@ -145,7 +158,7 @@
                         <li><i class="fa-solid fa-check" style="color: var(--primary); margin-right: 0.5rem;"></i> Staff Leaderboard</li>
                         <li><i class="fa-solid fa-check" style="color: var(--primary); margin-right: 0.5rem;"></i> Priority Support</li>
                     </ul>
-                    <a href="index.html#contact" class="btn btn-primary" style="width: 100%; margin-top: auto;">Start Free Trial</a>
+                    <a href="/#contact" class="btn btn-primary" style="width: 100%; margin-top: auto;">Start Free Trial</a>
                 </div>
 
                 <!-- Enterprise -->
@@ -161,9 +174,12 @@
                         <li><i class="fa-solid fa-check" style="color: white; margin-right: 0.5rem;"></i> Unlimited Staff Cards</li>
                         <li><i class="fa-solid fa-check" style="color: white; margin-right: 0.5rem;"></i> Custom Branding</li>
                         <li><i class="fa-solid fa-check" style="color: white; margin-right: 0.5rem;"></i> API Access</li>
-                        <li><i class="fa-solid fa-check" style="color: white; margin-right: 0.5rem;"></i> Dedicated Account Manager</li>
+                        <li><i class="fa-solid fa-check" style="color: white; margin-right: 0.5rem;"></i> <strong>Dedicated Account Manager</strong></li>
+                        <li><i class="fa-solid fa-check" style="color: white; margin-right: 0.5rem;"></i> Multi-location Dashboard</li>
+                        <li><i class="fa-solid fa-check" style="color: white; margin-right: 0.5rem;"></i> Priority Onboarding & Training</li>
+                        <li><i class="fa-solid fa-check" style="color: white; margin-right: 0.5rem;"></i> SLA-backed Support</li>
                     </ul>
-                    <a href="demo.html" class="btn btn-outline" style="width: 100%; margin-top: auto; border-color: white; color: white;">Contact Sales</a>
+                    <a href="demo" class="btn btn-outline" style="width: 100%; margin-top: auto; border-color: white; color: white;">Contact Sales</a>
                 </div>
             </div>
         </div>
@@ -182,17 +198,17 @@
                 <div>
                     <h4>Product</h4>
                     <ul style="display: flex; flex-direction: column; gap: 0.5rem;">
-                        <li><a href="index.html#features">Features</a></li>
-                        <li><a href="pricing.html">Pricing</a></li>
-                        <li><a href="index.html#how-it-works">How it Works</a></li>
+                        <li><a href="/#features">Features</a></li>
+                        <li><a href="pricing">Pricing</a></li>
+                        <li><a href="/#how-it-works">How it Works</a></li>
                     </ul>
                 </div>
                 <div>
                     <h4>Company</h4>
                     <ul style="display: flex; flex-direction: column; gap: 0.5rem;">
-                        <li><a href="index.html#about">About</a></li>
-                        <li><a href="index.html#blog">Blog</a></li>
-                        <li><a href="index.html#contact">Contact</a></li>
+                        <li><a href="/#about">About</a></li>
+                        <li><a href="/#blog">Blog</a></li>
+                        <li><a href="/#contact">Contact</a></li>
                     </ul>
                 </div>
                 <div>
