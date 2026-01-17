@@ -102,14 +102,16 @@ function showLanguageSuggestion() {
 
 window.redirectToSpanish = function() {
     localStorage.setItem('ratetap-lang-preference', 'es');
-    // Logic to switch to ES directory counterpart
     const currentPath = window.location.pathname;
-    const pageName = currentPath.split('/').pop() || 'index.html'; 
+    let pageName = currentPath.split('/').pop();
     
-    if (pageName === 'get-more-google-reviews-restaurants.html' || pageName === '') {
-         window.location.href = 'es/get-more-google-reviews-restaurants.html';
+    // If clean URL is used, pageName might be empty (root) or just the slug
+    if (!pageName || pageName === 'index.html') {
+        window.location.href = '/es/';
     } else {
-         window.location.href = 'es/' + pageName;
+        // Remove .html extension if present (for local testing)
+        pageName = pageName.replace('.html', '');
+        window.location.href = '/es/' + pageName;
     }
 }
 
