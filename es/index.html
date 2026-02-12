@@ -94,64 +94,108 @@
 <body>
 
     <!-- Navigation -->
-    <nav class="navbar navbar-transparent" id="navbar">
+    <nav class="navbar proof-nav" id="navbar">
         <div class="nav-container">
-            <a href="#" class="nav-brand">
+            <a href="/es/" class="nav-brand">
                 <i class="fa-solid fa-nfc-symbol fa-lg"></i>
                 RateTap
             </a>
             
             <div class="nav-menu" id="nav-menu">
                 <a href="#how-it-works" class="nav-link" data-i18n="nav-link-how">Cómo funciona</a>
-                <a href="#benefits" class="nav-link" data-i18n="nav-link-benefits">Beneficios</a>
                 <a href="#features" class="nav-link" data-i18n="nav-link-features">Características</a>
+                <a href="pricing" class="nav-link">Precios</a>
                 <a href="#faq" class="nav-link" data-i18n="nav-link-faq">Preguntas frecuentes</a>
             </div>
             
             <div class="nav-actions">
-                <div class="language-switcher">
-                    <button class="lang-btn" onclick="window.location.href='../index.html'">EN</button>
-                    <button class="lang-btn active" data-lang="es">ES</button>
-                </div>
-                <a href="#contact" class="btn btn-primary" data-i18n="nav-cta">Empezar</a>
+                <a href="demo" class="btn btn-primary" data-i18n="nav-cta">Agendar demo</a>
                 <button class="nav-toggle" id="nav-toggle"><i class="fa-solid fa-bars"></i></button>
             </div>
         </div>
     </nav>
 
     <!-- Hero Section -->
-    <section class="hero hero-fullscreen-bg" id="hero" style="background-image: url('../optimized-image-example-1.webp');">
+    <section class="hero proof-hero" id="hero">
         <div class="container">
-            <div class="hero-content" style="text-align: center; max-width: 900px; margin: 0 auto;">
-                <span class="hero-eyebrow" data-i18n="hero-eyebrow">Revolución en Reseñas de Restaurantes</span>
-                <h1 class="gradient-text" data-i18n="hero-title">Convierte cada mesa en una reseña de 5 estrellas</h1>
-                <p data-i18n="hero-subtitle" style="font-size: 1.25rem; max-width: 700px; margin-left: auto; margin-right: auto;">
-                    Dé a cada miembro del personal una tarjeta NFC única. Obtenga feedback instantáneo de todos los clientes y resuelva problemas en tiempo real. Todos los clientes siempre tienen la opción de dejar reseñas públicas.
-                </p>
-                
-                <div style="display: flex; gap: 1rem; flex-wrap: wrap; justify-content: center;">
-                    <a href="#contact" class="btn btn-primary" data-i18n="hero-cta-primary">Prueba Gratis</a>
-                    <a href="#how-it-works" class="btn btn-secondary" data-i18n="hero-cta-secondary">Cómo funciona</a>
-                </div>
-                
-                <div class="hero-metrics">
-                    <div class="metric">
-                        <div class="metric-number">3x</div>
-                        <div class="metric-label" data-i18n="metric-1-label">Más Reseñas</div>
+            <div class="proof-hero-grid">
+                <div class="hero-panel">
+                    <span class="hero-eyebrow">Flujo NFC de feedback</span>
+                    <h1>Detecta malas experiencias antes de que se vayan<br>Envía clientes felices a reseñas en Google</h1>
+                    <p class="proof-hero-subtitle">
+                        Asigna una tarjeta NFC por colaborador. El cliente toca una vez, deja feedback rápido y el flujo se divide entre recuperación privada o reseña pública.
+                    </p>
+                    <div class="hero-actions">
+                        <a href="demo" class="btn btn-primary">Agendar demo</a>
+                        <a href="#how-it-works" class="hero-link">Ver cómo funciona <i class="fa-solid fa-arrow-right"></i></a>
                     </div>
-                    <div class="metric">
-                        <div class="metric-number">85%</div>
-                        <div class="metric-label" data-i18n="metric-2-label">Problemas Resueltos</div>
-                    </div>
-                    <div class="metric">
-                        <div class="metric-number">24/7</div>
-                        <div class="metric-label" data-i18n="metric-3-label">Monitoreo</div>
+                    <div class="hero-proof-row">
+                        <span class="hero-proof-badge">
+                            <strong>+0.8&#9733;</strong>
+                            <span>Casa Miguel, Austin en 45 días</span>
+                        </span>
+                        <a href="case-studies" class="hero-proof-link">Ver caso de estudio <i class="fa-solid fa-arrow-right"></i></a>
                     </div>
                 </div>
-            </div>
-            
-            <div class="scroll-indicator">
-                <i class="fa-solid fa-chevron-down"></i>
+
+                <div class="product-proof" aria-label="Vista previa del flujo de clientes en RateTap">
+                    <div class="nfc-card-render">
+                        <div class="nfc-card-header">Tarjeta NFC RateTap</div>
+                        <div class="nfc-card-body">
+                            <span>Mesa 12 · Mesera Ana M.</span>
+                            <strong>Toca tu teléfono aquí</strong>
+                        </div>
+                        <div class="nfc-card-pulse" aria-hidden="true"></div>
+                    </div>
+
+                    <div class="phone-shell">
+                        <div class="phone-notch" aria-hidden="true"></div>
+                        <div class="phone-screen-stack">
+                            <div class="phone-screen-state screen-rating">
+                                <div class="screen-top">
+                                    <span class="screen-venue">La Brasa · Mesa 12</span>
+                                    <span class="screen-time">10s</span>
+                                </div>
+                                <p class="screen-kicker">Check-in de cliente</p>
+                                <h3 class="screen-title">¿Cómo estuvo tu cena hoy?</h3>
+                                <div class="rating-row">
+                                    <i class="fa-solid fa-star"></i>
+                                    <i class="fa-solid fa-star"></i>
+                                    <i class="fa-solid fa-star"></i>
+                                    <i class="fa-solid fa-star"></i>
+                                    <i class="fa-regular fa-star"></i>
+                                </div>
+                                <p class="screen-note">Toca una estrella para continuar</p>
+                                <button class="screen-action screen-action-muted" type="button">Continuar</button>
+                            </div>
+
+                            <div class="phone-screen-state screen-low">
+                                <p class="screen-kicker">Feedback privado</p>
+                                <h3 class="screen-title">¿Qué debemos corregir ahora?</h3>
+                                <p class="screen-note">Elige hasta 2 opciones</p>
+                                <div class="feedback-chips">
+                                    <span>Tiempo de espera</span>
+                                    <span>Calidad de comida</span>
+                                    <span>Servicio</span>
+                                </div>
+                                <label class="screen-label" for="feedback-low-es">¿Algo más?</label>
+                                <textarea class="feedback-textarea" id="feedback-low-es" rows="3" readonly>Olvidaron nuestras bebidas</textarea>
+                                <button class="screen-action screen-action-muted" type="button">Enviar a gerente</button>
+                            </div>
+
+                            <div class="phone-screen-state screen-high">
+                                <p class="screen-kicker">Excelente experiencia</p>
+                                <div class="screen-check">
+                                    <i class="fa-solid fa-circle-check"></i>
+                                    <span>Gracias por tu calificación de 5 estrellas</span>
+                                </div>
+                                <h3 class="screen-title">¿Nos ayudas con una reseña en Google?</h3>
+                                <p class="screen-note">Te toma unos 20 segundos</p>
+                                <button class="screen-action" type="button"><i class="fa-brands fa-google"></i> Dejar reseña en Google</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </section>
@@ -194,7 +238,7 @@
     </section>
 
     <!-- Benefits Section -->
-    <section class="section" id="benefits">
+    <section class="section" id="features">
         <div class="container">
             <div class="grid-2">
                 <div>
@@ -452,6 +496,10 @@
                     <div style="font-size: 0.85rem;">
                         <a href="#" data-i18n="footer-privacy" style="margin-right: 1rem;">Privacidad</a>
                         <a href="#" data-i18n="footer-terms">Términos</a>
+                    </div>
+                    <div class="footer-locale">
+                        <i class="fa-solid fa-earth-americas" aria-hidden="true"></i>
+                        <a href="/" lang="en">English</a>
                     </div>
                 </div>
                 <div style="display: flex; gap: 1rem;">

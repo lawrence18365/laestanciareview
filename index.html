@@ -213,64 +213,108 @@
 <body>
 
     <!-- Navigation -->
-    <nav class="navbar navbar-transparent" id="navbar">
+    <nav class="navbar proof-nav" id="navbar">
         <div class="nav-container">
-            <a href="#" class="nav-brand">
+            <a href="/" class="nav-brand">
                 <i class="fa-solid fa-nfc-symbol fa-lg" aria-label="NFC Symbol"></i>
                 RateTap
             </a>
             
             <div class="nav-menu" id="nav-menu">
                 <a href="#how-it-works" class="nav-link" data-i18n="nav-link-how">How It Works</a>
-                <a href="#benefits" class="nav-link" data-i18n="nav-link-benefits">Benefits</a>
                 <a href="#features" class="nav-link" data-i18n="nav-link-features">Features</a>
+                <a href="pricing" class="nav-link">Pricing</a>
                 <a href="#faq" class="nav-link" data-i18n="nav-link-faq">FAQ</a>
             </div>
             
             <div class="nav-actions">
-                <div class="language-switcher">
-                    <button class="lang-btn active" data-lang="en">EN</button>
-                    <button class="lang-btn" data-lang="es">ES</button>
-                </div>
-                <a href="#contact" class="btn btn-primary" data-i18n="nav-cta">Get Started</a>
+                <a href="demo" class="btn btn-primary" data-i18n="nav-cta">Book a demo</a>
                 <button class="nav-toggle" id="nav-toggle"><i class="fa-solid fa-bars"></i></button>
             </div>
         </div>
     </nav>
 
     <!-- Hero Section -->
-    <section class="hero hero-fullscreen-bg" id="hero" style="background-image: url('optimized-image-example-1.webp');">
+    <section class="hero proof-hero" id="hero">
         <div class="container">
-            <div class="hero-content" style="text-align: center; max-width: 900px; margin: 0 auto;">
-                <span class="hero-eyebrow" data-i18n="hero-eyebrow">Restaurant Review Revolution</span>
-                <h1 class="gradient-text" data-i18n="hero-title">Turn Every Table into a 5-Star Review</h1>
-                <p data-i18n="hero-subtitle" style="font-size: 1.25rem; max-width: 700px; margin-left: auto; margin-right: auto;">
-                    Give each staff member a unique NFC card. Guests tap to share their experience. Get real-time feedback and resolve concerns before they leave the building.
-                </p>
-                
-                <div style="display: flex; gap: 1rem; flex-wrap: wrap; justify-content: center;">
-                    <a href="#contact" class="btn btn-primary" data-i18n="hero-cta-primary">Start Free Trial</a>
-                    <a href="#how-it-works" class="btn btn-secondary" data-i18n="hero-cta-secondary">How It Works</a>
-                </div>
-                
-                <div class="hero-metrics">
-                    <div class="metric">
-                        <div class="metric-number">3x</div>
-                        <div class="metric-label" data-i18n="metric-1-label">More Reviews</div>
+            <div class="proof-hero-grid">
+                <div class="hero-panel">
+                    <span class="hero-eyebrow">NFC guest feedback flow</span>
+                    <h1>Catch bad visits before they leave<br>Send happy guests to Google reviews</h1>
+                    <p class="proof-hero-subtitle">
+                        Give each staff member an NFC card. Guests tap once, leave quick feedback, and the flow branches automatically to private recovery or public review.
+                    </p>
+                    <div class="hero-actions">
+                        <a href="demo" class="btn btn-primary">Book a demo</a>
+                        <a href="#how-it-works" class="hero-link">See how it works <i class="fa-solid fa-arrow-right"></i></a>
                     </div>
-                    <div class="metric">
-                        <div class="metric-number">85%</div>
-                        <div class="metric-label" data-i18n="metric-2-label">Issues Resolved</div>
-                    </div>
-                    <div class="metric">
-                        <div class="metric-number">24/7</div>
-                        <div class="metric-label" data-i18n="metric-3-label">Monitoring</div>
+                    <div class="hero-proof-row">
+                        <span class="hero-proof-badge">
+                            <strong>+0.8&#9733;</strong>
+                            <span>Casa Miguel, Austin in 45 days</span>
+                        </span>
+                        <a href="case-studies" class="hero-proof-link">Read case study <i class="fa-solid fa-arrow-right"></i></a>
                     </div>
                 </div>
-            </div>
-            
-            <div class="scroll-indicator">
-                <i class="fa-solid fa-chevron-down"></i>
+
+                <div class="product-proof" aria-label="RateTap guest flow preview">
+                    <div class="nfc-card-render">
+                        <div class="nfc-card-header">RateTap NFC Card</div>
+                        <div class="nfc-card-body">
+                            <span>Table 12 · Server Ana M.</span>
+                            <strong>Tap your phone here</strong>
+                        </div>
+                        <div class="nfc-card-pulse" aria-hidden="true"></div>
+                    </div>
+
+                    <div class="phone-shell">
+                        <div class="phone-notch" aria-hidden="true"></div>
+                        <div class="phone-screen-stack">
+                            <div class="phone-screen-state screen-rating">
+                                <div class="screen-top">
+                                    <span class="screen-venue">La Brasa · Table 12</span>
+                                    <span class="screen-time">10s</span>
+                                </div>
+                                <p class="screen-kicker">Guest check-in</p>
+                                <h3 class="screen-title">How was dinner tonight?</h3>
+                                <div class="rating-row">
+                                    <i class="fa-solid fa-star"></i>
+                                    <i class="fa-solid fa-star"></i>
+                                    <i class="fa-solid fa-star"></i>
+                                    <i class="fa-solid fa-star"></i>
+                                    <i class="fa-regular fa-star"></i>
+                                </div>
+                                <p class="screen-note">Tap a star to continue</p>
+                                <button class="screen-action screen-action-muted" type="button">Continue</button>
+                            </div>
+
+                            <div class="phone-screen-state screen-low">
+                                <p class="screen-kicker">Private feedback</p>
+                                <h3 class="screen-title">What should we fix right now?</h3>
+                                <p class="screen-note">Choose up to 2 issues</p>
+                                <div class="feedback-chips">
+                                    <span>Wait time</span>
+                                    <span>Food quality</span>
+                                    <span>Service</span>
+                                </div>
+                                <label class="screen-label" for="feedback-low-en">Anything else?</label>
+                                <textarea class="feedback-textarea" id="feedback-low-en" rows="3" readonly>Server forgot our drinks</textarea>
+                                <button class="screen-action screen-action-muted" type="button">Send to manager</button>
+                            </div>
+
+                            <div class="phone-screen-state screen-high">
+                                <p class="screen-kicker">Great experience</p>
+                                <div class="screen-check">
+                                    <i class="fa-solid fa-circle-check"></i>
+                                    <span>Thanks for the 5-star rating</span>
+                                </div>
+                                <h3 class="screen-title">Would you post this on Google?</h3>
+                                <p class="screen-note">It takes about 20 seconds</p>
+                                <button class="screen-action" type="button"><i class="fa-brands fa-google"></i> Leave a Google review</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </section>
@@ -309,7 +353,7 @@
     </section>
 
     <!-- Benefits Section -->
-    <section class="section" id="benefits">
+    <section class="section" id="features">
         <div class="container">
             <div class="grid-2">
                 <div>
@@ -571,6 +615,10 @@
                     <div style="font-size: 0.85rem;">
                         <a href="#" data-i18n="footer-privacy" style="margin-right: 1rem;">Privacy</a>
                         <a href="#" data-i18n="footer-terms">Terms</a>
+                    </div>
+                    <div class="footer-locale">
+                        <i class="fa-solid fa-earth-americas" aria-hidden="true"></i>
+                        <a href="/es/" lang="es">Español</a>
                     </div>
                 </div>
                 <div style="display: flex; gap: 1rem;">

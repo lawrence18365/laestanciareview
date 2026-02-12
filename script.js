@@ -19,8 +19,44 @@ const SPANISH_SLUG_MAP = {
     'restaurant-review-management-software': 'software-gestion-resenas-restaurantes'
 };
 
+const IMAGE_DIMENSIONS = {
+    'assets/og-image.png': { width: 2848, height: 1504 },
+    'graphic_sales.jpeg': { width: 1080, height: 1350 },
+    'hero.png': { width: 1408, height: 768 },
+    'logo.png': { width: 1024, height: 1024 },
+    'og-image.png': { width: 2848, height: 1504 },
+    'optimized-image-example-1.webp': { width: 2752, height: 1536 }
+};
+
+function isSpanishPage() {
+    const path = window.location.pathname;
+    return path === '/es' || path.startsWith('/es/');
+}
+
+function getPrimaryCtaLabel() {
+    return isSpanishPage() ? 'Agendar demo' : 'Book a demo';
+}
+
+function getPrimaryCtaFallbackHref() {
+    return isSpanishPage() ? '/es/demo' : '/demo';
+}
+
 function getNavbarElement() {
     return document.getElementById('navbar') || document.querySelector('.navbar');
+}
+
+function normalizeHref(href) {
+    if (!href) return '';
+    if (href.startsWith('#') || href.startsWith('mailto:') || href.startsWith('tel:')) {
+        return href;
+    }
+
+    try {
+        const url = new URL(href, window.location.href);
+        return `${url.pathname}${url.search}${url.hash}`;
+    } catch (error) {
+        return href;
+    }
 }
 
 function showLanguageSuggestion() {
@@ -65,7 +101,7 @@ function showLanguageSuggestion() {
             margin-top: 20px;
         }
         .btn-banner-primary {
-            background: #3B82F6;
+            background: var(--primary);
             color: white;
             border: none;
             padding: 12px;
@@ -75,7 +111,7 @@ function showLanguageSuggestion() {
             font-family: 'Outfit', sans-serif;
         }
         .btn-banner-primary:hover {
-            background: #2563EB;
+            background: var(--primary-dark);
             transform: scale(1.02);
         }
         .btn-banner-secondary {
@@ -137,13 +173,202 @@ window.dismissSuggestion = function() {
     if (banner) banner.remove();
 }
 
+function applyImagePerformanceTweaks() {
+    const images = document.querySelectorAll('img');
+    images.forEach(image => {
+        const src = image.getAttribute('src') || '';
+        const cleanSrc = src.split('?')[0];
+        const fileName = cleanSrc.split('/').pop();
+        const directMatch = IMAGE_DIMENSIONS[cleanSrc] || IMAGE_DIMENSIONS[fileName];
+        if (directMatch) {
+            if (!image.getAttribute('width')) image.setAttribute('width', String(directMatch.width));
+            if (!image.getAttribute('height')) image.setAttribute('height', String(directMatch.height));
+        }
+
+        if (!image.getAttribute('decoding')) {
+            image.setAttribute('decoding', 'async');
+        }
+
+        if (!image.getAttribute('loading')) {
+            const isCritical = Boolean(image.closest('nav, header, .hero'));
+            image.setAttribute('loading', isCritical ? 'eager' : 'lazy');
+        }
+    });
+}
+
+function standardizePrimaryCtas() {
+    const standardLabel = getPrimaryCtaLabel();
+    const primaryLinkSelector = 'a.btn.btn-primary[href]';
+
+    document.querySelectorAll(primaryLinkSelector).forEach(link => {
+        const href = normalizeHref(link.getAttribute('href')).toLowerCase();
+        const isDemoOrContactCta = href.includes('demo') || href === '#contact' || href === '/#contact';
+        const isProminentPlacement = Boolean(link.closest('.nav-actions, .hero, .hero-cta'));
+        if (!isDemoOrContactCta || !isProminentPlacement) return;
+
+        link.textContent = standardLabel;
+        link.setAttribute('aria-label', standardLabel);
+    });
+}
+
+function insertTrustStrip() {
+    if (document.querySelector('.trust-strip') || document.querySelector('.hero-trust') || document.querySelector('.hero-proof-row')) return;
+
+    const heroSection = document.querySelector('section.hero')
+        || document.querySelector('section.section.bg-muted[style*="padding-top"]');
+    if (!heroSection) return;
+
+    const items = isSpanishPage()
+        ? ['500+ restaurantes', 'Crecimiento promedio de 4.8★', 'Garantia de 30 dias']
+        : ['500+ restaurants', '4.8★ average rating growth', '30-day money-back guarantee'];
+
+    const trustStrip = document.createElement('section');
+    trustStrip.className = 'trust-strip';
+    trustStrip.innerHTML = `
+        <div class="container trust-strip-inner">
+            <div class="trust-item"><i class="fa-solid fa-store"></i><span>${items[0]}</span></div>
+            <div class="trust-item"><i class="fa-solid fa-star"></i><span>${items[1]}</span></div>
+            <div class="trust-item"><i class="fa-solid fa-shield-check"></i><span>${items[2]}</span></div>
+        </div>
+    `;
+
+    heroSection.insertAdjacentElement('afterend', trustStrip);
+}
+
+function removeFooterPlaceholderLinks() {
+    const placeholders = document.querySelectorAll('footer a[href="#"], .footer a[href="#"]');
+    placeholders.forEach(link => {
+        const listItem = link.closest('li');
+        if (listItem) {
+            listItem.remove();
+        } else {
+            link.remove();
+        }
+    });
+}
+
+function getFieldWrapper(form, field, wrappers) {
+    const wrapper = field.closest('.form-group');
+    if (wrapper && wrapper.closest('form') === form) return wrapper;
+    return wrappers.find(candidate => candidate.contains(field)) || field.parentElement;
+}
+
+function ensureNameField(form, restaurantField) {
+    let nameField = form.querySelector('#your-name, [name="your-name"]');
+    if (nameField) return nameField;
+
+    const restaurantWrapper = restaurantField.closest('.form-group') || restaurantField.parentElement;
+    if (!restaurantWrapper || !restaurantWrapper.parentElement) return null;
+
+    const nameWrapper = restaurantWrapper.cloneNode(true);
+    const input = nameWrapper.querySelector('input, textarea');
+    if (!input) return null;
+
+    const isSpanish = isSpanishPage();
+    input.type = 'text';
+    input.id = 'your-name';
+    input.name = 'your-name';
+    input.value = '';
+    input.required = true;
+    input.placeholder = isSpanish ? 'Tu Nombre' : 'Your Name';
+
+    const label = nameWrapper.querySelector('label');
+    if (label) {
+        label.textContent = isSpanish ? 'Tu Nombre' : 'Your Name';
+    }
+
+    restaurantWrapper.insertAdjacentElement('afterend', nameWrapper);
+    nameField = nameWrapper.querySelector('#your-name, [name="your-name"]');
+    return nameField;
+}
+
+function simplifyLeadForm(form) {
+    if (!form || form.classList.contains('lead-form-simplified')) return;
+
+    const restaurantField = form.querySelector('#restaurant-name, [name="restaurant-name"]');
+    let nameField = form.querySelector('#your-name, [name="your-name"]');
+    const emailField = form.querySelector('#email, [name="email"], input[type="email"]');
+    if (restaurantField && !nameField) {
+        nameField = ensureNameField(form, restaurantField);
+    }
+    if (!restaurantField || !nameField || !emailField) return;
+
+    let wrappers = Array.from(form.querySelectorAll('.form-group')).filter(wrapper => wrapper.closest('form') === form);
+    if (!wrappers.length) {
+        wrappers = Array.from(form.children).filter(child => {
+            return child.matches && child.matches('div') && child.querySelector('input, select, textarea');
+        });
+    }
+    if (!wrappers.length) return;
+
+    const requiredWrappers = new Set([
+        getFieldWrapper(form, restaurantField, wrappers),
+        getFieldWrapper(form, nameField, wrappers),
+        getFieldWrapper(form, emailField, wrappers)
+    ]);
+
+    const optionalWrappers = wrappers.filter(wrapper => !requiredWrappers.has(wrapper));
+    if (!optionalWrappers.length) return;
+
+    const details = document.createElement('details');
+    details.className = 'optional-form-details';
+
+    const summary = document.createElement('summary');
+    summary.textContent = isSpanishPage() ? 'Agregar detalles opcionales' : 'Add optional details';
+    details.appendChild(summary);
+
+    optionalWrappers.forEach(wrapper => {
+        wrapper.querySelectorAll('[required]').forEach(input => input.removeAttribute('required'));
+        details.appendChild(wrapper);
+    });
+
+    const submitButton = form.querySelector('button[type="submit"], input[type="submit"]');
+    if (submitButton) {
+        form.insertBefore(details, submitButton);
+    } else {
+        form.appendChild(details);
+    }
+
+    form.classList.add('lead-form-simplified');
+}
+
+function resolveStickyCtaHref() {
+    if (document.getElementById('contact')) return '#contact';
+
+    const candidate = document.querySelector('.nav-actions a.btn.btn-primary[href]')
+        || document.querySelector('.hero a.btn.btn-primary[href]')
+        || document.querySelector('a.btn.btn-primary[href]');
+    if (!candidate) return getPrimaryCtaFallbackHref();
+
+    const href = normalizeHref(candidate.getAttribute('href'));
+    if (!href || href === '#') return getPrimaryCtaFallbackHref();
+    return href;
+}
+
+function injectMobileStickyCta() {
+    if (document.querySelector('.mobile-sticky-cta')) return;
+    if (window.location.pathname.endsWith('/demo') || window.location.pathname.endsWith('/demo.html')) return;
+
+    const ctaBar = document.createElement('div');
+    ctaBar.className = 'mobile-sticky-cta';
+    ctaBar.innerHTML = `
+        <a class="btn btn-primary mobile-sticky-cta-btn" href="${resolveStickyCtaHref()}">${getPrimaryCtaLabel()}</a>
+    `;
+
+    document.body.appendChild(ctaBar);
+    document.body.classList.add('has-mobile-sticky-cta');
+}
+
 // Form handling
 function handleFormSubmit(event) {
     event.preventDefault();
     
     const form = event.target;
     const submitBtn = form.querySelector('button[type="submit"]');
+    if (!submitBtn) return;
+
     const originalText = submitBtn.textContent;
+    const originalDisplay = form.style.display;
     
     const isSpanish = window.location.pathname.includes('/es/');
     
@@ -172,7 +397,7 @@ function handleFormSubmit(event) {
         
         setTimeout(() => {
             successMessage.remove();
-            form.style.display = 'flex'; // Restore as flex container
+            form.style.display = originalDisplay || 'flex';
             form.reset();
         }, 5000);
     }, 2000);
@@ -243,14 +468,22 @@ document.addEventListener('DOMContentLoaded', () => {
     // Check location
     checkLocationAndSuggestLanguage();
 
+    // Quick-win UX enhancements
+    applyImagePerformanceTweaks();
+    standardizePrimaryCtas();
+    insertTrustStrip();
+    removeFooterPlaceholderLinks();
+
     // Form submission
-    const contactForm = document.getElementById('contact-form');
-    if (contactForm) {
-        contactForm.addEventListener('submit', handleFormSubmit);
-    }
+    const contactForms = document.querySelectorAll('#contact-form');
+    contactForms.forEach(form => {
+        simplifyLeadForm(form);
+        form.addEventListener('submit', handleFormSubmit);
+    });
 
     // Mobile menu toggle
     ensureMobileMenuToggle();
+    injectMobileStickyCta();
 
     // FAQ Accordion
     const faqItems = document.querySelectorAll('.faq-item');
