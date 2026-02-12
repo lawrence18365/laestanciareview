@@ -460,10 +460,19 @@ img {
 
 /* RESPONSIVE */
 @media (max-width: 768px) {
-    .nav-menu { display: none; }
+    .nav-container {
+        position: relative;
+        flex-wrap: wrap;
+        row-gap: 0.75rem;
+    }
+    .nav-menu {
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+    .nav-menu.is-collapsible { display: none; }
     .nav-toggle { display: block; }
     
-    .nav-menu.active {
+    .nav-menu.is-collapsible.active {
         display: flex;
         flex-direction: column;
         position: absolute;

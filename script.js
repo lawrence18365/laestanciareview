@@ -15,6 +15,14 @@ async function checkLocationAndSuggestLanguage() {
     }
 }
 
+const SPANISH_SLUG_MAP = {
+    'restaurant-review-management-software': 'software-gestion-resenas-restaurantes'
+};
+
+function getNavbarElement() {
+    return document.getElementById('navbar') || document.querySelector('.navbar');
+}
+
 function showLanguageSuggestion() {
     const banner = document.createElement('div');
     banner.className = 'language-suggestion-banner';
@@ -102,16 +110,24 @@ function showLanguageSuggestion() {
 
 window.redirectToSpanish = function() {
     localStorage.setItem('ratetap-lang-preference', 'es');
-    const currentPath = window.location.pathname;
+    const currentPath = window.location.pathname.replace(/\/+$/, '');
+    const query = window.location.search || '';
+    const hash = window.location.hash || '';
+
+    if (currentPath === '/es' || currentPath.startsWith('/es/')) {
+        return;
+    }
+
     let pageName = currentPath.split('/').pop();
-    
+
     // If clean URL is used, pageName might be empty (root) or just the slug
-    if (!pageName || pageName === 'index.html') {
-        window.location.href = '/es/';
+    if (!pageName || pageName === 'index' || pageName === 'index.html') {
+        window.location.href = `/es/${query}${hash}`;
     } else {
         // Remove .html extension if present (for local testing)
         pageName = pageName.replace('.html', '');
-        window.location.href = '/es/' + pageName;
+        const translatedSlug = SPANISH_SLUG_MAP[pageName] || pageName;
+        window.location.href = `/es/${translatedSlug}${query}${hash}`;
     }
 }
 
@@ -165,13 +181,61 @@ function handleFormSubmit(event) {
 // Mobile menu toggle
 function toggleMobileMenu() {
     const navMenu = document.querySelector('.nav-menu');
-    navMenu.classList.toggle('active');
-    
+    if (!navMenu) return;
+
+    const isActive = navMenu.classList.toggle('active');
+
     // Toggle menu-open class on navbar to prevent hiding on scroll
-    const navbar = document.getElementById('navbar');
+    const navbar = getNavbarElement();
     if (navbar) {
-        navbar.classList.toggle('menu-open');
+        navbar.classList.toggle('menu-open', isActive);
     }
+
+    const navToggle = document.querySelector('.nav-toggle');
+    if (navToggle) {
+        navToggle.setAttribute('aria-expanded', isActive ? 'true' : 'false');
+    }
+}
+
+function ensureMobileMenuToggle() {
+    const navMenu = document.querySelector('.nav-menu');
+    if (!navMenu) return;
+
+    let navToggle = document.querySelector('.nav-toggle');
+    if (!navToggle) {
+        const navContainer = navMenu.closest('.nav-container') || document.querySelector('.nav-container');
+        if (!navContainer) return;
+
+        navToggle = document.createElement('button');
+        navToggle.type = 'button';
+        navToggle.className = 'nav-toggle';
+        navToggle.innerHTML = '<i class="fa-solid fa-bars"></i>';
+        navToggle.setAttribute('aria-label', 'Toggle navigation menu');
+        navContainer.appendChild(navToggle);
+    }
+
+    if (!navMenu.id) {
+        navMenu.id = 'nav-menu';
+    }
+
+    navMenu.classList.add('is-collapsible');
+    navToggle.setAttribute('aria-controls', navMenu.id);
+    navToggle.setAttribute('aria-expanded', navMenu.classList.contains('active') ? 'true' : 'false');
+    navToggle.addEventListener('click', toggleMobileMenu);
+}
+
+function updateFaqIndicator(question, isExpanded) {
+    const icon = question.querySelector('i');
+    if (icon) {
+        icon.style.transform = isExpanded ? 'rotate(180deg)' : 'rotate(0deg)';
+    }
+
+    const textToggle = question.querySelector('.faq-toggle');
+    if (textToggle) {
+        textToggle.textContent = isExpanded ? '-' : '+';
+    }
+
+    question.setAttribute('aria-expanded', isExpanded ? 'true' : 'false');
 }
 
 // Initialize
@@ -186,15 +250,15 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Mobile menu toggle
-    const navToggle = document.querySelector('.nav-toggle');
-    if (navToggle) {
-        navToggle.addEventListener('click', toggleMobileMenu);
-    }
+    ensureMobileMenuToggle();
 
     // FAQ Accordion
     const faqItems = document.querySelectorAll('.faq-item');
     faqItems.forEach(item => {
         const question = item.querySelector('.faq-question');
+        if (!question) return;
+
+        updateFaqIndicator(question, item.classList.contains('active'));
         question.addEventListener('click', () => {
             const isActive = item.classList.contains('active');
             
@@ -203,10 +267,10 @@ document.addEventListener('DOMContentLoaded', () => {
             
             if (isActive) {
                 item.classList.remove('active');
-                question.querySelector('i').style.transform = 'rotate(0deg)';
+                updateFaqIndicator(question, false);
             } else {
                 item.classList.add('active');
-                question.querySelector('i').style.transform = 'rotate(180deg)';
+                updateFaqIndicator(question, true);
             }
         });
     });
@@ -214,22 +278,25 @@ document.addEventListener('DOMContentLoaded', () => {
     // Language switcher in navbar
     const langBtns = document.querySelectorAll('.lang-btn');
     langBtns.forEach(btn => {
-        btn.addEventListener('click', function() {
+        btn.addEventListener('click', function(event) {
             const lang = this.getAttribute('data-lang');
             if (lang === 'es') {
+                event.preventDefault();
                 redirectToSpanish();
-            } else {
-                // Already in English
+            } else if (lang === 'en') {
+                localStorage.setItem('ratetap-lang-preference', 'en');
             }
         });
     });
 
     // Header Scroll Effect & Parallax
-    const navbar = document.getElementById('navbar');
+    const navbar = getNavbarElement();
     const hero = document.getElementById('hero');
     let lastScrollY = window.scrollY;
     
     function handleScroll() {
+        if (!navbar) return;
+
         const currentScrollY = window.scrollY;
         
         // Header Hide/Show Logic (Always Transparent)
@@ -249,8 +316,10 @@ document.addEventListener('DOMContentLoaded', () => {
         //    hero.style.backgroundPositionY = `${currentScrollY * 0.5}px`;
         // }
     }
-    window.addEventListener('scroll', handleScroll);
-    handleScroll(); // Check initial state
+    if (navbar) {
+        window.addEventListener('scroll', handleScroll);
+        handleScroll(); // Check initial state
+    }
 
     // Mouse Move Parallax for Hero Metrics (3D Depth Effect)
     if (hero) {
