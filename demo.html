@@ -93,8 +93,7 @@ src="https://www.facebook.com/tr?id=1578821303344121&amp;ev=PageView&amp;noscrip
     <nav class="navbar">
         <div class="nav-container">
             <a href="/" class="nav-brand">
-                <i class="fa-solid fa-nfc-symbol fa-lg" aria-label="NFC Symbol"></i>
-                RateTap
+                <img src="/logo.png" alt="RateTap" style="height: 36px; width: auto;">
             </a>
             <div class="nav-menu">
                 <a href="/#how-it-works" class="nav-link">How It Works</a>
@@ -147,31 +146,33 @@ src="https://www.facebook.com/tr?id=1578821303344121&amp;ev=PageView&amp;noscrip
                 
                 <div class="card" style="background: white; border: 2px solid var(--border);">
                     <h3 class="mb-4">Schedule a Time</h3>
-                    <form id="demo-form" style="display: flex; flex-direction: column; gap: 1rem;">
+                    <form id="demo-form" action="https://formsubmit.co/hello@ratetap.com" method="POST" style="display: flex; flex-direction: column; gap: 1rem;">
+                        <input type="hidden" name="_subject" value="New Demo Request">
+                        <input type="hidden" name="_next" value="https://ratetapmx.com/demo?thanks=1">
                         <div style="display: flex; gap: 1rem;">
                             <div style="flex: 1;">
                                 <label style="font-weight: 600; font-size: 0.9rem;">First Name</label>
-                                <input type="text" required class="calc-input" style="margin-bottom: 0; padding: 0.5rem;">
+                                <input type="text" name="first_name" required class="calc-input" style="margin-bottom: 0; padding: 0.5rem;">
                             </div>
                             <div style="flex: 1;">
                                 <label style="font-weight: 600; font-size: 0.9rem;">Last Name</label>
-                                <input type="text" required class="calc-input" style="margin-bottom: 0; padding: 0.5rem;">
+                                <input type="text" name="last_name" required class="calc-input" style="margin-bottom: 0; padding: 0.5rem;">
                             </div>
                         </div>
-                        
+
                         <div>
                             <label style="font-weight: 600; font-size: 0.9rem;">Restaurant Name</label>
-                            <input type="text" required class="calc-input" style="margin-bottom: 0; padding: 0.5rem;">
+                            <input type="text" name="restaurant_name" required class="calc-input" style="margin-bottom: 0; padding: 0.5rem;">
                         </div>
-                        
+
                         <div>
                             <label style="font-weight: 600; font-size: 0.9rem;">Email</label>
-                            <input type="email" required class="calc-input" style="margin-bottom: 0; padding: 0.5rem;">
+                            <input type="email" name="email" required class="calc-input" style="margin-bottom: 0; padding: 0.5rem;">
                         </div>
 
                         <div>
                             <label style="font-weight: 600; font-size: 0.9rem;">Preferred Date</label>
-                            <input type="date" required class="calc-input" style="margin-bottom: 0; padding: 0.5rem;">
+                            <input type="date" name="preferred_date" required class="calc-input" style="margin-bottom: 0; padding: 0.5rem;">
                         </div>
                         
                         <button type="submit" class="btn btn-primary" style="margin-top: 1rem;">Confirm Booking</button>
@@ -188,7 +189,7 @@ src="https://www.facebook.com/tr?id=1578821303344121&amp;ev=PageView&amp;noscrip
             <div class="grid-4" style="align-items: flex-start;">
                 <div>
                     <h4 style="display: flex; align-items: center; gap: 0.5rem;">
-                        <i class="fa-solid fa-nfc-symbol"></i> RateTap
+                        <img src="/logo.png" alt="RateTap" style="height: 28px; width: auto;">
                     </h4>
                     <p style="font-size: 0.9rem; color: var(--text-light);">Turn tables into 5-star reviews.</p>
                 </div>

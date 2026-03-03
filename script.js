@@ -474,11 +474,10 @@ document.addEventListener('DOMContentLoaded', () => {
     insertTrustStrip();
     removeFooterPlaceholderLinks();
 
-    // Form submission
+    // Form submission - handled by Formsubmit.co (no JS override)
     const contactForms = document.querySelectorAll('#contact-form');
     contactForms.forEach(form => {
         simplifyLeadForm(form);
-        form.addEventListener('submit', handleFormSubmit);
     });
 
     // Mobile menu toggle
