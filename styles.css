@@ -240,7 +240,7 @@ img {
     gap: 0.75rem;
     color: var(--primary);
 }
-.nav-logo { height: 40px; }
+.nav-logo { height: 40px; width: auto; }
 
 .nav-menu {
     display: flex;
