@@ -23,7 +23,7 @@ const IMAGE_DIMENSIONS = {
     'assets/og-image.png': { width: 2848, height: 1504 },
     'graphic_sales.jpeg': { width: 1080, height: 1350 },
     'hero.png': { width: 1408, height: 768 },
-    'logo.png': { width: 1024, height: 1024 },
+    'ratetap-logo.png': { width: 1024, height: 1024 },
     'og-image.png': { width: 2848, height: 1504 },
     'optimized-image-example-1.webp': { width: 2752, height: 1536 }
 };
@@ -53,6 +53,8 @@ function normalizeHref(href) {
 
     try {
         const url = new URL(href, window.location.href);
+        // If it's a file:// protocol (local dev), just return the original href to avoid absolute file paths
+        if (url.protocol === 'file:') return href;
         return `${url.pathname}${url.search}${url.hash}`;
     } catch (error) {
         return href;
@@ -73,7 +75,7 @@ function showLanguageSuggestion() {
         </div>
     `;
     document.body.appendChild(banner);
-    
+
     // Add FLAT DESIGN styles for the banner dynamically
     const style = document.createElement('style');
     style.textContent = `
@@ -101,7 +103,7 @@ function showLanguageSuggestion() {
             margin-top: 20px;
         }
         .btn-banner-primary {
-            background: var(--primary);
+            background: var(--brand-charcoal);
             color: white;
             border: none;
             padding: 12px;
@@ -111,7 +113,7 @@ function showLanguageSuggestion() {
             font-family: 'Outfit', sans-serif;
         }
         .btn-banner-primary:hover {
-            background: var(--primary-dark);
+            background: #000;
             transform: scale(1.02);
         }
         .btn-banner-secondary {
@@ -144,7 +146,7 @@ function showLanguageSuggestion() {
     document.head.appendChild(style);
 }
 
-window.redirectToSpanish = function() {
+window.redirectToSpanish = function () {
     localStorage.setItem('ratetap-lang-preference', 'es');
     const currentPath = window.location.pathname.replace(/\/+$/, '');
     const query = window.location.search || '';
@@ -167,7 +169,7 @@ window.redirectToSpanish = function() {
     }
 }
 
-window.dismissSuggestion = function() {
+window.dismissSuggestion = function () {
     localStorage.setItem('ratetap-lang-preference', 'en');
     const banner = document.querySelector('.language-suggestion-banner');
     if (banner) banner.remove();
@@ -219,16 +221,16 @@ function insertTrustStrip() {
     if (!heroSection) return;
 
     const items = isSpanishPage()
-        ? ['500+ restaurantes', 'Crecimiento promedio de 4.8★', 'Garantia de 30 dias']
+        ? ['500+ restaurantes', 'Crecimiento promedio de 4.8★', 'Garantía de 30 días']
         : ['500+ restaurants', '4.8★ average rating growth', '30-day money-back guarantee'];
 
     const trustStrip = document.createElement('section');
-    trustStrip.className = 'trust-strip';
+    trustStrip.className = 'trust-strip reveal';
     trustStrip.innerHTML = `
         <div class="container trust-strip-inner">
             <div class="trust-item"><i class="fa-solid fa-store"></i><span>${items[0]}</span></div>
             <div class="trust-item"><i class="fa-solid fa-star"></i><span>${items[1]}</span></div>
-            <div class="trust-item"><i class="fa-solid fa-shield-check"></i><span>${items[2]}</span></div>
+            <div class="trust-item"><i class="fa-solid fa-shield-halved"></i><span>${items[2]}</span></div>
         </div>
     `;
 
@@ -362,24 +364,24 @@ function injectMobileStickyCta() {
 // Form handling
 function handleFormSubmit(event) {
     event.preventDefault();
-    
+
     const form = event.target;
     const submitBtn = form.querySelector('button[type="submit"]');
     if (!submitBtn) return;
 
     const originalText = submitBtn.textContent;
     const originalDisplay = form.style.display;
-    
+
     const isSpanish = window.location.pathname.includes('/es/');
-    
+
     submitBtn.textContent = isSpanish ? 'Procesando...' : 'Processing...';
     submitBtn.disabled = true;
-    
+
     // Simulate form submission
     setTimeout(() => {
         submitBtn.textContent = originalText;
         submitBtn.disabled = false;
-        
+
         const successMessage = document.createElement('div');
         successMessage.style.padding = '1rem';
         successMessage.style.marginTop = '1rem';
@@ -387,14 +389,14 @@ function handleFormSubmit(event) {
         successMessage.style.color = '#065F46'; // Green 800
         successMessage.style.fontWeight = '600';
         successMessage.style.textAlign = 'center';
-        
+
         successMessage.textContent = isSpanish
             ? '¡Gracias! Te contactaremos pronto.'
             : 'Thank you! We\'ll be in touch shortly.';
-        
+
         form.parentNode.insertBefore(successMessage, form);
         form.style.display = 'none';
-        
+
         setTimeout(() => {
             successMessage.remove();
             form.style.display = originalDisplay || 'flex';
@@ -452,7 +454,9 @@ function ensureMobileMenuToggle() {
 function updateFaqIndicator(question, isExpanded) {
     const icon = question.querySelector('i');
     if (icon) {
-        icon.style.transform = isExpanded ? 'rotate(180deg)' : 'rotate(0deg)';
+        icon.classList.remove('fa-plus', 'fa-minus', 'fa-chevron-down', 'fa-chevron-up');
+        icon.classList.add(isExpanded ? 'fa-minus' : 'fa-plus');
+        icon.style.transform = '';
     }
 
     const textToggle = question.querySelector('.faq-toggle');
@@ -493,10 +497,10 @@ document.addEventListener('DOMContentLoaded', () => {
         updateFaqIndicator(question, item.classList.contains('active'));
         question.addEventListener('click', () => {
             const isActive = item.classList.contains('active');
-            
+
             // Close others (optional, keep if you want accordion style)
             // faqItems.forEach(faqItem => faqItem.classList.remove('active'));
-            
+
             if (isActive) {
                 item.classList.remove('active');
                 updateFaqIndicator(question, false);
@@ -510,7 +514,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Language switcher in navbar
     const langBtns = document.querySelectorAll('.lang-btn');
     langBtns.forEach(btn => {
-        btn.addEventListener('click', function(event) {
+        btn.addEventListener('click', function (event) {
             const lang = this.getAttribute('data-lang');
             if (lang === 'es') {
                 event.preventDefault();
@@ -521,57 +525,77 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // Header Scroll Effect & Parallax
+    // Intersection Observer for Reveal Animations
+    const observerOptions = {
+        threshold: 0.1,
+        rootMargin: '0px 0px -50px 0px'
+    };
+
+    const revealObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('revealed');
+                // Optional: stop observing once revealed
+                // revealObserver.unobserve(entry.target);
+            }
+        });
+    }, observerOptions);
+
+    document.querySelectorAll('.reveal').forEach(el => {
+        revealObserver.observe(el);
+    });
+
+    // Header Scroll Effect
     const navbar = getNavbarElement();
-    const hero = document.getElementById('hero');
     let lastScrollY = window.scrollY;
-    
+
     function handleScroll() {
         if (!navbar) return;
-
         const currentScrollY = window.scrollY;
-        
-        // Header Hide/Show Logic (Always Transparent)
-        // Hide when scrolling down, show when scrolling up
-        // BUT: Keep visible if menu is open
         const isMenuOpen = navbar.classList.contains('menu-open');
-        
+
         if (!isMenuOpen && currentScrollY > lastScrollY && currentScrollY > 100) {
             navbar.classList.add('nav-hidden');
         } else {
             navbar.classList.remove('nav-hidden');
         }
+
+        // Add shadow/background on scroll
+        if (currentScrollY > 50) {
+            navbar.style.backgroundColor = 'rgba(255, 255, 255, 0.9)';
+            navbar.style.boxShadow = '0 10px 30px -10px rgba(0, 0, 0, 0.1)';
+        } else {
+            navbar.style.backgroundColor = 'rgba(255, 255, 255, 0.7)';
+            navbar.style.boxShadow = 'inset 0 1px 1px rgba(255, 255, 255, 0.9), 0 8px 32px rgba(0, 0, 0, 0.04)';
+        }
+
         lastScrollY = currentScrollY;
-        
-        // Simple Parallax for Hero Background - DISABLED for Fixed Effect
-        // if (hero) {
-        //    hero.style.backgroundPositionY = `${currentScrollY * 0.5}px`;
-        // }
     }
     if (navbar) {
-        window.addEventListener('scroll', handleScroll);
+        window.addEventListener('scroll', handleScroll, { passive: true });
         handleScroll(); // Check initial state
     }
 
     // Mouse Move Parallax for Hero Metrics (3D Depth Effect)
+    const hero = document.querySelector('.hero');
     if (hero) {
         hero.addEventListener('mousemove', (e) => {
             const moveX = (e.clientX - window.innerWidth / 2) * 0.01;
             const moveY = (e.clientY - window.innerHeight / 2) * 0.01;
-            
+
             const metrics = document.querySelectorAll('.hero-fullscreen-bg .metric');
             metrics.forEach((metric, index) => {
                 const depth = (index + 1) * 2; // Different depth for each card
                 metric.style.transform = `translate(${moveX * depth}px, ${moveY * depth}px)`;
             });
         });
-        
+
         // Reset on mouse leave
         hero.addEventListener('mouseleave', () => {
-             const metrics = document.querySelectorAll('.hero-fullscreen-bg .metric');
-             metrics.forEach(metric => {
-                 metric.style.transform = 'translate(0, 0)';
-             });
+            const metrics = document.querySelectorAll('.hero-fullscreen-bg .metric');
+            metrics.forEach(metric => {
+                metric.style.transform = 'translate(0, 0)';
+            });
         });
     }
 });

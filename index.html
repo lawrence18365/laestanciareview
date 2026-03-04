@@ -1,553 +1,333 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RateTap - Turn Every Table into a 5-Star Review with NFC Cards</title>
-    <meta name="description" content="Transform your restaurant's reputation with NFC cards that capture reviews at the table. Make it effortless for guests to share feedback and resolve concerns before they leave.">
-    <meta name="keywords" content="restaurant review software, NFC review cards, Google reviews for restaurants, restaurant reputation management, staff performance tracking, guest feedback system">
+    <title>RateTap - Turn Every Table into a 5-Star Review</title>
+    <meta name="description"
+        content="Capture 5-star Google reviews instantly with RateTap NFC cards. Resolve guest concerns in real-time.">
 
-    <!-- Canonical & Hreflang -->
-    <link rel="canonical" href="https://ratetap.com/" />
-    <link rel="alternate" hreflang="en-US" href="https://ratetap.com/" />
-    <link rel="alternate" hreflang="es-MX" href="https://ratetap.com/es/" />
-    <link rel="alternate" hreflang="x-default" href="https://ratetap.com/" />
-
-    <!-- Preload Critical Assets -->
     <link rel="preload" href="styles.css" as="style">
-    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" as="style">
-
-    <!-- Open Graph -->
-    <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://ratetap.com/" />
-    <meta property="og:title" content="RateTap - Turn Every Table into a 5-Star Review with NFC Cards" />
-    <meta property="og:description" content="Transform your restaurant's reputation with NFC cards that capture reviews at the table. Make it effortless for guests to share feedback and resolve concerns before they leave." />
-    <meta property="og:image" content="https://ratetap.com/assets/og-image.png" />
-    <meta property="og:locale" content="en_US" />
-    <meta property="og:locale:alternate" content="es_MX" />
-    <meta property="og:site_name" content="RateTap" />
-
-    <!-- Twitter Card -->
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:site" content="@ratetap" />
-    <meta name="twitter:title" content="RateTap - Turn Every Table into a 5-Star Review with NFC Cards" />
-    <meta name="twitter:description" content="Transform your restaurant's reputation with NFC cards. Resolve guest concerns in real-time before they leave." />
-    <meta name="twitter:image" content="https://ratetap.com/assets/og-image.png" />
-
-    <!-- Fonts & Icons -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <!-- Styles -->
     <link rel="stylesheet" href="styles.css">
-
-    <!-- Structured Data -->
-    <script type="application/ld+json">
-    {
-        "@context": "https://schema.org",
-        "@graph": [
-            {
-                "@type": "Organization",
-                "@id": "https://ratetap.com/#organization",
-                "name": "RateTap",
-                "url": "https://ratetap.com",
-                "logo": {
-                    "@type": "ImageObject",
-                    "url": "https://ratetap.com/assets/logo.png"
-                },
-                "description": "Restaurant review management software with NFC cards that capture Google reviews at the table.",
-                "sameAs": [
-                    "https://twitter.com/ratetap",
-                    "https://instagram.com/ratetap",
-                    "https://linkedin.com/company/ratetap"
-                ],
-                "contactPoint": [
-                    {
-                        "@type": "ContactPoint",
-                        "telephone": "+1-800-RATETAP",
-                        "contactType": "sales",
-                        "areaServed": ["US", "MX", "CA"],
-                        "availableLanguage": ["English", "Spanish"]
-                    }
-                ]
-            },
-            {
-                "@type": "WebSite",
-                "@id": "https://ratetap.com/#website",
-                "url": "https://ratetap.com",
-                "name": "RateTap",
-                "publisher": {"@id": "https://ratetap.com/#organization"},
-                "inLanguage": ["en-US", "es-MX"]
-            },
-            {
-                "@type": "SoftwareApplication",
-                "name": "RateTap",
-                "applicationCategory": "BusinessApplication",
-                "operatingSystem": "Web, iOS, Android",
-                "aggregateRating": {
-                    "ratingValue": "4.9",
-                    "ratingCount": "384"
-                },
-                "description": "NFC card software for restaurants to increase Google reviews and track staff performance."
-            },
-            {
-                "@type": "FAQPage",
-                "mainEntity": [
-                    {
-                        "@type": "Question",
-                        "name": "Do guests need an app to use RateTap?",
-                        "acceptedAnswer": {
-                            "@type": "Answer",
-                            "text": "No. Guests just tap their phone on the NFC card (iPhone or Android) and it opens in their browser instantly."
-                        }
-                    },
-                    {
-                        "@type": "Question",
-                        "name": "How does feedback routing work?",
-                        "acceptedAnswer": {
-                            "@type": "Answer",
-                            "text": "Guests who rate their experience highly are encouraged to share on Google. Those who want to share concerns can reach you directly through an instant feedback form, giving you the chance to resolve issues in real-time. All guests can still leave public reviews if they choose."
-                        }
-                    }
-                ]
-            },
-            {
-                "@type": "LocalBusiness",
-                "name": "RateTap - Mexico City",
-                "address": {
-                    "@type": "PostalAddress",
-                    "streetAddress": "Av. Paseo de la Reforma 296",
-                    "addressLocality": "Ciudad de Mexico",
-                    "addressRegion": "CDMX",
-                    "postalCode": "06600",
-                    "addressCountry": "MX"
-                },
-                "geo": {
-                    "@type": "GeoCoordinates",
-                    "latitude": "19.4326",
-                    "longitude": "-99.1332"
-                },
-                "areaServed": "Mexico"
-            },
-            {
-                "@type": "LocalBusiness",
-                "name": "RateTap - New York",
-                "address": {
-                    "@type": "PostalAddress",
-                    "streetAddress": "110 Wall St, Suite 502",
-                    "addressLocality": "New York",
-                    "addressRegion": "NY",
-                    "postalCode": "10005",
-                    "addressCountry": "US"
-                },
-                "geo": {
-                    "@type": "GeoCoordinates",
-                    "latitude": "40.7128",
-                    "longitude": "-74.0060"
-                },
-                "areaServed": "United States"
-            },
-            {
-                "@type": "LocalBusiness",
-                "name": "RateTap - Vancouver",
-                "address": {
-                    "@type": "PostalAddress",
-                    "streetAddress": "1055 W Georgia St",
-                    "addressLocality": "Vancouver",
-                    "addressRegion": "BC",
-                    "postalCode": "V6E 3P3",
-                    "addressCountry": "CA"
-                },
-                "geo": {
-                    "@type": "GeoCoordinates",
-                    "latitude": "49.2827",
-                    "longitude": "-123.1207"
-                },
-                "areaServed": "Canada"
-            },
-            {
-                "@type": "Review",
-                "itemReviewed": {"@id": "https://ratetap.com/#organization"},
-                "reviewRating": {"@type": "Rating", "ratingValue": "5", "bestRating": "5"},
-                "author": {"@type": "Person", "name": "Maria Rodriguez"},
-                "reviewBody": "We went from 127 to 412 reviews in 3 months. The real-time feedback lets us resolve issues before guests even leave.",
-                "datePublished": "2025-11-15"
-            },
-            {
-                "@type": "Review",
-                "itemReviewed": {"@id": "https://ratetap.com/#organization"},
-                "reviewRating": {"@type": "Rating", "ratingValue": "5", "bestRating": "5"},
-                "author": {"@type": "Person", "name": "David Chen"},
-                "reviewBody": "The staff tracking is a game changer. My servers compete to get the most mentions now. We've collected 287 reviews in just 6 weeks.",
-                "datePublished": "2025-10-22"
-            },
-            {
-                "@type": "Review",
-                "itemReviewed": {"@id": "https://ratetap.com/#organization"},
-                "reviewRating": {"@type": "Rating", "ratingValue": "5", "bestRating": "5"},
-                "author": {"@type": "Person", "name": "Jennifer Walsh"},
-                "reviewBody": "Setup took 10 minutes. No app for guests to download. Just tap and done. Brilliant. Our Google rating jumped from 4.1 to 4.7 stars.",
-                "datePublished": "2025-12-01"
-            }
-        ]
-    }
-    </script>
-<!-- Meta Pixel Code -->
-<script>
-!function(f,b,e,v,n,t,s)
-{if(f.fbq)return;n=f.fbq=function(){n.callMethod?
-n.callMethod.apply(n,arguments):n.queue.push(arguments)};
-if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
-n.queue=[];t=b.createElement(e);t.async=!0;
-t.src=v;s=b.getElementsByTagName(e)[0];
-s.parentNode.insertBefore(t,s)}(window, document,'script',
-'https://connect.facebook.net/en_US/fbevents.js');
-fbq('init', '1578821303344121');
-fbq('track', 'PageView');
-</script>
-<noscript><img height="1" width="1" style="display:none"
-src="https://www.facebook.com/tr?id=1578821303344121&amp;ev=PageView&amp;noscript=1"
-/></noscript>
-<!-- End Meta Pixel Code -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
+
 <body>
 
+    <div class="ambient-canvas"></div>
+
     <!-- Navigation -->
-    <nav class="navbar proof-nav" id="navbar">
-        <div class="nav-container">
-            <a href="/" class="nav-brand">
-                <img src="/logo.png" alt="RateTap" style="height: 36px; width: auto;">
-            </a>
-            
-            <div class="nav-menu" id="nav-menu">
-                <a href="#how-it-works" class="nav-link" data-i18n="nav-link-how">How It Works</a>
-                <a href="#features" class="nav-link" data-i18n="nav-link-features">Features</a>
-                <a href="#faq" class="nav-link" data-i18n="nav-link-faq">FAQ</a>
-            </div>
-            
-            <div class="nav-actions">
-                <a href="demo" class="btn btn-primary" data-i18n="nav-cta">Book a demo</a>
-                <button class="nav-toggle" id="nav-toggle"><i class="fa-solid fa-bars"></i></button>
-            </div>
+    <nav class="navbar" id="navbar">
+        <a href="index.html" class="nav-brand">
+            <img src="assets/ratetap-logo.png" alt="RateTap">
+        </a>
+
+        <div class="nav-menu" id="nav-menu">
+            <a href="#how-it-works" class="nav-link">How It Works</a>
+            <a href="#features" class="nav-link">Features</a>
+            <a href="#faq" class="nav-link">FAQ</a>
+        </div>
+
+        <div class="nav-actions">
+            <a href="demo.html" class="btn btn-primary" style="padding: 0.7rem 1.8rem; font-size: 0.9rem;">Book a
+                demo</a>
         </div>
     </nav>
 
     <!-- Hero Section -->
-    <section class="hero proof-hero" id="hero">
-        <div class="container">
-            <div class="proof-hero-grid">
-                <div class="hero-panel">
-                    <span class="hero-eyebrow">NFC guest feedback flow</span>
-                    <h1>Catch bad visits before they leave<br>Send happy guests to Google reviews</h1>
-                    <p class="proof-hero-subtitle">
-                        Give each staff member an NFC card. Guests tap once, leave quick feedback, and the flow branches automatically to private recovery or public review.
-                    </p>
-                    <div class="hero-actions">
-                        <a href="demo" class="btn btn-primary">Book a demo</a>
-                        <a href="#how-it-works" class="hero-link">See how it works <i class="fa-solid fa-arrow-right"></i></a>
-                    </div>
-                    <div class="hero-proof-row">
-                        <span class="hero-proof-badge">
-                            <strong>+0.8&#9733;</strong>
-                            <span>Casa Miguel, Austin in 45 days</span>
-                        </span>
-                        <a href="case-studies" class="hero-proof-link">Read case study <i class="fa-solid fa-arrow-right"></i></a>
-                    </div>
-                </div>
-
-                <div class="product-proof" aria-label="RateTap guest flow preview">
-                    <div class="nfc-card-render">
-                        <div class="nfc-card-header">RateTap NFC Card</div>
-                        <div class="nfc-card-body">
-                            <span>Table 12 · Server Ana M.</span>
-                            <strong>Tap your phone here</strong>
-                        </div>
-                        <div class="nfc-card-pulse" aria-hidden="true"></div>
-                    </div>
-
-                    <div class="phone-shell">
-                        <div class="phone-notch" aria-hidden="true"></div>
-                        <div class="phone-screen-stack">
-                            <div class="phone-screen-state screen-rating">
-                                <div class="screen-top">
-                                    <span class="screen-venue">La Brasa · Table 12</span>
-                                    <span class="screen-time">10s</span>
-                                </div>
-                                <p class="screen-kicker">Guest check-in</p>
-                                <h3 class="screen-title">How was dinner tonight?</h3>
-                                <div class="rating-row">
-                                    <i class="fa-solid fa-star"></i>
-                                    <i class="fa-solid fa-star"></i>
-                                    <i class="fa-solid fa-star"></i>
-                                    <i class="fa-solid fa-star"></i>
-                                    <i class="fa-regular fa-star"></i>
-                                </div>
-                                <p class="screen-note">Tap a star to continue</p>
-                                <button class="screen-action screen-action-muted" type="button">Continue</button>
-                            </div>
-
-                            <div class="phone-screen-state screen-low">
-                                <p class="screen-kicker">Private feedback</p>
-                                <h3 class="screen-title">What should we fix right now?</h3>
-                                <p class="screen-note">Choose up to 2 issues</p>
-                                <div class="feedback-chips">
-                                    <span>Wait time</span>
-                                    <span>Food quality</span>
-                                    <span>Service</span>
-                                </div>
-                                <label class="screen-label" for="feedback-low-en">Anything else?</label>
-                                <textarea class="feedback-textarea" id="feedback-low-en" rows="3" readonly>Server forgot our drinks</textarea>
-                                <button class="screen-action screen-action-muted" type="button">Send to manager</button>
-                            </div>
-
-                            <div class="phone-screen-state screen-high">
-                                <p class="screen-kicker">Great experience</p>
-                                <div class="screen-check">
-                                    <i class="fa-solid fa-circle-check"></i>
-                                    <span>Thanks for the 5-star rating</span>
-                                </div>
-                                <h3 class="screen-title">Would you post this on Google?</h3>
-                                <p class="screen-note">It takes about 20 seconds</p>
-                                <button class="screen-action" type="button"><i class="fa-brands fa-google"></i> Leave a Google review</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Problem Section -->
-    <section class="section bg-muted" id="problem">
-        <div class="container">
-            <div class="text-center" style="max-width: 700px; margin: 0 auto 4rem;">
-                <span class="hero-eyebrow" style="color: var(--text-muted);" data-i18n="problem-tag">THE PROBLEM</span>
-                <h2 data-i18n="problem-title">You're Losing Reviews & Missing Feedback</h2>
-                <p data-i18n="problem-subtitle">Traditional review requests don't work. Staff forget, unhappy guests complain publicly, and you fly blind.</p>
-            </div>
-            
-            <div class="grid-4">
-                <div class="card">
-                    <div class="card-icon"><i class="fa-solid fa-user-xmark"></i></div>
-                    <h3 data-i18n="problem-1-title">Staff Forget</h3>
-                    <p data-i18n="problem-1-text">Even your best servers forget to ask during the rush. You miss 90% of happy customers.</p>
-                </div>
-                
-                <div class="card">
-                    <div class="card-icon"><i class="fa-solid fa-bullhorn"></i></div>
-                    <h3 data-i18n="problem-2-title">Public Complaints</h3>
-                    <p data-i18n="problem-2-text">Without a feedback channel, small issues become public complaints. One unresolved concern costs you 30 potential covers.</p>
-                </div>
-                
-
-                
-                <div class="card">
-                    <div class="card-icon"><i class="fa-solid fa-eye-slash"></i></div>
-                    <h3 data-i18n="problem-4-title">Flying Blind</h3>
-                    <p data-i18n="problem-4-text">No early warning system. You only find out about problems days after they happen.</p>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Benefits Section -->
-    <section class="section" id="features">
+    <section class="hero" id="hero">
         <div class="container">
             <div class="grid-2">
-                <div>
-                    <span class="hero-eyebrow" data-i18n="benefits-title">WHY RATETAP</span>
-                    <h2>Real Results for Restaurants</h2>
-                    <p class="mb-8" data-i18n="benefits-subtitle">We don't just get you reviews; we give you a complete reputation management system.</p>
-                    
-                    <div class="feature-list-item">
-                        <div class="feature-list-icon"><i class="fa-solid fa-rocket"></i></div>
-                        <div>
-                            <h4 data-i18n="benefit-1-title">3x More Google Reviews</h4>
-                            <p data-i18n="benefit-1-text">Frictionless tapping means more guests actually leave reviews before they leave the table.</p>
-                        </div>
+                <!-- Text Content -->
+                <div class="hero-content">
+                    <span class="hero-eyebrow">
+                        Guest Experience
+                    </span>
+                    <h1>
+                        Catch bad visits <br><span class="serif-italic">before they leave.</span>
+                    </h1>
+                    <p class="hero-subtitle">
+                        Empower your staff with beautifully crafted NFC cards. Delighted guests are guided to leave
+                        5-star Google reviews, while private feedback is routed directly to your management team.
+                    </p>
+                    <div class="hero-actions">
+                        <a href="demo.html" class="btn btn-primary">Start free trial</a>
+                        <a href="#how-it-works" class="btn btn-secondary">Explore platform</a>
                     </div>
-                    
-                    <div class="feature-list-item">
-                        <div class="feature-list-icon"><i class="fa-solid fa-shield-halved"></i></div>
-                        <div>
-                            <h4 data-i18n="benefit-2-title">Feedback Protection</h4>
-                            <p data-i18n="benefit-2-text">Get instant alerts when guests have concerns. Resolve issues on the spot and turn problems into loyalty.</p>
+                </div>
+
+                <!-- Showcase Stage (Unbound Mockup) -->
+                <div class="hero-visual">
+                    <div class="product-proof">
+                        <!-- Phone -->
+                        <div class="phone-shell">
+                            <div class="phone-notch"></div>
+                            <div class="phone-screen-stack">
+                                <!-- Screen 1: Rating -->
+                                <div class="phone-screen-state screen-rating">
+                                    <div class="screen-top">
+                                        <span>La Brasa · Table 12</span>
+                                        <span>10s</span>
+                                    </div>
+                                    <p class="screen-kicker">Check-in</p>
+                                    <h3 class="screen-title">How was dinner tonight?</h3>
+                                    <div class="rating-row">
+                                        <i class="fa-solid fa-star"></i>
+                                        <i class="fa-solid fa-star"></i>
+                                        <i class="fa-solid fa-star"></i>
+                                        <i class="fa-solid fa-star"></i>
+                                        <i class="fa-regular fa-star" style="color: #cbd5e1;"></i>
+                                    </div>
+                                    <button class="mockup-btn mockup-btn-muted">Continue</button>
+                                </div>
+
+                                <!-- Screen 2: Low Rating (Private) -->
+                                <div class="phone-screen-state screen-low">
+                                    <p class="screen-kicker">Private feedback</p>
+                                    <h3 class="screen-title">What should we fix right now?</h3>
+                                    <div class="feedback-chips">
+                                        <span>Wait time</span>
+                                        <span>Food quality</span>
+                                        <span
+                                            style="background: var(--brand-blue); color: white; border-color: var(--brand-blue);">Service</span>
+                                    </div>
+                                    <button class="mockup-btn mockup-btn-primary">Send to manager</button>
+                                </div>
+
+                                <!-- Screen 3: High Rating (Google) -->
+                                <div class="phone-screen-state screen-high">
+                                    <p class="screen-kicker">Exceptional</p>
+                                    <div style="margin:1rem 0 2rem; color:var(--text-primary); font-size:3rem;">
+                                        <i class="fa-solid fa-certificate"></i>
+                                    </div>
+                                    <h3 class="screen-title">Would you post this on Google?</h3>
+                                    <button class="mockup-btn mockup-btn-outline">
+                                        <i class="fa-brands fa-google" style="color: #4285F4;"></i> Leave a review
+                                    </button>
+                                </div>
+                            </div>
                         </div>
-                    </div>
-                    
-                    <div class="feature-list-item">
-                        <div class="feature-list-icon"><i class="fa-solid fa-users-viewfinder"></i></div>
-                        <div>
-                            <h4 data-i18n="benefit-3-title">Staff Accountability</h4>
-                            <p data-i18n="benefit-3-text">Know exactly who is generating reviews. Gamify the process and reward top performers.</p>
+
+                        <!-- Hovering Card -->
+                        <div class="nfc-card-render">
+                            <div class="nfc-card-header">RateTap Access Card</div>
+                            <div class="nfc-card-body">
+                                <span>Table 12 · Server Ana M.</span>
+                                <strong>Tap your phone here</strong>
+                            </div>
                         </div>
                     </div>
                 </div>
-                
-                <div style="background: var(--bg-muted); padding: 3rem; border-radius: var(--radius-lg);">
-                    <div style="background: white; padding: 2rem; border-radius: var(--radius-md); margin-bottom: 2rem;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-                            <strong>Reviews This Month</strong>
-                            <span style="color: var(--secondary); font-weight: 700;">+342%</span>
-                        </div>
-                        <div style="height: 10px; background: var(--bg-muted); border-radius: 99px; overflow: hidden;">
-                            <div style="width: 85%; height: 100%; background: var(--primary);"></div>
-                        </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features -->
+    <section id="features" class="section bg-muted">
+        <div class="container">
+            <div class="section-header" style="text-align: center; margin-bottom: 4rem;">
+                <span class="hero-eyebrow" style="margin: 0 auto 1.5rem; justify-content: center;">
+                    Core Capabilities
+                </span>
+                <h2 style="font-size: clamp(3rem, 5vw, 4.5rem);">Built for <span
+                        class="serif-italic">hospitality.</span></h2>
+            </div>
+            <div class="grid-3">
+                <div class="card reveal">
+                    <div class="card-icon-wrapper">
+                        <i class="fa-solid fa-chart-line"></i>
                     </div>
-                    
-                    <div style="background: white; padding: 2rem; border-radius: var(--radius-md);">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-                            <strong>Private Feedback Resolved</strong>
-                            <span style="color: var(--accent); font-weight: 700;">24 Cases</span>
-                        </div>
-                        <div style="height: 10px; background: var(--bg-muted); border-radius: 99px; overflow: hidden;">
-                            <div style="width: 65%; height: 100%; background: var(--accent);"></div>
-                        </div>
+                    <h3>Staff Tracking</h3>
+                    <p>Know exactly which servers are driving the most 5-star reviews to your Google profile.</p>
+                </div>
+                <div class="card reveal" style="transition-delay: 100ms;">
+                    <div class="card-icon-wrapper">
+                        <i class="fa-solid fa-shield-halved"></i>
                     </div>
+                    <h3>Instant Recovery</h3>
+                    <p>Get instant manager alerts when a guest is unhappy, so you can resolve the issue before they walk
+                        out.</p>
+                </div>
+                <div class="card reveal" style="transition-delay: 200ms;">
+                    <div class="card-icon-wrapper">
+                        <i class="fa-solid fa-nfc-symbol"></i>
+                    </div>
+                    <h3>NFC Efficiency</h3>
+                    <p>No clunky QR codes or apps to download. A simple tap on the card opens the feedback flow
+                        instantly.</p>
                 </div>
             </div>
         </div>
     </section>
 
     <!-- How It Works -->
-    <section class="section bg-muted" id="how-it-works">
+    <section id="how-it-works" class="section">
         <div class="container">
-            <div class="text-center mb-8">
-                <span class="hero-eyebrow" data-i18n="how-tag">SIMPLE PROCESS</span>
-                <h2 data-i18n="how-title">3 Steps to 5 Stars</h2>
+            <div class="section-header" style="text-align: center; margin-bottom: 4rem;">
+                <span class="hero-eyebrow" style="margin: 0 auto 1.5rem; justify-content: center;">
+                    The Process
+                </span>
+                <h2 style="font-size: clamp(3rem, 5vw, 4.5rem);">Three steps to <br><span
+                        class="serif-italic">perfection.</span></h2>
             </div>
-            
+
             <div class="grid-3">
-                <div class="step-card" style="flex-direction: column; gap: 1rem;">
-                    <div class="step-number">1</div>
-                    <h3 data-i18n="step-1-title">Staff Tap</h3>
-                    <p data-i18n="step-1-text">Server presents the NFC card with the check. "Tap to let us know how we did!"</p>
+                <div class="step-card">
+                    <div class="step-number">01</div>
+                    <h3 style="font-size: 2rem; margin-bottom: 1rem; color: var(--brand-charcoal);">The Tap</h3>
+                    <p style="font-size: 1.1rem; color: var(--text-secondary);">Your server presents the beautifully
+                        designed NFC card with the bill. A single tap opens the experience instantly on any phone.</p>
                 </div>
-                
-                <div class="step-card" style="flex-direction: column; gap: 1rem;">
-                    <div class="step-number">2</div>
-                    <h3 data-i18n="step-2-title">Smart Route</h3>
-                    <p data-i18n="step-2-text">Delighted guests are guided to Google. Those with concerns can reach you directly for immediate resolution.</p>
+                <div class="step-card">
+                    <div class="step-number">02</div>
+                    <h3 style="font-size: 2rem; margin-bottom: 1rem; color: var(--brand-charcoal);">The Route</h3>
+                    <p style="font-size: 1.1rem; color: var(--text-secondary);">Intelligent routing sends delighted
+                        guests directly to Google, while guests with concerns are routed to a private feedback channel.
+                    </p>
                 </div>
-                
-                <div class="step-card" style="flex-direction: column; gap: 1rem;">
-                    <div class="step-number">3</div>
-                    <h3 data-i18n="step-3-title">You Grow</h3>
-                    <p data-i18n="step-3-text">Watch your Google ranking climb and handle issues privately in real-time.</p>
+                <div class="step-card">
+                    <div class="step-number">03</div>
+                    <h3 style="font-size: 2rem; margin-bottom: 1rem; color: var(--brand-charcoal);">The Result</h3>
+                    <p style="font-size: 1.1rem; color: var(--text-secondary);">Watch your Google ranking climb
+                        effortlessly while your management team resolves private issues before the guest leaves.</p>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- Testimonials -->
-    <section class="section bg-white" id="testimonials">
+    <!-- Metrics / Social Proof -->
+    <section class="section bg-muted">
         <div class="container">
-            <h2 class="text-center mb-8" data-i18n="testimonials-title">What Owners Say</h2>
-            <div class="grid-3">
-                <div class="card" style="background: var(--bg-white); border: 2px solid var(--bg-muted);">
-                    <div style="color: #FBBF24; margin-bottom: 1rem;">
-                        <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i>
-                    </div>
-                    <p style="font-style: italic;" data-i18n="testimonial-1-text">"We went from 127 to 412 reviews in 3 months. The real-time feedback lets us resolve issues before guests even leave."</p>
-                    <div style="margin-top: auto; padding-top: 1rem; font-weight: 700;">
-                        <div data-i18n="testimonial-1-name">Maria Rodriguez</div>
-                        <div style="font-size: 0.875rem; color: var(--text-light);" data-i18n="testimonial-1-role">Owner, Casa Miguel - Austin, TX</div>
+            <div class="grid-2">
+                <div>
+                    <span class="hero-eyebrow">
+                        Real Impact
+                    </span>
+                    <h2 style="font-size: clamp(3rem, 5vw, 4.5rem); margin-bottom: 1.5rem;">Elevate your <br><span
+                            class="serif-italic">reputation.</span></h2>
+                    <p style="font-size: 1.25rem; color: var(--text-secondary); margin-bottom: 3rem; max-width: 500px;">
+                        Join the top 1% of hospitality groups that control their narrative and capture every 5-star
+                        moment.</p>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+                        <div
+                            style="background: rgba(255,255,255,0.8); padding: 2.5rem 2rem; border-radius: 24px; border: 1px solid rgba(255,255,255,0.9); box-shadow: 0 10px 30px -10px rgba(0,0,0,0.03);">
+                            <div
+                                style="font-family: 'Instrument Serif', serif; font-size: 3.5rem; color: var(--brand-charcoal); line-height: 1;">
+                                +342%</div>
+                            <div
+                                style="font-weight: 700; color: var(--brand-blue); text-transform: uppercase; font-size: 0.8rem; letter-spacing: 0.1em; margin-top: 1rem;">
+                                Review Volume</div>
+                        </div>
+                        <div
+                            style="background: rgba(255,255,255,0.8); padding: 2.5rem 2rem; border-radius: 24px; border: 1px solid rgba(255,255,255,0.9); box-shadow: 0 10px 30px -10px rgba(0,0,0,0.03);">
+                            <div
+                                style="font-family: 'Instrument Serif', serif; font-size: 3.5rem; color: var(--brand-charcoal); line-height: 1;">
+                                4.8<i class="fa-solid fa-star"
+                                    style="font-size: 2.5rem; color: var(--brand-gold); margin-left: 0.5rem;"></i></div>
+                            <div
+                                style="font-weight: 700; color: var(--brand-blue); text-transform: uppercase; font-size: 0.8rem; letter-spacing: 0.1em; margin-top: 1rem;">
+                                Average Rating</div>
+                        </div>
                     </div>
                 </div>
-                
-                <div class="card" style="background: var(--bg-white); border: 2px solid var(--bg-muted);">
-                    <div style="color: #FBBF24; margin-bottom: 1rem;">
-                        <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i>
+
+                <div class="card" style="display: flex; flex-direction: column; justify-content: center;">
+                    <div
+                        style="color: var(--brand-gold); font-size: 1.5rem; margin-bottom: 1.5rem; display: flex; gap: 0.25rem;">
+                        <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i
+                            class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i
+                            class="fa-solid fa-star"></i>
                     </div>
-                    <p style="font-style: italic;" data-i18n="testimonial-2-text">"The staff tracking is a game changer. My servers compete to get the most mentions now. We've collected 287 reviews in just 6 weeks."</p>
-                    <div style="margin-top: auto; padding-top: 1rem; font-weight: 700;">
-                        <div data-i18n="testimonial-2-name">David Chen</div>
-                        <div style="font-size: 0.875rem; color: var(--text-light);" data-i18n="testimonial-2-role">GM, The Waterfront - Seattle, WA</div>
-                    </div>
-                </div>
-                
-                <div class="card" style="background: var(--bg-white); border: 2px solid var(--bg-muted);">
-                    <div style="color: #FBBF24; margin-bottom: 1rem;">
-                        <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i>
-                    </div>
-                    <p style="font-style: italic;" data-i18n="testimonial-3-text">"Setup took 10 minutes. No app for guests to download. Just tap and done. Brilliant. Our Google rating jumped from 4.1 to 4.7 stars."</p>
-                    <div style="margin-top: auto; padding-top: 1rem; font-weight: 700;">
-                        <div data-i18n="testimonial-3-name">Jennifer Walsh</div>
-                        <div style="font-size: 0.875rem; color: var(--text-light);" data-i18n="testimonial-3-role">Owner, Bistro 42 - Denver, CO</div>
+                    <p
+                        style="font-family: 'Instrument Serif', serif; font-size: 2.2rem; color: var(--brand-charcoal); line-height: 1.2; margin-bottom: 3rem;">
+                        "RateTap completely changed how we handle guest feedback. We catch issues immediately, and our
+                        Google ranking has skyrocketed. It's an indispensable part of our service."</p>
+                    <div style="display: flex; align-items: center; gap: 1rem;">
+                        <div
+                            style="width: 50px; height: 50px; background: var(--brand-charcoal); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: 'Instrument Serif', serif; font-size: 1.5rem; color: white;">
+                            SJ</div>
+                        <div>
+                            <strong style="display: block; color: var(--brand-charcoal);">Sarah Jenkins</strong>
+                            <span style="font-size: 0.9rem; color: var(--text-secondary);">General Manager, The
+                                Continental</span>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- FAQ -->
-    <section class="section bg-muted" id="faq">
+    <!-- FAQ Section -->
+    <section id="faq" class="section">
         <div class="container" style="max-width: 800px;">
-            <div class="text-center mb-8">
-                <h2 data-i18n="faq-title">Common Questions</h2>
+            <div style="text-align: center; margin-bottom: 4rem;">
+                <span class="hero-eyebrow" style="margin: 0 auto 1.5rem; justify-content: center;">
+                    FAQ
+                </span>
+                <h2 style="font-size: clamp(3rem, 5vw, 4.5rem);">Common <span class="serif-italic">inquiries.</span>
+                </h2>
             </div>
-            
-            <div class="faq-item">
-                <button class="faq-question">
-                    <span data-i18n="faq-2-question">Do guests need an app?</span>
-                    <i class="fa-solid fa-chevron-down"></i>
-                </button>
-                <div class="faq-answer">
-                    <p data-i18n="faq-2-answer">No. Guests just tap their phone on the NFC card (iPhone or Android) and it opens in their browser instantly.</p>
+
+            <div class="faq-accordion">
+                <div class="faq-item">
+                    <button class="faq-question">
+                        Do guests need to download an app?
+                        <i class="fa-solid fa-plus"></i>
+                    </button>
+                    <div class="faq-answer">
+                        <p>No. Our NFC technology uses native smartphone capabilities. A simple tap opens your custom
+                            flow directly in their browser without any downloads required.</p>
+                    </div>
                 </div>
-            </div>
-            
-            <div class="faq-item">
-                <button class="faq-question">
-                    <span data-i18n="faq-3-question">How does the feedback system work?</span>
-                    <i class="fa-solid fa-chevron-down"></i>
-                </button>
-                <div class="faq-answer">
-                    <p data-i18n="faq-3-answer">Guests who want to share concerns can reach you directly through an instant feedback form. This lets you resolve issues in real-time while they're still at the table. All guests always have the option to leave public reviews.</p>
+                <div class="faq-item">
+                    <button class="faq-question">
+                        How does sentiment routing work?
+                        <i class="fa-solid fa-plus"></i>
+                    </button>
+                    <div class="faq-answer">
+                        <p>When a guest rates their experience 4 or 5 stars, they are instantly redirected to your
+                            Google Maps page. Lower ratings open a private feedback form that alerts your management
+                            team in real-time.</p>
+                    </div>
+                </div>
+                <div class="faq-item">
+                    <button class="faq-question">
+                        Does it work with both iOS and Android?
+                        <i class="fa-solid fa-plus"></i>
+                    </button>
+                    <div class="faq-answer">
+                        <p>Yes, all modern smartphones (iPhone 7+ and nearly all Androids from the last 8 years) have
+                            NFC readers built-in and active by default.</p>
+                    </div>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- CTA -->
-    <section class="section bg-primary" id="contact" style="color: white;">
-        <div class="container grid-2">
-            <div>
-                <h2 style="color: white;" data-i18n="cta-title">Ready to Transform Your Reputation?</h2>
-                <p style="color: rgba(255,255,255,0.9);" data-i18n="cta-subtitle">Join 500+ restaurants across North America using RateTap today. 30-day money back guarantee.</p>
-                <p style="color: rgba(255,255,255,0.8); font-size: 0.9rem; margin-top: 0.5rem;"><i class="fa-solid fa-shield-check" style="margin-right: 0.5rem;"></i>Trusted by restaurants in 47 states and Mexico</p>
-                <ul class="mb-8">
-                    <li style="margin-bottom: 0.5rem;"><i class="fa-solid fa-check" style="margin-right: 0.5rem;"></i> <span data-i18n="cta-feature-1">Free Setup</span></li>
-                    <li style="margin-bottom: 0.5rem;"><i class="fa-solid fa-check" style="margin-right: 0.5rem;"></i> <span data-i18n="cta-feature-2">Cancel Anytime</span></li>
-                    <li style="margin-bottom: 0.5rem;"><i class="fa-solid fa-check" style="margin-right: 0.5rem;"></i> <span data-i18n="cta-feature-3">24/7 Support</span></li>
-                </ul>
-            </div>
-            
-            <div style="background: white; padding: 2.5rem; border-radius: var(--radius-lg); color: var(--text-main);">
-                <form id="contact-form" action="https://formsubmit.co/hello@ratetap.com" method="POST" style="display: flex; flex-direction: column; gap: 1rem;">
-                    <input type="hidden" name="_subject" value="New Lead - RateTap">
-                    <input type="hidden" name="_next" value="https://ratetapmx.com/?thanks=1">
-                    <h3 style="margin-bottom: 0.5rem;" data-i18n="form-submit">Get Started</h3>
-                    
-                    <div style="display: flex; flex-direction: column; gap: 0.5rem;">
-                        <label style="font-weight: 600; font-size: 0.9rem;">Restaurant Name</label>
-                        <input type="text" id="restaurant-name" name="restaurant_name" required placeholder="Joe's Diner" style="padding: 0.75rem; border: 2px solid var(--border); border-radius: var(--radius-md); font-family: inherit;">
-                    </div>
-                    
-                    <div style="display: flex; flex-direction: column; gap: 0.5rem;">
-                        <label style="font-weight: 600; font-size: 0.9rem;">Your Name</label>
-                        <input type="text" id="your-name" name="name" required placeholder="Joe Smith" style="padding: 0.75rem; border: 2px solid var(--border); border-radius: var(--radius-md); font-family: inherit;">
-                    </div>
-                    
-                    <div style="display: flex; flex-direction: column; gap: 0.5rem;">
-                        <label style="font-weight: 600; font-size: 0.9rem;">Email</label>
-                        <input type="email" id="email" name="email" required placeholder="joe@example.com" style="padding: 0.75rem; border: 2px solid var(--border); border-radius: var(--radius-md); font-family: inherit;">
-                    </div>
-                    
-                    <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">Start Trial</button>
-                </form>
+    <!-- CTA Section -->
+    <section class="section" style="padding: 12rem 0; position: relative; overflow: hidden;">
+        <div style="position: absolute; inset: 0; z-index: 1;">
+            <img src="assets/restaurant_atmosphere.png" alt="Luxury Restaurant Atmosphere"
+                style="width: 100%; height: 100%; object-fit: cover; filter: brightness(0.35);">
+        </div>
+        <div class="container" style="position: relative; z-index: 2; color: white;">
+            <div style="text-align: center; max-width: 800px; margin: 0 auto;">
+                <h2 style="font-size: clamp(3.5rem, 6vw, 5rem); margin-bottom: 1.5rem; color: white;">Ready to capture
+                    every <br><span class="serif-italic"
+                        style="background: linear-gradient(135deg, #fff 0%, #cbd5e1 100%); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;">5-star
+                        moment?</span></h2>
+                <p style="font-size: 1.25rem; color: rgba(255,255,255,0.8); margin-bottom: 3rem;">Join the world's best
+                    restaurants using RateTap to elevate their digital reputation.</p>
+                <div class="hero-actions" style="justify-content: center;">
+                    <a href="demo.html" class="btn btn-primary"
+                        style="padding: 1.2rem 3rem; font-size: 1.1rem; background: white; color: var(--brand-charcoal);">Start
+                        30-Day Trial</a>
+                    <a href="#contact" class="btn btn-secondary"
+                        style="padding: 1.2rem 3rem; font-size: 1.1rem; border-color: rgba(255,255,255,0.4); color: white; background: rgba(255,255,255,0.1);">Contact
+                        Sales</a>
+                </div>
             </div>
         </div>
     </section>
@@ -555,72 +335,64 @@ src="https://www.facebook.com/tr?id=1578821303344121&amp;ev=PageView&amp;noscrip
     <!-- Footer -->
     <footer class="footer">
         <div class="container">
-            <div class="grid-4" style="align-items: flex-start;">
-                <div>
-                    <h4 style="display: flex; align-items: center; gap: 0.5rem;">
-                        <img src="/logo.png" alt="RateTap" style="height: 28px; width: auto;">
-                    </h4>
-                    <p style="font-size: 0.9rem; color: var(--text-light);" data-i18n="footer-tagline">Turn tables into 5-star reviews.</p>
+            <div class="footer-grid">
+                <div class="footer-brand">
+                    <img src="assets/ratetap-logo.png" alt="RateTap"
+                        style="height: 40px; margin-bottom: 1.5rem; ">
+                    <p style="color: var(--text-secondary); font-size: 0.95rem; line-height: 1.6; max-width: 300px;">The
+                        standard in premium hospitality reputation management.</p>
                 </div>
-                <div>
-                    <h4 data-i18n="footer-product">Product</h4>
-                    <ul style="display: flex; flex-direction: column; gap: 0.5rem;">
-                        <li><a href="restaurant-review-management-software" data-i18n="footer-features">Features</a></li>
-                        <li><a href="nfc-google-review-cards-for-restaurants">NFC Review Cards</a></li>
-                        <li><a href="track-waiter-performance-dashboard">Staff Tracking</a></li>
-                        <li><a href="demo">Request Demo</a></li>
-                    </ul>
+                <div class="footer-links">
+                    <h4>Platform</h4>
+                    <a href="#">Sentiment Flow</a>
+                    <a href="#">Staff Tracking</a>
+                    <a href="#">Enterprise</a>
                 </div>
-                <div>
-                    <h4 data-i18n="footer-company">Resources</h4>
-                    <ul style="display: flex; flex-direction: column; gap: 0.5rem;">
-                        <li><a href="case-studies" data-i18n="footer-customers">Case Studies</a></li>
-                        <li><a href="roi-calculator">ROI Calculator</a></li>
-                        <li><a href="get-more-google-reviews-restaurants">Get More Reviews</a></li>
-                        <li><a href="stop-bad-restaurant-reviews">Stop Bad Reviews</a></li>
-                        <li><a href="#contact" data-i18n="footer-contact">Contact</a></li>
-                    </ul>
+                <div class="footer-links">
+                    <h4>Company</h4>
+                    <a href="case-studies.html">Case Studies</a>
+                    <a href="roi-calculator.html">ROI Calculator</a>
+                    <a href="#">Contact</a>
                 </div>
-                <div>
-                    <h4 data-i18n="footer-offices">Global Offices</h4>
-                    <ul style="display: flex; flex-direction: column; gap: 1rem; font-size: 0.9rem; color: var(--text-light);">
-                        <li>
-                            <strong style="color: white; display: block; margin-bottom: 0.25rem;">Mexico City</strong>
-                            Av. Paseo de la Reforma 296<br>Juárez, 06600 CDMX
-                        </li>
-                        <li>
-                            <strong style="color: white; display: block; margin-bottom: 0.25rem;">New York</strong>
-                            110 Wall St, Suite 502<br>New York, NY 10005
-                        </li>
-                        <li>
-                            <strong style="color: white; display: block; margin-bottom: 0.25rem;">Vancouver</strong>
-                            1055 W Georgia St<br>Vancouver, BC V6E 3P3
-                        </li>
-                    </ul>
+                <div class="footer-links">
+                    <h4>Connect</h4>
+                    <div class="social-links">
+                        <a href="#"><i class="fa-brands fa-twitter"></i></a>
+                        <a href="#"><i class="fa-brands fa-instagram"></i></a>
+                        <a href="#"><i class="fa-brands fa-linkedin"></i></a>
+                    </div>
                 </div>
             </div>
-            
             <div class="footer-bottom">
-                <div style="display: flex; flex-direction: column; gap: 0.5rem;">
-                    <span data-i18n="footer-copyright">&copy; 2026 RateTap. All rights reserved.</span>
-                    <div style="font-size: 0.85rem;">
-                        <a href="#" data-i18n="footer-privacy" style="margin-right: 1rem;">Privacy</a>
-                        <a href="#" data-i18n="footer-terms">Terms</a>
-                    </div>
-                    <div class="footer-locale">
-                        <i class="fa-solid fa-earth-americas" aria-hidden="true"></i>
-                        <a href="/es/" lang="es">Español</a>
-                    </div>
-                </div>
-                <div style="display: flex; gap: 1rem;">
-                    <a href="#"><i class="fa-brands fa-twitter" aria-label="Twitter"></i></a>
-                    <a href="#"><i class="fa-brands fa-instagram" aria-label="Instagram"></i></a>
-                    <a href="#"><i class="fa-brands fa-linkedin" aria-label="LinkedIn"></i></a>
+                <p>&copy; 2026 RateTap. All rights reserved.</p>
+                <div class="legal-links">
+                    <a href="#">Privacy Policy</a>
+                    <a href="#">Terms of Service</a>
                 </div>
             </div>
         </div>
     </footer>
 
     <script src="script.js"></script>
+    <script>
+        // Inline FAQ script to ensure it works immediately on index.html
+        document.querySelectorAll('.faq-question').forEach(button => {
+            button.addEventListener('click', () => {
+                const item = button.parentElement;
+                const icon = button.querySelector('i');
+
+                item.classList.toggle('active');
+
+                if (icon) {
+                    if (item.classList.contains('active')) {
+                        icon.style.transform = 'rotate(45deg)';
+                    } else {
+                        icon.style.transform = 'rotate(0deg)';
+                    }
+                }
+            });
+        });
+    </script>
 </body>
+
 </html>
