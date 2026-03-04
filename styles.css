@@ -133,10 +133,10 @@ h3 {
 }
 
 .nav-brand img {
-    height: 58px;
+    height: 75px;
     width: auto;
     object-fit: contain;
-    transform: scale(1.15) translateY(2px);
+    transform: scale(1.35) translateY(4px) translateX(12px);
     transform-origin: left center;
 }
 
@@ -677,12 +677,12 @@ h3 {
     }
 
     .nav-brand img {
-    height: 58px;
-    width: auto;
-    object-fit: contain;
-    transform: scale(1.15) translateY(2px);
-    transform-origin: left center;
-}
+        height: 58px;
+        width: auto;
+        object-fit: contain;
+        transform: scale(1.15) translateY(2px);
+        transform-origin: left center;
+    }
 
     .hero h1 {
         font-size: 3.5rem;

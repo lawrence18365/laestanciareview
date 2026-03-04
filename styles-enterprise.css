@@ -211,9 +211,12 @@ input {
     flex-shrink: 0;
 }
 
-.brand .nav-logo {
-    height: 32px;
+.brand .nav-brand img {
+    height: 75px;
     width: auto;
+    object-fit: contain;
+    transform: scale(1.35) translateY(4px) translateX(12px);
+    transform-origin: left center;
 }
 
 .brand-mark {
@@ -905,7 +908,7 @@ input {
     gap: 0.88rem;
 }
 
-.close-card > *:not(.close-card-image) {
+.close-card>*:not(.close-card-image) {
     position: relative;
     z-index: 1;
 }
