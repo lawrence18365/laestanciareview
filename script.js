@@ -221,8 +221,8 @@ function insertTrustStrip() {
     if (!heroSection) return;
 
     const items = isSpanishPage()
-        ? ['500+ restaurantes', 'Crecimiento promedio de 4.8★', 'Garantía de 30 días']
-        : ['500+ restaurants', '4.8★ average rating growth', '30-day money-back guarantee'];
+        ? ['500+ restaurantes', 'Crecimiento promedio de 4.8★', 'Sin contratos a largo plazo']
+        : ['500+ restaurants', '4.8★ average rating growth', 'No long-term contracts'];
 
     const trustStrip = document.createElement('section');
     trustStrip.className = 'trust-strip reveal';
