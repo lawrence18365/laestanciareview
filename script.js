@@ -438,49 +438,105 @@ function handleFormSubmit(event) {
 }
 
 // Mobile menu toggle
-function toggleMobileMenu() {
+function setMobileMenuState(isActive) {
     const navMenu = document.querySelector('.nav-menu');
     if (!navMenu) return;
 
-    const isActive = navMenu.classList.toggle('active');
-
-    // Toggle menu-open class on navbar to prevent hiding on scroll
+    const navToggle = document.querySelector('.nav-toggle');
     const navbar = getNavbarElement();
+
+    navMenu.classList.toggle('active', isActive);
+    document.body.classList.toggle('nav-open', isActive);
+
     if (navbar) {
         navbar.classList.toggle('menu-open', isActive);
     }
 
-    const navToggle = document.querySelector('.nav-toggle');
     if (navToggle) {
+        navToggle.classList.toggle('active', isActive);
         navToggle.setAttribute('aria-expanded', isActive ? 'true' : 'false');
+        navToggle.setAttribute('aria-label', isActive ? 'Close navigation menu' : 'Open navigation menu');
+        navToggle.innerHTML = isActive
+            ? '<i class="fa-solid fa-xmark"></i>'
+            : '<i class="fa-solid fa-bars"></i>';
     }
 }
 
-function ensureMobileMenuToggle() {
+function toggleMobileMenu() {
     const navMenu = document.querySelector('.nav-menu');
     if (!navMenu) return;
 
+    const isActive = navMenu.classList.contains('active');
+    setMobileMenuState(!isActive);
+}
+
+function closeMobileMenu() {
+    setMobileMenuState(false);
+}
+
+function ensureMobileMenuToggle() {
+    const navbar = getNavbarElement();
+    const navMenu = document.querySelector('.nav-menu');
+    if (!navMenu || !navbar) return;
+
     let navToggle = document.querySelector('.nav-toggle');
     if (!navToggle) {
-        const navContainer = navMenu.closest('.nav-container') || document.querySelector('.nav-container');
-        if (!navContainer) return;
-
         navToggle = document.createElement('button');
         navToggle.type = 'button';
         navToggle.className = 'nav-toggle';
         navToggle.innerHTML = '<i class="fa-solid fa-bars"></i>';
-        navToggle.setAttribute('aria-label', 'Toggle navigation menu');
-        navContainer.appendChild(navToggle);
+        navToggle.setAttribute('aria-label', 'Open navigation menu');
+        const navActions = navbar.querySelector('.nav-actions');
+        if (navActions) {
+            navActions.insertAdjacentElement('afterend', navToggle);
+        } else {
+            navbar.appendChild(navToggle);
+        }
     }
 
     if (!navMenu.id) {
         navMenu.id = 'nav-menu';
     }
 
-    navMenu.classList.add('is-collapsible');
     navToggle.setAttribute('aria-controls', navMenu.id);
     navToggle.setAttribute('aria-expanded', navMenu.classList.contains('active') ? 'true' : 'false');
-    navToggle.addEventListener('click', toggleMobileMenu);
+
+    if (navToggle.dataset.mobileNavBound !== 'true') {
+        navToggle.addEventListener('click', toggleMobileMenu);
+        navToggle.dataset.mobileNavBound = 'true';
+    }
+
+    if (navMenu.dataset.mobileNavLinksBound !== 'true') {
+        navMenu.querySelectorAll('a').forEach(link => {
+            link.addEventListener('click', closeMobileMenu);
+        });
+        navMenu.dataset.mobileNavLinksBound = 'true';
+    }
+
+    if (document.body.dataset.mobileNavOutsideBound !== 'true') {
+        document.addEventListener('click', (event) => {
+            if (!document.body.classList.contains('nav-open')) return;
+            if (!navbar.contains(event.target)) {
+                closeMobileMenu();
+            }
+        });
+
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape') {
+                closeMobileMenu();
+            }
+        });
+
+        window.addEventListener('resize', () => {
+            if (window.innerWidth > 768) {
+                closeMobileMenu();
+            }
+        });
+
+        document.body.dataset.mobileNavOutsideBound = 'true';
+    }
+
+    setMobileMenuState(navMenu.classList.contains('active'));
 }
 
 function updateFaqIndicator(question, isExpanded) {
