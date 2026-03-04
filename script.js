@@ -29,16 +29,24 @@ const IMAGE_DIMENSIONS = {
 };
 
 function isSpanishPage() {
-    const path = window.location.pathname;
-    return path === '/es' || path.startsWith('/es/');
+    const path = window.location.pathname || '';
+    return path === '/es' || path === '/es/' || path.startsWith('/es/') || path.includes('/es/');
 }
 
 function getPrimaryCtaLabel() {
     return isSpanishPage() ? 'Agendar demo' : 'Book a demo';
 }
 
+function getDemoPageHref() {
+    if (window.location.protocol === 'file:') {
+        return 'demo.html';
+    }
+
+    return isSpanishPage() ? '/es/demo.html' : '/demo.html';
+}
+
 function getPrimaryCtaFallbackHref() {
-    return isSpanishPage() ? '/es/demo' : '/demo';
+    return getDemoPageHref();
 }
 
 function getNavbarElement() {
@@ -240,12 +248,29 @@ function insertTrustStrip() {
 function removeFooterPlaceholderLinks() {
     const placeholders = document.querySelectorAll('footer a[href="#"], .footer a[href="#"]');
     placeholders.forEach(link => {
+        const label = (link.textContent || '').trim().toLowerCase();
+        const isContactLink = label === 'contact' || label === 'contacto';
+        if (isContactLink) {
+            link.setAttribute('href', `${getDemoPageHref()}#demo-form`);
+            return;
+        }
+
         const listItem = link.closest('li');
         if (listItem) {
             listItem.remove();
         } else {
             link.remove();
         }
+    });
+}
+
+function repairBrokenContactAnchors() {
+    const hasContactSection = Boolean(document.getElementById('contact'));
+    if (hasContactSection) return;
+
+    const fallbackHref = `${getDemoPageHref()}#demo-form`;
+    document.querySelectorAll('a[href="#contact"], a[href="/#contact"]').forEach(link => {
+        link.setAttribute('href', fallbackHref);
     });
 }
 
@@ -336,14 +361,21 @@ function simplifyLeadForm(form) {
 
 function resolveStickyCtaHref() {
     if (document.getElementById('contact')) return '#contact';
+    if (document.getElementById('contact-form')) return '#contact-form';
+    if (document.getElementById('demo-form')) return '#demo-form';
 
     const candidate = document.querySelector('.nav-actions a.btn.btn-primary[href]')
         || document.querySelector('.hero a.btn.btn-primary[href]')
         || document.querySelector('a.btn.btn-primary[href]');
-    if (!candidate) return getPrimaryCtaFallbackHref();
+    if (!candidate) return `${getPrimaryCtaFallbackHref()}#demo-form`;
 
     const href = normalizeHref(candidate.getAttribute('href'));
-    if (!href || href === '#') return getPrimaryCtaFallbackHref();
+    const lowerHref = href.toLowerCase();
+    if (!href || href === '#') return `${getPrimaryCtaFallbackHref()}#demo-form`;
+    if ((lowerHref === '#contact' || lowerHref === '/#contact') && !document.getElementById('contact')) {
+        return `${getPrimaryCtaFallbackHref()}#demo-form`;
+    }
+    if (lowerHref === '/demo' || lowerHref === '/es/demo') return getPrimaryCtaFallbackHref();
     return href;
 }
 
@@ -477,6 +509,7 @@ document.addEventListener('DOMContentLoaded', () => {
     standardizePrimaryCtas();
     insertTrustStrip();
     removeFooterPlaceholderLinks();
+    repairBrokenContactAnchors();
 
     // Form submission - handled by Formsubmit.co (no JS override)
     const contactForms = document.querySelectorAll('#contact-form');
