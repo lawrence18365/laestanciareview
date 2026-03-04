@@ -212,11 +212,9 @@ input {
 }
 
 .brand .nav-brand img {
-    height: 75px;
+    height: 48px;
     width: auto;
     object-fit: contain;
-    transform: scale(1.35) translateY(4px) translateX(12px);
-    transform-origin: left center;
 }
 
 .brand-mark {

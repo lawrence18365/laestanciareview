@@ -133,11 +133,9 @@ h3 {
 }
 
 .nav-brand img {
-    height: 75px;
+    height: 48px;
     width: auto;
     object-fit: contain;
-    transform: scale(1.35) translateY(4px) translateX(12px);
-    transform-origin: left center;
 }
 
 .nav-menu {
@@ -677,12 +675,10 @@ h3 {
     }
 
     .nav-brand img {
-        height: 58px;
-        width: auto;
-        object-fit: contain;
-        transform: scale(1.15) translateY(2px);
-        transform-origin: left center;
-    }
+    height: 48px;
+    width: auto;
+    object-fit: contain;
+}
 
     .hero h1 {
         font-size: 3.5rem;
