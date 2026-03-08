@@ -35,7 +35,7 @@ function emailLayout(content: string, footerNote?: string): string {
         <!-- Logo Header -->
         <tr><td style="padding: 0 0 24px; text-align: center;">
           <a href="${BASE_URL}" style="text-decoration: none;">
-            <img src="${LOGO_URL}" alt="RateTap" width="180" style="display: inline-block; height: auto; max-height: 72px;" />
+            <img src="${LOGO_URL}" alt="RateTap" width="240" style="display: inline-block; height: auto; max-height: 96px;" />
           </a>
         </td></tr>
 

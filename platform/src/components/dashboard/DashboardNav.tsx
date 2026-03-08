@@ -72,7 +72,7 @@ export default function DashboardNav({
           <img
             src="/logos/ratetap_logo.png"
             alt="RateTap"
-            style={{ height: 36, objectFit: 'contain', flexShrink: 0 }}
+            style={{ height: 44, objectFit: 'contain', flexShrink: 0 }}
           />
           <p style={{
             margin: 0,

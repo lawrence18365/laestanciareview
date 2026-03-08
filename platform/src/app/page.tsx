@@ -47,7 +47,7 @@ export default async function Home() {
             <img
               src="/logos/ratetap_logo.png"
               alt="RateTap"
-              style={{ height: 48, objectFit: 'contain' }}
+              style={{ height: 64, objectFit: 'contain' }}
             />
           </div>
           <span
