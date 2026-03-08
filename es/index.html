@@ -283,38 +283,50 @@
     <!-- Pricing Section -->
     <section id="pricing" class="section">
         <div class="container">
-            <div class="section-header" style="text-align: center; margin-bottom: 4rem;">
+            <div class="section-header" style="text-align: center; margin-bottom: 2rem;">
                 <span class="hero-eyebrow" style="margin: 0 auto 1.5rem; justify-content: center;">
                     Precios Transparentes
                 </span>
                 <h2 style="font-size: clamp(3rem, 5vw, 4.5rem);">Paga por tarjeta. <span class="serif-italic">Crece a tu ritmo.</span></h2>
                 <p style="font-size: 1.25rem; color: var(--text-secondary); margin-top: 1.5rem; max-width: 560px; margin-left: auto; margin-right: auto;">
-                    Sin costos ocultos. Sin contratos a largo plazo. Pagas por las tarjetas de staff que usas &mdash; todo lo demás está incluido.</p>
+                    Sin costos ocultos. Pagas por las tarjetas de staff que usas &mdash; todo lo demás está incluido.</p>
             </div>
 
-            <!-- Featured Card: Per-Staff Pricing -->
+            <!-- Billing Toggle -->
+            <div style="display: flex; align-items: center; justify-content: center; gap: 1rem; margin-bottom: 4rem;">
+                <span id="pricing-label-monthly" style="font-weight: 700; font-size: 0.95rem; color: var(--brand-charcoal); transition: color 0.3s;">Mensual</span>
+                <button id="pricing-toggle" onclick="togglePricing()" style="position: relative; width: 56px; height: 30px; border-radius: 999px; border: none; background: var(--brand-charcoal); cursor: pointer; transition: background 0.3s; flex-shrink: 0;">
+                    <span id="pricing-toggle-dot" style="position: absolute; top: 3px; left: 3px; width: 24px; height: 24px; border-radius: 50%; background: white; transition: transform 0.3s cubic-bezier(0.165, 0.84, 0.44, 1); box-shadow: 0 2px 4px rgba(0,0,0,0.15);"></span>
+                </button>
+                <span id="pricing-label-annual" style="font-weight: 700; font-size: 0.95rem; color: var(--text-secondary); transition: color 0.3s;">Anual <span style="background: linear-gradient(135deg, var(--brand-blue), #1A85C4); color: white; font-size: 0.7rem; padding: 0.25rem 0.6rem; border-radius: 999px; margin-left: 0.35rem; font-weight: 800; letter-spacing: 0.05em;">2 MESES GRATIS</span></span>
+            </div>
+
+            <!-- Pricing Cards -->
             <div class="pricing-grid">
+                <!-- Featured Card: Per-Staff Pricing -->
                 <div class="pricing-card pricing-card--featured reveal">
                     <div style="position: relative; z-index: 1;">
                         <div class="pricing-card__eyebrow">Por Miembro de Staff</div>
-                        <div class="pricing-card__price" style="color: white;">$15<span style="font-family: 'Plus Jakarta Sans', sans-serif; font-size: 1.2rem; font-weight: 600; opacity: 0.5;">/mes</span></div>
+                        <div class="pricing-card__price" style="color: white;">
+                            <span id="price-staff">$19</span><span style="font-family: 'Plus Jakarta Sans', sans-serif; font-size: 1.2rem; font-weight: 600; opacity: 0.5;" id="price-staff-unit">/mes</span>
+                        </div>
                         <div class="pricing-card__unit" style="color: rgba(255,255,255,0.5);">por tarjeta de staff activa</div>
-                        <p class="pricing-card__desc">Cada miembro del staff recibe una tarjeta NFC personalizada con acceso completo a la plataforma. Mínimo 5 tarjetas por sucursal ($75/mes).</p>
+                        <p class="pricing-card__desc">Cada miembro del staff recibe una tarjeta NFC personalizada con acceso completo a la plataforma. Mínimo 5 tarjetas por sucursal.</p>
                     </div>
                     <ul class="pricing-includes" style="position: relative; z-index: 1;">
                         <li><i class="fa-solid fa-check"></i>Tarjeta NFC personalizada incluida</li>
-                        <li><i class="fa-solid fa-check"></i>Dashboard, analíticas y vista en vivo</li>
-                        <li><i class="fa-solid fa-check"></i>Bandeja de feedback y seguimiento</li>
-                        <li><i class="fa-solid fa-check"></i>Alertas SMS + email instantáneas</li>
-                        <li><i class="fa-solid fa-check"></i>Reportes semanales de desempeño</li>
-                        <li><i class="fa-solid fa-check"></i>Seguimiento de calificación en Google</li>
+                        <li><i class="fa-solid fa-check"></i>Descubre qué meseros generan tus reseñas de 5 estrellas</li>
+                        <li><i class="fa-solid fa-check"></i>Recibe alertas antes de que un cliente insatisfecho se vaya</li>
+                        <li><i class="fa-solid fa-check"></i>Seguimiento de cada problema hasta su resolución</li>
+                        <li><i class="fa-solid fa-check"></i>Reportes automáticos semanales de desempeño</li>
+                        <li><i class="fa-solid fa-check"></i>Ve tu calificación de Google subir en tiempo real</li>
                     </ul>
                 </div>
 
                 <!-- Setup Fee -->
                 <div class="pricing-card reveal" style="transition-delay: 100ms;">
                     <div class="pricing-card__eyebrow">Setup Inicial</div>
-                    <div class="pricing-card__price">$200</div>
+                    <div class="pricing-card__price">$199</div>
                     <div class="pricing-card__unit">por sucursal</div>
                     <p class="pricing-card__desc">Onboarding, configuración de Google Place ID, registro de staff y capacitación del equipo. Todo para salir en vivo.</p>
                 </div>
@@ -322,9 +334,9 @@
                 <!-- Owner Add-on -->
                 <div class="pricing-card reveal" style="transition-delay: 200ms;">
                     <div class="pricing-card__eyebrow">Add-on de Dueño</div>
-                    <div class="pricing-card__price">$50<span style="font-family: 'Plus Jakarta Sans', sans-serif; font-size: 1rem; font-weight: 600; color: var(--text-secondary);">/mes</span></div>
+                    <div class="pricing-card__price">$49<span style="font-family: 'Plus Jakarta Sans', sans-serif; font-size: 1rem; font-weight: 600; color: var(--text-secondary);" id="price-owner-unit">/mes</span></div>
                     <div class="pricing-card__unit">tarifa fija</div>
-                    <p class="pricing-card__desc">Dashboard multi-sucursal y reporte semanal de dueño. Para quien administra todo el grupo.</p>
+                    <p class="pricing-card__desc">Ve el rendimiento de cada sucursal, tendencias en Google y problemas sin resolver desde un solo dashboard.</p>
                 </div>
             </div>
 
@@ -336,41 +348,43 @@
                         <tr>
                             <th>Tamaño</th>
                             <th>Staff</th>
-                            <th>Mensual</th>
+                            <th id="table-period-header">Mensual</th>
                             <th>Setup</th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr>
-                            <td>Pequeño</td>
-                            <td>5</td>
-                            <td>$75/mes</td>
-                            <td>$200</td>
-                        </tr>
-                        <tr>
-                            <td>Mediano</td>
-                            <td>10</td>
-                            <td>$150/mes</td>
-                            <td>$200</td>
+                            <td style="font-weight: 700;">Multi-sucursal (12 sucursales)</td>
+                            <td>~120</td>
+                            <td style="font-weight: 700;" class="pricing-table-amount" data-monthly="$2,329/mes" data-annual="$1,939/mes">$2,329/mes</td>
+                            <td>$2,388</td>
                         </tr>
                         <tr>
                             <td>Grande</td>
                             <td>20</td>
-                            <td>$300/mes</td>
-                            <td>$200</td>
+                            <td class="pricing-table-amount" data-monthly="$380/mes" data-annual="$317/mes">$380/mes</td>
+                            <td>$199</td>
                         </tr>
                         <tr>
-                            <td style="font-weight: 700;">Multi-sucursal (12 sucursales)</td>
-                            <td>~120</td>
-                            <td style="font-weight: 700;">$1,850/mes</td>
-                            <td>$2,400</td>
+                            <td>Mediano</td>
+                            <td>10</td>
+                            <td class="pricing-table-amount" data-monthly="$190/mes" data-annual="$158/mes">$190/mes</td>
+                            <td>$199</td>
+                        </tr>
+                        <tr>
+                            <td>Pequeño</td>
+                            <td>5</td>
+                            <td class="pricing-table-amount" data-monthly="$95/mes" data-annual="$79/mes">$95/mes</td>
+                            <td>$199</td>
                         </tr>
                     </tbody>
                 </table>
             </div>
 
+            <!-- Social proof + CTA -->
             <div style="text-align: center; margin-top: 3rem;">
-                <p style="color: var(--text-secondary); font-size: 1rem; margin-bottom: 2rem;">Tarjetas de reemplazo: $10 cada una. Sin contratos a largo plazo. Cancela cuando quieras.</p>
+                <p style="color: var(--text-secondary); font-size: 1rem; margin-bottom: 0.75rem;">Utilizado por Grupo Estancia &mdash; 12 sucursales en México.</p>
+                <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 2rem;">Tarjetas de reemplazo: $10 cada una. Sin contratos a largo plazo. Cancela cuando quieras.</p>
                 <a href="demo.html" class="btn btn-primary" style="padding: 1rem 2.5rem; font-size: 1.05rem;">Comenzar Ahora</a>
             </div>
         </div>
@@ -442,6 +456,29 @@
         </div>
     </footer>
     <script src="../script.js"></script>
+    <script>
+        let isAnnual = false;
+        function togglePricing() {
+            isAnnual = !isAnnual;
+            const dot = document.getElementById('pricing-toggle-dot');
+            const labelM = document.getElementById('pricing-label-monthly');
+            const labelA = document.getElementById('pricing-label-annual');
+            const staffPrice = document.getElementById('price-staff');
+
+            dot.style.transform = isAnnual ? 'translateX(26px)' : 'translateX(0)';
+            labelM.style.color = isAnnual ? 'var(--text-secondary)' : 'var(--brand-charcoal)';
+            labelA.style.color = isAnnual ? 'var(--brand-charcoal)' : 'var(--text-secondary)';
+
+            staffPrice.textContent = isAnnual ? '$16' : '$19';
+
+            const headerEl = document.getElementById('table-period-header');
+            if (headerEl) headerEl.textContent = isAnnual ? 'Mensual (anual)' : 'Mensual';
+
+            document.querySelectorAll('.pricing-table-amount').forEach(td => {
+                td.textContent = isAnnual ? td.dataset.annual : td.dataset.monthly;
+            });
+        }
+    </script>
 </body>
 
 </html>
