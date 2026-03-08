@@ -1534,6 +1534,11 @@ h3 {
         padding: 2rem;
     }
 
+    /* Collapse all 2-col grids inside pricing section */
+    #pricing .container > div[style*="grid-template-columns: 1fr 1fr"] {
+        grid-template-columns: 1fr !important;
+    }
+
     .pricing-examples th,
     .pricing-examples td {
         padding: 1rem 1.5rem;

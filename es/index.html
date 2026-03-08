@@ -290,6 +290,7 @@
                 <h2 style="font-size: clamp(3rem, 5vw, 4.5rem);">Paga por tarjeta. <span class="serif-italic">Crece a tu ritmo.</span></h2>
                 <p style="font-size: 1.25rem; color: var(--text-secondary); margin-top: 1.5rem; max-width: 560px; margin-left: auto; margin-right: auto;">
                     Sin costos ocultos. Pagas por las tarjetas de staff que usas &mdash; todo lo demás está incluido.</p>
+                <a href="demo.html" class="btn btn-primary" style="padding: 0.9rem 2.2rem; font-size: 1rem; margin-top: 2rem;">Empieza a capturar reseñas de 5 estrellas</a>
             </div>
 
             <!-- Billing Toggle -->
@@ -301,38 +302,64 @@
                 <span id="pricing-label-annual" style="font-weight: 700; font-size: 0.95rem; color: var(--text-secondary); transition: color 0.3s;">Anual <span style="background: linear-gradient(135deg, var(--brand-blue), #1A85C4); color: white; font-size: 0.7rem; padding: 0.25rem 0.6rem; border-radius: 999px; margin-left: 0.35rem; font-weight: 800; letter-spacing: 0.05em;">2 MESES GRATIS</span></span>
             </div>
 
-            <!-- Pricing Cards -->
-            <div class="pricing-grid">
-                <!-- Featured Card: Per-Staff Pricing -->
-                <div class="pricing-card pricing-card--featured reveal">
-                    <div style="position: relative; z-index: 1;">
-                        <div class="pricing-card__eyebrow">Por Miembro de Staff</div>
-                        <div class="pricing-card__price" style="color: white;">
-                            <span id="price-staff">$19</span><span style="font-family: 'Plus Jakarta Sans', sans-serif; font-size: 1.2rem; font-weight: 600; opacity: 0.5;" id="price-staff-unit">/mes</span>
-                        </div>
-                        <div class="pricing-card__unit" style="color: rgba(255,255,255,0.5);">por tarjeta de staff activa</div>
-                        <p class="pricing-card__desc">Cada miembro del staff recibe una tarjeta NFC personalizada con acceso completo a la plataforma. Mínimo 5 tarjetas por sucursal.</p>
+            <!-- Tier Comparison: Básico vs Pro -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; max-width: 960px; margin: 0 auto 3rem;">
+
+                <!-- Basic Tier -->
+                <div class="pricing-card reveal" style="display: flex; flex-direction: column;">
+                    <div class="pricing-card__eyebrow">Básico</div>
+                    <div class="pricing-card__price">
+                        <span class="tier-price-basic">$9</span><span style="font-family: 'Plus Jakarta Sans', sans-serif; font-size: 1rem; font-weight: 600; color: var(--text-secondary);">/mes</span>
                     </div>
-                    <ul class="pricing-includes" style="position: relative; z-index: 1;">
-                        <li><i class="fa-solid fa-check"></i>Tarjeta NFC personalizada incluida</li>
-                        <li><i class="fa-solid fa-check"></i>Descubre qué meseros generan tus reseñas de 5 estrellas</li>
-                        <li><i class="fa-solid fa-check"></i>Recibe alertas antes de que un cliente insatisfecho se vaya</li>
-                        <li><i class="fa-solid fa-check"></i>Seguimiento de cada problema hasta su resolución</li>
-                        <li><i class="fa-solid fa-check"></i>Reportes automáticos semanales de desempeño</li>
-                        <li><i class="fa-solid fa-check"></i>Ve tu calificación de Google subir en tiempo real</li>
+                    <div class="pricing-card__unit">por tarjeta de staff</div>
+                    <p class="pricing-card__desc" style="margin-bottom: 2rem;">Tarjetas NFC con calificación y redirección a Google. Lo esencial para empezar a recolectar reseñas.</p>
+                    <ul style="list-style: none; padding: 0; margin: 0 0 2rem; display: flex; flex-direction: column; gap: 0.85rem; flex-grow: 1;">
+                        <li style="display: flex; align-items: center; gap: 0.75rem; font-size: 0.95rem; color: var(--text-secondary);"><i class="fa-solid fa-check" style="color: var(--brand-blue); font-size: 0.8rem;"></i>Tarjeta NFC + calificación</li>
+                        <li style="display: flex; align-items: center; gap: 0.75rem; font-size: 0.95rem; color: var(--text-secondary);"><i class="fa-solid fa-check" style="color: var(--brand-blue); font-size: 0.8rem;"></i>Redirección a Google</li>
+                        <li style="display: flex; align-items: center; gap: 0.75rem; font-size: 0.95rem; color: var(--text-secondary);"><i class="fa-solid fa-check" style="color: var(--brand-blue); font-size: 0.8rem;"></i>Formulario de feedback privado</li>
+                        <li style="display: flex; align-items: center; gap: 0.75rem; font-size: 0.95rem; color: #cbd5e1;"><i class="fa-solid fa-xmark" style="color: #cbd5e1; font-size: 0.8rem;"></i>Tabla de posiciones de staff</li>
+                        <li style="display: flex; align-items: center; gap: 0.75rem; font-size: 0.95rem; color: #cbd5e1;"><i class="fa-solid fa-xmark" style="color: #cbd5e1; font-size: 0.8rem;"></i>Vista en Vivo en tablet</li>
+                        <li style="display: flex; align-items: center; gap: 0.75rem; font-size: 0.95rem; color: #cbd5e1;"><i class="fa-solid fa-xmark" style="color: #cbd5e1; font-size: 0.8rem;"></i>Alertas SMS</li>
+                        <li style="display: flex; align-items: center; gap: 0.75rem; font-size: 0.95rem; color: #cbd5e1;"><i class="fa-solid fa-xmark" style="color: #cbd5e1; font-size: 0.8rem;"></i>Reportes semanales</li>
+                        <li style="display: flex; align-items: center; gap: 0.75rem; font-size: 0.95rem; color: #cbd5e1;"><i class="fa-solid fa-xmark" style="color: #cbd5e1; font-size: 0.8rem;"></i>Bandeja + flujo de resolución</li>
+                        <li style="display: flex; align-items: center; gap: 0.75rem; font-size: 0.95rem; color: #cbd5e1;"><i class="fa-solid fa-xmark" style="color: #cbd5e1; font-size: 0.8rem;"></i>Dashboard de analíticas</li>
                     </ul>
+                    <a href="demo.html" class="btn btn-secondary" style="width: 100%; text-align: center;">Ver en acción</a>
                 </div>
 
-                <!-- Setup Fee -->
-                <div class="pricing-card reveal" style="transition-delay: 100ms;">
+                <!-- Pro Tier -->
+                <div class="pricing-card reveal" style="transition-delay: 100ms; display: flex; flex-direction: column; border: 2px solid var(--brand-blue); background: rgba(255,255,255,0.95);">
+                    <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem;">
+                        <div class="pricing-card__eyebrow" style="margin-bottom: 0;">Pro</div>
+                        <span style="background: var(--brand-blue); color: white; font-size: 0.65rem; padding: 0.2rem 0.55rem; border-radius: 999px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em;">Más Popular</span>
+                    </div>
+                    <div class="pricing-card__price">
+                        <span id="price-staff">$19</span><span style="font-family: 'Plus Jakarta Sans', sans-serif; font-size: 1rem; font-weight: 600; color: var(--text-secondary);" id="price-staff-unit">/mes</span>
+                    </div>
+                    <div class="pricing-card__unit">por tarjeta de staff</div>
+                    <p style="font-size: 0.85rem; color: var(--brand-blue); font-weight: 700; margin-bottom: 2rem;">Eso es menos de $0.63/día por miembro de staff</p>
+                    <ul style="list-style: none; padding: 0; margin: 0 0 2rem; display: flex; flex-direction: column; gap: 0.85rem; flex-grow: 1;">
+                        <li style="display: flex; align-items: center; gap: 0.75rem; font-size: 0.95rem; color: var(--brand-charcoal); font-weight: 600;"><i class="fa-solid fa-check" style="color: var(--brand-blue); font-size: 0.8rem;"></i>Todo en Básico</li>
+                        <li style="display: flex; align-items: center; gap: 0.75rem; font-size: 0.95rem; color: var(--text-secondary);"><i class="fa-solid fa-check" style="color: var(--brand-blue); font-size: 0.8rem;"></i>Descubre qué meseros generan reseñas de 5 estrellas</li>
+                        <li style="display: flex; align-items: center; gap: 0.75rem; font-size: 0.95rem; color: var(--text-secondary);"><i class="fa-solid fa-check" style="color: var(--brand-blue); font-size: 0.8rem;"></i>Alertas antes de que un cliente insatisfecho se vaya</li>
+                        <li style="display: flex; align-items: center; gap: 0.75rem; font-size: 0.95rem; color: var(--text-secondary);"><i class="fa-solid fa-check" style="color: var(--brand-blue); font-size: 0.8rem;"></i>Seguimiento de cada problema hasta resolución</li>
+                        <li style="display: flex; align-items: center; gap: 0.75rem; font-size: 0.95rem; color: var(--text-secondary);"><i class="fa-solid fa-check" style="color: var(--brand-blue); font-size: 0.8rem;"></i>Reportes automáticos semanales</li>
+                        <li style="display: flex; align-items: center; gap: 0.75rem; font-size: 0.95rem; color: var(--text-secondary);"><i class="fa-solid fa-check" style="color: var(--brand-blue); font-size: 0.8rem;"></i>Vista en Vivo en cualquier tablet</li>
+                        <li style="display: flex; align-items: center; gap: 0.75rem; font-size: 0.95rem; color: var(--text-secondary);"><i class="fa-solid fa-check" style="color: var(--brand-blue); font-size: 0.8rem;"></i>Dashboard completo de analíticas</li>
+                    </ul>
+                    <a href="demo.html" class="btn btn-primary" style="width: 100%; text-align: center;">Quiero mis tarjetas</a>
+                </div>
+            </div>
+
+            <!-- Setup + Owner row -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; max-width: 960px; margin: 0 auto;">
+                <div class="pricing-card reveal" style="transition-delay: 200ms;">
                     <div class="pricing-card__eyebrow">Setup Inicial</div>
                     <div class="pricing-card__price">$199</div>
                     <div class="pricing-card__unit">por sucursal</div>
                     <p class="pricing-card__desc">Onboarding, configuración de Google Place ID, registro de staff y capacitación del equipo. Todo para salir en vivo.</p>
                 </div>
-
-                <!-- Owner Add-on -->
-                <div class="pricing-card reveal" style="transition-delay: 200ms;">
+                <div class="pricing-card reveal" style="transition-delay: 300ms;">
                     <div class="pricing-card__eyebrow">Add-on de Dueño</div>
                     <div class="pricing-card__price">$49<span style="font-family: 'Plus Jakarta Sans', sans-serif; font-size: 1rem; font-weight: 600; color: var(--text-secondary);" id="price-owner-unit">/mes</span></div>
                     <div class="pricing-card__unit">tarifa fija</div>
@@ -340,52 +367,41 @@
                 </div>
             </div>
 
-            <!-- Example Pricing Table -->
-            <div class="pricing-examples reveal" style="transition-delay: 300ms;">
-                <div class="pricing-examples__header">Cómo se ve en la práctica</div>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Tamaño</th>
-                            <th>Staff</th>
-                            <th id="table-period-header">Mensual</th>
-                            <th>Setup</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td style="font-weight: 700;">Multi-sucursal (12 sucursales)</td>
-                            <td>~120</td>
-                            <td style="font-weight: 700;" class="pricing-table-amount" data-monthly="$2,329/mes" data-annual="$1,939/mes">$2,329/mes</td>
-                            <td>$2,388</td>
-                        </tr>
-                        <tr>
-                            <td>Grande</td>
-                            <td>20</td>
-                            <td class="pricing-table-amount" data-monthly="$380/mes" data-annual="$317/mes">$380/mes</td>
-                            <td>$199</td>
-                        </tr>
-                        <tr>
-                            <td>Mediano</td>
-                            <td>10</td>
-                            <td class="pricing-table-amount" data-monthly="$190/mes" data-annual="$158/mes">$190/mes</td>
-                            <td>$199</td>
-                        </tr>
-                        <tr>
-                            <td>Pequeño</td>
-                            <td>5</td>
-                            <td class="pricing-table-amount" data-monthly="$95/mes" data-annual="$79/mes">$95/mes</td>
-                            <td>$199</td>
-                        </tr>
-                    </tbody>
-                </table>
+            <!-- ROI Calculator -->
+            <div class="pricing-card reveal" style="max-width: 960px; margin: 3rem auto 0; transition-delay: 400ms;">
+                <div style="text-align: center; margin-bottom: 2rem;">
+                    <div class="pricing-card__eyebrow" style="text-align: center;">Calculadora de ROI</div>
+                    <h3 style="font-family: 'Instrument Serif', serif; font-size: 2rem; font-weight: 400; color: var(--brand-charcoal);">Mira lo que RateTap te ahorra</h3>
+                </div>
+                <div style="max-width: 500px; margin: 0 auto;">
+                    <label style="font-weight: 700; font-size: 0.9rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.1em; display: block; margin-bottom: 0.75rem;">¿Cuántos miembros de staff tienes?</label>
+                    <div style="display: flex; align-items: center; gap: 1.5rem;">
+                        <input type="range" id="roi-slider" min="5" max="30" value="10" style="flex: 1; accent-color: var(--brand-blue); height: 6px; cursor: pointer;">
+                        <span id="roi-staff-count" style="font-family: 'Instrument Serif', serif; font-size: 2.5rem; color: var(--brand-charcoal); min-width: 50px; text-align: center;">10</span>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-top: 2rem;">
+                        <div style="text-align: center; padding: 1.5rem; background: rgba(45,156,219,0.05); border-radius: 16px; border: 1px solid rgba(45,156,219,0.1);">
+                            <div style="font-weight: 800; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.12em; color: var(--text-secondary); margin-bottom: 0.5rem;">Tu costo</div>
+                            <div id="roi-cost" style="font-family: 'Instrument Serif', serif; font-size: 2.2rem; color: var(--brand-charcoal);">$190/mes</div>
+                        </div>
+                        <div style="text-align: center; padding: 1.5rem; background: rgba(45,156,219,0.05); border-radius: 16px; border: 1px solid rgba(45,156,219,0.1);">
+                            <div style="font-weight: 800; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.12em; color: var(--text-secondary); margin-bottom: 0.5rem;">Ahorro estimado</div>
+                            <div id="roi-savings" style="font-family: 'Instrument Serif', serif; font-size: 2.2rem; color: var(--brand-blue);">$1,500&ndash;$3,000/mes</div>
+                        </div>
+                    </div>
+                    <p style="text-align: center; margin-top: 1.5rem; font-size: 0.9rem; color: var(--text-secondary); line-height: 1.6;">Interceptar solo 2 malas reseñas al mes ahorra un estimado de $1,500&ndash;$3,000 en ingresos perdidos. Una sola reseña de 1 estrella cuesta al restaurante 5&ndash;9% de sus ingresos.</p>
+                </div>
             </div>
 
-            <!-- Social proof + CTA -->
-            <div style="text-align: center; margin-top: 3rem;">
-                <p style="color: var(--text-secondary); font-size: 1rem; margin-bottom: 0.75rem;">Utilizado por Grupo Estancia &mdash; 12 sucursales en México.</p>
+            <!-- Money-back + social proof -->
+            <div style="text-align: center; margin-top: 3rem; max-width: 960px; margin-left: auto; margin-right: auto;">
+                <div style="display: inline-flex; align-items: center; gap: 0.6rem; background: rgba(255,255,255,0.8); border: 1px solid rgba(45,156,219,0.2); border-radius: 999px; padding: 0.6rem 1.5rem; margin-bottom: 1.5rem;">
+                    <i class="fa-solid fa-shield-halved" style="color: var(--brand-blue); font-size: 1.1rem;"></i>
+                    <span style="font-weight: 700; font-size: 0.9rem; color: var(--brand-charcoal);">Garantía de devolución de 30 días</span>
+                </div>
+                <p style="color: var(--text-secondary); font-size: 1rem; margin-bottom: 0.5rem;">Utilizado por Grupo Estancia &mdash; 12 sucursales en México.</p>
                 <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 2rem;">Tarjetas de reemplazo: $10 cada una. Sin contratos a largo plazo. Cancela cuando quieras.</p>
-                <a href="demo.html" class="btn btn-primary" style="padding: 1rem 2.5rem; font-size: 1.05rem;">Comenzar Ahora</a>
+                <a href="demo.html" class="btn btn-primary" style="padding: 1rem 2.5rem; font-size: 1.05rem;">Empieza a capturar reseñas de 5 estrellas</a>
             </div>
         </div>
     </section>
@@ -471,12 +487,25 @@
 
             staffPrice.textContent = isAnnual ? '$16' : '$19';
 
-            const headerEl = document.getElementById('table-period-header');
-            if (headerEl) headerEl.textContent = isAnnual ? 'Mensual (anual)' : 'Mensual';
+            const basicPrice = document.querySelector('.tier-price-basic');
+            if (basicPrice) basicPrice.textContent = isAnnual ? '$7' : '$9';
 
-            document.querySelectorAll('.pricing-table-amount').forEach(td => {
-                td.textContent = isAnnual ? td.dataset.annual : td.dataset.monthly;
-            });
+            updateROI();
+        }
+
+        const roiSlider = document.getElementById('roi-slider');
+        if (roiSlider) {
+            roiSlider.addEventListener('input', updateROI);
+        }
+        function updateROI() {
+            const slider = document.getElementById('roi-slider');
+            if (!slider) return;
+            const staff = parseInt(slider.value);
+            const perStaff = isAnnual ? 16 : 19;
+            const cost = staff * perStaff;
+            document.getElementById('roi-staff-count').textContent = staff;
+            document.getElementById('roi-cost').textContent = '$' + cost + '/mes';
+            document.getElementById('roi-savings').innerHTML = '$1,500&ndash;$3,000/mes';
         }
     </script>
 </body>
