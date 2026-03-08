@@ -11,7 +11,7 @@ interface StarRatingProps {
   restaurantName: string;
 }
 
-function StarIcon({ filled, size = 48 }: { filled: boolean; size?: number }) {
+function StarIcon({ filled, size = 44 }: { filled: boolean; size?: number }) {
   return (
     <svg
       width={size}
@@ -19,7 +19,7 @@ function StarIcon({ filled, size = 48 }: { filled: boolean; size?: number }) {
       viewBox="0 0 24 24"
       fill={filled ? 'currentColor' : 'none'}
       stroke="currentColor"
-      strokeWidth={filled ? 0 : 1.5}
+      strokeWidth={filled ? 0 : 1.2}
       strokeLinecap="round"
       strokeLinejoin="round"
     >
@@ -84,42 +84,64 @@ export default function StarRating({
 
   return (
     <div
-      style={{ animation: 'scaleIn 0.5s ease-out both' }}
-      className="flex flex-col items-center px-6 py-10 w-full max-w-md mx-auto"
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        padding: '0 1.5rem',
+        width: '100%',
+        maxWidth: 440,
+        margin: '0 auto',
+        animation: 'reviewFadeIn 0.6s ease-out both',
+      }}
     >
       {/* Restaurant name */}
       <h1
         style={{
-          fontFamily: 'var(--font-cormorant), Georgia, serif',
+          fontFamily: 'var(--font-serif)',
+          fontSize: 'clamp(28px, 7vw, 40px)',
+          fontWeight: 600,
+          textAlign: 'center',
+          lineHeight: 1.1,
           letterSpacing: '-0.02em',
+          color: '#111',
+          margin: '0 0 0.5rem',
         }}
-        className="text-[clamp(36px,7vw,48px)] font-semibold text-center leading-[1.05] mb-2"
       >
         {restaurantName}
       </h1>
 
-      {/* Decorative line */}
-      <div
-        className="mx-auto my-5"
-        style={{
-          width: 48,
-          height: 1,
-          background:
-            'linear-gradient(90deg, transparent, var(--stone-300), transparent)',
-        }}
-      />
+      {/* Decorative rule */}
+      <div style={{
+        width: 40,
+        height: 1,
+        background: '#D97706',
+        margin: '1rem 0 1.25rem',
+      }} />
 
       {/* Question */}
-      <p className="text-center text-[17px] leading-relaxed mb-9" style={{ color: 'var(--stone-700)' }}>
+      <p style={{
+        textAlign: 'center',
+        fontSize: '1rem',
+        lineHeight: 1.6,
+        color: '#666',
+        margin: '0 0 2rem',
+        fontFamily: 'var(--font-sans)',
+      }}>
         {t.starRating.howWasYourExperience}{' '}
-        <span className="font-semibold" style={{ color: 'var(--espresso)' }}>
+        <span style={{ fontWeight: 600, color: '#111' }}>
           {staffName}
         </span>
         ?
       </p>
 
       {/* Stars */}
-      <div className="flex justify-center gap-2 mb-6">
+      <div style={{
+        display: 'flex',
+        justifyContent: 'center',
+        gap: '0.5rem',
+        marginBottom: '1.5rem',
+      }}>
         {[1, 2, 3, 4, 5].map((star) => {
           const isFilled = star <= displayRating;
           const isPopping = star === popStar;
@@ -132,20 +154,23 @@ export default function StarRating({
               onMouseLeave={() => !submitting && setHoveredStar(0)}
               onClick={() => handleSubmit(star)}
               aria-label={t.starRating.rateStars(star)}
-              className="border-0 bg-transparent rounded-lg p-1.5"
               style={{
+                border: 'none',
+                background: 'transparent',
+                padding: '0.5rem',
                 cursor: submitting ? 'default' : 'pointer',
                 transition: 'transform 0.2s ease, filter 0.25s ease',
-                transform: isFilled && !isPopping ? 'scale(1.08)' : 'scale(1)',
+                transform: isFilled && !isPopping ? 'scale(1.1)' : 'scale(1)',
                 filter: isFilled
-                  ? 'drop-shadow(0 0 14px rgba(251, 191, 36, 0.45))'
+                  ? 'drop-shadow(0 2px 12px rgba(217, 119, 6, 0.4))'
                   : 'none',
-                color: isFilled ? 'var(--amber-400)' : 'var(--stone-300)',
-                opacity: submitting && !isFilled ? 0.25 : 1,
+                color: isFilled ? '#D97706' : '#D4D4D4',
+                opacity: submitting && !isFilled ? 0.2 : 1,
                 animation: isPopping ? 'starPop 0.35s ease-out' : 'none',
+                WebkitTapHighlightColor: 'transparent',
               }}
             >
-              <StarIcon filled={isFilled} />
+              <StarIcon filled={isFilled} size={48} />
             </button>
           );
         })}
@@ -153,11 +178,15 @@ export default function StarRating({
 
       {/* Hint / Error */}
       <p
-        className="text-center text-[13px] min-h-[20px]"
         style={{
-          color: error ? '#dc2626' : 'var(--stone-400)',
+          textAlign: 'center',
+          fontSize: '0.75rem',
+          minHeight: 20,
+          color: error ? '#DC2626' : '#A3A3A3',
+          fontWeight: 500,
+          letterSpacing: '0.04em',
           transition: 'opacity 0.3s ease',
-          animation: submitting ? 'pulse-soft 1.4s ease-in-out infinite' : 'none',
+          animation: submitting ? 'pulseSoft 1.4s ease-in-out infinite' : 'none',
         }}
       >
         {error
@@ -168,6 +197,24 @@ export default function StarRating({
               ? t.starRating.tapToRate
               : ''}
       </p>
+
+      {/* Keyframes */}
+      <style>{`
+        @keyframes reviewFadeIn {
+          from { opacity: 0; transform: translateY(12px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes starPop {
+          0% { transform: scale(1); }
+          40% { transform: scale(1.35); }
+          70% { transform: scale(0.95); }
+          100% { transform: scale(1.1); }
+        }
+        @keyframes pulseSoft {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.4; }
+        }
+      `}</style>
     </div>
   );
 }

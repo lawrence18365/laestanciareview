@@ -1,7 +1,6 @@
 import { notFound } from 'next/navigation';
 import { getRestaurantBySlug, getStaffByCode } from '@/lib/queries';
 import { getBrandForSlug } from '@/lib/brands';
-import { t } from '@/lib/i18n';
 import StarRating from '@/components/review/StarRating';
 
 interface PageProps {
@@ -23,24 +22,40 @@ export default async function ReviewPage({ params, searchParams }: PageProps) {
 
   return (
     <main
-      className="min-h-dvh flex flex-col items-center justify-center"
       style={{
-        background:
-          'linear-gradient(165deg, #faf6f1 0%, #f0e9df 50%, #ebe3d7 100%)',
+        minHeight: '100dvh',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: '#FAFAF9',
+        padding: '1.5rem 1rem 4rem',
+        position: 'relative',
       }}
     >
+      {/* Subtle top accent line */}
+      <div style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        height: 3,
+        background: '#D97706',
+      }} />
+
+      {/* Restaurant Logo */}
       <div
         style={{
-          width: 80,
-          height: 80,
-          borderRadius: 16,
+          width: 96,
+          height: 96,
           overflow: 'hidden',
-          background: brand.darkBg ? '#1c1917' : '#fff',
-          boxShadow: 'var(--shadow-md)',
+          background: brand.darkBg ? '#111' : '#fff',
+          border: '1px solid #E2E2E2',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          marginBottom: '1rem',
+          marginBottom: '1.25rem',
+          flexShrink: 0,
         }}
       >
         <img
@@ -62,18 +77,24 @@ export default async function ReviewPage({ params, searchParams }: PageProps) {
         restaurantName={restaurant.name}
       />
 
+      {/* Footer */}
       <footer
-        className="fixed bottom-0 inset-x-0 text-center pb-5 pt-3"
         style={{
-          fontSize: 11,
-          letterSpacing: '0.06em',
-          color: 'var(--stone-400)',
+          position: 'fixed',
+          bottom: 0,
+          left: 0,
+          right: 0,
+          textAlign: 'center',
+          paddingBottom: '1.25rem',
+          paddingTop: '0.75rem',
+          fontSize: '0.6rem',
+          fontWeight: 600,
+          letterSpacing: '0.12em',
+          textTransform: 'uppercase',
+          color: '#A3A3A3',
         }}
       >
-        {t.common.poweredBy}{' '}
-        <span className="font-semibold" style={{ color: 'var(--stone-500)' }}>
-          RateTap
-        </span>
+        DESARROLLADO POR <span style={{ fontWeight: 700, color: '#111' }}>RATETAP</span>
       </footer>
     </main>
   );
