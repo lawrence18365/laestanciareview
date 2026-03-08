@@ -13,6 +13,7 @@ const brands: Record<string, BrandInfo> = {
   steakcompany: { logo: '/logos/ratetap.webp', darkBg: false },
   real: { logo: '/logos/real.jpeg', darkBg: false },
   regio: { logo: '/logos/ratetap.webp', darkBg: false },
+  owner: { logo: '/logos/grupo-estancia.png', darkBg: false },
 };
 
 export function getBrandForSlug(slug: string): BrandInfo {

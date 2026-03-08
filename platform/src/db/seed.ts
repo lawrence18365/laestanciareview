@@ -15,9 +15,9 @@ const allRestaurants = [
   { name: 'Estancia Veracruz', slug: 'estancia-veracruz' },
   { name: 'Estancia Xalapa', slug: 'estancia-xalapa' },
 
-  // Harbors
-  { name: 'Harbors Angelopolis', slug: 'harbors-angelopolis' },
-  { name: 'Harbors Veracruz', slug: 'harbors-veracruz' },
+  // Harbor's
+  { name: "Harbor's Angelopolis", slug: 'harbors-angelopolis' },
+  { name: "Harbor's Veracruz", slug: 'harbors-veracruz' },
 
   // La Silla
   { name: 'La Silla Juarez', slug: 'la-silla-juarez' },
@@ -32,7 +32,7 @@ const allRestaurants = [
 
 // Owner account — can see all locations
 const ownerAccount = {
-  name: 'La Estancia (Owner)',
+  name: 'Grupo Estancia',
   slug: 'owner',
   isOwner: true,
 };
