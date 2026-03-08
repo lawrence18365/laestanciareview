@@ -492,7 +492,7 @@ export default function LiveView({ restaurantName, logoSrc, logoDarkBg, googleRa
         }
 
         .font-numeric {
-          font-family: "JetBrains Mono", "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace;
+          font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace;
           font-variant-numeric: tabular-nums;
         }
         

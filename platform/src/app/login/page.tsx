@@ -52,58 +52,32 @@ export default function LoginPage() {
     }
   }
 
-  const inputStyle: React.CSSProperties = {
-    width: '100%',
-    padding: '0.65rem 0.75rem',
-    border: '1px solid var(--border-dark)',
-    borderRadius: 0,
-    fontSize: '0.9rem',
-    fontFamily: 'var(--font-sans)',
-    background: 'var(--panel-bg)',
-    color: 'var(--text-main)',
-    transition: 'box-shadow 0.15s ease',
-  };
-
-  const labelStyle: React.CSSProperties = {
-    display: 'block',
-    fontSize: '0.65rem',
-    fontWeight: 700,
-    letterSpacing: '0.1em',
-    textTransform: 'uppercase',
-    color: 'var(--text-muted)',
-    marginBottom: '0.4rem',
-  };
-
   return (
-    <div
-      style={{
-        minHeight: '100vh',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        background: 'var(--bg-base)',
-        padding: '1rem',
-      }}
-    >
-      <div
-        style={{
-          width: '100%',
-          maxWidth: 400,
-          background: 'var(--panel-bg)',
-          border: '1px solid var(--border-dark)',
-          padding: '2.5rem 2rem',
-          boxShadow: '8px 8px 0px rgba(0,0,0,0.06)',
-        }}
-      >
-        {/* Header */}
+    <div style={{
+      minHeight: '100vh',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      background: 'var(--bg-base)',
+      padding: '1rem',
+    }}>
+      <div style={{
+        width: '100%',
+        maxWidth: 420,
+        background: 'var(--panel-bg)',
+        border: '1px solid var(--border-dark)',
+        padding: '2.5rem 2rem',
+        boxShadow: '8px 8px 0px rgba(0,0,0,0.06)',
+      }}>
+        {/* Logo */}
         <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
           <img
             src="/logos/ratetap_logo_transparent_background.png"
             alt="RateTap"
-            style={{ height: 120, margin: '0 auto 0.75rem', objectFit: 'contain', display: 'block' }}
+            style={{ height: 120, margin: '0 auto 1rem', objectFit: 'contain', display: 'block' }}
           />
           <div style={{
-            fontSize: '0.6rem',
+            fontSize: '0.65rem',
             fontWeight: 700,
             letterSpacing: '0.15em',
             textTransform: 'uppercase',
@@ -114,14 +88,18 @@ export default function LoginPage() {
         </div>
 
         <form onSubmit={handleSubmit}>
-          {/* Divider */}
-          <div style={{
-            borderTop: '1px solid var(--panel-border)',
-            marginBottom: '1.5rem',
-          }} />
+          <div style={{ borderTop: '1px solid var(--panel-border)', marginBottom: '1.5rem' }} />
 
           <div style={{ marginBottom: '1.25rem' }}>
-            <label htmlFor="restaurant" style={labelStyle}>
+            <label htmlFor="restaurant" style={{
+              display: 'block',
+              fontSize: '0.65rem',
+              fontWeight: 700,
+              letterSpacing: '0.1em',
+              textTransform: 'uppercase',
+              color: 'var(--text-muted)',
+              marginBottom: '0.4rem',
+            }}>
               {t.login.restaurant}
             </label>
             <select
@@ -129,7 +107,16 @@ export default function LoginPage() {
               value={slug}
               onChange={(e) => setSlug(e.target.value)}
               required
-              style={inputStyle}
+              style={{
+                width: '100%',
+                padding: '0.65rem 0.75rem',
+                border: '1px solid var(--border-dark)',
+                borderRadius: 0,
+                fontSize: '0.9rem',
+                fontFamily: 'var(--font-sans)',
+                background: 'var(--panel-bg)',
+                color: 'var(--text-main)',
+              }}
             >
               <option value="">{t.login.selectRestaurant}</option>
               {restaurants.map((r) => (
@@ -141,7 +128,15 @@ export default function LoginPage() {
           </div>
 
           <div style={{ marginBottom: '1.5rem' }}>
-            <label htmlFor="password" style={labelStyle}>
+            <label htmlFor="password" style={{
+              display: 'block',
+              fontSize: '0.65rem',
+              fontWeight: 700,
+              letterSpacing: '0.1em',
+              textTransform: 'uppercase',
+              color: 'var(--text-muted)',
+              marginBottom: '0.4rem',
+            }}>
               {t.login.password}
             </label>
             <input
@@ -151,22 +146,29 @@ export default function LoginPage() {
               onChange={(e) => setPassword(e.target.value)}
               required
               placeholder={t.login.enterPassword}
-              style={inputStyle}
+              style={{
+                width: '100%',
+                padding: '0.65rem 0.75rem',
+                border: '1px solid var(--border-dark)',
+                borderRadius: 0,
+                fontSize: '0.9rem',
+                fontFamily: 'var(--font-sans)',
+                background: 'var(--panel-bg)',
+                color: 'var(--text-main)',
+              }}
             />
           </div>
 
           {error && (
-            <div
-              style={{
-                padding: '0.5rem 0.75rem',
-                marginBottom: '1rem',
-                border: '1px solid var(--red)',
-                background: 'var(--red-light)',
-                color: 'var(--red)',
-                fontSize: '0.8rem',
-                fontWeight: 500,
-              }}
-            >
+            <div style={{
+              padding: '0.5rem 0.75rem',
+              marginBottom: '1rem',
+              border: '1px solid var(--red)',
+              background: 'var(--red-light)',
+              color: 'var(--red)',
+              fontSize: '0.8rem',
+              fontWeight: 500,
+            }}>
               {error}
             </div>
           )}
@@ -176,8 +178,9 @@ export default function LoginPage() {
             disabled={loading}
             style={{
               width: '100%',
-              padding: '0.7rem',
+              padding: '0.75rem',
               border: 'none',
+              borderRadius: 0,
               background: 'var(--text-main)',
               color: 'var(--panel-bg)',
               fontWeight: 700,
@@ -198,10 +201,10 @@ export default function LoginPage() {
               href="/forgot-password"
               style={{
                 color: 'var(--text-dim)',
-                fontSize: '0.7rem',
-                fontWeight: 500,
+                fontSize: '0.65rem',
+                fontWeight: 600,
                 textDecoration: 'none',
-                letterSpacing: '0.04em',
+                letterSpacing: '0.06em',
                 textTransform: 'uppercase',
               }}
             >
