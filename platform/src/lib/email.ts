@@ -565,7 +565,7 @@ export async function sendGMFeedback({
   subject,
   message,
 }: GMFeedbackParams) {
-  const adminEmail = process.env.ADMIN_EMAIL ?? 'admin@ratetapmx.com';
+  const adminEmail = process.env.ADMIN_EMAIL ?? 'lawrencebrennan@gmail.com';
   const label = categoryLabels[category] ?? category;
   const colors = categoryColors[category] ?? categoryColors.feedback;
 

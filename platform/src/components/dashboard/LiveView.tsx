@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import React from 'react';
 
 /* ── Types ──────────────────────────────────────── */
 
@@ -82,25 +83,20 @@ interface Props {
   initialData: LiveData;
 }
 
-/* ── Colors ─────────────────────────────────────── */
+/* ── Colors (Classy Editorial Light Theme) ──────── */
 
 const C = {
-  bg: '#09090b',
-  surface: 'rgba(255,255,255,0.03)',
-  border: 'rgba(255,255,255,0.07)',
-  borderLight: 'rgba(255,255,255,0.12)',
-  white: '#fafafa',
-  muted: 'rgba(255,255,255,0.45)',
-  dim: 'rgba(255,255,255,0.2)',
-  gold: '#f59e0b',
-  green: '#22c55e',
-  greenBg: 'rgba(34, 197, 94, 0.1)',
-  greenBorder: 'rgba(34, 197, 94, 0.25)',
-  red: '#ef4444',
-  redBg: 'rgba(239, 68, 68, 0.1)',
-  redBorder: 'rgba(239, 68, 68, 0.25)',
-  amberBg: 'rgba(245, 158, 11, 0.08)',
-  amberBorder: 'rgba(245, 158, 11, 0.2)',
+  bgBase: '#F9F9F8', // Soft warm white
+  panelBg: '#FFFFFF',
+  panelBorder: '#E2E2E2',
+  borderDark: '#111111',
+  textMain: '#111111',
+  textMuted: '#666666',
+  textDim: '#A3A3A3',
+  gold: '#D97706',
+  green: '#059669',
+  red: '#DC2626',
+  blue: '#2563EB',
 };
 
 /* ── Helpers ────────────────────────────────────── */
@@ -150,12 +146,12 @@ function mergeStaff(data: LiveData): MergedStaff[] {
 
 function relativeTime(date: Date, now: Date): string {
   const seconds = Math.floor((now.getTime() - date.getTime()) / 1000);
-  if (seconds < 60) return 'just now';
+  if (seconds < 60) return 'justo ahora';
   const minutes = Math.floor(seconds / 60);
-  if (minutes < 60) return `${minutes}m ago`;
+  if (minutes < 60) return `hace ${minutes}m`;
   const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours}h ago`;
-  return `${Math.floor(hours / 24)}d ago`;
+  if (hours < 24) return `hace ${hours}h`;
+  return `hace ${Math.floor(hours / 24)}d`;
 }
 
 /* ── Main Component ─────────────────────────────── */
@@ -172,13 +168,15 @@ export default function LiveView({ restaurantName, logoSrc, logoDarkBg, googleRa
 
   const team = useMemo(() => mergeStaff(data), [data]);
 
-  const topPerformer = useMemo(() => {
+  // Compute daily winners: anyone with >0 scans today, sorted primarily by todayScans
+  const todayTopPerformers = useMemo(() => {
     const todayActive = team.filter((s) => s.todayScans > 0);
-    if (todayActive.length === 0) return null;
     return todayActive.sort(
       (a, b) => b.todayScans - a.todayScans || b.avgRating - a.avgRating,
-    )[0];
+    ).slice(0, 3); // Get top 3 for gamification
   }, [team]);
+
+  const topPerformer = todayTopPerformers[0] || null;
 
   const protectionRate = useMemo(() => {
     const total = data.week.totalScans;
@@ -226,23 +224,28 @@ export default function LiveView({ restaurantName, logoSrc, logoDarkBg, googleRa
   }, []);
 
   const fs = isFullscreen;
-  const timeStr = clock.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+  const timeStr = clock.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
   const secondsSince = Math.floor((clock.getTime() - lastUpdate.getTime()) / 1000);
 
   return (
     <div
       ref={containerRef}
       style={{
-        background: C.bg,
-        color: C.white,
+        position: 'relative',
+        background: C.bgBase,
+        color: C.textMain,
         height: fs ? '100vh' : undefined,
         minHeight: fs ? undefined : 'calc(100vh - 120px)',
-        padding: fs ? '1.5rem 2rem' : '1.25rem',
-        fontFamily: 'system-ui, -apple-system, sans-serif',
+        padding: fs ? '2rem 3rem' : '1.5rem',
+        fontFamily: '"Inter", "Helvetica Neue", Helvetica, Arial, sans-serif',
         display: 'flex',
         flexDirection: 'column',
-        borderRadius: fs ? 0 : 12,
+        borderRadius: fs ? 0 : 0, // Sharp corners
         overflow: 'hidden',
+        border: fs ? 'none' : `1px solid ${C.borderDark}`,
+        boxShadow: fs ? 'none' : '12px 12px 0px rgba(0,0,0,0.05)',
       }}
     >
       {/* ── HEADER ── */}
@@ -251,111 +254,145 @@ export default function LiveView({ restaurantName, logoSrc, logoDarkBg, googleRa
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          marginBottom: fs ? '1.25rem' : '1rem',
+          marginBottom: fs ? '3rem' : '1.5rem',
           flexShrink: 0,
+          borderBottom: `2px solid ${C.borderDark}`,
+          paddingBottom: fs ? '1.5rem' : '1rem',
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: fs ? '1rem' : '0.75rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: fs ? '2rem' : '1rem' }}>
           {/* Restaurant logo */}
           <div
             style={{
-              width: fs ? 52 : 42,
-              height: fs ? 52 : 42,
-              borderRadius: fs ? 12 : 10,
+              width: fs ? 120 : 56, // Significantly bigger in fullscreen
+              height: fs ? 120 : 56, // Significantly bigger in fullscreen
+              borderRadius: 0,
               overflow: 'hidden',
               background: logoDarkBg ? '#111' : '#fff',
               flexShrink: 0,
-              border: `1px solid ${C.borderLight}`,
-              boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
+              border: `1px solid ${C.borderDark}`,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: fs ? '8px' : '4px',
+              boxShadow: fs ? '4px 4px 0px rgba(0,0,0,0.1)' : 'none',
+              transition: 'all 0.3s ease',
             }}
           >
             <img
               src={logoSrc}
               alt={restaurantName}
-              style={{ width: '100%', height: '100%', objectFit: 'contain', padding: 3 }}
+              style={{ width: '100%', height: '100%', objectFit: 'contain' }}
             />
           </div>
-          <h1
-            style={{
-              margin: 0,
-              fontSize: fs ? '1.35rem' : '1.05rem',
-              fontWeight: 600,
-              letterSpacing: '0.02em',
-            }}
-          >
-            {restaurantName}
-          </h1>
-          {/* Live badge */}
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 6,
-              background: 'rgba(34,197,94,0.12)',
-              border: '1px solid rgba(34,197,94,0.25)',
-              borderRadius: 20,
-              padding: '3px 10px 3px 7px',
-              fontSize: '0.6rem',
-              fontWeight: 700,
-              letterSpacing: '0.12em',
-              textTransform: 'uppercase' as const,
-              color: '#4ade80',
-            }}
-          >
-            <span
+          <div style={{ display: 'flex', flexDirection: 'column', gap: fs ? 8 : 4 }}>
+            <h1
+              className="editorial-serif"
               style={{
-                width: 6,
-                height: 6,
-                borderRadius: '50%',
-                background: '#22c55e',
-                animation: 'livePulse 2s ease-in-out infinite',
+                margin: 0,
+                fontSize: fs ? '3rem' : '1.5rem',
+                fontWeight: 600,
+                letterSpacing: '-0.02em',
+                color: C.textMain,
+                lineHeight: 1.1,
               }}
-            />
-            LIVE
+            >
+              {restaurantName}
+            </h1>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              {/* Live badge */}
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  fontSize: fs ? '0.8rem' : '0.65rem',
+                  fontWeight: 700,
+                  letterSpacing: '0.15em',
+                  textTransform: 'uppercase' as const,
+                  color: C.green,
+                }}
+              >
+                <span
+                  style={{
+                    width: fs ? 8 : 6,
+                    height: fs ? 8 : 6,
+                    borderRadius: '50%',
+                    background: C.green,
+                    animation: 'liveIndicatorLight 2s ease-in-out infinite',
+                  }}
+                />
+                EN VIVO
+              </div>
+            </div>
           </div>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          <span style={{ fontSize: '0.65rem', color: C.dim }}>
-            {secondsSince < 5 ? 'Updated just now' : `Updated ${secondsSince}s ago`}
-          </span>
-          <span
-            style={{
-              fontSize: fs ? '1rem' : '0.85rem',
-              fontWeight: 500,
-              color: C.muted,
-              fontVariantNumeric: 'tabular-nums',
-            }}
-          >
-            {timeStr}
-          </span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '2rem' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'center' }}>
+             <span
+              className="font-numeric"
+              style={{
+                fontSize: fs ? '2rem' : '1.1rem',
+                fontWeight: 500,
+                color: C.textMain,
+                lineHeight: 1,
+                marginBottom: 4,
+                letterSpacing: '-0.02em',
+              }}
+            >
+              {mounted ? timeStr : ''}
+            </span>
+            <span style={{ fontSize: fs ? '0.8rem' : '0.65rem', color: C.textMuted, fontWeight: 500, letterSpacing: '0.05em', textTransform: 'uppercase' }}>
+              {secondsSince < 5 ? 'Sincronizado: Justo Ahora' : `Sincronizado: Hace ${secondsSince}s`}
+            </span>
+          </div>
           <button
             onClick={toggleFullscreen}
             style={{
-              background: C.surface,
-              border: `1px solid ${C.borderLight}`,
-              color: C.white,
-              borderRadius: 8,
-              padding: '7px 14px',
+              background: C.panelBg,
+              border: `1px solid ${C.borderDark}`,
+              color: C.textMain,
+              borderRadius: 0,
+              padding: fs ? '14px 20px' : '8px 14px',
               cursor: 'pointer',
-              fontSize: '0.65rem',
-              fontWeight: 500,
+              fontSize: fs ? '0.8rem' : '0.7rem',
+              fontWeight: 600,
+              letterSpacing: '0.05em',
               display: 'flex',
               alignItems: 'center',
-              gap: 5,
-              transition: 'background 0.15s',
+              gap: 8,
+              transition: 'all 0.15s ease',
+              textTransform: 'uppercase',
+              boxShadow: fs ? '4px 4px 0px rgba(0,0,0,1)' : 'none', // Brutalist shadow on button in FS
             }}
-            onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(255,255,255,0.1)')}
-            onMouseLeave={(e) => (e.currentTarget.style.background = C.surface)}
+            onMouseEnter={(e) => {
+              if(!fs) {
+                e.currentTarget.style.background = C.textMain;
+                e.currentTarget.style.color = C.panelBg;
+              } else {
+                 e.currentTarget.style.transform = 'translate(2px, 2px)';
+                 e.currentTarget.style.boxShadow = '2px 2px 0px rgba(0,0,0,1)';
+              }
+            }}
+            onMouseLeave={(e) => {
+              if(!fs) {
+                e.currentTarget.style.background = C.panelBg;
+                e.currentTarget.style.color = C.textMain;
+              } else {
+                 e.currentTarget.style.transform = 'translate(0px, 0px)';
+                 e.currentTarget.style.boxShadow = '4px 4px 0px rgba(0,0,0,1)';
+              }
+            }}
           >
-            <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+            <svg width={fs ? 20 : 14} height={fs ? 20 : 14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
               {fs ? (
                 <><polyline points="4 14 4 20 10 20" /><polyline points="20 10 20 4 14 4" /><line x1="14" y1="10" x2="20" y2="4" /><line x1="4" y1="20" x2="10" y2="14" /></>
               ) : (
                 <><polyline points="15 3 21 3 21 9" /><polyline points="9 21 3 21 3 15" /><line x1="21" y1="3" x2="14" y2="10" /><line x1="3" y1="21" x2="10" y2="14" /></>
               )}
             </svg>
-            {fs ? 'Exit' : 'Fullscreen'}
+            {fs ? 'SALIR' : 'EXPANDIR'}
           </button>
         </div>
       </div>
@@ -366,14 +403,19 @@ export default function LiveView({ restaurantName, logoSrc, logoDarkBg, googleRa
         style={{
           flex: 1,
           display: 'grid',
-          gridTemplateColumns: fs ? '340px 1fr' : '280px 1fr',
-          gap: fs ? '1.25rem' : '0.85rem',
+          gridTemplateColumns: fs ? '420px 1fr' : '340px 1fr',
+          gap: fs ? '2.5rem' : '1.5rem',
           minHeight: 0,
           overflow: 'hidden',
         }}
       >
         {/* ── LEFT COLUMN ── */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: fs ? '0.85rem' : '0.65rem', overflow: 'hidden' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: fs ? '1.5rem' : '1.25rem', overflow: 'hidden' }}>
+          {/* Gamified Daily Winners */}
+          {(todayTopPerformers.length > 0) && (
+            <DailyPodium winners={todayTopPerformers} large={fs} />
+          )}
+
           {/* Google Rating */}
           {gRating != null && (
             <GoogleRatingCard rating={gRating} reviewCount={gReviewCount} trend={gTrend} large={fs} />
@@ -387,48 +429,34 @@ export default function LiveView({ restaurantName, logoSrc, logoDarkBg, googleRa
             large={fs}
           />
 
-          {/* Staff of the Day */}
-          {topPerformer && <TopPerformer member={topPerformer} large={fs} />}
-
           {/* Live Activity Feed */}
           <LiveFeed scans={data.recentScans} now={clock} large={fs} />
         </div>
 
         {/* ── RIGHT COLUMN ── */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: fs ? '0.85rem' : '0.65rem', overflow: 'hidden' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: fs ? '1.5rem' : '1.25rem', overflow: 'hidden' }}>
           {/* Stats Row with week-over-week */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: fs ? '0.85rem' : '0.6rem', flexShrink: 0 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: fs ? '1.5rem' : '1.25rem', flexShrink: 0 }}>
             <StatBox
-              label="Total Scans"
+              label="TOTAL ESCANEOS"
               weekValue={data.week.totalScans}
               todayValue={data.today.totalScans}
               lastWeekValue={data.lastWeek.totalScans}
-              color={C.gold}
-              bgColor={C.amberBg}
-              borderColor={C.amberBorder}
               large={fs}
             />
             <StatBox
-              label="Sent to Google"
+              label="ENVIADOS A GOOGLE"
               weekValue={data.week.sentToGoogle}
               todayValue={data.today.sentToGoogle}
               lastWeekValue={data.lastWeek.sentToGoogle}
-              color={C.green}
-              bgColor={C.greenBg}
-              borderColor={C.greenBorder}
               large={fs}
-              icon="star"
             />
             <StatBox
-              label="Intercepted"
+              label="INTERCEPTADOS"
               weekValue={data.week.belowFourCount}
               todayValue={data.today.belowFourCount}
               lastWeekValue={data.lastWeek.belowFourCount}
-              color={C.red}
-              bgColor={C.redBg}
-              borderColor={C.redBorder}
               large={fs}
-              icon="shield"
             />
           </div>
 
@@ -438,27 +466,205 @@ export default function LiveView({ restaurantName, logoSrc, logoDarkBg, googleRa
       </div>
 
       {/* ── FOOTER ── */}
-      <div style={{ textAlign: 'right', paddingTop: fs ? '0.75rem' : '0.5rem', fontSize: '0.55rem', letterSpacing: '0.06em', color: C.dim, flexShrink: 0 }}>
-        Powered by <span style={{ fontWeight: 600, color: C.muted }}>RateTap</span>
+      <div style={{ 
+        borderTop: `1px solid ${C.panelBorder}`,
+        marginTop: fs ? '1.5rem' : '1rem',
+        paddingTop: fs ? '1.5rem' : '1rem', 
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        fontSize: '0.65rem', 
+        letterSpacing: '0.05em', 
+        color: C.textDim, 
+        flexShrink: 0,
+        textTransform: 'uppercase'
+      }}>
+        <span>PANEL DE DATOS INTERNO</span>
+        <span>
+          SISTEMA PROVISTO POR <span style={{ fontWeight: 700, color: C.textMain }}>RATETAP</span>
+        </span>
       </div>
 
-      {/* Keyframes */}
+      {/* Keyframes & Global Styles */}
       <style>{`
-        @keyframes livePulse {
-          0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(34,197,94,0.5); }
-          50% { opacity: 0.6; box-shadow: 0 0 0 4px rgba(34,197,94,0); }
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&display=swap');
+        
+        .editorial-serif {
+          font-family: 'Playfair Display', Georgia, serif;
         }
-        @keyframes fadeInScan {
-          from { opacity: 0; transform: translateY(-8px); }
+
+        .font-numeric {
+          font-family: "JetBrains Mono", "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace;
+          font-variant-numeric: tabular-nums;
+        }
+        
+        .flat-panel {
+          background: ${C.panelBg};
+          border: 1px solid ${C.borderDark};
+          border-radius: 0px;
+        }
+
+        @keyframes liveIndicatorLight {
+          0% { opacity: 1; }
+          50% { opacity: 0.3; }
+          100% { opacity: 1; }
+        }
+
+        @keyframes slideInScanLight {
+          from { opacity: 0; transform: translateY(-5px); }
           to { opacity: 1; transform: translateY(0); }
         }
-        @media (max-width: 700px) {
+
+        @keyframes championGlow {
+          0% { border-color: #D97706; box-shadow: 0 0 5px rgba(217,119,6,0.2); }
+          50% { border-color: #F59E0B; box-shadow: 0 0 15px rgba(217,119,6,0.6); }
+          100% { border-color: #D97706; box-shadow: 0 0 5px rgba(217,119,6,0.2); }
+        }
+
+        @keyframes flipBadge {
+          0% { transform: perspective(400px) rotateY(0); }
+          10% { transform: perspective(400px) rotateY(180deg); }
+          100% { transform: perspective(400px) rotateY(180deg); }
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+          width: 4px;
+          height: 4px;
+        }
+        ::-webkit-scrollbar-track {
+          background: ${C.bgBase};
+        }
+        ::-webkit-scrollbar-thumb {
+          background: ${C.panelBorder};
+        }
+        ::-webkit-scrollbar-thumb:hover {
+          background: ${C.textDim};
+        }
+        
+        @media (max-width: 1024px) {
           .live-content-grid { grid-template-columns: 1fr !important; }
         }
       `}</style>
     </div>
   );
 }
+
+/* ── Gamified Podium ───────────────────────────── */
+
+function DailyPodium({ winners, large }: { winners: MergedStaff[]; large: boolean }) {
+  const fs = large;
+  const first = winners[0];
+  const second = winners[1];
+  const third = winners[2];
+
+  // Colors for podium
+  const gold = '#D97706';
+  const silver = '#9CA3AF';
+  const bronze = '#B45309';
+
+  return (
+    <div
+      style={{
+        background: '#111111', // Invert for impact
+        border: `1px solid ${C.borderDark}`,
+        padding: fs ? '1.5rem' : '1.25rem',
+        flexShrink: 0,
+        position: 'relative',
+        color: '#FFFFFF',
+      }}
+    >
+      <div
+        style={{
+          fontSize: '0.65rem',
+          fontWeight: 800,
+          letterSpacing: '0.15em',
+          textTransform: 'uppercase' as const,
+          color: '#A3A3A3',
+          marginBottom: fs ? 16 : 12,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 8,
+          borderBottom: '1px solid #333',
+          paddingBottom: 10,
+        }}
+      >
+        <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="square">
+          <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+        </svg>
+        LÍDERES DEL DÍA
+      </div>
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: fs ? 12 : 8 }}>
+        {/* 1st Place - Boldest */}
+        {first && (
+          <div style={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            gap: 12, 
+            padding: fs ? '12px 16px' : '8px 12px',
+            background: 'rgba(217, 119, 6, 0.1)', 
+            border: `1px solid ${gold}`,
+            animation: 'championGlow 3s infinite ease-in-out'
+          }}>
+             <div style={{
+                width: fs ? 28 : 24, height: fs ? 28 : 24,
+                background: gold, color: '#fff',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontWeight: 800, fontSize: fs ? '1rem' : '0.8rem',
+                fontFamily: '"JetBrains Mono", monospace'
+             }}>1</div>
+             <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+               <span className="editorial-serif" style={{ fontSize: fs ? '1.3rem' : '1.1rem', fontWeight: 700, color: '#fff', fontStyle: 'italic', lineHeight: 1.1 }}>{first.name}</span>
+               <span style={{ fontSize: '0.65rem', color: gold, fontWeight: 700, letterSpacing: '0.05em' }}>CAMPEÓN ACTUAL</span>
+             </div>
+             <div style={{ textAlign: 'right' }}>
+               <div className="font-numeric" style={{ fontSize: fs ? '1.5rem' : '1.2rem', fontWeight: 700, color: gold, lineHeight: 1 }}>{first.todayScans}</div>
+               <div style={{ fontSize: '0.55rem', color: '#888', letterSpacing: '0.05em', textTransform: 'uppercase' }}>Escaneos</div>
+             </div>
+          </div>
+        )}
+
+        {/* 2nd and 3rd - Grid below */}
+        {(second || third) && (
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+            {second && (
+               <div style={{ 
+                 display: 'flex', 
+                 alignItems: 'center', 
+                 gap: 8, 
+                 padding: '8px 12px',
+                 border: `1px solid #333`,
+               }}>
+                  <div style={{ color: silver, fontWeight: 700, fontSize: '0.9rem', fontFamily: '"JetBrains Mono", monospace' }}>#2</div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div className="editorial-serif" style={{ fontSize: '1rem', color: '#fff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{second.name}</div>
+                  </div>
+                  <div className="font-numeric" style={{ fontSize: '1rem', color: silver, fontWeight: 600 }}>{second.todayScans}</div>
+               </div>
+            )}
+            {third && (
+               <div style={{ 
+                 display: 'flex', 
+                 alignItems: 'center', 
+                 gap: 8, 
+                 padding: '8px 12px',
+                 border: `1px solid #333`,
+               }}>
+                  <div style={{ color: bronze, fontWeight: 700, fontSize: '0.9rem', fontFamily: '"JetBrains Mono", monospace' }}>#3</div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div className="editorial-serif" style={{ fontSize: '1rem', color: '#fff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{third.name}</div>
+                  </div>
+                  <div className="font-numeric" style={{ fontSize: '1rem', color: bronze, fontWeight: 600 }}>{third.todayScans}</div>
+               </div>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 
 /* ── Protection Ring ────────────────────────────── */
 
@@ -474,126 +680,89 @@ function ProtectionRing({
   large: boolean;
 }) {
   const fs = large;
-  const size = fs ? 110 : 90;
-  const r = size / 2 - 12;
+  const size = fs ? 150 : 120;
+  const strokeW = fs ? 6 : 5;
+  const r = size / 2 - strokeW - 2;
   const circ = 2 * Math.PI * r;
   const offset = circ * (1 - rate / 100);
-  const ringColor = rate >= 70 ? C.green : rate >= 40 ? C.gold : C.red;
 
   return (
     <div
+      className="flat-panel"
       style={{
-        background: C.surface,
-        border: `1px solid ${C.border}`,
-        borderRadius: fs ? 14 : 10,
-        padding: fs ? '1.25rem' : '0.85rem',
+        padding: fs ? '2rem 1.5rem' : '1.5rem 1.25rem',
         display: 'flex',
         alignItems: 'center',
-        gap: fs ? '1.25rem' : '0.85rem',
+        gap: fs ? '2rem' : '1.5rem',
         flexShrink: 0,
       }}
     >
       <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} style={{ flexShrink: 0 }}>
-        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth={fs ? 9 : 7} />
+        {/* Track solid */}
+        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="#F0F0F0" strokeWidth={strokeW} />
+        {/* Progress indicator */}
         <circle
           cx={size / 2}
           cy={size / 2}
           r={r}
           fill="none"
-          stroke={ringColor}
-          strokeWidth={fs ? 9 : 7}
+          stroke={C.borderDark}
+          strokeWidth={strokeW}
           strokeDasharray={circ}
           strokeDashoffset={offset}
-          strokeLinecap="round"
+          strokeLinecap="butt"
           transform={`rotate(-90 ${size / 2} ${size / 2})`}
           style={{ transition: 'stroke-dashoffset 1s ease' }}
         />
-        <text x={size / 2} y={size / 2 - 4} textAnchor="middle" fill="white" fontSize={fs ? 26 : 20} fontWeight="700">
+        <text className="font-numeric" x={size / 2} y={size / 2} textAnchor="middle" fill={C.textMain} fontSize={fs ? 36 : 28} fontWeight="500" dy=".3em">
           {rate}%
         </text>
         <text
           x={size / 2}
-          y={size / 2 + (fs ? 14 : 11)}
+          y={size / 2 + (fs ? 24 : 20)}
           textAnchor="middle"
-          fill="rgba(255,255,255,0.35)"
-          fontSize={fs ? 8 : 7}
+          fill={C.textMuted}
+          fontSize={fs ? 9 : 8}
           fontWeight="600"
           letterSpacing="0.1em"
         >
-          SATISFACTION
+          PUNTUACIÓN
         </text>
       </svg>
-      <div style={{ flex: 1, minWidth: 0 }}>
+      <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: fs ? 16 : 12 }}>
         <div
           style={{
-            fontSize: '0.55rem',
+            fontSize: '0.7rem',
             fontWeight: 700,
-            letterSpacing: '0.12em',
+            letterSpacing: '0.1em',
             textTransform: 'uppercase' as const,
-            color: C.muted,
-            marginBottom: fs ? 12 : 8,
+            color: C.textMain,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
+            borderBottom: `1px solid ${C.panelBorder}`,
+            paddingBottom: 8,
           }}
         >
-          Reputation Shield
+          ESCUDO DE REPUTACIÓN
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: fs ? 8 : 5 }}>
-          <span style={{ width: 7, height: 7, borderRadius: '50%', background: C.green, flexShrink: 0 }} />
-          <span style={{ fontSize: fs ? '0.8rem' : '0.7rem' }}>
-            <strong>{googleSends}</strong>{' '}
-            <span style={{ color: C.muted }}>sent to Google</span>
-          </span>
+        
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div style={{ width: 6, height: 6, background: C.borderDark, flexShrink: 0 }} />
+            <span style={{ fontSize: fs ? '0.85rem' : '0.75rem', display: 'flex', alignItems: 'center', gap: 6 }}>
+              <strong className="font-numeric" style={{ fontSize: fs ? '1.1rem' : '1rem', color: C.textMain, fontWeight: 500 }}>{googleSends}</strong>
+              <span style={{ color: C.textMuted }}>ENVIADOS A GOOGLE</span>
+            </span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div style={{ width: 6, height: 6, background: C.textDim, flexShrink: 0 }} />
+            <span style={{ fontSize: fs ? '0.85rem' : '0.75rem', display: 'flex', alignItems: 'center', gap: 6 }}>
+              <strong className="font-numeric" style={{ fontSize: fs ? '1.1rem' : '1rem', color: C.textMain, fontWeight: 500 }}>{intercepted}</strong>
+              <span style={{ color: C.textMuted }}>INTERCEPTADOS</span>
+            </span>
+          </div>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span style={{ width: 7, height: 7, borderRadius: '50%', background: C.red, flexShrink: 0 }} />
-          <span style={{ fontSize: fs ? '0.8rem' : '0.7rem' }}>
-            <strong>{intercepted}</strong>{' '}
-            <span style={{ color: C.muted }}>caught before Google</span>
-          </span>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/* ── Staff of the Day ───────────────────────────── */
-
-function TopPerformer({ member, large }: { member: MergedStaff; large: boolean }) {
-  const fs = large;
-  return (
-    <div
-      style={{
-        background: 'linear-gradient(135deg, rgba(245,158,11,0.1), rgba(245,158,11,0.02))',
-        border: '1px solid rgba(245,158,11,0.2)',
-        borderRadius: fs ? 14 : 10,
-        padding: fs ? '1rem 1.25rem' : '0.7rem 0.85rem',
-        flexShrink: 0,
-      }}
-    >
-      <div
-        style={{
-          fontSize: '0.5rem',
-          fontWeight: 700,
-          letterSpacing: '0.14em',
-          textTransform: 'uppercase' as const,
-          color: C.gold,
-          marginBottom: fs ? 6 : 4,
-          display: 'flex',
-          alignItems: 'center',
-          gap: 5,
-        }}
-      >
-        <svg width={12} height={12} viewBox="0 0 24 24" fill={C.gold} stroke="none">
-          <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-        </svg>
-        Staff of the Day
-      </div>
-      <div style={{ fontSize: fs ? '1.1rem' : '0.9rem', fontWeight: 700, marginBottom: 3 }}>
-        {member.name}
-      </div>
-      <div style={{ fontSize: fs ? '0.7rem' : '0.6rem', color: C.muted }}>
-        {member.todayScans} scans today
-        {member.todayFiveStars > 0 && <> &middot; {member.todayFiveStars} sent to Google</>}
-        {member.avgRating > 0 && <> &middot; {member.avgRating.toFixed(1)} avg</>}
       </div>
     </div>
   );
@@ -605,12 +774,10 @@ function LiveFeed({ scans, now, large }: { scans: RecentScan[]; now: Date; large
   const fs = large;
   return (
     <div
+      className="flat-panel"
       style={{
         flex: 1,
-        background: C.surface,
-        border: `1px solid ${C.border}`,
-        borderRadius: fs ? 14 : 10,
-        padding: fs ? '0.85rem 1rem' : '0.65rem 0.75rem',
+        padding: 0,
         display: 'flex',
         flexDirection: 'column',
         overflow: 'hidden',
@@ -619,86 +786,93 @@ function LiveFeed({ scans, now, large }: { scans: RecentScan[]; now: Date; large
     >
       <div
         style={{
-          fontSize: '0.5rem',
+          fontSize: '0.65rem',
           fontWeight: 700,
-          letterSpacing: '0.12em',
+          letterSpacing: '0.1em',
           textTransform: 'uppercase' as const,
-          color: C.muted,
-          marginBottom: 6,
+          color: C.textMain,
+          padding: fs ? '1.25rem 1.5rem' : '1rem 1.25rem',
           flexShrink: 0,
+          borderBottom: `1px solid ${C.panelBorder}`,
+          background: '#FAFAFA'
         }}
       >
-        Recent Activity
+        REGISTRO DE ACTIVIDAD
       </div>
-      <div style={{ flex: 1, overflow: 'auto', display: 'flex', flexDirection: 'column', gap: 1 }}>
+      <div style={{ flex: 1, overflow: 'auto', display: 'flex', flexDirection: 'column' }}>
         {scans.length === 0 ? (
-          <div style={{ color: C.dim, fontSize: '0.75rem', padding: '1rem 0', textAlign: 'center' }}>
-            Waiting for scans...
+          <div style={{ color: C.textDim, fontSize: '0.8rem', padding: '3rem 0', textAlign: 'center', fontStyle: 'italic', fontFamily: 'Georgia, serif' }}>
+            Esperando registros...
           </div>
         ) : (
           scans.map((scan, i) => {
             const ago = relativeTime(new Date(scan.createdAt), now);
-            const stars = Array.from({ length: 5 }, (_, si) => (si < scan.rating ? '\u2605' : '\u2606')).join('');
+            const isGood = scan.rating >= 4;
             return (
               <div
                 key={scan.id}
                 style={{
                   display: 'flex',
                   alignItems: 'center',
-                  gap: 8,
-                  padding: fs ? '5px 6px' : '3px 4px',
-                  borderRadius: 5,
-                  background: i === 0 ? 'rgba(255,255,255,0.04)' : 'transparent',
-                  animation: i === 0 ? 'fadeInScan 0.4s ease' : undefined,
-                  fontSize: fs ? '0.75rem' : '0.65rem',
+                  gap: 12,
+                  padding: fs ? '12px 1.5rem' : '10px 1.25rem',
+                  borderBottom: `1px solid ${C.panelBorder}`,
+                  background: i === 0 ? '#FDFDFD' : 'transparent',
+                  animation: i === 0 ? 'slideInScanLight 0.4s ease' : undefined,
                 }}
               >
                 <span
                   style={{
                     flex: 1,
                     fontWeight: 500,
+                    color: C.textMain,
+                    fontSize: fs ? '0.85rem' : '0.8rem',
                     whiteSpace: 'nowrap' as const,
                     overflow: 'hidden',
                     textOverflow: 'ellipsis',
                   }}
                 >
-                  {scan.staffName ?? 'Unknown'}
+                  {scan.staffName ?? 'Desconocido'}
                 </span>
-                <span
-                  style={{
-                    color: scan.rating >= 4 ? C.gold : C.red,
-                    fontSize: fs ? '0.7rem' : '0.6rem',
-                    letterSpacing: '0.01em',
-                    flexShrink: 0,
-                  }}
-                >
-                  {stars}
-                </span>
+                
+                <div style={{ display: 'flex', gap: 2, flexShrink: 0 }}>
+                  {Array.from({ length: 5 }).map((_, idx) => (
+                    <div 
+                      key={idx} 
+                      style={{ 
+                        width: fs ? 10 : 8, 
+                        height: fs ? 10 : 8, 
+                        background: idx < scan.rating ? C.textMain : '#EEEEEE',
+                        borderRadius: '1px'
+                      }} 
+                    />
+                  ))}
+                </div>
+
                 {!scan.sentToGoogle && (
                   <span
                     style={{
-                      fontSize: '0.45rem',
-                      fontWeight: 700,
+                      fontSize: '0.55rem',
+                      fontWeight: 600,
                       letterSpacing: '0.05em',
-                      background: C.redBg,
-                      border: `1px solid ${C.redBorder}`,
-                      color: C.red,
-                      borderRadius: 3,
-                      padding: '1px 4px',
+                      border: `1px solid ${C.textMain}`,
+                      color: C.textMain,
+                      padding: '2px 6px',
                       flexShrink: 0,
                       textTransform: 'uppercase' as const,
                     }}
                   >
-                    caught
+                    Interceptado
                   </span>
                 )}
                 <span
+                  className="font-numeric"
                   style={{
-                    fontSize: fs ? '0.6rem' : '0.5rem',
-                    color: C.dim,
+                    fontSize: fs ? '0.7rem' : '0.65rem',
+                    color: C.textMuted,
                     flexShrink: 0,
                     textAlign: 'right' as const,
-                    minWidth: 42,
+                    minWidth: 55,
                   }}
                 >
                   {ago}
@@ -719,20 +893,12 @@ function StatBox({
   weekValue,
   todayValue,
   lastWeekValue,
-  color,
-  bgColor,
-  borderColor,
-  icon,
   large,
 }: {
   label: string;
   weekValue: number;
   todayValue: number;
   lastWeekValue: number;
-  color: string;
-  bgColor: string;
-  borderColor: string;
-  icon?: 'star' | 'shield';
   large: boolean;
 }) {
   const fs = large;
@@ -741,61 +907,67 @@ function StatBox({
 
   return (
     <div
+      className="flat-panel"
       style={{
-        background: bgColor,
-        border: `1px solid ${borderColor}`,
-        borderRadius: fs ? 14 : 10,
-        padding: fs ? '1.1rem' : '0.75rem',
+        padding: fs ? '1.5rem' : '1.25rem',
+        display: 'flex',
+        flexDirection: 'column',
       }}
     >
-      <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 4 }}>
-        {icon === 'star' && (
-          <svg width={fs ? 13 : 11} height={fs ? 13 : 11} viewBox="0 0 24 24" fill={color} stroke="none">
-            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-          </svg>
-        )}
-        {icon === 'shield' && (
-          <svg width={fs ? 13 : 11} height={fs ? 13 : 11} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={2}>
-            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-          </svg>
-        )}
-        <span
-          style={{
-            fontSize: fs ? '0.6rem' : '0.5rem',
-            fontWeight: 600,
-            textTransform: 'uppercase' as const,
-            letterSpacing: '0.1em',
-            color: C.muted,
-          }}
-        >
-          {label}
-        </span>
-      </div>
       <div
         style={{
-          fontSize: fs ? '2.2rem' : '1.6rem',
+          fontSize: fs ? '0.65rem' : '0.6rem',
           fontWeight: 700,
-          color,
+          textTransform: 'uppercase' as const,
+          letterSpacing: '0.1em',
+          color: C.textMuted,
+          marginBottom: fs ? 16 : 12,
+        }}
+      >
+        {label}
+      </div>
+      
+      <div
+        className="editorial-serif"
+        style={{
+          fontSize: fs ? '3.5rem' : '2.5rem',
+          fontWeight: 400,
+          color: C.textMain,
           lineHeight: 1,
-          fontVariantNumeric: 'tabular-nums',
+          marginBottom: fs ? 16 : 12,
         }}
       >
         {weekValue}
       </div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 4, flexWrap: 'wrap' as const }}>
-        <span style={{ fontSize: fs ? '0.65rem' : '0.55rem', color: C.dim }}>
-          {todayValue} today
-        </span>
+      
+      <div style={{ 
+        display: 'flex', 
+        alignItems: 'center', 
+        justifyContent: 'space-between',
+        borderTop: `1px solid ${C.panelBorder}`,
+        paddingTop: fs ? 12 : 10,
+        marginTop: 'auto'
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+           <span className="font-numeric" style={{ fontSize: fs ? '0.85rem' : '0.75rem', color: C.textMain, fontWeight: 500 }}>
+             {todayValue}
+           </span>
+           <span style={{ fontSize: fs ? '0.6rem' : '0.55rem', color: C.textMuted, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+             HOY
+           </span>
+        </div>
         {showDelta && (
-          <span
-            style={{
-              fontSize: fs ? '0.6rem' : '0.5rem',
-              fontWeight: 600,
-              color: delta > 0 ? C.green : delta < 0 ? C.red : C.dim,
-            }}
-          >
-            {delta > 0 ? '+' : ''}{delta} vs last wk
-          </span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+            <span style={{ fontSize: fs ? '0.75rem' : '0.7rem', color: C.textMain }}>
+               {delta > 0 ? '↑' : delta < 0 ? '↓' : '-'}
+            </span>
+            <span className="font-numeric" style={{ fontSize: fs ? '0.85rem' : '0.75rem', fontWeight: 500, color: C.textMain }}>
+              {Math.abs(delta)}
+            </span>
+            <span style={{ fontSize: fs ? '0.6rem' : '0.55rem', color: C.textMuted, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              VS SEMANA PASADA
+            </span>
+          </div>
         )}
       </div>
     </div>
@@ -809,12 +981,10 @@ function TeamTable({ team, large }: { team: MergedStaff[]; large: boolean }) {
 
   return (
     <div
+      className="flat-panel"
       style={{
         flex: 1,
-        background: C.surface,
-        border: `1px solid ${C.border}`,
-        borderRadius: fs ? 14 : 10,
-        padding: fs ? '0.85rem 1rem' : '0.65rem 0.75rem',
+        padding: 0,
         display: 'flex',
         flexDirection: 'column',
         overflow: 'hidden',
@@ -823,58 +993,72 @@ function TeamTable({ team, large }: { team: MergedStaff[]; large: boolean }) {
     >
       <div
         style={{
-          fontSize: '0.5rem',
+          fontSize: '0.65rem',
           fontWeight: 700,
-          letterSpacing: '0.12em',
+          letterSpacing: '0.1em',
           textTransform: 'uppercase' as const,
-          color: C.muted,
-          marginBottom: 6,
+          color: C.textMain,
+          padding: fs ? '1.25rem 1.5rem' : '1rem 1.25rem',
           flexShrink: 0,
+          background: '#FAFAFA',
+          borderBottom: `1px solid ${C.panelBorder}`,
         }}
       >
-        Team Leaderboard
+        ÍNDICE DE PERSONAL
       </div>
       <div style={{ flex: 1, overflow: 'auto' }}>
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-          <thead>
+          <thead style={{ position: 'sticky', top: 0, background: C.panelBg, zIndex: 1 }}>
             <tr>
-              <ThCell align="left" large={fs}>#</ThCell>
-              <ThCell align="left" large={fs}>Name</ThCell>
-              <ThCell align="right" large={fs}>Scans</ThCell>
-              <ThCell align="right" large={fs} color={C.green}>5-star</ThCell>
-              <ThCell align="right" large={fs} color={C.red}>&lt;4</ThCell>
-              <ThCell align="right" large={fs}>Avg</ThCell>
+              <ThCell align="center" large={fs} style={{ width: 50, borderBottom: `2px solid ${C.borderDark}` }}>RANGO</ThCell>
+              <ThCell align="left" large={fs} style={{ borderBottom: `2px solid ${C.borderDark}` }}>NOMBRE</ThCell>
+              <ThCell align="right" large={fs} style={{ borderBottom: `2px solid ${C.borderDark}` }}>ESCANEOS</ThCell>
+              <ThCell align="right" large={fs} style={{ borderBottom: `2px solid ${C.borderDark}` }}>5 ESTRELLAS</ThCell>
+              <ThCell align="right" large={fs} style={{ borderBottom: `2px solid ${C.borderDark}` }}>&lt;4</ThCell>
+              <ThCell align="right" large={fs} style={{ borderBottom: `2px solid ${C.borderDark}` }}>PROM</ThCell>
             </tr>
           </thead>
           <tbody>
             {team.map((m, i) => {
               const rank = i + 1;
               const hasActivity = m.weekScans > 0;
-              const rankColors: Record<number, string> = { 1: C.gold, 2: '#a8a8a8', 3: '#cd7f32' };
 
               return (
                 <tr
                   key={m.id}
                   style={{
-                    opacity: hasActivity ? 1 : 0.3,
-                    borderTop: i > 0 ? `1px solid ${C.border}` : undefined,
+                    opacity: hasActivity ? 1 : 0.4,
+                    borderBottom: `1px solid ${C.panelBorder}`,
+                    transition: 'background 0.2s',
                   }}
+                  onMouseEnter={(e) => e.currentTarget.style.background = '#F9F9F9'}
+                  onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
                 >
-                  <TdCell align="left" large={fs} style={{ fontWeight: 700, color: rankColors[rank] ?? C.dim, width: 32 }}>
-                    {rank}
+                  <TdCell align="center" large={fs} style={{ color: C.textMuted }}>
+                    <span className="font-numeric" style={{ fontSize: fs ? '0.85rem' : '0.75rem' }}>
+                      {rank.toString().padStart(2, '0')}
+                    </span>
                   </TdCell>
-                  <TdCell align="left" large={fs} style={{ fontWeight: 500 }}>
+                  <TdCell align="left" large={fs} style={{ fontWeight: 500, color: C.textMain }}>
                     {m.name}
                     {m.todayScans > 0 && (
-                      <span style={{ marginLeft: 6, fontSize: '0.55rem', color: C.muted }}>
-                        +{m.todayScans} today
+                      <span style={{ 
+                        marginLeft: 10, 
+                        fontSize: '0.6rem', 
+                        color: C.textMuted, 
+                        border: `1px solid ${C.panelBorder}`,
+                        padding: '1px 5px', 
+                        fontWeight: 600,
+                        fontFamily: 'monospace'
+                      }}>
+                        +{m.todayScans}
                       </span>
                     )}
                   </TdCell>
-                  <TdCell align="right" large={fs} style={{ fontWeight: 600 }}>{m.weekScans}</TdCell>
-                  <TdCell align="right" large={fs} style={{ color: m.weekFiveStars > 0 ? C.green : C.dim }}>{m.weekFiveStars}</TdCell>
-                  <TdCell align="right" large={fs} style={{ color: m.weekBelowFour > 0 ? C.red : C.dim }}>{m.weekBelowFour}</TdCell>
-                  <TdCell align="right" large={fs} style={{ color: C.muted }}>
+                  <TdCell align="right" large={fs} className="font-numeric" style={{ fontWeight: 500 }}>{m.weekScans}</TdCell>
+                  <TdCell align="right" large={fs} className="font-numeric" style={{ color: m.weekFiveStars > 0 ? C.textMain : C.textDim }}>{m.weekFiveStars}</TdCell>
+                  <TdCell align="right" large={fs} className="font-numeric" style={{ color: m.weekBelowFour > 0 ? C.textMain : C.textDim }}>{m.weekBelowFour}</TdCell>
+                  <TdCell align="right" large={fs} className="font-numeric" style={{ color: C.textMuted }}>
                     {m.avgRating > 0 ? m.avgRating.toFixed(1) : '-'}
                   </TdCell>
                 </tr>
@@ -883,8 +1067,8 @@ function TeamTable({ team, large }: { team: MergedStaff[]; large: boolean }) {
           </tbody>
         </table>
         {team.length === 0 && (
-          <div style={{ textAlign: 'center', padding: '2rem 0', color: C.dim, fontSize: '0.8rem' }}>
-            No staff registered yet
+          <div style={{ textAlign: 'center', padding: '4rem 0', color: C.textDim, fontSize: '0.85rem', fontFamily: 'Georgia, serif', fontStyle: 'italic' }}>
+            No hay registros para mostrar
           </div>
         )}
       </div>
@@ -906,93 +1090,77 @@ function GoogleRatingCard({
   large: boolean;
 }) {
   const fs = large;
-  const stars = Array.from({ length: 5 }, (_, i) => {
-    const filled = rating - i;
-    if (filled >= 0.75) return 'full';
-    if (filled >= 0.25) return 'half';
-    return 'empty';
-  });
 
   return (
     <div
+      className="flat-panel"
       style={{
-        background: 'linear-gradient(135deg, rgba(66,133,244,0.1), rgba(66,133,244,0.03))',
-        border: '1px solid rgba(66,133,244,0.2)',
-        borderRadius: fs ? 14 : 10,
-        padding: fs ? '1rem 1.25rem' : '0.7rem 0.85rem',
+        padding: fs ? '1.5rem' : '1.25rem',
         flexShrink: 0,
         display: 'flex',
-        alignItems: 'center',
-        gap: fs ? 14 : 10,
+        alignItems: 'flex-start',
+        gap: fs ? 20 : 16,
       }}
     >
-      {/* Google "G" icon */}
-      <svg width={fs ? 28 : 22} height={fs ? 28 : 22} viewBox="0 0 24 24" style={{ flexShrink: 0 }}>
-        <path
-          d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"
-          fill="#4285F4"
-        />
-        <path
-          d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-          fill="#34A853"
-        />
-        <path
-          d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
-          fill="#FBBC05"
-        />
-        <path
-          d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
-          fill="#EA4335"
-        />
-      </svg>
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
+        <div style={{ fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.1em', color: C.textMuted, marginBottom: fs ? 12 : 8, textTransform: 'uppercase' }}>
+          SENTIMIENTO GLOBAL
+        </div>
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: 12 }}>
           <span
+            className="editorial-serif"
             style={{
-              fontSize: fs ? '1.6rem' : '1.25rem',
-              fontWeight: 700,
-              color: C.white,
-              fontVariantNumeric: 'tabular-nums',
+              fontSize: fs ? '3rem' : '2.5rem',
+              color: C.textMain,
+              lineHeight: 1,
             }}
           >
             {rating.toFixed(1)}
           </span>
-          <div style={{ display: 'flex', gap: 1 }}>
-            {stars.map((s, i) => (
-              <svg key={i} width={fs ? 14 : 11} height={fs ? 14 : 11} viewBox="0 0 24 24">
-                <polygon
-                  points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"
-                  fill={s === 'empty' ? 'rgba(255,255,255,0.1)' : '#FBBC05'}
-                  opacity={s === 'half' ? 0.5 : 1}
-                  stroke="none"
-                />
-              </svg>
-            ))}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+            <div style={{ display: 'flex', gap: 4 }}>
+               {Array.from({ length: 5 }).map((_, i) => (
+                 <svg key={i} width={fs ? 14 : 12} height={fs ? 14 : 12} viewBox="0 0 24 24">
+                   <polygon
+                     points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"
+                     fill={i < Math.round(rating) ? C.textMain : 'none'}
+                     stroke={C.textMain}
+                     strokeWidth="2"
+                   />
+                 </svg>
+               ))}
+            </div>
+            <div style={{ fontSize: fs ? '0.7rem' : '0.65rem', color: C.textMuted, fontWeight: 500, letterSpacing: '0.02em' }}>
+              {reviewCount != null ? <><span className="font-numeric" style={{ color: C.textMain }}>{reviewCount.toLocaleString()}</span> RESEÑAS VERIFICADAS</> : 'ÍNDICE DE GOOGLE'}
+            </div>
           </div>
         </div>
-        <div style={{ fontSize: fs ? '0.65rem' : '0.55rem', color: C.muted, marginTop: 1 }}>
-          {reviewCount != null ? `${reviewCount.toLocaleString()} reviews on Google` : 'Google Rating'}
-        </div>
+        
         {trend && trend.ratingChange !== 0 && (
           <div
             style={{
-              marginTop: fs ? 8 : 5,
-              padding: '4px 8px',
-              borderRadius: 6,
-              background: trend.ratingChange > 0
-                ? 'rgba(34,197,94,0.1)'
-                : 'rgba(239,68,68,0.1)',
-              border: `1px solid ${trend.ratingChange > 0 ? C.greenBorder : C.redBorder}`,
-              fontSize: fs ? '0.6rem' : '0.5rem',
-              color: trend.ratingChange > 0 ? C.green : C.red,
+              marginTop: fs ? 16 : 12,
+              paddingTop: fs ? 12 : 10,
+              borderTop: `1px solid ${C.panelBorder}`,
+              fontSize: fs ? '0.65rem' : '0.6rem',
+              color: C.textMain,
               fontWeight: 600,
+              letterSpacing: '0.05em',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+              textTransform: 'uppercase'
             }}
           >
-            {trend.ratingChange > 0 ? '+' : ''}{trend.ratingChange.toFixed(1)} since start
+            <span style={{ color: trend.ratingChange > 0 ? C.green : C.red }}>
+              {trend.ratingChange > 0 ? '↑' : '↓'} {Math.abs(trend.ratingChange).toFixed(1)}
+            </span>
+            <span style={{ color: C.textMuted }}>TENDENCIA</span>
             {trend.reviewsGained > 0 && (
-              <span style={{ color: C.muted, fontWeight: 400 }}>
-                {' '}&middot; +{trend.reviewsGained} new reviews
-              </span>
+              <>
+                <span style={{ color: C.panelBorder }}>|</span>
+                <span><span className="font-numeric">+{trend.reviewsGained}</span> NUEVAS</span>
+              </>
             )}
           </div>
         )}
@@ -1003,18 +1171,18 @@ function GoogleRatingCard({
 
 /* ── Table helpers ──────────────────────────────── */
 
-function ThCell({ children, align, large, color }: { children: React.ReactNode; align: 'left' | 'right'; large: boolean; color?: string }) {
+function ThCell({ children, align, large, color, style }: { children: React.ReactNode; align: 'left' | 'right' | 'center'; large: boolean; color?: string; style?: React.CSSProperties }) {
   return (
     <th
       style={{
         textAlign: align,
-        padding: large ? '0.4rem 0.5rem' : '0.3rem 0.4rem',
-        fontSize: large ? '0.55rem' : '0.45rem',
+        padding: large ? '1rem 1.5rem' : '0.75rem 1.25rem',
+        fontSize: large ? '0.65rem' : '0.6rem',
         fontWeight: 700,
         textTransform: 'uppercase' as const,
-        letterSpacing: '0.08em',
-        color: color ?? C.dim,
-        borderBottom: `1px solid ${C.border}`,
+        letterSpacing: '0.05em',
+        color: color ?? C.textMuted,
+        ...style
       }}
     >
       {children}
@@ -1022,13 +1190,14 @@ function ThCell({ children, align, large, color }: { children: React.ReactNode; 
   );
 }
 
-function TdCell({ children, align, large, style: extra }: { children: React.ReactNode; align: 'left' | 'right'; large: boolean; style?: React.CSSProperties }) {
+function TdCell({ children, align, large, className, style: extra }: { children: React.ReactNode; align: 'left' | 'right' | 'center'; large: boolean; className?: string; style?: React.CSSProperties }) {
   return (
     <td
+      className={className}
       style={{
         textAlign: align,
-        padding: large ? '0.5rem 0.5rem' : '0.4rem 0.4rem',
-        fontSize: large ? '0.8rem' : '0.7rem',
+        padding: large ? '1rem 1.5rem' : '0.8rem 1.25rem',
+        fontSize: large ? '0.85rem' : '0.8rem',
         ...extra,
       }}
     >

@@ -68,10 +68,12 @@ async function seed() {
         slug: r.slug,
         googleThreshold: 4,
         adminPasswordHash: defaultPasswordHash,
+        managerEmail: 'lawrencebrennan@gmail.com',
+        alertPreference: 'all',
       })
       .onConflictDoUpdate({
         target: restaurants.slug,
-        set: { name: r.name, adminPasswordHash: defaultPasswordHash },
+        set: { name: r.name, adminPasswordHash: defaultPasswordHash, managerEmail: 'lawrencebrennan@gmail.com', alertPreference: 'all' },
       })
       .returning();
 
@@ -98,10 +100,12 @@ async function seed() {
       googleThreshold: 4,
       adminPasswordHash: defaultPasswordHash,
       isOwner: true,
+      managerEmail: 'lawrencebrennan@gmail.com',
+      alertPreference: 'all',
     })
     .onConflictDoUpdate({
       target: restaurants.slug,
-      set: { name: ownerAccount.name, adminPasswordHash: defaultPasswordHash, isOwner: true },
+      set: { name: ownerAccount.name, adminPasswordHash: defaultPasswordHash, isOwner: true, managerEmail: 'lawrencebrennan@gmail.com', alertPreference: 'all' },
     })
     .returning();
   console.log(`  Owner: ${owner.name} (id=${owner.id})`);
