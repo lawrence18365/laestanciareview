@@ -56,41 +56,24 @@ export default function DashboardNav({
       }}
     >
       <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-        {/* Brand logo */}
-        <div
-          style={{
-            width: 40,
-            height: 40,
-            borderRadius: 8,
-            overflow: 'hidden',
-            background: logoDarkBg ? '#000' : '#fff',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            flexShrink: 0,
-          }}
-        >
+        {/* RateTap logo */}
+        <a href={isOwner ? '/overview' : '/dashboard'} style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', textDecoration: 'none', color: 'inherit' }}>
           <img
-            src={logoSrc}
-            alt={restaurantName}
+            src="/logos/ratetap.webp"
+            alt="RateTap"
             style={{
-              width: '100%',
-              height: '100%',
+              height: 32,
+              width: 'auto',
               objectFit: 'contain',
-              padding: 3,
+              borderRadius: 6,
+              flexShrink: 0,
             }}
           />
-        </div>
-
-        <span
-          style={{
-            fontSize: '0.9rem',
-            fontWeight: 500,
-            opacity: 0.9,
-          }}
-        >
-          {restaurantName}
-        </span>
+          <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.2 }}>
+            <span style={{ fontSize: '0.8rem', fontWeight: 600, opacity: 0.95 }}>RateTap</span>
+            <span style={{ fontSize: '0.7rem', fontWeight: 400, opacity: 0.6 }}>{restaurantName}</span>
+          </div>
+        </a>
 
         <div
           style={{

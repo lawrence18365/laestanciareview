@@ -185,28 +185,16 @@ export default function ResetPasswordPage() {
           boxShadow: 'var(--shadow-md)',
         }}
       >
-        <h1
-          style={{
-            fontFamily: 'var(--font-cormorant), serif',
-            fontSize: '2rem',
-            fontWeight: 600,
-            textAlign: 'center',
-            marginBottom: '0.25rem',
-            color: 'var(--espresso)',
-          }}
-        >
-          RateTap
-        </h1>
-        <p
-          style={{
-            textAlign: 'center',
-            color: 'var(--stone-500)',
-            fontSize: '0.9rem',
-            marginBottom: '2rem',
-          }}
-        >
-          Restablecer Contraseña
-        </p>
+        <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
+          <img
+            src="/logos/ratetap.webp"
+            alt="RateTap"
+            style={{ height: 56, margin: '0 auto 0.75rem', objectFit: 'contain' }}
+          />
+          <p style={{ color: 'var(--stone-500)', fontSize: '0.9rem' }}>
+            Restablecer Contraseña
+          </p>
+        </div>
 
         <Suspense fallback={<p style={{ textAlign: 'center', color: 'var(--stone-500)' }}>Cargando...</p>}>
           <ResetPasswordForm />

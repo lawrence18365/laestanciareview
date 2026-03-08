@@ -42,27 +42,27 @@ export default async function Home() {
           borderBottom: '1px solid var(--stone-200)',
         }}
       >
-        <div className="max-w-5xl mx-auto px-6 py-7 flex items-end justify-between">
-          <div>
-            <h1
-              className="text-[32px] font-semibold leading-none"
-              style={{
-                fontFamily: 'var(--font-cormorant), Georgia, serif',
-                letterSpacing: '-0.02em',
-              }}
-            >
-              RateTap
-            </h1>
-            <p
-              className="text-[13px] mt-1.5"
-              style={{
-                color: 'var(--stone-500)',
-                letterSpacing: '0.04em',
-                textTransform: 'uppercase',
-              }}
-            >
-              Review Platform
-            </p>
+        <div className="max-w-5xl mx-auto px-6 py-5 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <img
+              src="/logos/ratetap.webp"
+              alt="RateTap"
+              style={{ height: 44, objectFit: 'contain' }}
+            />
+            <div>
+              <h1
+                className="text-lg font-semibold leading-none"
+                style={{ letterSpacing: '-0.01em' }}
+              >
+                RateTap
+              </h1>
+              <p
+                className="text-[12px] mt-0.5"
+                style={{ color: 'var(--stone-500)' }}
+              >
+                Plataforma de Reseñas
+              </p>
+            </div>
           </div>
           <span
             className="text-sm font-medium px-3 py-1 rounded-full"
