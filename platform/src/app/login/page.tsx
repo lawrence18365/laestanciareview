@@ -98,7 +98,7 @@ export default function LoginPage() {
         {/* Header */}
         <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
           <img
-            src="/logos/logo.png"
+            src="/logos/ratetap_logo.png"
             alt="RateTap"
             style={{ height: 48, margin: '0 auto 1rem', objectFit: 'contain' }}
           />

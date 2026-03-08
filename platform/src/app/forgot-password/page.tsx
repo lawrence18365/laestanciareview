@@ -71,7 +71,7 @@ export default function ForgotPasswordPage() {
       >
         <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
           <img
-            src="/logos/logo.png"
+            src="/logos/ratetap_logo.png"
             alt="RateTap"
             style={{ height: 56, margin: '0 auto 0.75rem', objectFit: 'contain' }}
           />
