@@ -29,11 +29,11 @@ export default async function ReviewPage({ params, searchParams }: PageProps) {
         alignItems: 'center',
         justifyContent: 'center',
         background: '#FAFAF9',
-        padding: '1.5rem 1rem 4rem',
+        padding: '2rem 1rem 4.5rem',
         position: 'relative',
       }}
     >
-      {/* Subtle top accent line */}
+      {/* Gold accent bar */}
       <div style={{
         position: 'fixed',
         top: 0,
@@ -41,21 +41,24 @@ export default async function ReviewPage({ params, searchParams }: PageProps) {
         right: 0,
         height: 3,
         background: '#D97706',
+        zIndex: 10,
       }} />
 
-      {/* Restaurant Logo */}
+      {/* Hero Logo — large and dominant */}
       <div
         style={{
-          width: 96,
-          height: 96,
+          width: 160,
+          height: 160,
           overflow: 'hidden',
           background: brand.darkBg ? '#111' : '#fff',
-          border: '1px solid #E2E2E2',
+          border: '2px solid #111',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          marginBottom: '1.25rem',
+          marginBottom: '1.75rem',
           flexShrink: 0,
+          boxShadow: '6px 6px 0px rgba(0,0,0,0.06)',
+          animation: 'logoReveal 0.5s ease-out both',
         }}
       >
         <img
@@ -65,7 +68,7 @@ export default async function ReviewPage({ params, searchParams }: PageProps) {
             width: '100%',
             height: '100%',
             objectFit: 'contain',
-            padding: 6,
+            padding: 12,
           }}
         />
       </div>
@@ -96,6 +99,13 @@ export default async function ReviewPage({ params, searchParams }: PageProps) {
       >
         DESARROLLADO POR <span style={{ fontWeight: 700, color: '#111' }}>RATETAP</span>
       </footer>
+
+      <style>{`
+        @keyframes logoReveal {
+          from { opacity: 0; transform: scale(0.85); }
+          to { opacity: 1; transform: scale(1); }
+        }
+      `}</style>
     </main>
   );
 }

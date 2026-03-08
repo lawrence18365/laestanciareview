@@ -46,16 +46,17 @@ export default async function FeedbackPage({
       {/* Restaurant Logo */}
       <div
         style={{
-          width: 72,
-          height: 72,
+          width: 120,
+          height: 120,
           overflow: 'hidden',
           background: brand.darkBg ? '#111' : '#fff',
-          border: '1px solid #E2E2E2',
+          border: '2px solid #111',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          marginBottom: '1.25rem',
+          marginBottom: '1.5rem',
           flexShrink: 0,
+          boxShadow: '4px 4px 0px rgba(0,0,0,0.06)',
         }}
       >
         <img
@@ -65,7 +66,7 @@ export default async function FeedbackPage({
             width: '100%',
             height: '100%',
             objectFit: 'contain',
-            padding: 5,
+            padding: 10,
           }}
         />
       </div>
