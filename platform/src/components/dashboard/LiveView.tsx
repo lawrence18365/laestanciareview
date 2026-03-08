@@ -264,8 +264,8 @@ export default function LiveView({ restaurantName, logoSrc, logoDarkBg, googleRa
           {/* Restaurant logo */}
           <div
             style={{
-              width: fs ? 120 : 56, // Significantly bigger in fullscreen
-              height: fs ? 120 : 56, // Significantly bigger in fullscreen
+              width: fs ? 140 : 72,
+              height: fs ? 140 : 72,
               borderRadius: 0,
               overflow: 'hidden',
               background: logoDarkBg ? '#111' : '#fff',
