@@ -12,6 +12,7 @@ const brands: Record<string, BrandInfo> = {
   'la-silla': { logo: '/logos/la-silla.jpeg', darkBg: true },
   sfera: { logo: '/logos/sfera.jpeg', darkBg: true },
   real: { logo: '/logos/real.jpeg', darkBg: false },
+  regio: { logo: '/logos/ratetap.webp', darkBg: false },
 };
 
 export function getBrandForSlug(slug: string): BrandInfo {

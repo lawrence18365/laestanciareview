@@ -2,7 +2,7 @@ import { NextRequest } from 'next/server';
 import { getRestaurantBySlug } from '@/lib/queries';
 import { generateResetToken } from '@/lib/reset-token';
 import { sendPasswordResetEmail } from '@/lib/email';
-import { checkRateLimit, getClientIP, rateLimitResponse } from '@/lib/rate-limit';
+import { checkRateLimitAsync, getClientIP, rateLimitResponse } from '@/lib/rate-limit';
 
 // 3 requests per 15 minutes per IP
 const RESET_LIMIT = 3;
@@ -10,7 +10,7 @@ const RESET_WINDOW = 15 * 60_000;
 
 export async function POST(req: NextRequest) {
   const ip = getClientIP(req);
-  const rl = checkRateLimit(`reset:${ip}`, RESET_LIMIT, RESET_WINDOW);
+  const rl = await checkRateLimitAsync(`reset:${ip}`, RESET_LIMIT, RESET_WINDOW);
   if (!rl.allowed) return rateLimitResponse(rl.resetAt);
 
   let body: { slug?: string };

@@ -7,7 +7,7 @@ function getResend(): Resend | null {
   return _resend;
 }
 
-const FROM = process.env.EMAIL_FROM ?? 'RateTap <notifications@ratetap.com>';
+const FROM = process.env.EMAIL_FROM ?? 'RateTap <notifications@ratetapmx.com>';
 
 /** Escape HTML special characters to prevent injection. */
 function escapeHtml(str: string): string {
@@ -68,7 +68,7 @@ export async function sendFeedbackAlert({
           </table>
         </div>
         <p style="text-align: center; margin: 16px 0 0; font-size: 11px; color: #a8a29e;">
-          Sent by RateTap &middot; <a href="${process.env.NEXT_PUBLIC_BASE_URL ?? 'https://app.ratetap.com'}/feedback" style="color: #a8a29e;">View all feedback</a>
+          Sent by RateTap &middot; <a href="${process.env.NEXT_PUBLIC_BASE_URL ?? 'https://app.ratetapmx.com'}/feedback" style="color: #a8a29e;">View all feedback</a>
         </p>
       </div>
     `,

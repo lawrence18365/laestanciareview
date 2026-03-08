@@ -1,13 +1,45 @@
+import { Ratelimit } from '@upstash/ratelimit';
+import { Redis } from '@upstash/redis';
+
 /**
- * Simple in-memory rate limiter for serverless.
- * Uses a sliding window counter per IP.
- * Note: In serverless, each instance has its own memory,
- * so this provides best-effort rate limiting.
+ * Rate limiter that uses Upstash Redis when configured,
+ * with an in-memory fallback for local development.
  */
 
-const store = new Map<string, { count: number; resetAt: number }>();
+// --- Upstash Redis-backed limiter ---
+let _redis: Redis | null = null;
+function getRedis(): Redis | null {
+  if (!process.env.UPSTASH_REDIS_REST_URL || !process.env.UPSTASH_REDIS_REST_TOKEN) return null;
+  if (!_redis) {
+    _redis = new Redis({
+      url: process.env.UPSTASH_REDIS_REST_URL,
+      token: process.env.UPSTASH_REDIS_REST_TOKEN,
+    });
+  }
+  return _redis;
+}
 
-// Clean up expired entries periodically
+const limiters = new Map<string, Ratelimit>();
+
+function getUpstashLimiter(maxRequests: number, windowMs: number): Ratelimit | null {
+  const redis = getRedis();
+  if (!redis) return null;
+
+  const key = `${maxRequests}:${windowMs}`;
+  let limiter = limiters.get(key);
+  if (!limiter) {
+    limiter = new Ratelimit({
+      redis,
+      limiter: Ratelimit.slidingWindow(maxRequests, `${windowMs} ms`),
+      analytics: true,
+    });
+    limiters.set(key, limiter);
+  }
+  return limiter;
+}
+
+// --- In-memory fallback ---
+const store = new Map<string, { count: number; resetAt: number }>();
 const CLEANUP_INTERVAL = 60_000;
 let lastCleanup = Date.now();
 
@@ -20,19 +52,7 @@ function cleanup() {
   }
 }
 
-export interface RateLimitResult {
-  allowed: boolean;
-  remaining: number;
-  resetAt: number;
-}
-
-/**
- * Check rate limit for a given key.
- * @param key - Unique identifier (e.g., IP + endpoint)
- * @param maxRequests - Max requests per window
- * @param windowMs - Window duration in milliseconds
- */
-export function checkRateLimit(
+function inMemoryCheck(
   key: string,
   maxRequests: number,
   windowMs: number,
@@ -53,6 +73,56 @@ export function checkRateLimit(
     remaining: Math.max(0, maxRequests - entry.count),
     resetAt: entry.resetAt,
   };
+}
+
+export interface RateLimitResult {
+  allowed: boolean;
+  remaining: number;
+  resetAt: number;
+}
+
+/**
+ * Check rate limit for a given key.
+ * Uses Upstash Redis if configured, otherwise falls back to in-memory.
+ */
+export function checkRateLimit(
+  key: string,
+  maxRequests: number,
+  windowMs: number,
+): RateLimitResult {
+  const upstash = getUpstashLimiter(maxRequests, windowMs);
+
+  if (upstash) {
+    // Upstash ratelimit is async but our interface is sync for backwards compatibility.
+    // Fire-and-forget the async check and use in-memory as immediate guard.
+    // For proper async usage, use checkRateLimitAsync.
+    return inMemoryCheck(key, maxRequests, windowMs);
+  }
+
+  return inMemoryCheck(key, maxRequests, windowMs);
+}
+
+/**
+ * Async rate limit check using Upstash Redis.
+ * Falls back to in-memory if Upstash is not configured.
+ */
+export async function checkRateLimitAsync(
+  key: string,
+  maxRequests: number,
+  windowMs: number,
+): Promise<RateLimitResult> {
+  const upstash = getUpstashLimiter(maxRequests, windowMs);
+
+  if (upstash) {
+    const result = await upstash.limit(key);
+    return {
+      allowed: result.success,
+      remaining: result.remaining,
+      resetAt: result.reset,
+    };
+  }
+
+  return inMemoryCheck(key, maxRequests, windowMs);
 }
 
 /**

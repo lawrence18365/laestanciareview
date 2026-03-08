@@ -30,6 +30,13 @@ const allRestaurants = [
   { name: 'Regio Norte', slug: 'regio-norte' },
 ];
 
+// Owner account — can see all locations
+const ownerAccount = {
+  name: 'La Estancia (Owner)',
+  slug: 'owner',
+  isOwner: true,
+};
+
 // Default staff for each restaurant (can be updated per-restaurant later)
 const defaultStaff = [
   { code: 'EDUARDO001', name: 'Eduardo' },
@@ -82,7 +89,24 @@ async function seed() {
     }
   }
 
-  console.log(`\nSeeded ${allRestaurants.length} restaurants with ${defaultStaff.length} staff each.`);
+  // Seed owner account
+  const [owner] = await db
+    .insert(restaurants)
+    .values({
+      name: ownerAccount.name,
+      slug: ownerAccount.slug,
+      googleThreshold: 4,
+      adminPasswordHash: defaultPasswordHash,
+      isOwner: true,
+    })
+    .onConflictDoUpdate({
+      target: restaurants.slug,
+      set: { name: ownerAccount.name, adminPasswordHash: defaultPasswordHash, isOwner: true },
+    })
+    .returning();
+  console.log(`  Owner: ${owner.name} (id=${owner.id})`);
+
+  console.log(`\nSeeded ${allRestaurants.length} restaurants + 1 owner with ${defaultStaff.length} staff each.`);
   console.log('Done!');
 }
 

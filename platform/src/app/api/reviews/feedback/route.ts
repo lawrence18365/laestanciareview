@@ -5,7 +5,7 @@ import { eq, and, isNull } from 'drizzle-orm';
 import { submitFeedbackSchema } from '@/lib/validations';
 import { sendFeedbackAlert } from '@/lib/email';
 import { sendSMSAlert } from '@/lib/sms';
-import { checkRateLimit, getClientIP, rateLimitResponse } from '@/lib/rate-limit';
+import { checkRateLimitAsync, getClientIP, rateLimitResponse } from '@/lib/rate-limit';
 
 // 10 feedback submissions per minute per IP
 const FEEDBACK_LIMIT = 10;
@@ -13,7 +13,7 @@ const FEEDBACK_WINDOW = 60_000;
 
 export async function POST(req: NextRequest) {
   const ip = getClientIP(req);
-  const rl = checkRateLimit(`feedback:${ip}`, FEEDBACK_LIMIT, FEEDBACK_WINDOW);
+  const rl = await checkRateLimitAsync(`feedback:${ip}`, FEEDBACK_LIMIT, FEEDBACK_WINDOW);
   if (!rl.allowed) return rateLimitResponse(rl.resetAt);
 
   let body: unknown;

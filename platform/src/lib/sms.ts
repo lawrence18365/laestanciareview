@@ -39,7 +39,7 @@ export async function sendSMSAlert({
   const staff = staffName ? ` (staff: ${staffName})` : '';
   const preview = feedback.length > 120 ? feedback.slice(0, 120) + '...' : feedback;
 
-  const text = `[RateTap] ${stars} at ${restaurantName}\n${name}${staff}\n"${preview}"\n\nView: ${process.env.NEXT_PUBLIC_BASE_URL ?? 'https://app.ratetap.com'}/inbox`;
+  const text = `[RateTap] ${stars} at ${restaurantName}\n${name}${staff}\n"${preview}"\n\nView: ${process.env.NEXT_PUBLIC_BASE_URL ?? 'https://app.ratetapmx.com'}/inbox`;
 
   await client.messages.send({ to, from: FROM, text });
 }

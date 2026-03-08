@@ -5,7 +5,7 @@ import { getRestaurantBySlug } from '@/lib/queries';
 import { db } from '@/db';
 import { restaurants } from '@/db/schema';
 import { eq } from 'drizzle-orm';
-import { checkRateLimit, getClientIP, rateLimitResponse } from '@/lib/rate-limit';
+import { checkRateLimitAsync, getClientIP, rateLimitResponse } from '@/lib/rate-limit';
 
 // 5 attempts per 15 minutes per IP
 const LIMIT = 5;
@@ -13,7 +13,7 @@ const WINDOW = 15 * 60_000;
 
 export async function POST(req: NextRequest) {
   const ip = getClientIP(req);
-  const rl = checkRateLimit(`reset-pw:${ip}`, LIMIT, WINDOW);
+  const rl = await checkRateLimitAsync(`reset-pw:${ip}`, LIMIT, WINDOW);
   if (!rl.allowed) return rateLimitResponse(rl.resetAt);
 
   let body: { token?: string; password?: string };
