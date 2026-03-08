@@ -3,10 +3,10 @@ name: CI
 on:
   push:
     branches: [main]
-    paths: ['platform/**']
+    paths: ['platform/**', '.github/workflows/**']
   pull_request:
     branches: [main]
-    paths: ['platform/**']
+    paths: ['platform/**', '.github/workflows/**']
 
 jobs:
   typecheck:
