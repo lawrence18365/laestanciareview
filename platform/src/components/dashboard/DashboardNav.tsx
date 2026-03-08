@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { t } from '@/lib/i18n';
 
@@ -34,110 +35,91 @@ export default function DashboardNav({
   const router = useRouter();
   const pathname = usePathname();
   const navLinks = isOwner ? ownerLinks : gmLinks;
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   async function handleLogout() {
     try {
       await fetch('/api/auth/logout', { method: 'POST' });
-    } catch {
-      // Continue to login even if logout request fails
-    }
+    } catch { /* continue */ }
     router.push('/login');
   }
 
+  const linkStyle = (active: boolean): React.CSSProperties => ({
+    padding: '0.4rem 0.75rem',
+    fontSize: '0.8125rem',
+    fontWeight: active ? 600 : 400,
+    color: active ? 'var(--text-main)' : 'var(--text-muted)',
+    textDecoration: 'none',
+    borderRadius: '6px',
+    background: active ? 'var(--bg-base)' : 'transparent',
+    transition: 'all 0.15s ease',
+    position: 'relative' as const,
+  });
+
+  const mobileLinkStyle = (active: boolean): React.CSSProperties => ({
+    padding: '0.6rem 0.75rem',
+    fontSize: '0.875rem',
+    fontWeight: active ? 600 : 400,
+    color: active ? 'var(--text-main)' : 'var(--text-muted)',
+    textDecoration: 'none',
+    borderRadius: '6px',
+    background: active ? 'var(--bg-base)' : 'transparent',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  });
+
   return (
-    <nav
-      style={{
+    <>
+      <nav style={{
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        padding: '0.75rem 1.5rem',
+        padding: '0.625rem 1.25rem',
         background: 'var(--panel-bg)',
-        color: 'var(--text-main)',
-        borderBottom: '2px solid var(--border-dark)',
-      }}
-    >
-      <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
-        {/* RateTap logo */}
-        <a href={isOwner ? '/overview' : '/dashboard'} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', textDecoration: 'none', color: 'inherit' }}>
+        borderBottom: '1px solid var(--panel-border)',
+        position: 'sticky',
+        top: 0,
+        zIndex: 50,
+      }}>
+        {/* Left: Logo + Name */}
+        <a href={isOwner ? '/overview' : '/dashboard'} style={{ display: 'flex', alignItems: 'center', gap: '0.625rem', textDecoration: 'none', color: 'inherit' }}>
           <img
             src="/logos/logo.png"
             alt="RateTap"
-            style={{
-              height: 36,
-              width: 'auto',
-              objectFit: 'contain',
-              flexShrink: 0,
-            }}
+            style={{ height: 32, width: 'auto', objectFit: 'contain', flexShrink: 0 }}
           />
-          <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.1 }}>
-            <span className="editorial-serif" style={{ fontSize: '1.1rem', fontWeight: 600, letterSpacing: '-0.02em' }}>RateTap</span>
-            <span style={{ fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.1em', color: 'var(--text-muted)', textTransform: 'uppercase' }}>{restaurantName}</span>
+          <div style={{ lineHeight: 1.2 }}>
+            <p style={{ margin: 0, fontSize: '0.9375rem', fontWeight: 700, letterSpacing: '-0.01em' }}>RateTap</p>
+            <p style={{ margin: 0, fontSize: '0.6875rem', color: 'var(--text-muted)' }}>{restaurantName}</p>
           </div>
         </a>
 
-        <div
-          style={{
-            display: 'flex',
-            gap: '0.5rem',
-            marginLeft: '1rem',
-            borderLeft: '1px solid var(--panel-border)',
-            paddingLeft: '1.5rem',
-          }}
-        >
+        {/* Center: Desktop nav links */}
+        <div className="nav-links" style={{ alignItems: 'center' }}>
           {navLinks.map((link) => {
             const active = pathname === link.href;
             const badgeCount = 'badge' in link && link.badge ? (newFeedbackCount ?? 0) : 0;
             return (
-              <a
-                key={link.href}
-                href={link.href}
-                style={{
-                  position: 'relative',
-                  padding: '0.4rem 0.85rem',
-                  fontSize: '0.75rem',
-                  fontWeight: active ? 700 : 500,
-                  color: active ? 'var(--text-main)' : 'var(--text-muted)',
-                  textDecoration: 'none',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.05em',
-                  background: active ? 'var(--bg-base)' : 'transparent',
-                  border: active ? '1px solid var(--border-dark)' : '1px solid transparent',
-                  transition: 'all 0.15s ease',
-                }}
-                onMouseEnter={(e) => {
-                  if (!active) {
-                    e.currentTarget.style.color = 'var(--text-main)';
-                    e.currentTarget.style.borderColor = 'var(--panel-border)';
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (!active) {
-                    e.currentTarget.style.color = 'var(--text-muted)';
-                    e.currentTarget.style.borderColor = 'transparent';
-                  }
-                }}
-              >
+              <a key={link.href} href={link.href} style={linkStyle(active)}>
                 {link.label}
                 {badgeCount > 0 && (
-                  <span
-                    className="font-numeric"
-                    style={{
-                      position: 'absolute',
-                      top: -6,
-                      right: -6,
-                      background: 'var(--border-dark)',
-                      color: 'var(--panel-bg)',
-                      fontSize: '0.6rem',
-                      fontWeight: 700,
-                      minWidth: 18,
-                      height: 18,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      padding: '0 4px',
-                      border: '1px solid var(--border-dark)',
-                    }}
-                  >
+                  <span style={{
+                    position: 'absolute',
+                    top: -4,
+                    right: -4,
+                    background: 'var(--red)',
+                    color: '#fff',
+                    fontSize: '0.625rem',
+                    fontWeight: 700,
+                    minWidth: 17,
+                    height: 17,
+                    borderRadius: 99,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    padding: '0 4px',
+                  }}>
                     {badgeCount > 99 ? '99+' : badgeCount}
                   </span>
                 )}
@@ -145,32 +127,80 @@ export default function DashboardNav({
             );
           })}
         </div>
-      </div>
-      <button
-        onClick={handleLogout}
-        style={{
-          background: 'var(--panel-bg)',
-          border: '1px solid var(--border-dark)',
-          color: 'var(--text-main)',
-          padding: '0.4rem 1.25rem',
-          fontSize: '0.75rem',
-          fontWeight: 600,
-          letterSpacing: '0.05em',
-          textTransform: 'uppercase',
-          cursor: 'pointer',
-          transition: 'all 0.15s ease',
-        }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.background = 'var(--text-main)';
-          e.currentTarget.style.color = 'var(--panel-bg)';
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.background = 'var(--panel-bg)';
-          e.currentTarget.style.color = 'var(--text-main)';
-        }}
-      >
-        {t.nav.signOut}
-      </button>
-    </nav>
+
+        {/* Right: Desktop sign out */}
+        <button
+          onClick={handleLogout}
+          className="btn btn-outline nav-links"
+          style={{ fontSize: '0.75rem', padding: '0.35rem 1rem' }}
+        >
+          {t.nav.signOut}
+        </button>
+
+        {/* Mobile: Hamburger */}
+        <button
+          className="nav-mobile-toggle"
+          onClick={() => setMobileOpen(!mobileOpen)}
+          style={{
+            background: 'none',
+            border: 'none',
+            cursor: 'pointer',
+            padding: '0.5rem',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '4px',
+          }}
+          aria-label="Menu"
+        >
+          <span style={{ width: 20, height: 2, background: 'var(--text-main)', borderRadius: 1, transition: 'all 0.2s', transform: mobileOpen ? 'rotate(45deg) translate(4px, 4px)' : 'none' }} />
+          <span style={{ width: 20, height: 2, background: 'var(--text-main)', borderRadius: 1, transition: 'all 0.2s', opacity: mobileOpen ? 0 : 1 }} />
+          <span style={{ width: 20, height: 2, background: 'var(--text-main)', borderRadius: 1, transition: 'all 0.2s', transform: mobileOpen ? 'rotate(-45deg) translate(4px, -4px)' : 'none' }} />
+        </button>
+      </nav>
+
+      {/* Mobile menu */}
+      {mobileOpen && (
+        <div className="nav-mobile-menu">
+          {navLinks.map((link) => {
+            const active = pathname === link.href;
+            const badgeCount = 'badge' in link && link.badge ? (newFeedbackCount ?? 0) : 0;
+            return (
+              <a key={link.href} href={link.href} style={mobileLinkStyle(active)} onClick={() => setMobileOpen(false)}>
+                {link.label}
+                {badgeCount > 0 && (
+                  <span style={{
+                    background: 'var(--red)',
+                    color: '#fff',
+                    fontSize: '0.625rem',
+                    fontWeight: 700,
+                    padding: '2px 7px',
+                    borderRadius: 99,
+                  }}>
+                    {badgeCount}
+                  </span>
+                )}
+              </a>
+            );
+          })}
+          <button
+            onClick={handleLogout}
+            className="nav-signout-mobile"
+            style={{
+              marginTop: '0.5rem',
+              padding: '0.6rem 0.75rem',
+              fontSize: '0.875rem',
+              color: 'var(--red)',
+              background: 'none',
+              border: 'none',
+              textAlign: 'left',
+              cursor: 'pointer',
+              borderRadius: '6px',
+            }}
+          >
+            {t.nav.signOut}
+          </button>
+        </div>
+      )}
+    </>
   );
 }
