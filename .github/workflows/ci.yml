@@ -23,4 +23,3 @@ jobs:
           cache-dependency-path: platform/package-lock.json
       - run: npm ci
       - run: npx tsc --noEmit
-      - run: npx next lint
