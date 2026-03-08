@@ -69,42 +69,21 @@ export default function DashboardNav({
             color: 'inherit',
           }}
         >
-          <div style={{
-            width: 32,
-            height: 32,
-            overflow: 'hidden',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            flexShrink: 0,
+          <img
+            src="/logos/ratetap_logo.png"
+            alt="RateTap"
+            style={{ height: 36, objectFit: 'contain', flexShrink: 0 }}
+          />
+          <p style={{
+            margin: 0,
+            fontSize: '0.6rem',
+            fontWeight: 600,
+            color: 'var(--text-dim)',
+            letterSpacing: '0.08em',
+            textTransform: 'uppercase',
           }}>
-            <img
-              src="/logos/ratetap_logo.png"
-              alt="RateTap"
-              style={{ height: 32, width: 'auto', objectFit: 'contain' }}
-            />
-          </div>
-          <div style={{ lineHeight: 1.2 }}>
-            <p style={{
-              margin: 0,
-              fontSize: '0.875rem',
-              fontWeight: 700,
-              letterSpacing: '-0.01em',
-              fontFamily: 'var(--font-serif)',
-            }}>
-              RateTap
-            </p>
-            <p style={{
-              margin: 0,
-              fontSize: '0.6rem',
-              fontWeight: 600,
-              color: 'var(--text-dim)',
-              letterSpacing: '0.08em',
-              textTransform: 'uppercase',
-            }}>
-              {restaurantName}
-            </p>
-          </div>
+            {restaurantName}
+          </p>
         </a>
 
         {/* Center: Desktop nav links */}

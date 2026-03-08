@@ -100,7 +100,7 @@ export default function LoginPage() {
           <img
             src="/logos/ratetap_logo.png"
             alt="RateTap"
-            style={{ height: 48, margin: '0 auto 1rem', objectFit: 'contain' }}
+            style={{ height: 80, margin: '0 auto 0.75rem', objectFit: 'contain', display: 'block' }}
           />
           <div style={{
             fontSize: '0.6rem',

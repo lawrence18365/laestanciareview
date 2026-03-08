@@ -189,7 +189,7 @@ export default function ResetPasswordPage() {
           <img
             src="/logos/ratetap_logo.png"
             alt="RateTap"
-            style={{ height: 56, margin: '0 auto 0.75rem', objectFit: 'contain' }}
+            style={{ height: 80, margin: '0 auto 0.75rem', objectFit: 'contain', display: 'block' }}
           />
           <p style={{ color: 'var(--stone-500)', fontSize: '0.9rem' }}>
             Restablecer Contraseña

@@ -47,22 +47,8 @@ export default async function Home() {
             <img
               src="/logos/ratetap_logo.png"
               alt="RateTap"
-              style={{ height: 44, objectFit: 'contain' }}
+              style={{ height: 48, objectFit: 'contain' }}
             />
-            <div>
-              <h1
-                className="text-lg font-semibold leading-none"
-                style={{ letterSpacing: '-0.01em' }}
-              >
-                RateTap
-              </h1>
-              <p
-                className="text-[12px] mt-0.5"
-                style={{ color: 'var(--stone-500)' }}
-              >
-                Plataforma de Reseñas
-              </p>
-            </div>
           </div>
           <span
             className="text-sm font-medium px-3 py-1 rounded-full"
