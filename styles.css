@@ -134,7 +134,7 @@ h3 {
 }
 
 .nav-brand img {
-    height: 48px;
+    height: 68px;
     width: auto;
     object-fit: contain;
 }
@@ -731,7 +731,7 @@ h3 {
     }
 
     .nav-brand img {
-        height: 44px;
+        height: 58px;
         width: auto;
         object-fit: contain;
     }
@@ -840,7 +840,7 @@ h3 {
     }
 
     .nav-brand img {
-        height: 38px;
+        height: 50px;
     }
 
     .nav-actions .btn.btn-primary {
@@ -1076,7 +1076,7 @@ h3 {
 .footer-brand img {
     filter: brightness(0) invert(1);
     margin-bottom: 1rem;
-    width: min(220px, 100%);
+    width: min(160px, 100%);
     height: auto;
 }
 
