@@ -21,7 +21,7 @@ export default async function AppLayout({
   const newFeedbackCount = isOwner ? 0 : await getNewFeedbackCount(restaurant.id);
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--linen)' }}>
+    <div style={{ minHeight: '100vh', background: 'var(--bg-base)' }}>
       <DashboardNav
         restaurantName={isOwner ? t.nav.ownerDashboard : restaurant.name}
         logoSrc={brand.logo}
@@ -29,7 +29,7 @@ export default async function AppLayout({
         newFeedbackCount={newFeedbackCount}
         isOwner={isOwner}
       />
-      <main style={{ maxWidth: 1100, margin: '0 auto', padding: '2rem 1.5rem' }}>
+      <main style={{ maxWidth: 1200, margin: '0 auto', padding: '2rem 1.5rem' }}>
         {children}
       </main>
     </div>

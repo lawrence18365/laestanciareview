@@ -50,38 +50,38 @@ export default function DashboardNav({
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        padding: '0.6rem 1.5rem',
-        background: 'var(--espresso)',
-        color: 'var(--warm-white)',
+        padding: '0.75rem 1.5rem',
+        background: 'var(--panel-bg)',
+        color: 'var(--text-main)',
+        borderBottom: '2px solid var(--border-dark)',
       }}
     >
-      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
         {/* RateTap logo */}
-        <a href={isOwner ? '/overview' : '/dashboard'} style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', textDecoration: 'none', color: 'inherit' }}>
+        <a href={isOwner ? '/overview' : '/dashboard'} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', textDecoration: 'none', color: 'inherit' }}>
           <img
             src="/logos/logo.png"
             alt="RateTap"
             style={{
-              height: 32,
+              height: 36,
               width: 'auto',
               objectFit: 'contain',
-              borderRadius: 6,
               flexShrink: 0,
             }}
           />
-          <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.2 }}>
-            <span style={{ fontSize: '0.8rem', fontWeight: 600, opacity: 0.95 }}>RateTap</span>
-            <span style={{ fontSize: '0.7rem', fontWeight: 400, opacity: 0.6 }}>{restaurantName}</span>
+          <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.1 }}>
+            <span className="editorial-serif" style={{ fontSize: '1.1rem', fontWeight: 600, letterSpacing: '-0.02em' }}>RateTap</span>
+            <span style={{ fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.1em', color: 'var(--text-muted)', textTransform: 'uppercase' }}>{restaurantName}</span>
           </div>
         </a>
 
         <div
           style={{
             display: 'flex',
-            gap: '0.25rem',
-            marginLeft: '0.5rem',
-            borderLeft: '1px solid rgba(255,255,255,0.15)',
-            paddingLeft: '1rem',
+            gap: '0.5rem',
+            marginLeft: '1rem',
+            borderLeft: '1px solid var(--panel-border)',
+            paddingLeft: '1.5rem',
           }}
         >
           {navLinks.map((link) => {
@@ -93,40 +93,49 @@ export default function DashboardNav({
                 href={link.href}
                 style={{
                   position: 'relative',
-                  padding: '0.35rem 0.75rem',
-                  borderRadius: 6,
-                  fontSize: '0.85rem',
-                  color: 'var(--warm-white)',
+                  padding: '0.4rem 0.85rem',
+                  fontSize: '0.75rem',
+                  fontWeight: active ? 700 : 500,
+                  color: active ? 'var(--text-main)' : 'var(--text-muted)',
                   textDecoration: 'none',
-                  background: active ? 'rgba(255,255,255,0.12)' : 'transparent',
-                  opacity: active ? 1 : 0.7,
-                  transition: 'background 0.15s, opacity 0.15s',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.05em',
+                  background: active ? 'var(--bg-base)' : 'transparent',
+                  border: active ? '1px solid var(--border-dark)' : '1px solid transparent',
+                  transition: 'all 0.15s ease',
                 }}
                 onMouseEnter={(e) => {
-                  if (!active) e.currentTarget.style.opacity = '1';
+                  if (!active) {
+                    e.currentTarget.style.color = 'var(--text-main)';
+                    e.currentTarget.style.borderColor = 'var(--panel-border)';
+                  }
                 }}
                 onMouseLeave={(e) => {
-                  if (!active) e.currentTarget.style.opacity = '0.7';
+                  if (!active) {
+                    e.currentTarget.style.color = 'var(--text-muted)';
+                    e.currentTarget.style.borderColor = 'transparent';
+                  }
                 }}
               >
                 {link.label}
                 {badgeCount > 0 && (
                   <span
+                    className="font-numeric"
                     style={{
                       position: 'absolute',
-                      top: -4,
-                      right: -4,
-                      background: '#dc2626',
-                      color: 'white',
-                      fontSize: '0.65rem',
+                      top: -6,
+                      right: -6,
+                      background: 'var(--border-dark)',
+                      color: 'var(--panel-bg)',
+                      fontSize: '0.6rem',
                       fontWeight: 700,
                       minWidth: 18,
                       height: 18,
-                      borderRadius: 999,
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
                       padding: '0 4px',
+                      border: '1px solid var(--border-dark)',
                     }}
                   >
                     {badgeCount > 99 ? '99+' : badgeCount}
@@ -140,19 +149,25 @@ export default function DashboardNav({
       <button
         onClick={handleLogout}
         style={{
-          background: 'none',
-          border: '1px solid rgba(255,255,255,0.25)',
-          color: 'var(--warm-white)',
-          padding: '0.4rem 1rem',
-          borderRadius: 6,
-          fontSize: '0.85rem',
+          background: 'var(--panel-bg)',
+          border: '1px solid var(--border-dark)',
+          color: 'var(--text-main)',
+          padding: '0.4rem 1.25rem',
+          fontSize: '0.75rem',
+          fontWeight: 600,
+          letterSpacing: '0.05em',
+          textTransform: 'uppercase',
           cursor: 'pointer',
-          transition: 'background 0.2s',
+          transition: 'all 0.15s ease',
         }}
-        onMouseEnter={(e) =>
-          (e.currentTarget.style.background = 'rgba(255,255,255,0.1)')
-        }
-        onMouseLeave={(e) => (e.currentTarget.style.background = 'none')}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.background = 'var(--text-main)';
+          e.currentTarget.style.color = 'var(--panel-bg)';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.background = 'var(--panel-bg)';
+          e.currentTarget.style.color = 'var(--text-main)';
+        }}
       >
         {t.nav.signOut}
       </button>
