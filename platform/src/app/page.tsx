@@ -45,7 +45,7 @@ export default async function Home() {
         <div className="max-w-5xl mx-auto px-6 py-5 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <img
-              src="/logos/ratetap.webp"
+              src="/logos/logo.png"
               alt="RateTap"
               style={{ height: 44, objectFit: 'contain' }}
             />

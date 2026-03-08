@@ -12,7 +12,7 @@ def get_new_footer(is_es=False):
         <div class="container">
             <div class="footer-grid">
                 <div class="footer-brand">
-                    <img src="{prefix}assets/ratetap-logo.png" alt="RateTap" style="height: 40px; margin-bottom: 1.5rem; mix-blend-mode: multiply;">
+                    <img src="{prefix}assets/logo.png" alt="RateTap" style="height: 40px; margin-bottom: 1.5rem; mix-blend-mode: multiply;">
                     <p style="color: var(--text-secondary); font-size: 0.95rem; line-height: 1.6; max-width: 300px;">El estándar en gestión de reputación premium para hostelería.</p>
                 </div>
                 <div class="footer-links">
@@ -53,7 +53,7 @@ def get_new_footer(is_es=False):
         <div class="container">
             <div class="footer-grid">
                 <div class="footer-brand">
-                    <img src="{prefix}assets/ratetap-logo.png" alt="RateTap" style="height: 40px; margin-bottom: 1.5rem; mix-blend-mode: multiply;">
+                    <img src="{prefix}assets/logo.png" alt="RateTap" style="height: 40px; margin-bottom: 1.5rem; mix-blend-mode: multiply;">
                     <p style="color: var(--text-secondary); font-size: 0.95rem; line-height: 1.6; max-width: 300px;">The standard in premium hospitality reputation management.</p>
                 </div>
                 <div class="footer-links">

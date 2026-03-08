@@ -23,7 +23,7 @@ const IMAGE_DIMENSIONS = {
     'assets/og-image.png': { width: 2848, height: 1504 },
     'graphic_sales.jpeg': { width: 1080, height: 1350 },
     'hero.png': { width: 1408, height: 768 },
-    'ratetap-logo.png': { width: 1024, height: 1024 },
+    'logo.png': { width: 1024, height: 1024 },
     'og-image.png': { width: 2848, height: 1504 },
     'optimized-image-example-1.webp': { width: 2752, height: 1536 }
 };

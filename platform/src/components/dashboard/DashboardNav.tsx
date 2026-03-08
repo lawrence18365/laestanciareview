@@ -59,7 +59,7 @@ export default function DashboardNav({
         {/* RateTap logo */}
         <a href={isOwner ? '/overview' : '/dashboard'} style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', textDecoration: 'none', color: 'inherit' }}>
           <img
-            src="/logos/ratetap.webp"
+            src="/logos/logo.png"
             alt="RateTap"
             style={{
               height: 32,

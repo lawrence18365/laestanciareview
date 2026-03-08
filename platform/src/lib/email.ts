@@ -9,7 +9,7 @@ function getResend(): Resend | null {
 
 const FROM = process.env.EMAIL_FROM ?? 'RateTap <notifications@ratetapmx.com>';
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL ?? 'https://app.ratetapmx.com';
-const LOGO_URL = `${BASE_URL}/logos/ratetap.webp`;
+const LOGO_URL = `${BASE_URL}/logos/logo.png`;
 
 /** Escape HTML special characters to prevent injection. */
 function escapeHtml(str: string): string {

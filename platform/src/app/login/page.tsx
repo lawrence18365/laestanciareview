@@ -75,7 +75,7 @@ export default function LoginPage() {
       >
         <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
           <img
-            src="/logos/ratetap.webp"
+            src="/logos/logo.png"
             alt="RateTap"
             style={{ height: 56, margin: '0 auto 0.75rem', objectFit: 'contain' }}
           />

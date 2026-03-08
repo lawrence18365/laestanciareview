@@ -44,7 +44,7 @@ def process_file(filepath):
         nav_structure = f'''
 <nav class="navbar" id="navbar">
     <a href="{prefix}index.html" class="nav-brand">
-        <img src="{prefix}assets/ratetap-logo.png" alt="RateTap">
+        <img src="{prefix}assets/logo.png" alt="RateTap">
     </a>
     <div class="nav-menu" id="nav-menu">
         <a href="{prefix}index.html#how-it-works" class="nav-link">How It Works</a>
