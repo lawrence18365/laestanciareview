@@ -27,6 +27,7 @@ export const t = {
     signIn: 'Iniciar Sesión',
     somethingWrong: 'Algo salió mal',
     failedToLoad: 'Error al cargar restaurantes',
+    forgotPassword: '¿Olvidaste tu contraseña?',
   },
 
   // ── Dashboard ──

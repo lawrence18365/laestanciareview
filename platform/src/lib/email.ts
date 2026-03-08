@@ -391,6 +391,83 @@ export async function sendOwnerDigest({ to, locations, dashboardUrl }: OwnerDige
   });
 }
 
+interface PasswordResetParams {
+  to: string;
+  restaurantName: string;
+  resetUrl: string;
+}
+
+export async function sendPasswordResetEmail({
+  to,
+  restaurantName,
+  resetUrl,
+}: PasswordResetParams) {
+  const resend = getResend();
+  if (!resend) {
+    console.warn('[email] RESEND_API_KEY not set — skipping password reset email');
+    return;
+  }
+
+  await resend.emails.send({
+    from: FROM,
+    to,
+    subject: `[RateTap] Restablecer contraseña — ${restaurantName}`,
+    html: `
+      <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 520px; margin: 0 auto; color: #1c1917;">
+        <div style="padding: 24px; background: #faf6f1; border-radius: 12px;">
+          <h2 style="margin: 0 0 4px; font-size: 18px;">Restablecer Contraseña</h2>
+          <p style="margin: 0 0 16px; color: #78716c; font-size: 14px;">${escapeHtml(restaurantName)}</p>
+
+          <p style="margin: 0 0 16px; font-size: 15px; line-height: 1.5;">
+            Recibimos una solicitud para restablecer la contraseña de tu cuenta. Haz clic en el boton de abajo para crear una nueva contraseña.
+          </p>
+
+          <div style="text-align: center; margin: 24px 0;">
+            <a href="${resetUrl}" style="display: inline-block; padding: 12px 32px; background: #1c1917; color: white; border-radius: 8px; text-decoration: none; font-size: 15px; font-weight: 600;">
+              Restablecer Contraseña
+            </a>
+          </div>
+
+          <p style="margin: 0; font-size: 13px; color: #78716c; line-height: 1.5;">
+            Este enlace expira en 1 hora. Si no solicitaste esto, puedes ignorar este correo.
+          </p>
+        </div>
+        <p style="text-align: center; margin: 16px 0 0; font-size: 11px; color: #a8a29e;">
+          Enviado por RateTap
+        </p>
+      </div>
+    `,
+  });
+}
+
+export async function sendTestEmail(to: string) {
+  const resend = getResend();
+  if (!resend) {
+    return { success: false, error: 'RESEND_API_KEY not set' };
+  }
+
+  const result = await resend.emails.send({
+    from: FROM,
+    to,
+    subject: '[RateTap] Email de prueba',
+    html: `
+      <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 520px; margin: 0 auto; color: #1c1917;">
+        <div style="padding: 24px; background: #faf6f1; border-radius: 12px;">
+          <h2 style="margin: 0 0 8px; font-size: 18px;">Email de Prueba</h2>
+          <p style="margin: 0; font-size: 15px; color: #44403c;">
+            Si puedes ver este correo, la integracion con Resend esta funcionando correctamente.
+          </p>
+        </div>
+        <p style="text-align: center; margin: 16px 0 0; font-size: 11px; color: #a8a29e;">
+          Enviado por RateTap
+        </p>
+      </div>
+    `,
+  });
+
+  return { success: true, id: result.data?.id };
+}
+
 const categoryLabels: Record<string, string> = {
   bug: 'Bug Report',
   feature: 'Feature Request',
