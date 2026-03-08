@@ -1,7 +1,9 @@
 'use client';
 
 import { downloadCSV } from '@/lib/csv';
+import { t } from '@/lib/i18n';
 
+/* ── Types ── */
 
 interface ROIStats {
   totalReviews: number;
@@ -45,21 +47,7 @@ interface Props {
   googleTrend: GoogleTrend | null;
 }
 
-const card: React.CSSProperties = {
-  background: 'var(--warm-white)',
-  borderRadius: 10,
-  padding: '1.5rem',
-  boxShadow: 'var(--shadow-sm)',
-};
-
-const sectionTitle: React.CSSProperties = {
-  fontFamily: 'var(--font-cormorant), serif',
-  fontSize: '1.3rem',
-  fontWeight: 600,
-  marginTop: 0,
-  marginBottom: '1rem',
-  color: 'var(--espresso)',
-};
+/* ── Main Component ── */
 
 export default function AnalyticsView({
   weeklyStats,
@@ -75,139 +63,145 @@ export default function AnalyticsView({
   const maxBar = Math.max(...Object.values(ratingDistribution), 1);
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-      {/* Impact Summary Banner */}
+    <div className="page-container">
+
+      {/* ── Header ── */}
+      <div className="stagger-1">
+        <h1 className="text-editorial" style={{ margin: '0 0 0.5rem 0' }}>
+          {t.nav.analytics}
+        </h1>
+        <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: '1rem' }}>
+          Métricas detalladas y análisis de rendimiento.
+        </p>
+      </div>
+
+      {/* ── Impact Summary Banner ── */}
       {roiStats.totalReviews > 0 && (
-        <div
-          style={{
-            background: 'var(--espresso)',
-            borderRadius: 12,
-            padding: '1.25rem 1.5rem',
-            color: 'var(--warm-white)',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '2rem',
-            flexWrap: 'wrap',
-          }}
-        >
-          {googleTrend && googleTrend.ratingChange !== 0 ? (
-            <div>
-              <div style={{ fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#f59e0b', marginBottom: 4 }}>
-                Google Rating
-              </div>
-              <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.5rem' }}>
-                <span style={{ fontSize: '0.95rem', color: 'rgba(255,255,255,0.4)' }}>{googleTrend.baselineRating.toFixed(1)}</span>
-                <span style={{ color: 'rgba(255,255,255,0.3)' }}>→</span>
-                <span style={{ fontSize: '2rem', fontWeight: 800, fontVariantNumeric: 'tabular-nums' }}>{googleTrend.currentRating.toFixed(1)} ★</span>
-                <span style={{ fontSize: '0.85rem', fontWeight: 700, color: googleTrend.ratingChange > 0 ? '#4ade80' : '#f87171' }}>
-                  {googleTrend.ratingChange > 0 ? '+' : ''}{googleTrend.ratingChange.toFixed(1)}
-                </span>
-              </div>
-            </div>
-          ) : (
-            <div>
-              <div style={{ fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#f59e0b', marginBottom: 4 }}>
-                All-Time Impact
-              </div>
-              <div style={{ fontSize: '2rem', fontWeight: 800, fontVariantNumeric: 'tabular-nums' }}>
-                {roiStats.totalReviews} scans
-              </div>
-            </div>
-          )}
-          <div style={{ display: 'flex', gap: '1.5rem', flexWrap: 'wrap' }}>
-            <div>
-              <div style={{ fontSize: '0.6rem', fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.5)', marginBottom: 2 }}>Sent to Google</div>
-              <div style={{ fontSize: '1.1rem', fontWeight: 700, color: '#4ade80' }}>{roiStats.googleSends}</div>
-              <div style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.4)' }}>
-                {googleTrend && googleTrend.reviewsGained > 0
-                  ? `${googleTrend.reviewsGained} confirmed new reviews`
-                  : 'customers directed to Google'}
-              </div>
-            </div>
-            <div>
-              <div style={{ fontSize: '0.6rem', fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.5)', marginBottom: 2 }}>Intercepted</div>
-              <div style={{ fontSize: '1.1rem', fontWeight: 700, color: '#fbbf24' }}>{roiStats.intercepted}</div>
-              <div style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.4)' }}>bad reviews caught privately</div>
-            </div>
+        <div className="card stagger-2 impact-wrapper" style={{ overflow: 'hidden' }}>
+          <div style={{ padding: '2rem 2rem 1.5rem' }}>
+            {googleTrend && googleTrend.ratingChange !== 0 ? (
+              <>
+                <p className="section-label" style={{ color: 'rgba(255,255,255,0.6)', margin: '0 0 0.5rem' }}>
+                  {t.analytics.googleRating}
+                </p>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.75rem', flexWrap: 'wrap' }}>
+                  <span style={{ fontSize: '1.5rem', color: 'rgba(255,255,255,0.5)', fontWeight: 500, fontFamily: 'var(--font-serif)' }}>
+                    {googleTrend.baselineRating.toFixed(1)}
+                  </span>
+                  <span style={{ color: 'rgba(255,255,255,0.3)' }}>&rarr;</span>
+                  <span className="editorial-serif" style={{ fontSize: '3.5rem', fontWeight: 600, lineHeight: 1 }}>
+                    {googleTrend.currentRating.toFixed(1)}
+                  </span>
+                  <span style={{ color: 'var(--gold)', fontSize: '2rem' }}>&#9733;</span>
+                  <span style={{
+                    padding: '4px 10px',
+                    fontSize: '0.875rem',
+                    fontWeight: 600,
+                    background: googleTrend.ratingChange > 0 ? 'rgba(43,98,77,0.4)' : 'rgba(155,49,49,0.4)',
+                    color: googleTrend.ratingChange > 0 ? '#A7F3D0' : '#FECACA',
+                  }}>
+                    {googleTrend.ratingChange > 0 ? '+' : ''}{googleTrend.ratingChange.toFixed(1)}
+                  </span>
+                </div>
+              </>
+            ) : (
+              <>
+                <p className="section-label" style={{ color: 'rgba(255,255,255,0.6)', margin: '0 0 0.5rem' }}>
+                  {t.analytics.allTimeImpact}
+                </p>
+                <p className="editorial-serif" style={{ margin: 0, fontSize: '3.5rem', fontWeight: 600, lineHeight: 1 }}>
+                  {roiStats.totalReviews} <span style={{ fontSize: '1.5rem', fontWeight: 400, color: 'rgba(255,255,255,0.6)' }}>{t.analytics.scans}</span>
+                </p>
+              </>
+            )}
+          </div>
+
+          {/* Impact metrics row */}
+          <div className="grid-impact" style={{ borderTop: '1px solid rgba(255,255,255,0.1)' }}>
+            <ImpactMetric
+              label={t.analytics.sentToGoogle}
+              value={roiStats.googleSends}
+              sub={googleTrend && googleTrend.reviewsGained > 0
+                ? t.analytics.confirmedNewReviews(googleTrend.reviewsGained)
+                : t.analytics.customersDirectedToGoogle}
+            />
+            <ImpactMetric
+              label={t.analytics.intercepted}
+              value={roiStats.intercepted}
+              sub={t.analytics.badReviewsCaughtPrivately}
+            />
           </div>
         </div>
       )}
 
-      {/* Overview Cards */}
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
-          gap: '1rem',
-        }}
-      >
-        <MiniCard label="All-Time Reviews" value={allTimeStats.totalReviews} />
+      {/* ── Overview Cards ── */}
+      <div className="grid-stats stagger-3">
+        <MiniCard label={t.analytics.allTimeReviews} value={allTimeStats.totalReviews} />
         <MiniCard
-          label="All-Time Avg"
+          label={t.analytics.allTimeAvg}
           value={allTimeStats.avgRating ? allTimeStats.avgRating.toFixed(1) : '--'}
-          suffix=" ★"
+          suffix=" / 5"
         />
-        <MiniCard label="Google Sends" value={allTimeStats.googleSends} />
-        <MiniCard label="Feedback Received" value={allTimeStats.feedbackCount} />
-        <MiniCard label="This Week" value={weeklyStats.totalReviews} />
+        <MiniCard label={t.analytics.googleSends} value={allTimeStats.googleSends} />
+        <MiniCard label={t.analytics.feedbackReceived} value={allTimeStats.feedbackCount} />
+        <MiniCard label={t.analytics.thisWeek} value={weeklyStats.totalReviews} />
         <MiniCard
-          label="Google Conversion"
+          label={t.analytics.googleConversion}
           value={`${conversion.rate}%`}
-          sub={`${conversion.sent} of ${conversion.above} eligible`}
+          sub={t.analytics.ofEligible(conversion.sent, conversion.above)}
         />
       </div>
 
-      {/* Rating Distribution */}
-      <section style={card}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-          <h2 style={{ ...sectionTitle, marginBottom: 0 }}>Rating Distribution</h2>
+      {/* ── Rating Distribution ── */}
+      <section className="card stagger-4" style={{ overflow: 'hidden' }}>
+        <div style={{
+          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+          padding: '1.25rem 1.5rem', borderBottom: '1px solid var(--panel-border)',
+        }}>
+          <h2 style={{ margin: 0, fontSize: '1.125rem', fontWeight: 600, fontFamily: 'var(--font-serif)', color: 'var(--text-main)' }}>
+            {t.analytics.ratingDistribution}
+          </h2>
           <button
+            className="btn btn-outline"
             onClick={() =>
               downloadCSV(
                 [5, 4, 3, 2, 1].map((star) => ({
-                  Stars: star,
-                  Count: ratingDistribution[star] || 0,
-                  Percentage: totalRatings > 0 ? `${Math.round(((ratingDistribution[star] || 0) / totalRatings) * 100)}%` : '0%',
+                  Estrellas: star,
+                  Cantidad: ratingDistribution[star] || 0,
+                  Porcentaje: totalRatings > 0 ? `${Math.round(((ratingDistribution[star] || 0) / totalRatings) * 100)}%` : '0%',
                 })),
-                'rating-distribution.csv',
+                'distribucion-calificaciones.csv',
               )
             }
-            style={{
-              padding: '0.35rem 0.8rem',
-              borderRadius: 6,
-              border: '1px solid var(--stone-300)',
-              background: 'transparent',
-              fontSize: '0.8rem',
-              cursor: 'pointer',
-              color: 'var(--stone-700)',
-            }}
+            style={{ fontSize: '0.8125rem', padding: '0.4rem 1rem' }}
           >
-            Export CSV
+            {t.analytics.exportCsv}
           </button>
         </div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+        <div style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
           {[5, 4, 3, 2, 1].map((star) => {
             const cnt = ratingDistribution[star] || 0;
             const pct = totalRatings > 0 ? Math.round((cnt / totalRatings) * 100) : 0;
             return (
               <div key={star} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                 <span
+                  className="font-numeric"
                   style={{
                     width: 50,
                     textAlign: 'right',
-                    fontSize: '0.85rem',
-                    fontWeight: 500,
-                    color: 'var(--espresso)',
+                    fontSize: '0.875rem',
+                    fontWeight: 600,
+                    color: 'var(--text-main)',
                   }}
                 >
-                  {star} ★
+                  {star} &#9733;
                 </span>
                 <div
                   style={{
                     flex: 1,
                     height: 24,
-                    background: 'var(--stone-100)',
-                    borderRadius: 6,
+                    background: 'var(--bg-base)',
+                    border: '1px solid var(--panel-border)',
                     overflow: 'hidden',
                   }}
                 >
@@ -217,21 +211,21 @@ export default function AnalyticsView({
                       height: '100%',
                       background:
                         star >= 4
-                          ? 'var(--success)'
+                          ? 'var(--green)'
                           : star === 3
-                            ? 'var(--amber-500)'
-                            : '#dc2626',
-                      borderRadius: 6,
+                            ? 'var(--gold)'
+                            : 'var(--red)',
                       transition: 'width 0.4s ease',
                       minWidth: cnt > 0 ? 4 : 0,
                     }}
                   />
                 </div>
                 <span
+                  className="font-numeric"
                   style={{
-                    width: 70,
-                    fontSize: '0.8rem',
-                    color: 'var(--stone-500)',
+                    width: 80,
+                    fontSize: '0.8125rem',
+                    color: 'var(--text-muted)',
                   }}
                 >
                   {cnt} ({pct}%)
@@ -242,151 +236,176 @@ export default function AnalyticsView({
         </div>
       </section>
 
-      {/* Daily Activity */}
-      <section style={card}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-          <h2 style={{ ...sectionTitle, marginBottom: 0 }}>Daily Reviews (Last 30 Days)</h2>
+      {/* ── Daily Activity ── */}
+      <section className="card stagger-4" style={{ overflow: 'hidden' }}>
+        <div style={{
+          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+          padding: '1.25rem 1.5rem', borderBottom: '1px solid var(--panel-border)',
+        }}>
+          <h2 style={{ margin: 0, fontSize: '1.125rem', fontWeight: 600, fontFamily: 'var(--font-serif)', color: 'var(--text-main)' }}>
+            {t.analytics.dailyReviews}
+          </h2>
           {dailyCounts.length > 0 && (
             <button
+              className="btn btn-outline"
               onClick={() =>
                 downloadCSV(
                   dailyCounts.map((d) => ({
-                    Date: d.date,
-                    Reviews: d.count,
-                    'Avg Rating': d.avgRating?.toFixed(1) ?? '',
+                    Fecha: d.date,
+                    Reseñas: d.count,
+                    'Calif. Prom.': d.avgRating?.toFixed(1) ?? '',
                   })),
-                  'daily-reviews.csv',
+                  'resenas-diarias.csv',
                 )
               }
-              style={{
-                padding: '0.35rem 0.8rem',
-                borderRadius: 6,
-                border: '1px solid var(--stone-300)',
-                background: 'transparent',
-                fontSize: '0.8rem',
-                cursor: 'pointer',
-                color: 'var(--stone-700)',
-              }}
+              style={{ fontSize: '0.8125rem', padding: '0.4rem 1rem' }}
             >
-              Export CSV
+              {t.analytics.exportCsv}
             </button>
           )}
         </div>
-        {dailyCounts.length === 0 ? (
-          <p style={{ color: 'var(--stone-400)', fontStyle: 'italic', margin: 0 }}>
-            No reviews in the last 30 days.
+        <div style={{ padding: '1.5rem' }}>
+          {dailyCounts.length === 0 ? (
+            <p style={{ color: 'var(--text-dim)', fontSize: '0.875rem', textAlign: 'center', padding: '2rem 0', margin: 0 }}>
+              {t.analytics.noReviewsLast30}
+            </p>
+          ) : (
+            <div style={{ overflowX: 'auto' }}>
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'flex-end',
+                  gap: 3,
+                  height: 140,
+                  minWidth: dailyCounts.length * 20,
+                  padding: '0 0.25rem',
+                }}
+              >
+                {dailyCounts.map((d) => {
+                  const maxCount = Math.max(...dailyCounts.map((x) => x.count), 1);
+                  const h = (d.count / maxCount) * 120;
+                  return (
+                    <div
+                      key={d.date}
+                      title={`${d.date}: ${d.count} reseñas, prom. ${d.avgRating?.toFixed(1) ?? '--'}`}
+                      style={{
+                        flex: 1,
+                        minWidth: 14,
+                        maxWidth: 32,
+                        height: Math.max(h, 3),
+                        background:
+                          d.avgRating >= 4
+                            ? 'var(--green)'
+                            : d.avgRating >= 3
+                              ? 'var(--gold)'
+                              : 'var(--red)',
+                        opacity: 0.8,
+                        cursor: 'default',
+                        transition: 'opacity 0.15s',
+                      }}
+                      onMouseEnter={(e) => (e.currentTarget.style.opacity = '1')}
+                      onMouseLeave={(e) => (e.currentTarget.style.opacity = '0.8')}
+                    />
+                  );
+                })}
+              </div>
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  marginTop: '0.5rem',
+                  fontSize: '0.75rem',
+                  color: 'var(--text-dim)',
+                  fontFamily: 'var(--font-mono)',
+                }}
+              >
+                <span>{dailyCounts[0]?.date}</span>
+                <span>{dailyCounts[dailyCounts.length - 1]?.date}</span>
+              </div>
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* ── Top Performers ── */}
+      <section className="card stagger-5" style={{ overflow: 'hidden' }}>
+        <div style={{
+          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+          padding: '1.25rem 1.5rem', borderBottom: '1px solid var(--panel-border)',
+        }}>
+          <h2 style={{ margin: 0, fontSize: '1.125rem', fontWeight: 600, fontFamily: 'var(--font-serif)', color: 'var(--text-main)' }}>
+            {t.analytics.topPerformers}
+          </h2>
+        </div>
+        {leaderboard.length === 0 ? (
+          <p style={{ color: 'var(--text-dim)', fontSize: '0.875rem', textAlign: 'center', padding: '3rem 0', margin: 0 }}>
+            {t.analytics.noReviewsThisWeek}
           </p>
         ) : (
           <div style={{ overflowX: 'auto' }}>
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'flex-end',
-                gap: 3,
-                height: 140,
-                minWidth: dailyCounts.length * 20,
-                padding: '0 0.25rem',
-              }}
-            >
-              {dailyCounts.map((d) => {
-                const maxCount = Math.max(...dailyCounts.map((x) => x.count), 1);
-                const h = (d.count / maxCount) * 120;
-                return (
-                  <div
-                    key={d.date}
-                    title={`${d.date}: ${d.count} reviews, avg ${d.avgRating?.toFixed(1) ?? '--'}`}
-                    style={{
-                      flex: 1,
-                      minWidth: 14,
-                      maxWidth: 32,
-                      height: Math.max(h, 3),
-                      background:
-                        d.avgRating >= 4
-                          ? 'var(--success)'
-                          : d.avgRating >= 3
-                            ? 'var(--amber-500)'
-                            : '#dc2626',
-                      borderRadius: '3px 3px 0 0',
-                      opacity: 0.8,
-                      cursor: 'default',
-                      transition: 'opacity 0.15s',
-                    }}
-                    onMouseEnter={(e) => (e.currentTarget.style.opacity = '1')}
-                    onMouseLeave={(e) => (e.currentTarget.style.opacity = '0.8')}
-                  />
-                );
-              })}
-            </div>
-            <div
-              style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                marginTop: '0.4rem',
-                fontSize: '0.7rem',
-                color: 'var(--stone-400)',
-              }}
-            >
-              <span>{dailyCounts[0]?.date}</span>
-              <span>{dailyCounts[dailyCounts.length - 1]?.date}</span>
-            </div>
-          </div>
-        )}
-      </section>
-
-      {/* Top Performers */}
-      <section style={card}>
-        <h2 style={sectionTitle}>Top Performers This Week</h2>
-        {leaderboard.length === 0 ? (
-          <p style={{ color: 'var(--stone-400)', fontStyle: 'italic', margin: 0 }}>
-            No reviews this week yet.
-          </p>
-        ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-            {leaderboard.slice(0, 5).map((entry, i) => (
-              <div
-                key={entry.staffId ?? i}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.75rem',
-                  padding: '0.5rem 0.75rem',
-                  borderRadius: 8,
-                  background: i === 0 ? 'var(--success-light)' : 'var(--stone-100)',
-                }}
-              >
-                <span
-                  style={{
-                    width: 28,
-                    height: 28,
-                    borderRadius: '50%',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: '0.8rem',
-                    fontWeight: 700,
-                    background: i === 0 ? 'var(--success)' : 'var(--stone-300)',
-                    color: i === 0 ? 'white' : 'var(--stone-700)',
-                  }}
-                >
-                  {i + 1}
-                </span>
-                <span style={{ flex: 1, fontWeight: 500, fontSize: '0.9rem' }}>
-                  {entry.staffName ?? 'Unknown'}
-                </span>
-                <span style={{ fontSize: '0.85rem', color: 'var(--stone-500)' }}>
-                  {entry.reviewCount} reviews
-                </span>
-                <span style={{ fontWeight: 600, fontSize: '0.9rem' }}>
-                  {entry.avgRating.toFixed(1)} ★
-                </span>
-              </div>
-            ))}
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <thead>
+                <tr style={{ background: 'var(--bg-base)' }}>
+                  <Th align="center" w={60}>#</Th>
+                  <Th align="left">Personal</Th>
+                  <Th align="right">Calif. Prom.</Th>
+                  <Th align="right">{t.analytics.reviews}</Th>
+                </tr>
+              </thead>
+              <tbody>
+                {leaderboard.slice(0, 5).map((entry, i) => (
+                  <tr key={entry.staffId ?? i} style={{ borderTop: '1px solid var(--panel-border)' }}>
+                    <td style={{ textAlign: 'center', padding: '1rem 1.5rem', fontSize: '0.875rem', color: 'var(--text-dim)', fontWeight: 500, fontFamily: 'var(--font-mono)' }}>
+                      {String(i + 1).padStart(2, '0')}
+                    </td>
+                    <td style={{ padding: '1rem 1.5rem', fontSize: '0.9375rem' }}>
+                      <span style={{ fontWeight: 500 }}>{entry.staffName ?? 'Desconocido'}</span>
+                      {entry.staffCode && (
+                        <span style={{ color: 'var(--text-dim)', marginLeft: 12, fontSize: '0.8125rem', fontFamily: 'var(--font-mono)' }}>
+                          {entry.staffCode}
+                        </span>
+                      )}
+                    </td>
+                    <td className="font-numeric" style={{ textAlign: 'right', padding: '1rem 1.5rem', fontSize: '0.9375rem', fontWeight: 600 }}>
+                      {entry.avgRating.toFixed(1)}
+                    </td>
+                    <td className="font-numeric" style={{ textAlign: 'right', padding: '1rem 1.5rem', fontSize: '0.9375rem', color: 'var(--text-muted)' }}>
+                      {entry.reviewCount}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         )}
       </section>
     </div>
   );
 }
+
+/* ── Impact Metric ── */
+
+function ImpactMetric({ label, value, sub }: {
+  label: string;
+  value: string | number;
+  sub: string;
+}) {
+  return (
+    <div className="impact-metric-item">
+      <p style={{ margin: '0 0 0.5rem', fontSize: '0.75rem', fontWeight: 600, color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+        {label}
+      </p>
+      <p className="editorial-serif" style={{ margin: 0, fontSize: '2rem', fontWeight: 600, color: '#fff', lineHeight: 1 }}>
+        {value}
+      </p>
+      <p style={{ margin: '0.5rem 0 0', fontSize: '0.8125rem', color: 'rgba(255,255,255,0.6)' }}>
+        {sub}
+      </p>
+    </div>
+  );
+}
+
+/* ── Mini Card ── */
 
 function MiniCard({
   label,
@@ -400,39 +419,55 @@ function MiniCard({
   sub?: string;
 }) {
   return (
-    <div style={card}>
-      <p
-        style={{
-          margin: 0,
-          fontSize: '0.75rem',
-          color: 'var(--stone-500)',
-          marginBottom: '0.2rem',
-          textTransform: 'uppercase',
-          letterSpacing: '0.04em',
-        }}
-      >
+    <div className="card" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+      <p style={{
+        margin: 0,
+        fontSize: '0.875rem',
+        fontWeight: 500,
+        color: 'var(--text-muted)',
+        textTransform: 'uppercase',
+        letterSpacing: '0.04em',
+      }}>
         {label}
       </p>
-      <p
-        style={{
-          margin: 0,
-          fontSize: '1.6rem',
-          fontWeight: 700,
-          color: 'var(--espresso)',
-        }}
-      >
+      <p className="editorial-serif" style={{
+        margin: 0,
+        fontSize: '2.5rem',
+        fontWeight: 600,
+        color: 'var(--text-main)',
+        lineHeight: 1,
+      }}>
         {value}
         {suffix && (
-          <span style={{ fontSize: '0.85rem', fontWeight: 400, color: 'var(--amber-500)' }}>
+          <span style={{ fontSize: '1rem', fontWeight: 400, color: 'var(--text-dim)', marginLeft: 6, fontFamily: 'var(--font-sans)' }}>
             {suffix}
           </span>
         )}
       </p>
       {sub && (
-        <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--stone-400)', marginTop: '0.15rem' }}>
+        <p style={{ margin: 0, fontSize: '0.8125rem', color: 'var(--text-dim)' }}>
           {sub}
         </p>
       )}
     </div>
+  );
+}
+
+/* ── Table Header ── */
+
+function Th({ children, align, w }: { children: React.ReactNode; align: 'left' | 'right' | 'center'; w?: number }) {
+  return (
+    <th style={{
+      textAlign: align,
+      padding: '0.875rem 1.5rem',
+      fontSize: '0.8125rem',
+      fontWeight: 600,
+      color: 'var(--text-dim)',
+      width: w,
+      textTransform: 'uppercase',
+      letterSpacing: '0.04em',
+    }}>
+      {children}
+    </th>
   );
 }

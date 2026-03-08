@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import { getBrandForSlug } from '@/lib/brands';
+import { t } from '@/lib/i18n';
 
 /* ── Types ── */
 
@@ -43,24 +44,6 @@ interface Props {
   googleTrends: Record<number, GoogleTrend | null>;
 }
 
-/* ── Styles ── */
-
-const card: React.CSSProperties = {
-  background: 'var(--warm-white)',
-  borderRadius: 10,
-  padding: '1.5rem',
-  boxShadow: 'var(--shadow-sm)',
-};
-
-const sectionTitle: React.CSSProperties = {
-  fontFamily: 'var(--font-cormorant), serif',
-  fontSize: '1.3rem',
-  fontWeight: 600,
-  marginTop: 0,
-  marginBottom: '1rem',
-  color: 'var(--espresso)',
-};
-
 type SortKey = 'restaurantName' | 'weeklyReviews' | 'weeklyAvg' | 'totalReviews' | 'totalAvg' | 'unresolved' | 'roi' | 'ratingChange';
 
 /* ── Main Component ── */
@@ -69,7 +52,6 @@ export default function OwnerOverview({ stats, unresolvedCounts, roiByLocation, 
   const [sortKey, setSortKey] = useState<SortKey>('roi');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
 
-  // Compute aggregate impact across all locations
   const portfolioROI = useMemo(() => {
     let totalGoogleSends = 0;
     let totalIntercepted = 0;
@@ -110,9 +92,7 @@ export default function OwnerOverview({ stats, unresolvedCounts, roiByLocation, 
       stats.map((r) => {
         const roi = roiByLocation[r.restaurantId];
         const trend = googleTrends[r.restaurantId];
-        const roiValue = roi
-          ? roi.googleSends + roi.intercepted
-          : 0;
+        const roiValue = roi ? roi.googleSends + roi.intercepted : 0;
         return {
           ...r,
           unresolved: unresolvedCounts[r.restaurantId] ?? 0,
@@ -156,10 +136,10 @@ export default function OwnerOverview({ stats, unresolvedCounts, roiByLocation, 
       {/* ── PORTFOLIO ROI HERO ── */}
       <div
         style={{
-          background: 'linear-gradient(135deg, #1c1917 0%, #292524 100%)',
-          borderRadius: 14,
+          background: '#111111',
+          border: '1px solid #111111',
           padding: '2rem',
-          color: '#fafaf9',
+          color: '#FAFAFA',
           position: 'relative',
           overflow: 'hidden',
         }}
@@ -170,64 +150,60 @@ export default function OwnerOverview({ stats, unresolvedCounts, roiByLocation, 
             top: 0,
             left: 0,
             right: 0,
-            height: 3,
-            background: 'linear-gradient(90deg, #f59e0b, #d97706, #f59e0b)',
+            height: 2,
+            background: '#D97706',
           }}
         />
 
         <div
           style={{
-            fontSize: '0.7rem',
+            fontSize: '0.65rem',
             fontWeight: 700,
             letterSpacing: '0.14em',
             textTransform: 'uppercase',
-            color: '#f59e0b',
+            color: '#D97706',
             marginBottom: '1.25rem',
           }}
         >
-          Portfolio Impact — All {stats.length} Locations
+          {t.owner.portfolioImpact(stats.length)}
         </div>
 
-        {/* Hero: avg rating gain if available, otherwise total scans */}
         <div style={{ marginBottom: '1.75rem' }}>
           {portfolioROI.locationsWithGain > 0 ? (
             <>
               <div
+                className="editorial-serif"
                 style={{
                   fontSize: '3.2rem',
-                  fontWeight: 800,
+                  fontWeight: 700,
                   lineHeight: 1,
-                  color: '#fafaf9',
-                  fontVariantNumeric: 'tabular-nums',
                 }}
               >
-                +{portfolioROI.avgRatingGain.toFixed(1)} <span style={{ color: 'var(--amber-500)' }}>★</span>
+                +{portfolioROI.avgRatingGain.toFixed(1)} <span style={{ color: '#D97706' }}>&#9733;</span>
               </div>
-              <div style={{ fontSize: '0.9rem', color: 'rgba(255,255,255,0.5)', marginTop: '0.4rem' }}>
-                Average Google rating gain across {portfolioROI.locationsWithGain} {portfolioROI.locationsWithGain === 1 ? 'location' : 'locations'}
+              <div style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.5)', marginTop: '0.4rem' }}>
+                {t.owner.avgGoogleRatingGain(portfolioROI.locationsWithGain)}
               </div>
             </>
           ) : (
             <>
               <div
+                className="font-numeric"
                 style={{
                   fontSize: '3.2rem',
-                  fontWeight: 800,
+                  fontWeight: 700,
                   lineHeight: 1,
-                  color: '#fafaf9',
-                  fontVariantNumeric: 'tabular-nums',
                 }}
               >
                 {portfolioROI.totalReviews.toLocaleString()}
               </div>
-              <div style={{ fontSize: '0.9rem', color: 'rgba(255,255,255,0.5)', marginTop: '0.4rem' }}>
-                Total scans processed across all locations
+              <div style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.5)', marginTop: '0.4rem' }}>
+                {t.owner.totalScansProcessed}
               </div>
             </>
           )}
         </div>
 
-        {/* Breakdown grid */}
         <div
           style={{
             display: 'grid',
@@ -236,30 +212,27 @@ export default function OwnerOverview({ stats, unresolvedCounts, roiByLocation, 
           }}
         >
           <ROICard
-            label="Sent to Google"
+            label={t.owner.sentToGoogle}
             value={portfolioROI.totalGoogleSends.toLocaleString()}
             sub={portfolioROI.totalReviewsGained > 0
-              ? `${portfolioROI.totalReviewsGained} new Google reviews confirmed`
-              : 'customers directed to Google'}
+              ? t.owner.newGoogleReviewsConfirmed(portfolioROI.totalReviewsGained)
+              : t.owner.customersDirectedToGoogle}
             color="#4ade80"
-            bgColor="rgba(34, 197, 94, 0.1)"
-            borderColor="rgba(34, 197, 94, 0.2)"
+            borderColor="rgba(34, 197, 94, 0.3)"
           />
           <ROICard
-            label="Bad Reviews Prevented"
+            label={t.owner.badReviewsPrevented}
             value={portfolioROI.totalIntercepted.toLocaleString()}
-            sub="negative reviews caught privately"
+            sub={t.owner.negativeReviewsCaughtPrivately}
             color="#fbbf24"
-            bgColor="rgba(245, 158, 11, 0.1)"
-            borderColor="rgba(245, 158, 11, 0.2)"
+            borderColor="rgba(245, 158, 11, 0.3)"
           />
           <ROICard
-            label="Total Scans"
+            label={t.owner.totalScans}
             value={portfolioROI.totalReviews.toLocaleString()}
-            sub={`${totalWeekly} this week`}
-            color="#fafaf9"
-            bgColor="rgba(255, 255, 255, 0.04)"
-            borderColor="rgba(255, 255, 255, 0.1)"
+            sub={t.owner.thisWeek(totalWeekly)}
+            color="#fafafa"
+            borderColor="rgba(255, 255, 255, 0.15)"
           />
         </div>
       </div>
@@ -269,53 +242,62 @@ export default function OwnerOverview({ stats, unresolvedCounts, roiByLocation, 
         <div
           style={{
             padding: '1rem 1.25rem',
-            borderRadius: 10,
-            background: '#fef2f2',
-            border: '1px solid #fecaca',
-            color: '#991b1b',
+            border: '1px solid var(--red)',
+            background: 'var(--red-light)',
+            color: 'var(--red)',
+            fontWeight: 600,
+            fontSize: '0.9rem',
           }}
         >
-          <p style={{ margin: 0, fontWeight: 600, fontSize: '0.95rem' }}>
-            {totalUnresolved} unresolved feedback {totalUnresolved === 1 ? 'item' : 'items'} across all locations
-          </p>
+          {t.owner.unresolvedFeedback(totalUnresolved)}
         </div>
       )}
 
-      {/* ── Location Table (with ROI columns) ── */}
-      <section style={card}>
-        <h2 style={sectionTitle}>All Locations</h2>
+      {/* ── Location Table ── */}
+      <section style={{
+        background: 'var(--panel-bg)',
+        border: '1px solid var(--border-dark)',
+        padding: '1.5rem',
+      }}>
+        <h2 style={{
+          fontFamily: 'var(--font-serif)',
+          fontSize: '1.1rem',
+          fontWeight: 600,
+          color: 'var(--text-main)',
+          margin: '0 0 1rem',
+        }}>
+          {t.owner.allLocations}
+        </h2>
         <div style={{ overflowX: 'auto' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
               <tr>
-                <SortTh label="Restaurant" sortKey="restaurantName" current={sortKey} dir={sortDir} onSort={toggleSort} />
-                <SortTh label="Impact" sortKey="roi" current={sortKey} dir={sortDir} onSort={toggleSort} align="right" />
-                <SortTh label="Google ★" sortKey="ratingChange" current={sortKey} dir={sortDir} onSort={toggleSort} align="right" />
-                <SortTh label="Weekly" sortKey="weeklyReviews" current={sortKey} dir={sortDir} onSort={toggleSort} align="right" />
-                <SortTh label="Unresolved" sortKey="unresolved" current={sortKey} dir={sortDir} onSort={toggleSort} align="right" />
-                <SortTh label="Total" sortKey="totalReviews" current={sortKey} dir={sortDir} onSort={toggleSort} align="right" />
+                <SortTh label={t.owner.restaurant} sortKey="restaurantName" current={sortKey} dir={sortDir} onSort={toggleSort} />
+                <SortTh label={t.owner.impact} sortKey="roi" current={sortKey} dir={sortDir} onSort={toggleSort} align="right" />
+                <SortTh label={t.owner.googleStar} sortKey="ratingChange" current={sortKey} dir={sortDir} onSort={toggleSort} align="right" />
+                <SortTh label={t.owner.weekly} sortKey="weeklyReviews" current={sortKey} dir={sortDir} onSort={toggleSort} align="right" />
+                <SortTh label={t.owner.unresolved} sortKey="unresolved" current={sortKey} dir={sortDir} onSort={toggleSort} align="right" />
+                <SortTh label={t.owner.total} sortKey="totalReviews" current={sortKey} dir={sortDir} onSort={toggleSort} align="right" />
               </tr>
             </thead>
             <tbody>
               {sorted.map((r) => {
                 const brand = getBrandForSlug(r.slug);
                 return (
-                  <tr key={r.restaurantId} style={{ borderTop: '1px solid var(--stone-200)' }}>
-                    {/* Restaurant */}
+                  <tr key={r.restaurantId} style={{ borderTop: '1px solid var(--panel-border)' }}>
                     <td style={{ padding: '0.6rem 0.75rem' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
                         <div
                           style={{
                             width: 28,
                             height: 28,
-                            borderRadius: 6,
                             overflow: 'hidden',
                             background: brand.darkBg ? '#000' : '#fff',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
                             flexShrink: 0,
-                            border: '1px solid var(--stone-200)',
+                            border: '1px solid var(--border-dark)',
                           }}
                         >
                           <img
@@ -328,38 +310,37 @@ export default function OwnerOverview({ stats, unresolvedCounts, roiByLocation, 
                       </div>
                     </td>
 
-                    {/* Impact */}
                     <TdCell align="right">
-                      <span style={{ fontWeight: 700, color: 'var(--success)' }}>
+                      <span className="font-numeric" style={{ fontWeight: 700, color: 'var(--green)' }}>
                         {r.googleSends}
                       </span>
-                      <span style={{ color: 'var(--stone-400)', margin: '0 3px' }}>/</span>
-                      <span style={{ fontWeight: 700, color: '#fbbf24' }}>
+                      <span style={{ color: 'var(--text-dim)', margin: '0 3px' }}>/</span>
+                      <span className="font-numeric" style={{ fontWeight: 700, color: 'var(--gold)' }}>
                         {r.intercepted}
                       </span>
-                      <div style={{ fontSize: '0.65rem', color: 'var(--stone-400)', marginTop: 1 }}>
-                        sent / caught
+                      <div style={{ fontSize: '0.6rem', color: 'var(--text-dim)', marginTop: 1, letterSpacing: '0.05em', textTransform: 'uppercase' }}>
+                        {t.owner.sentCaught}
                       </div>
                     </TdCell>
 
-                    {/* Google Rating */}
                     <TdCell align="right">
                       {r.currentRating != null ? (
                         <div>
-                          <span style={{ fontWeight: 600 }}>{r.currentRating.toFixed(1)}</span>
-                          <span style={{ color: 'var(--amber-500)', marginLeft: 2 }}>★</span>
+                          <span className="font-numeric" style={{ fontWeight: 600 }}>{r.currentRating.toFixed(1)}</span>
+                          <span style={{ color: 'var(--gold)', marginLeft: 2 }}>&#9733;</span>
                           {r.ratingChange !== 0 && (
                             <div
+                              className="font-numeric"
                               style={{
                                 fontSize: '0.7rem',
                                 fontWeight: 600,
-                                color: r.ratingChange > 0 ? 'var(--success)' : '#dc2626',
+                                color: r.ratingChange > 0 ? 'var(--green)' : 'var(--red)',
                                 marginTop: 1,
                               }}
                             >
                               {r.ratingChange > 0 ? '+' : ''}{r.ratingChange.toFixed(1)}
                               {r.reviewsGained > 0 && (
-                                <span style={{ color: 'var(--stone-400)', fontWeight: 400 }}>
+                                <span style={{ color: 'var(--text-dim)', fontWeight: 400 }}>
                                   {' '}(+{r.reviewsGained})
                                 </span>
                               )}
@@ -367,31 +348,30 @@ export default function OwnerOverview({ stats, unresolvedCounts, roiByLocation, 
                           )}
                         </div>
                       ) : (
-                        <span style={{ color: 'var(--stone-400)' }}>--</span>
+                        <span style={{ color: 'var(--text-dim)' }}>--</span>
                       )}
                     </TdCell>
 
-                    {/* Weekly */}
                     <TdCell align="right">
-                      {r.weeklyReviews}
+                      <span className="font-numeric">{r.weeklyReviews}</span>
                       {r.weeklyAvg != null && (
-                        <div style={{ fontSize: '0.7rem', color: 'var(--stone-400)' }}>
-                          {Number(r.weeklyAvg).toFixed(1)} avg
+                        <div className="font-numeric" style={{ fontSize: '0.7rem', color: 'var(--text-dim)' }}>
+                          {Number(r.weeklyAvg).toFixed(1)} {t.owner.avg}
                         </div>
                       )}
                     </TdCell>
 
-                    {/* Unresolved */}
                     <TdCell align="right">
                       {r.unresolved > 0 ? (
-                        <span style={{ color: '#dc2626', fontWeight: 600 }}>{r.unresolved}</span>
+                        <span className="font-numeric" style={{ color: 'var(--red)', fontWeight: 600 }}>{r.unresolved}</span>
                       ) : (
-                        <span style={{ color: 'var(--success)' }}>0</span>
+                        <span className="font-numeric" style={{ color: 'var(--green)' }}>0</span>
                       )}
                     </TdCell>
 
-                    {/* Total */}
-                    <TdCell align="right">{r.totalReviews}</TdCell>
+                    <TdCell align="right">
+                      <span className="font-numeric">{r.totalReviews}</span>
+                    </TdCell>
                   </tr>
                 );
               })}
@@ -403,37 +383,33 @@ export default function OwnerOverview({ stats, unresolvedCounts, roiByLocation, 
   );
 }
 
-/* ── ROI Card (dark theme) ── */
+/* ── ROI Card ── */
 
 function ROICard({
   label,
   value,
   sub,
   color,
-  bgColor,
   borderColor,
 }: {
   label: string;
   value: string;
   sub: string;
   color: string;
-  bgColor: string;
   borderColor: string;
 }) {
   return (
     <div
       style={{
-        background: bgColor,
         border: `1px solid ${borderColor}`,
-        borderRadius: 10,
         padding: '1rem 1.15rem',
       }}
     >
       <div
         style={{
-          fontSize: '0.65rem',
-          fontWeight: 600,
-          letterSpacing: '0.08em',
+          fontSize: '0.6rem',
+          fontWeight: 700,
+          letterSpacing: '0.1em',
           textTransform: 'uppercase',
           color: 'rgba(255,255,255,0.5)',
           marginBottom: 6,
@@ -441,7 +417,7 @@ function ROICard({
       >
         {label}
       </div>
-      <div style={{ fontSize: '1.6rem', fontWeight: 700, color }}>{value}</div>
+      <div className="font-numeric" style={{ fontSize: '1.6rem', fontWeight: 700, color }}>{value}</div>
       <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)', marginTop: 3 }}>{sub}</div>
     </div>
   );
@@ -470,15 +446,16 @@ function SortTh({
       onClick={() => onSort(sortKey)}
       style={{
         textAlign: align,
-        padding: '0.5rem 0.75rem',
-        fontSize: '0.75rem',
-        fontWeight: 600,
+        padding: '0.6rem 0.75rem',
+        fontSize: '0.65rem',
+        fontWeight: 700,
         textTransform: 'uppercase',
-        letterSpacing: '0.05em',
-        color: active ? 'var(--espresso)' : 'var(--stone-500)',
+        letterSpacing: '0.1em',
+        color: active ? 'var(--text-main)' : 'var(--text-muted)',
         cursor: 'pointer',
         userSelect: 'none',
         whiteSpace: 'nowrap',
+        borderBottom: '1px solid var(--border-dark)',
       }}
     >
       {label} {active ? (dir === 'asc' ? '↑' : '↓') : ''}

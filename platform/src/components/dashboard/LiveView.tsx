@@ -436,7 +436,7 @@ export default function LiveView({ restaurantName, logoSrc, logoDarkBg, googleRa
         {/* ── RIGHT COLUMN ── */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: fs ? '1.5rem' : '1.25rem', overflow: 'hidden' }}>
           {/* Stats Row with week-over-week */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: fs ? '1.5rem' : '1.25rem', flexShrink: 0 }}>
+          <div className="grid-stats" style={{ gap: fs ? '1.5rem' : '1.25rem', flexShrink: 0 }}>
             <StatBox
               label="TOTAL ESCANEOS"
               weekValue={data.week.totalScans}

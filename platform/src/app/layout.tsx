@@ -1,12 +1,5 @@
 import type { Metadata } from "next";
-import { DM_Sans } from "next/font/google";
 import "./globals.css";
-
-const sans = DM_Sans({
-  subsets: ["latin"],
-  variable: "--font-dm-sans",
-  display: "swap",
-});
 
 export const metadata: Metadata = {
   title: "RateTap",
@@ -20,7 +13,15 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="es">
-      <body className={`${sans.variable} antialiased`} style={{ fontFamily: 'var(--font-dm-sans, "DM Sans", sans-serif)' }}>
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,700&display=swap"
+          rel="stylesheet"
+        />
+      </head>
+      <body className="antialiased">
         {children}
       </body>
     </html>

@@ -29,7 +29,7 @@ export default async function AppLayout({
         newFeedbackCount={newFeedbackCount}
         isOwner={isOwner}
       />
-      <main style={{ maxWidth: 1200, margin: '0 auto', padding: '2rem 1.5rem' }}>
+      <main>
         {children}
       </main>
     </div>

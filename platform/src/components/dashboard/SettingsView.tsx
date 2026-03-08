@@ -17,51 +17,53 @@ interface Props {
 }
 
 const card: React.CSSProperties = {
-  background: 'var(--warm-white)',
-  borderRadius: 10,
+  background: 'var(--panel-bg)',
+  border: '1px solid var(--border-dark)',
+  borderRadius: 0,
   padding: '1.5rem',
-  boxShadow: 'var(--shadow-sm)',
 };
 
 const sectionTitle: React.CSSProperties = {
-  fontFamily: 'var(--font-cormorant), serif',
-  fontSize: '1.3rem',
+  fontFamily: 'var(--font-serif)',
+  fontSize: '1.1rem',
   fontWeight: 600,
-  marginTop: 0,
+  color: 'var(--text-main)',
+  margin: 0,
   marginBottom: '1rem',
-  color: 'var(--espresso)',
 };
 
 const labelStyle: React.CSSProperties = {
   display: 'block',
-  fontSize: '0.8rem',
-  fontWeight: 600,
-  color: 'var(--stone-700)',
-  marginBottom: '0.3rem',
+  fontSize: '0.65rem',
+  fontWeight: 700,
+  letterSpacing: '0.1em',
   textTransform: 'uppercase',
-  letterSpacing: '0.04em',
+  color: 'var(--text-muted)',
+  marginBottom: '0.35rem',
 };
 
 const inputStyle: React.CSSProperties = {
   width: '100%',
   padding: '0.6rem 0.75rem',
-  borderRadius: 8,
-  border: '1px solid var(--stone-300)',
+  border: '1px solid var(--border-dark)',
+  borderRadius: 0,
   fontSize: '0.9rem',
-  background: 'var(--warm-white)',
-  color: 'var(--espresso)',
+  background: 'var(--panel-bg)',
+  color: 'var(--text-main)',
+  fontFamily: 'var(--font-sans)',
 };
 
 const btnPrimary: React.CSSProperties = {
-  padding: '0.6rem 1.5rem',
-  borderRadius: 8,
+  padding: '0.5rem 1.25rem',
   border: 'none',
-  background: 'var(--espresso)',
-  color: 'var(--warm-white)',
-  fontWeight: 600,
-  fontSize: '0.9rem',
+  background: 'var(--text-main)',
+  color: 'var(--panel-bg)',
+  fontWeight: 700,
+  fontSize: '0.7rem',
+  letterSpacing: '0.08em',
+  textTransform: 'uppercase',
   cursor: 'pointer',
-  transition: 'opacity 0.2s',
+  borderRadius: 0,
 };
 
 export default function SettingsView({ settings }: Props) {
@@ -152,11 +154,12 @@ export default function SettingsView({ settings }: Props) {
         <div
           style={{
             padding: '0.6rem 1rem',
-            borderRadius: 8,
+            borderRadius: 0,
             fontSize: '0.85rem',
             fontWeight: 500,
-            background: messageType === 'success' ? 'var(--success-light)' : '#fef2f2',
-            color: messageType === 'success' ? 'var(--success)' : '#dc2626',
+            border: messageType === 'success' ? '1px solid var(--green)' : '1px solid var(--red)',
+            background: messageType === 'success' ? 'var(--green-light)' : 'var(--red-light)',
+            color: messageType === 'success' ? 'var(--green)' : 'var(--red)',
           }}
         >
           {message}
@@ -169,7 +172,7 @@ export default function SettingsView({ settings }: Props) {
         <div style={{ display: 'flex', gap: '1.5rem', flexWrap: 'wrap' }}>
           <div>
             <span style={{ ...labelStyle, marginBottom: '0.15rem' }}>{t.settings.name}</span>
-            <p style={{ margin: 0, fontSize: '1rem', fontWeight: 500 }}>{settings.name}</p>
+            <p style={{ margin: 0, fontSize: '1rem', fontWeight: 500, color: 'var(--text-main)' }}>{settings.name}</p>
           </div>
           <div>
             <span style={{ ...labelStyle, marginBottom: '0.15rem' }}>{t.settings.slug}</span>
@@ -177,8 +180,8 @@ export default function SettingsView({ settings }: Props) {
               style={{
                 margin: 0,
                 fontSize: '0.9rem',
-                fontFamily: 'monospace',
-                color: 'var(--stone-500)',
+                fontFamily: 'var(--font-mono)',
+                color: 'var(--text-muted)',
               }}
             >
               {settings.slug}
@@ -218,7 +221,7 @@ export default function SettingsView({ settings }: Props) {
                 placeholder="+1 (555) 123-4567"
                 style={inputStyle}
               />
-              <p style={{ margin: '0.3rem 0 0', fontSize: '0.8rem', color: 'var(--stone-400)' }}>
+              <p style={{ margin: '0.3rem 0 0', fontSize: '0.8rem', color: 'var(--text-dim)' }}>
                 {t.settings.phoneHint}
               </p>
             </div>
@@ -254,7 +257,7 @@ export default function SettingsView({ settings }: Props) {
                     </option>
                   ))}
                 </select>
-                <span style={{ fontSize: '0.8rem', color: 'var(--stone-400)' }}>
+                <span style={{ fontSize: '0.8rem', color: 'var(--text-dim)' }}>
                   {t.settings.thresholdHint}
                 </span>
               </div>
@@ -275,7 +278,7 @@ export default function SettingsView({ settings }: Props) {
                 <option value="threshold">{t.settings.belowGoogleThreshold}</option>
                 <option value="off">{t.settings.off}</option>
               </select>
-              <p style={{ margin: '0.3rem 0 0', fontSize: '0.8rem', color: 'var(--stone-400)' }}>
+              <p style={{ margin: '0.3rem 0 0', fontSize: '0.8rem', color: 'var(--text-dim)' }}>
                 {t.settings.alertHint}
               </p>
             </div>
@@ -286,13 +289,13 @@ export default function SettingsView({ settings }: Props) {
                   type="checkbox"
                   checked={smsAlerts}
                   onChange={(e) => setSmsAlerts(e.target.checked)}
-                  style={{ width: 18, height: 18, accentColor: 'var(--espresso)', cursor: 'pointer' }}
+                  style={{ width: 18, height: 18, accentColor: 'var(--text-main)', cursor: 'pointer' }}
                 />
-                <span style={{ textTransform: 'none', fontSize: '0.9rem', fontWeight: 500, color: 'var(--espresso)' }}>
+                <span style={{ textTransform: 'none', fontSize: '0.9rem', fontWeight: 500, color: 'var(--text-main)' }}>
                   {t.settings.enableSmsAlerts}
                 </span>
               </label>
-              <p style={{ margin: '0.3rem 0 0 1.6rem', fontSize: '0.8rem', color: 'var(--stone-400)' }}>
+              <p style={{ margin: '0.3rem 0 0 1.6rem', fontSize: '0.8rem', color: 'var(--text-dim)' }}>
                 {t.settings.smsHint}
               </p>
             </div>

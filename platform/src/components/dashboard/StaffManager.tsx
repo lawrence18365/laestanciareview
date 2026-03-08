@@ -15,49 +15,56 @@ interface Props {
 }
 
 const card: React.CSSProperties = {
-  background: 'var(--warm-white)',
-  borderRadius: 10,
+  background: 'var(--panel-bg)',
+  border: '1px solid var(--border-dark)',
+  borderRadius: 0,
   padding: '1.5rem',
-  boxShadow: 'var(--shadow-sm)',
 };
 
 const sectionTitle: React.CSSProperties = {
-  fontFamily: 'var(--font-cormorant), serif',
-  fontSize: '1.3rem',
+  fontFamily: 'var(--font-serif)',
+  fontSize: '1.1rem',
   fontWeight: 600,
-  marginTop: 0,
+  color: 'var(--text-main)',
+  margin: 0,
   marginBottom: '1rem',
-  color: 'var(--espresso)',
 };
 
 const inputStyle: React.CSSProperties = {
-  padding: '0.5rem 0.75rem',
-  borderRadius: 8,
-  border: '1px solid var(--stone-300)',
+  width: '100%',
+  padding: '0.6rem 0.75rem',
+  border: '1px solid var(--border-dark)',
+  borderRadius: 0,
   fontSize: '0.9rem',
-  background: 'var(--warm-white)',
-  color: 'var(--espresso)',
+  background: 'var(--panel-bg)',
+  color: 'var(--text-main)',
+  fontFamily: 'var(--font-sans)',
 };
 
 const btnPrimary: React.CSSProperties = {
-  padding: '0.5rem 1.2rem',
-  borderRadius: 8,
+  padding: '0.5rem 1.25rem',
   border: 'none',
-  background: 'var(--espresso)',
-  color: 'var(--warm-white)',
-  fontWeight: 600,
-  fontSize: '0.85rem',
+  background: 'var(--text-main)',
+  color: 'var(--panel-bg)',
+  fontWeight: 700,
+  fontSize: '0.7rem',
+  letterSpacing: '0.08em',
+  textTransform: 'uppercase',
   cursor: 'pointer',
+  borderRadius: 0,
 };
 
 const btnSecondary: React.CSSProperties = {
-  padding: '0.35rem 0.8rem',
-  borderRadius: 6,
-  border: '1px solid var(--stone-300)',
-  background: 'transparent',
-  color: 'var(--stone-700)',
-  fontSize: '0.8rem',
+  padding: '0.35rem 0.75rem',
+  border: '1px solid var(--border-dark)',
+  background: 'var(--panel-bg)',
+  color: 'var(--text-main)',
+  fontSize: '0.7rem',
+  fontWeight: 600,
+  letterSpacing: '0.05em',
+  textTransform: 'uppercase',
   cursor: 'pointer',
+  borderRadius: 0,
 };
 
 export default function StaffManager({ initialStaff }: Props) {
@@ -158,11 +165,12 @@ export default function StaffManager({ initialStaff }: Props) {
         <div
           style={{
             padding: '0.6rem 1rem',
-            borderRadius: 8,
+            borderRadius: 0,
             fontSize: '0.85rem',
             fontWeight: 500,
-            background: 'var(--success-light)',
-            color: 'var(--success)',
+            border: '1px solid var(--green)',
+            background: 'var(--green-light)',
+            color: 'var(--green)',
           }}
         >
           {message}
@@ -174,7 +182,7 @@ export default function StaffManager({ initialStaff }: Props) {
         <h2 style={sectionTitle}>{t.staffManager.addStaffMember}</h2>
         <form onSubmit={handleAdd} style={{ display: 'flex', gap: '0.75rem', alignItems: 'flex-end', flexWrap: 'wrap' }}>
           <div>
-            <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'var(--stone-500)', marginBottom: '0.25rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+            <label style={{ display: 'block', fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '0.35rem' }}>
               {t.staffManager.name}
             </label>
             <input
@@ -186,7 +194,7 @@ export default function StaffManager({ initialStaff }: Props) {
             />
           </div>
           <div>
-            <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'var(--stone-500)', marginBottom: '0.25rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+            <label style={{ display: 'block', fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '0.35rem' }}>
               {t.staffManager.code}
             </label>
             <input
@@ -207,7 +215,7 @@ export default function StaffManager({ initialStaff }: Props) {
       <section style={card}>
         <h2 style={sectionTitle}>{t.staffManager.staff(staffList.length)}</h2>
         {staffList.length === 0 ? (
-          <p style={{ color: 'var(--stone-400)', fontSize: '0.9rem', fontStyle: 'italic', margin: 0 }}>
+          <p style={{ color: 'var(--text-dim)', fontSize: '0.9rem', fontStyle: 'italic', margin: 0 }}>
             {t.staffManager.noStaffYet}
           </p>
         ) : (
@@ -223,7 +231,7 @@ export default function StaffManager({ initialStaff }: Props) {
               </thead>
               <tbody>
                 {staffList.map((s) => (
-                  <tr key={s.id} style={{ borderTop: '1px solid var(--stone-200)' }}>
+                  <tr key={s.id} style={{ borderTop: '1px solid var(--panel-border)' }}>
                     {editingId === s.id ? (
                       <>
                         <td style={{ padding: '0.5rem 0.75rem' }}>
@@ -254,24 +262,26 @@ export default function StaffManager({ initialStaff }: Props) {
                       </>
                     ) : (
                       <>
-                        <td style={{ padding: '0.6rem 0.75rem', fontWeight: 500, fontSize: '0.9rem' }}>
+                        <td style={{ padding: '0.6rem 0.75rem', fontWeight: 500, fontSize: '0.9rem', color: 'var(--text-main)' }}>
                           {s.name}
                         </td>
-                        <td style={{ padding: '0.6rem 0.75rem', color: 'var(--stone-500)', fontFamily: 'monospace', fontSize: '0.85rem' }}>
+                        <td style={{ padding: '0.6rem 0.75rem', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', fontSize: '0.85rem' }}>
                           {s.code}
                         </td>
                         <td style={{ padding: '0.6rem 0.75rem' }}>
                           <button
                             onClick={() => handleToggle(s)}
                             style={{
-                              ...btnSecondary,
-                              background: s.active ? 'var(--success-light)' : 'var(--stone-100)',
-                              color: s.active ? 'var(--success)' : 'var(--stone-500)',
-                              border: 'none',
-                              fontWeight: 500,
-                              borderRadius: 999,
                               padding: '0.2rem 0.7rem',
-                              fontSize: '0.75rem',
+                              fontSize: '0.7rem',
+                              fontWeight: 600,
+                              letterSpacing: '0.05em',
+                              textTransform: 'uppercase' as const,
+                              cursor: 'pointer',
+                              borderRadius: 0,
+                              background: s.active ? 'var(--green-light)' : 'transparent',
+                              color: s.active ? 'var(--green)' : 'var(--text-dim)',
+                              border: s.active ? '1px solid var(--green)' : '1px solid var(--text-dim)',
                             }}
                           >
                             {s.active ? t.staffManager.active : t.staffManager.inactive}
@@ -283,7 +293,7 @@ export default function StaffManager({ initialStaff }: Props) {
                               {t.staffManager.edit}
                             </button>
                             <button
-                              style={{ ...btnSecondary, color: '#dc2626', borderColor: '#fecaca' }}
+                              style={{ ...btnSecondary, color: 'var(--red)', borderColor: 'var(--red)' }}
                               onClick={() => handleDelete(s.id)}
                             >
                               {t.staffManager.delete}
@@ -308,12 +318,13 @@ function Th({ children, style }: { children: React.ReactNode; style?: React.CSSP
     <th
       style={{
         textAlign: 'left',
-        padding: '0.5rem 0.75rem',
-        fontSize: '0.75rem',
-        fontWeight: 600,
+        padding: '0.6rem 0.75rem',
+        fontSize: '0.65rem',
+        fontWeight: 700,
         textTransform: 'uppercase',
-        letterSpacing: '0.05em',
-        color: 'var(--stone-500)',
+        letterSpacing: '0.1em',
+        color: 'var(--text-muted)',
+        borderBottom: '1px solid var(--border-dark)',
         ...style,
       }}
     >
