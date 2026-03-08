@@ -15,16 +15,16 @@ const allRestaurants = [
   { name: 'Estancia Veracruz', slug: 'estancia-veracruz' },
   { name: 'Estancia Xalapa', slug: 'estancia-xalapa' },
 
-  // Harbours
-  { name: 'Harbours Angelopolis', slug: 'harbours-angelopolis' },
-  { name: 'Harbours Veracruz', slug: 'harbours-veracruz' },
+  // Harbors
+  { name: 'Harbors Angelopolis', slug: 'harbors-angelopolis' },
+  { name: 'Harbors Veracruz', slug: 'harbors-veracruz' },
 
   // La Silla
   { name: 'La Silla Juarez', slug: 'la-silla-juarez' },
   { name: 'La Silla Huexotitla', slug: 'la-silla-huexotitla' },
 
-  // Sfera
-  { name: 'Sfera Queretaro', slug: 'sfera-queretaro' },
+  // SteakCompany
+  { name: 'SteakCompany Queretaro', slug: 'steakcompany-queretaro' },
 
   // Regio Norte
   { name: 'Regio Norte', slug: 'regio-norte' },

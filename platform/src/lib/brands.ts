@@ -8,9 +8,9 @@ interface BrandInfo {
 
 const brands: Record<string, BrandInfo> = {
   estancia: { logo: '/logos/estancia.jpg', darkBg: false },
-  harbours: { logo: '/logos/harbours.jpeg', darkBg: true },
+  harbors: { logo: '/logos/harbors.jpeg', darkBg: true },
   'la-silla': { logo: '/logos/la-silla.jpeg', darkBg: true },
-  sfera: { logo: '/logos/sfera.jpeg', darkBg: true },
+  steakcompany: { logo: '/logos/ratetap.webp', darkBg: false },
   real: { logo: '/logos/real.jpeg', darkBg: false },
   regio: { logo: '/logos/ratetap.webp', darkBg: false },
 };
