@@ -333,11 +333,11 @@
 
             <!-- Billing Toggle -->
             <div style="display: flex; align-items: center; justify-content: center; gap: 1rem; margin-bottom: 4rem;">
-                <span id="pricing-label-monthly" style="font-weight: 700; font-size: 0.95rem; color: var(--brand-charcoal); transition: color 0.3s;">Monthly</span>
+                <span id="pricing-label-monthly" style="font-weight: 700; font-size: 0.95rem; color: var(--text-secondary); transition: color 0.3s;">Monthly</span>
                 <button id="pricing-toggle" onclick="togglePricing()" style="position: relative; width: 56px; height: 30px; border-radius: 999px; border: none; background: var(--brand-charcoal); cursor: pointer; transition: background 0.3s; flex-shrink: 0;">
-                    <span id="pricing-toggle-dot" style="position: absolute; top: 3px; left: 3px; width: 24px; height: 24px; border-radius: 50%; background: white; transition: transform 0.3s cubic-bezier(0.165, 0.84, 0.44, 1); box-shadow: 0 2px 4px rgba(0,0,0,0.15);"></span>
+                    <span id="pricing-toggle-dot" style="position: absolute; top: 3px; left: 3px; width: 24px; height: 24px; border-radius: 50%; background: white; transition: transform 0.3s cubic-bezier(0.165, 0.84, 0.44, 1); box-shadow: 0 2px 4px rgba(0,0,0,0.15); transform: translateX(26px);"></span>
                 </button>
-                <span id="pricing-label-annual" style="font-weight: 700; font-size: 0.95rem; color: var(--text-secondary); transition: color 0.3s;">Annual <span style="background: linear-gradient(135deg, var(--brand-blue), #1A85C4); color: white; font-size: 0.7rem; padding: 0.25rem 0.6rem; border-radius: 999px; margin-left: 0.35rem; font-weight: 800; letter-spacing: 0.05em;">2 MONTHS FREE</span></span>
+                <span id="pricing-label-annual" style="font-weight: 700; font-size: 0.95rem; color: var(--brand-charcoal); transition: color 0.3s;">Annual <span style="background: linear-gradient(135deg, var(--brand-blue), #1A85C4); color: white; font-size: 0.7rem; padding: 0.25rem 0.6rem; border-radius: 999px; margin-left: 0.35rem; font-weight: 800; letter-spacing: 0.05em;">2 MONTHS FREE</span></span>
             </div>
 
             <!-- Tier Comparison: Basic vs Pro -->
@@ -347,7 +347,7 @@
                 <div class="pricing-card reveal" style="display: flex; flex-direction: column;">
                     <div class="pricing-card__eyebrow">Basic</div>
                     <div class="pricing-card__price">
-                        <span class="tier-price-basic">$9</span><span style="font-family: 'Plus Jakarta Sans', sans-serif; font-size: 1rem; font-weight: 600; color: var(--text-secondary);">/mo</span>
+                        <span class="tier-price-basic">$7</span><span style="font-family: 'Plus Jakarta Sans', sans-serif; font-size: 1rem; font-weight: 600; color: var(--text-secondary);">/mo</span>
                     </div>
                     <div class="pricing-card__unit">per staff card</div>
                     <p class="pricing-card__desc" style="margin-bottom: 2rem;">NFC cards with star rating and Google redirect. The essentials to start collecting reviews.</p>
@@ -372,7 +372,7 @@
                         <span style="background: var(--brand-blue); color: white; font-size: 0.65rem; padding: 0.2rem 0.55rem; border-radius: 999px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em;">Most Popular</span>
                     </div>
                     <div class="pricing-card__price">
-                        <span id="price-staff">$19</span><span style="font-family: 'Plus Jakarta Sans', sans-serif; font-size: 1rem; font-weight: 600; color: var(--text-secondary);" id="price-staff-unit">/mo</span>
+                        <span id="price-staff">$16</span><span style="font-family: 'Plus Jakarta Sans', sans-serif; font-size: 1rem; font-weight: 600; color: var(--text-secondary);" id="price-staff-unit">/mo</span>
                     </div>
                     <div class="pricing-card__unit">per staff card</div>
                     <p style="font-size: 0.85rem; color: var(--brand-blue); font-weight: 700; margin-bottom: 2rem;">That's less than $0.63/day per staff member</p>
@@ -420,7 +420,7 @@
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-top: 2rem;">
                         <div style="text-align: center; padding: 1.5rem; background: rgba(45,156,219,0.05); border-radius: 16px; border: 1px solid rgba(45,156,219,0.1);">
                             <div style="font-weight: 800; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.12em; color: var(--text-secondary); margin-bottom: 0.5rem;">Your cost</div>
-                            <div id="roi-cost" style="font-family: 'Instrument Serif', serif; font-size: 2.2rem; color: var(--brand-charcoal);">$190/mo</div>
+                            <div id="roi-cost" style="font-family: 'Instrument Serif', serif; font-size: 2.2rem; color: var(--brand-charcoal);">$160/mo</div>
                         </div>
                         <div style="text-align: center; padding: 1.5rem; background: rgba(45,156,219,0.05); border-radius: 16px; border: 1px solid rgba(45,156,219,0.1);">
                             <div style="font-weight: 800; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.12em; color: var(--text-secondary); margin-bottom: 0.5rem;">Estimated savings</div>
@@ -606,8 +606,8 @@
             });
         });
 
-        // Pricing toggle (monthly / annual)
-        let isAnnual = false;
+        // Pricing toggle (monthly / annual) — starts on annual
+        let isAnnual = true;
         function togglePricing() {
             isAnnual = !isAnnual;
             const dot = document.getElementById('pricing-toggle-dot');
