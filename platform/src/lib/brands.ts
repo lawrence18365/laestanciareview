@@ -10,9 +10,9 @@ const brands: Record<string, BrandInfo> = {
   estancia: { logo: '/logos/estancia.jpg', darkBg: false },
   harbors: { logo: '/logos/harbors.jpeg', darkBg: true },
   'la-silla': { logo: '/logos/la-silla.jpeg', darkBg: true },
-  steakcompany: { logo: '/logos/ratetap_logo_transparent_background.png', darkBg: false },
+  steakcompany: { logo: '/logos/steak-company-parrilla-urbana-logo.jpeg', darkBg: true },
   real: { logo: '/logos/real.jpeg', darkBg: false },
-  regio: { logo: '/logos/ratetap_logo_transparent_background.png', darkBg: false },
+  regio: { logo: '/logos/regio-norte-cocina-del-norte-logo.jpeg', darkBg: false },
   owner: { logo: '/logos/grupo-estancia.png', darkBg: false },
 };
 
