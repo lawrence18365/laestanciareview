@@ -113,6 +113,10 @@ export const t = {
     resolve: 'Resolver',
     replyViaEmail: 'Responder por Email',
     reYourFeedback: 'Re: Tu comentario',
+    sortNewest: 'Más recientes',
+    sortOldest: 'Más antiguos',
+    sortHighest: 'Mayor calificación',
+    sortLowest: 'Menor calificación',
   },
 
   // ── Feedback Manager ──
@@ -243,6 +247,10 @@ export const t = {
     saving: 'Guardando...',
     saveSettings: 'Guardar Ajustes',
     changePassword: 'Cambiar Contraseña',
+    currentPassword: 'Contraseña Actual',
+    enterCurrentPassword: 'Ingresa tu contraseña actual',
+    currentPasswordRequired: 'Debes ingresar tu contraseña actual',
+    wrongCurrentPassword: 'Contraseña actual incorrecta',
     newPassword: 'Nueva Contraseña',
     confirmPassword: 'Confirmar Contraseña',
     minChars: 'Mínimo 8 caracteres',
@@ -279,6 +287,7 @@ export const t = {
     confirmDelete: '¿Eliminar este miembro del personal? Esto no se puede deshacer.',
     failedToAdd: 'Error al agregar',
     failedToUpdate: 'Error al actualizar',
+    searchPlaceholder: 'Buscar por nombre o código...',
   },
 
   // ── Restaurant Card ──
@@ -295,6 +304,7 @@ export const t = {
     tapToRate: 'Toca una estrella para calificar',
     rateStars: (n: number) => `Calificar ${n} ${n === 1 ? 'estrella' : 'estrellas'}`,
     somethingWrong: 'Algo salió mal. Por favor intenta de nuevo.',
+    tryAgain: 'Intentar de nuevo',
   },
 
   // ── Customer-facing: Feedback Form ──
@@ -313,6 +323,83 @@ export const t = {
     submitting: 'Enviando\u2026',
     shareFeedback: 'Compartir Comentario',
     somethingWrong: 'Algo salió mal. Por favor intenta de nuevo.',
+    invalidLink: 'Enlace inválido. Por favor escanea tu código de nuevo.',
+  },
+
+  // ── Onboarding Wizard ──
+  onboarding: {
+    // Navigation
+    stepOf: (current: number, total: number) => `Paso ${current} de ${total}`,
+    next: 'Siguiente',
+    prev: 'Anterior',
+    skip: 'Saltar tutorial — ya conozco la plataforma',
+    finish: 'Comenzar',
+    tipLabel: 'Consejo',
+    helpButton: 'Guía',
+
+    // GM Steps
+    welcomeTitle: 'Bienvenido a RateTap',
+    welcomeSubtitle: 'Tu escudo de reputación en línea',
+    welcomeBody: 'RateTap protege la reputación de tu restaurante en Google. Cuando un cliente escanea la tarjeta NFC en su mesa, califica su experiencia. Las calificaciones altas van directo a Google para subir tu puntuación. Las calificaciones bajas se capturan en privado para que puedas resolver el problema sin dañar tu perfil público.',
+    welcomeTip: 'Cada reseña positiva que llega a Google ayuda a atraer más clientes nuevos. Las negativas se quedan contigo para mejorar.',
+
+    reviewFlowTitle: 'Así Funciona para el Cliente',
+    reviewFlowSubtitle: 'Del escaneo a la reseña en segundos',
+    reviewFlowBody: 'El cliente toca la tarjeta NFC con su celular y ve una pantalla con estrellas. Si califica 4 o 5 estrellas, se le redirige automáticamente a Google para dejar su reseña pública. Si califica 3 estrellas o menos, se abre un formulario privado donde puede compartir su comentario directamente contigo — sin que afecte tu perfil de Google.',
+    reviewFlowTip: 'Cada mesero tiene un código único. Cuando el cliente escanea la tarjeta de un mesero, la reseña se asocia automáticamente a ese miembro del personal.',
+
+    dashboardTitle: 'Panel Principal',
+    dashboardSubtitle: 'Tu centro de control — /dashboard',
+    dashboardBody: 'Aquí ves todo de un vistazo: tu calificación de Google actual, cuántas reseñas se enviaron a Google, cuántas negativas se interceptaron, y el rendimiento semanal de tu equipo. También incluye alertas cuando hay comentarios sin leer o reseñas negativas que necesitan atención.',
+
+    liveTitle: 'Vista En Vivo',
+    liveSubtitle: 'Monitoreo en tiempo real — /live',
+    liveBody: 'La pantalla En Vivo se actualiza automáticamente mostrando cada escaneo conforme sucede. Puedes ver quién escaneó, qué calificación dio, y si fue enviado a Google o interceptado. Perfecto para tenerlo en una pantalla en la oficina durante el servicio.',
+    liveTip: 'Usa el botón de pantalla completa para proyectar esta vista en un monitor o TV durante las horas de servicio.',
+
+    inboxTitle: 'Buzón de Comentarios',
+    inboxSubtitle: 'Gestión de retroalimentación — /inbox',
+    inboxBody: 'Todos los comentarios privados de los clientes llegan aquí. Puedes filtrar por estado (nuevo, revisado, resuelto), buscar por nombre o texto, y responder directamente por email. Cada comentario muestra la calificación, el mesero que atendió, y la fecha.',
+
+    staffTitle: 'Gestión de Personal',
+    staffSubtitle: 'Tu equipo — /staff',
+    staffBody: 'Agrega a cada mesero con su nombre y un código único (ej. "maria01"). Este código se asocia a su tarjeta NFC. Puedes activar o desactivar meseros según su turno, editar sus datos, y ver su rendimiento en las clasificaciones.',
+    staffTip: 'Los códigos de personal son únicos por restaurante. Puedes usar el mismo formato en todas tus ubicaciones.',
+
+    analyticsTitle: 'Analíticas',
+    analyticsSubtitle: 'Datos profundos — /analytics',
+    analyticsBody: 'Explora tendencias detalladas: distribución de calificaciones, reseñas diarias de los últimos 30 días, tasa de conversión a Google, y el ranking de los mejores meseros de la semana. Todo exportable a CSV para tus reportes.',
+
+    settingsTitle: 'Ajustes',
+    settingsSubtitle: 'Configuración del restaurante — /settings',
+    settingsBody: 'Configura tu URL de Google Reviews, el umbral de redirección (qué calificación mínima va a Google), las alertas por email y SMS, y el teléfono del gerente. También puedes cambiar tu contraseña aquí.',
+    settingsTip: 'Recomendamos configurar las alertas SMS para recibir notificaciones instantáneas cuando llegue una reseña negativa.',
+
+    readyTitle: '¡Todo Listo!',
+    readySubtitle: 'Estás preparado para comenzar',
+    readyBody: 'Ya conoces todas las herramientas. Tu siguiente paso: ve a Personal para agregar a tus meseros, luego reparte las tarjetas NFC. Cada escaneo fortalece la reputación de tu restaurante en Google. Puedes volver a ver esta guía en cualquier momento desde el botón "Guía" en la barra de navegación.',
+
+    // Owner Steps
+    ownerWelcomeTitle: 'Bienvenido, Propietario',
+    ownerWelcomeSubtitle: 'Vista general de tu portafolio',
+    ownerWelcomeBody: 'Como propietario, tienes una vista panorámica de todas tus ubicaciones. Puedes ver el impacto total de RateTap, comparar el rendimiento entre restaurantes, y acceder al panel de cada ubicación individual.',
+
+    overviewTitle: 'Resumen del Portafolio',
+    overviewSubtitle: 'Todas tus ubicaciones — /overview',
+    overviewBody: 'El Resumen muestra el impacto agregado de RateTap en todas tus ubicaciones: ganancia promedio de calificación en Google, total de escaneos, reseñas enviadas a Google, y reseñas negativas prevenidas. La tabla de ubicaciones te permite comparar y ordenar por cualquier métrica.',
+    overviewTip: 'Haz clic en el nombre de cualquier restaurante para ir directamente a su panel individual.',
+
+    ownerAnalyticsTitle: 'Analíticas del Portafolio',
+    ownerAnalyticsSubtitle: 'Tendencias de todas las ubicaciones',
+    ownerAnalyticsBody: 'Accede a las analíticas detalladas de cualquier ubicación: distribución de calificaciones, tendencias diarias, tasas de conversión, y ranking de personal.',
+
+    ownerSettingsTitle: 'Ajustes',
+    ownerSettingsSubtitle: 'Configuración por ubicación',
+    ownerSettingsBody: 'Desde aquí puedes configurar la URL de Google, umbrales de redirección, alertas, y contraseñas para cada ubicación de tu portafolio.',
+
+    ownerReadyTitle: '¡Listo para Supervisar!',
+    ownerReadySubtitle: 'Tu portafolio está en buenas manos',
+    ownerReadyBody: 'Ya conoces todas las herramientas disponibles. Comienza revisando el Resumen para ver el estado actual de todas tus ubicaciones. Puedes volver a ver esta guía desde el botón "Guía" en la navegación.',
   },
 
   // ── Common ──

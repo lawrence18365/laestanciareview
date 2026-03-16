@@ -25,12 +25,14 @@ export default function DashboardNav({
   logoDarkBg,
   newFeedbackCount,
   isOwner,
+  onOpenGuide,
 }: {
   restaurantName: string;
   logoSrc: string;
   logoDarkBg: boolean;
   newFeedbackCount?: number;
   isOwner?: boolean;
+  onOpenGuide?: () => void;
 }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -134,35 +136,66 @@ export default function DashboardNav({
           })}
         </div>
 
-        {/* Right: Desktop sign out */}
-        <button
-          onClick={handleLogout}
-          className="nav-links"
-          style={{
-            fontSize: '0.65rem',
-            padding: '0.3rem 0.75rem',
-            fontWeight: 600,
-            letterSpacing: '0.06em',
-            textTransform: 'uppercase',
-            background: 'var(--panel-bg)',
-            color: 'var(--text-main)',
-            border: '1px solid var(--border-dark)',
-            cursor: 'pointer',
-            transition: 'all 0.15s ease',
-            display: 'flex',
-            alignItems: 'center',
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.background = 'var(--text-main)';
-            e.currentTarget.style.color = 'var(--panel-bg)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.background = 'var(--panel-bg)';
-            e.currentTarget.style.color = 'var(--text-main)';
-          }}
-        >
-          {t.nav.signOut}
-        </button>
+        {/* Right: Guide + Sign out */}
+        <div className="nav-links" style={{ alignItems: 'center', gap: '0.5rem' }}>
+          {onOpenGuide && (
+            <button
+              onClick={onOpenGuide}
+              style={{
+                fontSize: '0.65rem',
+                padding: '0.3rem 0.75rem',
+                fontWeight: 600,
+                letterSpacing: '0.06em',
+                textTransform: 'uppercase',
+                background: 'var(--panel-bg)',
+                color: 'var(--gold)',
+                border: '1px solid var(--gold)',
+                cursor: 'pointer',
+                transition: 'all 0.15s ease',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.35rem',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'var(--gold)';
+                e.currentTarget.style.color = '#fff';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'var(--panel-bg)';
+                e.currentTarget.style.color = 'var(--gold)';
+              }}
+            >
+              ?&ensp;{t.onboarding.helpButton}
+            </button>
+          )}
+          <button
+            onClick={handleLogout}
+            style={{
+              fontSize: '0.65rem',
+              padding: '0.3rem 0.75rem',
+              fontWeight: 600,
+              letterSpacing: '0.06em',
+              textTransform: 'uppercase',
+              background: 'var(--panel-bg)',
+              color: 'var(--text-main)',
+              border: '1px solid var(--border-dark)',
+              cursor: 'pointer',
+              transition: 'all 0.15s ease',
+              display: 'flex',
+              alignItems: 'center',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = 'var(--text-main)';
+              e.currentTarget.style.color = 'var(--panel-bg)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'var(--panel-bg)';
+              e.currentTarget.style.color = 'var(--text-main)';
+            }}
+          >
+            {t.nav.signOut}
+          </button>
+        </div>
 
         {/* Mobile: Hamburger */}
         <button
@@ -238,6 +271,26 @@ export default function DashboardNav({
               </a>
             );
           })}
+          {onOpenGuide && (
+            <button
+              onClick={() => { setMobileOpen(false); onOpenGuide(); }}
+              style={{
+                margin: '0.5rem 1.25rem 0',
+                padding: '0.5rem 0.75rem',
+                fontSize: '0.7rem',
+                fontWeight: 600,
+                color: 'var(--gold)',
+                background: 'none',
+                border: '1px solid var(--gold)',
+                textAlign: 'left',
+                cursor: 'pointer',
+                letterSpacing: '0.06em',
+                textTransform: 'uppercase',
+              }}
+            >
+              ? {t.onboarding.helpButton}
+            </button>
+          )}
           <button
             onClick={handleLogout}
             className="nav-signout-mobile"

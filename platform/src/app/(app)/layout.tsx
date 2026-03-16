@@ -3,7 +3,7 @@ import { getRestaurantBySlug, getNewFeedbackCount } from '@/lib/queries';
 import { redirect } from 'next/navigation';
 import { getBrandForSlug } from '@/lib/brands';
 import { t } from '@/lib/i18n';
-import DashboardNav from '@/components/dashboard/DashboardNav';
+import DashboardShell from '@/components/dashboard/DashboardShell';
 
 export default async function AppLayout({
   children,
@@ -22,16 +22,16 @@ export default async function AppLayout({
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg-base)' }}>
-      <DashboardNav
+      <DashboardShell
         restaurantName={isOwner ? t.nav.ownerDashboard : restaurant.name}
         logoSrc={brand.logo}
         logoDarkBg={brand.darkBg}
         newFeedbackCount={newFeedbackCount}
         isOwner={isOwner}
-      />
-      <main>
+        slug={session.slug}
+      >
         {children}
-      </main>
+      </DashboardShell>
     </div>
   );
 }
