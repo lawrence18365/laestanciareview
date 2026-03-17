@@ -78,30 +78,39 @@ export async function POST(req: NextRequest) {
     // pref === 'off' -> shouldSend stays false
 
     if (shouldSend) {
+      const alerts: Promise<void>[] = [];
+
       // Email alert
       if (restaurant.managerEmail) {
-        sendFeedbackAlert({
-          to: restaurant.managerEmail,
-          restaurantName: restaurant.name,
-          customerName: updated.customerName,
-          customerEmail: updated.customerEmail,
-          rating: updated.rating,
-          staffName: updated.staffName,
-          feedback: feedback,
-        }).catch((err) => console.error('[email] Failed to send alert:', err));
+        alerts.push(
+          sendFeedbackAlert({
+            to: restaurant.managerEmail,
+            restaurantName: restaurant.name,
+            customerName: updated.customerName,
+            customerEmail: updated.customerEmail,
+            rating: updated.rating,
+            staffName: updated.staffName,
+            feedback: feedback,
+          }).catch((err) => console.error('[email] Failed to send alert:', err)),
+        );
       }
 
       // SMS alert
       if (restaurant.smsAlerts && restaurant.managerPhone) {
-        sendSMSAlert({
-          to: restaurant.managerPhone,
-          restaurantName: restaurant.name,
-          customerName: updated.customerName,
-          rating: updated.rating,
-          staffName: updated.staffName,
-          feedback: feedback,
-        }).catch((err) => console.error('[sms] Failed to send alert:', err));
+        alerts.push(
+          sendSMSAlert({
+            to: restaurant.managerPhone,
+            restaurantName: restaurant.name,
+            customerName: updated.customerName,
+            rating: updated.rating,
+            staffName: updated.staffName,
+            feedback: feedback,
+          }).catch((err) => console.error('[sms] Failed to send alert:', err)),
+        );
       }
+
+      // Await alerts so serverless function doesn't terminate early
+      await Promise.all(alerts);
     }
   }
 
