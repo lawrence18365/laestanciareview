@@ -23,7 +23,7 @@ jobs:
           node-version: 22
           cache: npm
           cache-dependency-path: platform/package-lock.json
-      - run: npm ci
+      - run: npm ci --ignore-scripts
       - run: npm run lint
 
   typecheck:
@@ -36,7 +36,7 @@ jobs:
           node-version: 22
           cache: npm
           cache-dependency-path: platform/package-lock.json
-      - run: npm ci
+      - run: npm ci --ignore-scripts
       - run: npx tsc --noEmit
 
   test:
@@ -49,5 +49,5 @@ jobs:
           node-version: 22
           cache: npm
           cache-dependency-path: platform/package-lock.json
-      - run: npm ci
+      - run: npm ci --ignore-scripts
       - run: npm test
