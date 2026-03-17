@@ -30,6 +30,7 @@
     "react-dom": "19.2.3",
     "resend": "^6.9.3",
     "telnyx": "^6.3.0",
+    "ws": "^8.19.0",
     "zod": "^4.3.6"
   },
   "devDependencies": {
