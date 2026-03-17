@@ -1,14 +1,33 @@
 import { NextRequest } from 'next/server';
 import { db } from '@/db';
 import { staff } from '@/db/schema';
-import { eq } from 'drizzle-orm';
+import { eq, and } from 'drizzle-orm';
 import { requireAdminKey, unauthorizedResponse } from '@/lib/auth';
 import { updateStaffSchema } from '@/lib/validations';
+import { verifySession } from '@/lib/session';
+import { getRestaurantBySlug } from '@/lib/queries';
 
 type RouteContext = { params: Promise<{ id: string }> };
 
+/**
+ * Resolve the restaurant ID from the session, ensuring
+ * the request is authorized and scoped to the user's restaurant.
+ */
+async function getAuthorizedRestaurantId(req: NextRequest): Promise<number | null> {
+  if (!requireAdminKey(req)) return null;
+
+  const session = await verifySession();
+  if (!session) return null;
+
+  const restaurant = await getRestaurantBySlug(session.slug);
+  if (!restaurant) return null;
+
+  return restaurant.id;
+}
+
 export async function PATCH(req: NextRequest, ctx: RouteContext) {
-  if (!requireAdminKey(req)) return unauthorizedResponse();
+  const restaurantId = await getAuthorizedRestaurantId(req);
+  if (restaurantId === null) return unauthorizedResponse();
 
   const { id } = await ctx.params;
   const staffId = parseInt(id, 10);
@@ -29,7 +48,7 @@ export async function PATCH(req: NextRequest, ctx: RouteContext) {
   const [updated] = await db
     .update(staff)
     .set(parsed.data)
-    .where(eq(staff.id, staffId))
+    .where(and(eq(staff.id, staffId), eq(staff.restaurantId, restaurantId)))
     .returning();
 
   if (!updated) {
@@ -40,7 +59,8 @@ export async function PATCH(req: NextRequest, ctx: RouteContext) {
 }
 
 export async function DELETE(req: NextRequest, ctx: RouteContext) {
-  if (!requireAdminKey(req)) return unauthorizedResponse();
+  const restaurantId = await getAuthorizedRestaurantId(req);
+  if (restaurantId === null) return unauthorizedResponse();
 
   const { id } = await ctx.params;
   const staffId = parseInt(id, 10);
@@ -50,7 +70,7 @@ export async function DELETE(req: NextRequest, ctx: RouteContext) {
 
   const [deleted] = await db
     .delete(staff)
-    .where(eq(staff.id, staffId))
+    .where(and(eq(staff.id, staffId), eq(staff.restaurantId, restaurantId)))
     .returning();
 
   if (!deleted) {

@@ -5,14 +5,25 @@ import {
   getWeeklyStats,
   getRecentFeedback,
 } from '@/lib/queries';
+import { verifySession } from '@/lib/session';
 
 export async function GET(req: NextRequest) {
+  const session = await verifySession();
+  if (!session) {
+    return Response.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   const slug = req.nextUrl.searchParams.get('restaurant');
   if (!slug) {
     return Response.json(
       { error: 'Missing ?restaurant= parameter' },
       { status: 400 },
     );
+  }
+
+  // Verify the user owns this restaurant (owners can see all)
+  if (session.role !== 'owner' && session.slug !== slug) {
+    return Response.json({ error: 'Forbidden' }, { status: 403 });
   }
 
   const restaurant = await getRestaurantBySlug(slug);

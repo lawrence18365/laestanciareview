@@ -565,7 +565,11 @@ export async function sendGMFeedback({
   subject,
   message,
 }: GMFeedbackParams) {
-  const adminEmail = process.env.ADMIN_EMAIL ?? 'lawrencebrennan@gmail.com';
+  const adminEmail = process.env.ADMIN_EMAIL;
+  if (!adminEmail) {
+    console.warn('[email] ADMIN_EMAIL not set — skipping GM feedback email');
+    return;
+  }
   const label = categoryLabels[category] ?? category;
   const colors = categoryColors[category] ?? categoryColors.feedback;
 

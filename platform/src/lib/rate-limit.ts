@@ -127,11 +127,22 @@ export async function checkRateLimitAsync(
 
 /**
  * Get client IP from request headers.
+ * On Vercel, x-real-ip is set by the platform and is trustworthy.
+ * Falls back to x-forwarded-for (last entry = closest proxy).
  */
 export function getClientIP(req: Request): string {
+  // Vercel sets x-real-ip to the actual client IP
+  const realIp = req.headers.get('x-real-ip');
+  if (realIp) return realIp.trim();
+
+  // Fallback: use the rightmost (most trusted) x-forwarded-for entry
   const forwarded = req.headers.get('x-forwarded-for');
-  if (forwarded) return forwarded.split(',')[0].trim();
-  return req.headers.get('x-real-ip') ?? 'unknown';
+  if (forwarded) {
+    const parts = forwarded.split(',');
+    return parts[parts.length - 1].trim();
+  }
+
+  return 'unknown';
 }
 
 /**
