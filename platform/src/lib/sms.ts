@@ -17,7 +17,14 @@ const SENDER_ID = 'RateTap';
  * If a 10-digit Mexican number is provided without country code, prepend +52.
  */
 function normalizePhone(phone: string): string {
-  const digits = phone.replace(/\D/g, '');
+  let digits = phone.replace(/\D/g, '');
+  // Strip old Mexican mobile "1" prefix: +521XXXXXXXXXX → +52XXXXXXXXXX
+  if (digits.length === 13 && digits.startsWith('521')) {
+    digits = '52' + digits.slice(3);
+  }
+  if (phone.startsWith('+') && digits.length === 12 && digits.startsWith('52')) {
+    return `+${digits}`;
+  }
   if (phone.startsWith('+')) return phone;
   if (digits.length === 10) return `+52${digits}`;
   if (digits.length === 12 && digits.startsWith('52')) return `+${digits}`;

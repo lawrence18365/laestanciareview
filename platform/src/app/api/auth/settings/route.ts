@@ -54,7 +54,15 @@ export async function PATCH(req: Request) {
     updates.managerEmail = body.managerEmail || null;
   }
   if (typeof body.managerPhone === 'string') {
-    updates.managerPhone = body.managerPhone || null;
+    let phone = body.managerPhone || null;
+    // Strip old Mexican mobile "1" prefix: +521XXXXXXXXXX → +52XXXXXXXXXX
+    if (phone) {
+      const digits = phone.replace(/\D/g, '');
+      if (digits.length === 13 && digits.startsWith('521')) {
+        phone = '+52' + digits.slice(3);
+      }
+    }
+    updates.managerPhone = phone;
   }
   if (typeof body.smsAlerts === 'boolean') {
     updates.smsAlerts = body.smsAlerts;
