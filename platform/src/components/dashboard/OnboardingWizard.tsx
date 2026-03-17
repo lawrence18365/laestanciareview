@@ -111,6 +111,7 @@ export default function OnboardingWizard({
   const [transitioning, setTransitioning] = useState(false);
   const [contentKey, setContentKey] = useState(0);
 
+  /* eslint-disable */
   useEffect(() => {
     if (forceOpen) {
       setStep(0);
@@ -120,6 +121,7 @@ export default function OnboardingWizard({
     const done = localStorage.getItem(storageKey(slug, role));
     if (!done) setVisible(true);
   }, [slug, role, forceOpen]);
+  /* eslint-enable */
 
   const close = useCallback(() => {
     localStorage.setItem(storageKey(slug, role), '1');

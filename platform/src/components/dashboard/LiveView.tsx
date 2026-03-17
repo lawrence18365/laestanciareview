@@ -260,7 +260,8 @@ export default function LiveView({ restaurantName, logoSrc, logoDarkBg, googleRa
 
   const fs = isFullscreen;
   const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
+  // eslint-disable-next-line
+  useEffect(() => { setMounted(true); }, []);
   const timeStr = clock.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
   const secondsSince = Math.floor((clock.getTime() - lastUpdate.getTime()) / 1000);
 

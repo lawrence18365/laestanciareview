@@ -21,8 +21,8 @@ const ownerLinks = [
 
 export default function DashboardNav({
   restaurantName,
-  logoSrc,
-  logoDarkBg,
+  logoSrc: _logoSrc,
+  logoDarkBg: _logoDarkBg,
   newFeedbackCount,
   isOwner,
   onOpenGuide,
