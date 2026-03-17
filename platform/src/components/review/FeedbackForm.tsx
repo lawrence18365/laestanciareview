@@ -72,6 +72,57 @@ export default function FeedbackForm({
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState(false);
+  const [feedbackLength, setFeedbackLength] = useState(0);
+
+  const isValidReviewId = reviewId !== null && reviewId !== '' && !isNaN(parseInt(reviewId, 10));
+
+  if (!isValidReviewId) {
+    return (
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          gap: '1rem',
+          padding: '3rem 2rem',
+          textAlign: 'center',
+          animation: 'fbSlideUp 0.5s ease-out',
+        }}
+      >
+        <div style={{
+          width: 48,
+          height: 48,
+          borderRadius: '50%',
+          border: '2px solid #DC2626',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          color: '#DC2626',
+          fontSize: '1.5rem',
+          fontWeight: 700,
+        }}>
+          !
+        </div>
+        <p
+          style={{
+            fontSize: '0.95rem',
+            lineHeight: 1.6,
+            color: '#666',
+            maxWidth: 300,
+            fontFamily: 'var(--font-sans)',
+          }}
+        >
+          {t.feedbackForm.invalidLink}
+        </p>
+        <style>{`
+          @keyframes fbSlideUp {
+            from { opacity: 0; transform: translateY(12px); }
+            to { opacity: 1; transform: translateY(0); }
+          }
+        `}</style>
+      </div>
+    );
+  }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -248,14 +299,26 @@ export default function FeedbackForm({
             name="feedback"
             required
             rows={4}
+            maxLength={5000}
             placeholder={t.feedbackForm.tellUsAboutExperience}
             style={{
               ...inputStyle,
               resize: 'none',
             }}
+            onChange={(e) => setFeedbackLength(e.target.value.length)}
             onFocus={(e) => { e.target.style.boxShadow = '0 0 0 2px rgba(217,119,6,0.15)'; }}
             onBlur={(e) => { e.target.style.boxShadow = 'none'; }}
           />
+          <p style={{
+            textAlign: 'right',
+            fontSize: '0.7rem',
+            color: feedbackLength >= 5000 ? '#DC2626' : '#A3A3A3',
+            fontWeight: 500,
+            marginTop: '0.3rem',
+            fontFamily: 'var(--font-sans)',
+          }}>
+            {feedbackLength.toLocaleString()} / 5,000
+          </p>
         </div>
 
         <button

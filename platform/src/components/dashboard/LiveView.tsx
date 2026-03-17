@@ -3,6 +3,10 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import React from 'react';
 
+function fmt(n: number): string {
+  return n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+}
+
 /* ── Types ──────────────────────────────────────── */
 
 interface LiveTotals {
@@ -184,9 +188,11 @@ export default function LiveView({ restaurantName, logoSrc, logoDarkBg, googleRa
     return Math.round((data.week.sentToGoogle / total) * 100);
   }, [data.week]);
 
-  // Poll every 15s
+  // Poll every 15s, pause when tab is hidden
   useEffect(() => {
-    const interval = setInterval(async () => {
+    let interval: ReturnType<typeof setInterval> | null = null;
+
+    const poll = async () => {
       try {
         const res = await fetch('/api/auth/live');
         if (res.ok) {
@@ -198,8 +204,37 @@ export default function LiveView({ restaurantName, logoSrc, logoDarkBg, googleRa
           setLastUpdate(new Date());
         }
       } catch { /* retry next interval */ }
-    }, 15_000);
-    return () => clearInterval(interval);
+    };
+
+    const startPolling = () => {
+      if (!interval) {
+        interval = setInterval(poll, 15_000);
+      }
+    };
+
+    const stopPolling = () => {
+      if (interval) {
+        clearInterval(interval);
+        interval = null;
+      }
+    };
+
+    const handleVisibility = () => {
+      if (document.hidden) {
+        stopPolling();
+      } else {
+        poll(); // fetch fresh data immediately on return
+        startPolling();
+      }
+    };
+
+    startPolling();
+    document.addEventListener('visibilitychange', handleVisibility);
+
+    return () => {
+      stopPolling();
+      document.removeEventListener('visibilitychange', handleVisibility);
+    };
   }, []);
 
   // Clock
@@ -398,7 +433,47 @@ export default function LiveView({ restaurantName, logoSrc, logoDarkBg, googleRa
       </div>
 
       {/* ── MAIN CONTENT: two columns ── */}
-      <div
+      {data.week.totalScans === 0 && data.recentScans.length === 0 && team.length === 0 ? (
+        <div style={{
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          textAlign: 'center',
+          gap: '0.75rem',
+          padding: '3rem 1rem',
+        }}>
+          <p style={{
+            margin: 0,
+            fontSize: '0.65rem',
+            fontWeight: 700,
+            letterSpacing: '0.12em',
+            textTransform: 'uppercase',
+            color: C.textDim,
+          }}>
+            PANEL EN VIVO
+          </p>
+          <h2 style={{
+            margin: 0,
+            fontSize: fs ? '2rem' : '1.5rem',
+            fontWeight: 600,
+            fontFamily: '"Playfair Display", Georgia, serif',
+            color: C.textMain,
+          }}>
+            Aún no hay actividad
+          </h2>
+          <p style={{
+            margin: 0,
+            fontSize: fs ? '1rem' : '0.9375rem',
+            color: C.textMuted,
+            maxWidth: 420,
+            lineHeight: 1.5,
+          }}>
+            Agrega personal en la sección de Staff y los datos aparecerán aquí en tiempo real cuando los clientes escaneen los códigos NFC.
+          </p>
+        </div>
+      ) : <div
         className="live-content-grid"
         style={{
           flex: 1,
@@ -463,7 +538,7 @@ export default function LiveView({ restaurantName, logoSrc, logoDarkBg, googleRa
           {/* Team Leaderboard Table */}
           <TeamTable team={team} large={fs} />
         </div>
-      </div>
+      </div>}
 
       {/* ── FOOTER ── */}
       <div style={{ 
@@ -1129,7 +1204,7 @@ function GoogleRatingCard({
                ))}
             </div>
             <div style={{ fontSize: fs ? '0.7rem' : '0.65rem', color: C.textMuted, fontWeight: 500, letterSpacing: '0.02em' }}>
-              {reviewCount != null ? <><span className="font-numeric" style={{ color: C.textMain }}>{reviewCount.toLocaleString()}</span> RESEÑAS VERIFICADAS</> : 'ÍNDICE DE GOOGLE'}
+              {reviewCount != null ? <><span className="font-numeric" style={{ color: C.textMain }}>{fmt(reviewCount)}</span> RESEÑAS VERIFICADAS</> : 'ÍNDICE DE GOOGLE'}
             </div>
           </div>
         </div>

@@ -100,9 +100,10 @@ export default function FeedbackInbox({ initialFeedback }: Props) {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [ratingFilter, setRatingFilter] = useState<number>(0);
   const [search, setSearch] = useState('');
+  const [sortBy, setSortBy] = useState<'newest' | 'oldest' | 'highest' | 'lowest'>('newest');
 
   const filtered = useMemo(() => {
-    return items.filter((item) => {
+    const result = items.filter((item) => {
       if (statusFilter !== 'all' && item.status !== statusFilter) return false;
       if (ratingFilter > 0 && item.rating !== ratingFilter) return false;
       if (search) {
@@ -114,7 +115,22 @@ export default function FeedbackInbox({ initialFeedback }: Props) {
       }
       return true;
     });
-  }, [items, statusFilter, ratingFilter, search]);
+
+    return result.sort((a, b) => {
+      switch (sortBy) {
+        case 'newest':
+          return b.createdAt.localeCompare(a.createdAt);
+        case 'oldest':
+          return a.createdAt.localeCompare(b.createdAt);
+        case 'highest':
+          return b.rating - a.rating || b.createdAt.localeCompare(a.createdAt);
+        case 'lowest':
+          return a.rating - b.rating || b.createdAt.localeCompare(a.createdAt);
+        default:
+          return 0;
+      }
+    });
+  }, [items, statusFilter, ratingFilter, search, sortBy]);
 
   async function updateStatus(id: number, newStatus: string) {
     try {
@@ -138,7 +154,7 @@ export default function FeedbackInbox({ initialFeedback }: Props) {
 
   function handleExport() {
     const rows = filtered.map((f) => ({
-      Date: new Date(f.createdAt).toLocaleDateString(),
+      Date: f.createdAt.slice(0, 10),
       Customer: f.customerName ?? '',
       Email: f.customerEmail ?? '',
       Rating: f.rating,
@@ -156,6 +172,50 @@ export default function FeedbackInbox({ initialFeedback }: Props) {
     }
     return c;
   }, [items]);
+
+  if (initialFeedback.length === 0) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+        <section className="flat-panel" style={{
+          padding: '4rem 2rem',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          textAlign: 'center',
+          gap: '0.75rem',
+        }}>
+          <p style={{
+            margin: 0,
+            fontSize: '0.65rem',
+            fontWeight: 700,
+            letterSpacing: '0.12em',
+            textTransform: 'uppercase',
+            color: 'var(--text-dim)',
+          }}>
+            BANDEJA DE ENTRADA
+          </p>
+          <h2 style={{
+            margin: 0,
+            fontSize: '1.5rem',
+            fontWeight: 600,
+            fontFamily: 'var(--font-serif)',
+            color: 'var(--text-main)',
+          }}>
+            Aún no hay comentarios de clientes
+          </h2>
+          <p style={{
+            margin: 0,
+            fontSize: '0.9375rem',
+            color: 'var(--text-muted)',
+            maxWidth: 420,
+            lineHeight: 1.5,
+          }}>
+            Aparecerán aquí cuando alguien deje feedback.
+          </p>
+        </section>
+      </div>
+    );
+  }
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
@@ -183,6 +243,20 @@ export default function FeedbackInbox({ initialFeedback }: Props) {
               {r} ★
             </option>
           ))}
+        </select>
+
+        <select
+          value={sortBy}
+          onChange={(e) => setSortBy(e.target.value as 'newest' | 'oldest' | 'highest' | 'lowest')}
+          style={{
+            ...inputStyle,
+            padding: '0.4rem 0.6rem',
+          }}
+        >
+          <option value="newest">{t.inbox.sortNewest}</option>
+          <option value="oldest">{t.inbox.sortOldest}</option>
+          <option value="highest">{t.inbox.sortHighest}</option>
+          <option value="lowest">{t.inbox.sortLowest}</option>
         </select>
 
         <input
@@ -242,7 +316,7 @@ export default function FeedbackInbox({ initialFeedback }: Props) {
                   <span style={{ fontSize: '0.75rem', color: 'var(--text-dim)', fontFamily: 'var(--font-mono)', fontVariantNumeric: 'tabular-nums' }}>
                     {'★'.repeat(fb.rating)}{'☆'.repeat(5 - fb.rating)}
                     {' · '}
-                    {new Date(fb.createdAt).toLocaleDateString()}
+                    {fb.createdAt.slice(0, 10)}
                     {fb.staffName && ` · ${fb.staffName}`}
                   </span>
                 </div>

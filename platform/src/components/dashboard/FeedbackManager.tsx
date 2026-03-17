@@ -181,12 +181,7 @@ export default function FeedbackManager({ feedback: initialFeedback }: { feedbac
                       </span>
                     </div>
                     <div style={{ fontSize: '0.75rem', color: 'var(--stone-400)', marginTop: 2 }}>
-                      {new Date(item.createdAt).toLocaleDateString('en-US', {
-                        month: 'short',
-                        day: 'numeric',
-                        hour: 'numeric',
-                        minute: '2-digit',
-                      })}
+                      {item.createdAt.slice(0, 10)}
                     </div>
                   </div>
                 </div>

@@ -346,9 +346,7 @@ async function seed() {
       })
       .returning();
 
-    // Delete old placeholder staff, then insert real staff
-    await db.delete(staff).where(eq(staff.restaurantId, restaurant.id));
-
+    // Upsert staff (don't delete — onDelete:'set null' would orphan review links)
     const usedCodes = new Set<string>();
     for (const member of r.staff) {
       let code: string;
@@ -364,7 +362,10 @@ async function seed() {
       await db
         .insert(staff)
         .values({ restaurantId: restaurant.id, code, name })
-        .onConflictDoNothing();
+        .onConflictDoUpdate({
+          target: [staff.restaurantId, staff.code],
+          set: { name },
+        });
     }
 
     totalStaff += r.staff.length;

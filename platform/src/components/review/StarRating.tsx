@@ -177,26 +177,65 @@ export default function StarRating({
       </div>
 
       {/* Hint / Error */}
-      <p
-        style={{
-          textAlign: 'center',
-          fontSize: '0.75rem',
-          minHeight: 20,
-          color: error ? '#DC2626' : '#A3A3A3',
-          fontWeight: 500,
-          letterSpacing: '0.04em',
-          transition: 'opacity 0.3s ease',
-          animation: submitting ? 'pulseSoft 1.4s ease-in-out infinite' : 'none',
-        }}
-      >
-        {error
-          ? t.starRating.somethingWrong
-          : submitting
+      {error ? (
+        <div style={{ textAlign: 'center' }}>
+          <p
+            style={{
+              fontSize: '0.75rem',
+              minHeight: 20,
+              color: '#DC2626',
+              fontWeight: 500,
+              letterSpacing: '0.04em',
+              marginBottom: '0.5rem',
+            }}
+          >
+            {t.starRating.somethingWrong}
+          </p>
+          <button
+            onClick={() => {
+              setError(false);
+              setSelectedStar(0);
+              setHoveredStar(0);
+              setPopStar(0);
+            }}
+            style={{
+              border: '1px solid #111',
+              borderRadius: 0,
+              background: '#fff',
+              color: '#111',
+              fontWeight: 700,
+              fontSize: '0.7rem',
+              letterSpacing: '0.1em',
+              textTransform: 'uppercase',
+              padding: '0.5rem 1.25rem',
+              cursor: 'pointer',
+              fontFamily: 'var(--font-sans)',
+              transition: 'background 0.15s ease, color 0.15s ease',
+            }}
+          >
+            {t.starRating.tryAgain}
+          </button>
+        </div>
+      ) : (
+        <p
+          style={{
+            textAlign: 'center',
+            fontSize: '0.75rem',
+            minHeight: 20,
+            color: '#A3A3A3',
+            fontWeight: 500,
+            letterSpacing: '0.04em',
+            transition: 'opacity 0.3s ease',
+            animation: submitting ? 'pulseSoft 1.4s ease-in-out infinite' : 'none',
+          }}
+        >
+          {submitting
             ? t.starRating.submittingRating
             : selectedStar === 0
               ? t.starRating.tapToRate
               : ''}
-      </p>
+        </p>
+      )}
 
       {/* Keyframes */}
       <style>{`

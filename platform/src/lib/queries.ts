@@ -43,7 +43,7 @@ export async function getLeaderboard(restaurantId: number) {
       ),
     )
     .groupBy(reviews.staffId, reviews.staffName, reviews.staffCode)
-    .orderBy(desc(avg(reviews.rating)));
+    .orderBy(desc(avg(reviews.rating)), desc(count(reviews.id)));
 }
 
 /** Weekly stats: total reviews, average rating, google sends this week. */

@@ -15,9 +15,9 @@ export default async function ReviewPage({ params, searchParams }: PageProps) {
   const restaurant = await getRestaurantBySlug(slug);
   if (!restaurant) notFound();
 
-  const staffCode = card ?? 'UNKNOWN';
-  const staffMember = await getStaffByCode(restaurant.id, staffCode);
-  const staffName = staffMember?.name ?? staffCode;
+  const staffCode = card ?? '';
+  const staffMember = staffCode ? await getStaffByCode(restaurant.id, staffCode) : null;
+  const staffName = staffMember?.name ?? 'Tu mesero';
   const brand = getBrandForSlug(slug);
 
   return (

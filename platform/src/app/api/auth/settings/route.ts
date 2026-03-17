@@ -3,7 +3,7 @@ import { restaurants } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 import { verifySession } from '@/lib/session';
 import { getRestaurantBySlug } from '@/lib/queries';
-import { hashPassword } from '@/lib/auth';
+import { hashPassword, verifyPassword } from '@/lib/auth';
 import { refreshGoogleRating } from '@/lib/google-places';
 
 export async function GET() {
@@ -66,6 +66,17 @@ export async function PATCH(req: Request) {
     updates.googlePlaceId = body.googlePlaceId || null;
   }
   if (typeof body.newPassword === 'string' && body.newPassword.length >= 8) {
+    // Require current password verification before allowing a change
+    if (typeof body.currentPassword !== 'string' || !body.currentPassword) {
+      return Response.json({ error: 'Contraseña actual requerida' }, { status: 400 });
+    }
+    if (!restaurant.adminPasswordHash) {
+      return Response.json({ error: 'No se encontró contraseña existente' }, { status: 400 });
+    }
+    const isValid = await verifyPassword(body.currentPassword, restaurant.adminPasswordHash);
+    if (!isValid) {
+      return Response.json({ error: 'Contraseña actual incorrecta' }, { status: 403 });
+    }
     updates.adminPasswordHash = await hashPassword(body.newPassword);
   }
 

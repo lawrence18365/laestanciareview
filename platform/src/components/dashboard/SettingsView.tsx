@@ -73,6 +73,7 @@ export default function SettingsView({ settings }: Props) {
   const [managerPhone, setManagerPhone] = useState(settings.managerPhone);
   const [alertPreference, setAlertPreference] = useState(settings.alertPreference);
   const [smsAlerts, setSmsAlerts] = useState(settings.smsAlerts);
+  const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
 
@@ -109,6 +110,11 @@ export default function SettingsView({ settings }: Props) {
 
   async function handleChangePassword(e: React.FormEvent) {
     e.preventDefault();
+    if (!currentPassword) {
+      setMessage(t.settings.currentPasswordRequired);
+      setMessageType('error');
+      return;
+    }
     if (newPassword !== confirmPassword) {
       setMessage(t.settings.passwordsDoNotMatch);
       setMessageType('error');
@@ -127,7 +133,7 @@ export default function SettingsView({ settings }: Props) {
       const res = await fetch('/api/auth/settings', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ newPassword }),
+        body: JSON.stringify({ currentPassword, newPassword }),
       });
 
       if (!res.ok) {
@@ -135,6 +141,7 @@ export default function SettingsView({ settings }: Props) {
         throw new Error(data.error || t.login.somethingWrong);
       }
 
+      setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
       setMessage(t.settings.passwordUpdated);
@@ -314,6 +321,20 @@ export default function SettingsView({ settings }: Props) {
         <h2 style={sectionTitle}>{t.settings.changePassword}</h2>
         <form onSubmit={handleChangePassword}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <div>
+              <label style={labelStyle} htmlFor="currentPassword">
+                {t.settings.currentPassword}
+              </label>
+              <input
+                id="currentPassword"
+                type="password"
+                value={currentPassword}
+                onChange={(e) => setCurrentPassword(e.target.value)}
+                placeholder={t.settings.enterCurrentPassword}
+                style={inputStyle}
+              />
+            </div>
+
             <div>
               <label style={labelStyle} htmlFor="newPassword">
                 {t.settings.newPassword}

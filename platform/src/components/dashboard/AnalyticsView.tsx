@@ -75,6 +75,47 @@ export default function AnalyticsView({
         </p>
       </div>
 
+      {/* ── Global Empty State ── */}
+      {roiStats.totalReviews === 0 && (
+        <div className="card stagger-2" style={{
+          padding: '4rem 2rem',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          textAlign: 'center',
+          gap: '0.75rem',
+        }}>
+          <p style={{
+            margin: 0,
+            fontSize: '0.65rem',
+            fontWeight: 700,
+            letterSpacing: '0.12em',
+            textTransform: 'uppercase',
+            color: 'var(--text-dim)',
+          }}>
+            ANALÍTICAS
+          </p>
+          <h2 style={{
+            margin: 0,
+            fontSize: '1.5rem',
+            fontWeight: 600,
+            fontFamily: 'var(--font-serif)',
+            color: 'var(--text-main)',
+          }}>
+            Aún no hay datos de analíticas
+          </h2>
+          <p style={{
+            margin: 0,
+            fontSize: '0.9375rem',
+            color: 'var(--text-muted)',
+            maxWidth: 420,
+            lineHeight: 1.5,
+          }}>
+            Los datos aparecerán aquí conforme los clientes interactúen con los códigos NFC.
+          </p>
+        </div>
+      )}
+
       {/* ── Impact Summary Banner ── */}
       {roiStats.totalReviews > 0 && (
         <div className="card stagger-2 impact-wrapper" style={{ overflow: 'hidden' }}>
@@ -135,7 +176,7 @@ export default function AnalyticsView({
       )}
 
       {/* ── Overview Cards ── */}
-      <div className="grid-stats stagger-3">
+      {roiStats.totalReviews > 0 && <div className="grid-stats stagger-3">
         <MiniCard label={t.analytics.allTimeReviews} value={allTimeStats.totalReviews} />
         <MiniCard
           label={t.analytics.allTimeAvg}
@@ -150,10 +191,10 @@ export default function AnalyticsView({
           value={`${conversion.rate}%`}
           sub={t.analytics.ofEligible(conversion.sent, conversion.above)}
         />
-      </div>
+      </div>}
 
       {/* ── Rating Distribution ── */}
-      <section className="card stagger-4" style={{ overflow: 'hidden' }}>
+      {roiStats.totalReviews > 0 && <section className="card stagger-4" style={{ overflow: 'hidden' }}>
         <div style={{
           display: 'flex', justifyContent: 'space-between', alignItems: 'center',
           padding: '1.25rem 1.5rem', borderBottom: '1px solid var(--panel-border)',
@@ -234,10 +275,10 @@ export default function AnalyticsView({
             );
           })}
         </div>
-      </section>
+      </section>}
 
       {/* ── Daily Activity ── */}
-      <section className="card stagger-4" style={{ overflow: 'hidden' }}>
+      {roiStats.totalReviews > 0 && <section className="card stagger-4" style={{ overflow: 'hidden' }}>
         <div style={{
           display: 'flex', justifyContent: 'space-between', alignItems: 'center',
           padding: '1.25rem 1.5rem', borderBottom: '1px solid var(--panel-border)',
@@ -325,10 +366,10 @@ export default function AnalyticsView({
             </div>
           )}
         </div>
-      </section>
+      </section>}
 
       {/* ── Top Performers ── */}
-      <section className="card stagger-5" style={{ overflow: 'hidden' }}>
+      {roiStats.totalReviews > 0 && <section className="card stagger-5" style={{ overflow: 'hidden' }}>
         <div style={{
           display: 'flex', justifyContent: 'space-between', alignItems: 'center',
           padding: '1.25rem 1.5rem', borderBottom: '1px solid var(--panel-border)',
@@ -378,7 +419,7 @@ export default function AnalyticsView({
             </table>
           </div>
         )}
-      </section>
+      </section>}
     </div>
   );
 }

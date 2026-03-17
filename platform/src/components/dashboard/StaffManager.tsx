@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { t } from '@/lib/i18n';
 
 interface StaffMember {
@@ -76,6 +76,15 @@ export default function StaffManager({ initialStaff }: Props) {
   const [editCode, setEditCode] = useState('');
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const filteredStaff = useMemo(() => {
+    if (!searchQuery) return staffList;
+    const q = searchQuery.toLowerCase();
+    return staffList.filter(
+      (s) => s.name.toLowerCase().includes(q) || s.code.toLowerCase().includes(q),
+    );
+  }, [staffList, searchQuery]);
 
   async function handleAdd(e: React.FormEvent) {
     e.preventDefault();
@@ -213,8 +222,24 @@ export default function StaffManager({ initialStaff }: Props) {
 
       {/* Staff Table */}
       <section style={card}>
-        <h2 style={sectionTitle}>{t.staffManager.staff(staffList.length)}</h2>
-        {staffList.length === 0 ? (
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.75rem' }}>
+          <h2 style={{ ...sectionTitle, marginBottom: 0 }}>{t.staffManager.staff(staffList.length)}</h2>
+          <input
+            type="text"
+            placeholder={t.staffManager.searchPlaceholder}
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            style={{
+              ...inputStyle,
+              width: 'auto',
+              minWidth: 200,
+              flex: '0 1 280px',
+              padding: '0.4rem 0.75rem',
+              fontSize: '0.8rem',
+            }}
+          />
+        </div>
+        {filteredStaff.length === 0 ? (
           <p style={{ color: 'var(--text-dim)', fontSize: '0.9rem', fontStyle: 'italic', margin: 0 }}>
             {t.staffManager.noStaffYet}
           </p>
@@ -230,7 +255,7 @@ export default function StaffManager({ initialStaff }: Props) {
                 </tr>
               </thead>
               <tbody>
-                {staffList.map((s) => (
+                {filteredStaff.map((s) => (
                   <tr key={s.id} style={{ borderTop: '1px solid var(--panel-border)' }}>
                     {editingId === s.id ? (
                       <>

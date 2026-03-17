@@ -1,7 +1,18 @@
 'use client';
 
+import { useMemo } from 'react';
 import { downloadCSV } from '@/lib/csv';
 import { t } from '@/lib/i18n';
+
+function fmt(n: number): string {
+  return n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+}
+
+const MONTHS_ES = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+
+function formatDateES(d: Date): string {
+  return `${d.getUTCDate()} ${MONTHS_ES[d.getUTCMonth()]}`;
+}
 
 /* ── Types ── */
 
@@ -83,9 +94,14 @@ export default function DashboardView({
   googleReviewCount,
 }: Props) {
   const firstReview = roiStats.firstReviewAt ? new Date(roiStats.firstReviewAt) : null;
-  const weeksActive = firstReview
-    ? Math.max(1, Math.round((Date.now() - firstReview.getTime()) / (7 * 24 * 60 * 60 * 1000)))
-    : 0;
+  const weeksActive = useMemo(() => {
+    if (!firstReview) return 0;
+    // Use a day-granularity timestamp to avoid server/client mismatch from Date.now()
+    const now = new Date();
+    const stableNow = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+    return Math.max(1, Math.round((stableNow - firstReview.getTime()) / (7 * 24 * 60 * 60 * 1000)));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [roiStats.firstReviewAt]);
   const avgReviewsPerWeek = weeksActive > 0 ? (roiStats.totalReviews / weeksActive).toFixed(1) : '0';
 
   const googleConversionText = googleTrend && googleTrend.reviewsGained > 0
@@ -104,6 +120,47 @@ export default function DashboardView({
           Resumen de rendimiento y métricas clave.
         </p>
       </div>
+
+      {/* ── Global Empty State ── */}
+      {roiStats.totalReviews === 0 && (
+        <div className="card stagger-2" style={{
+          padding: '4rem 2rem',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          textAlign: 'center',
+          gap: '0.75rem',
+        }}>
+          <p style={{
+            margin: 0,
+            fontSize: '0.65rem',
+            fontWeight: 700,
+            letterSpacing: '0.12em',
+            textTransform: 'uppercase',
+            color: 'var(--text-dim)',
+          }}>
+            ESTADO
+          </p>
+          <h2 style={{
+            margin: 0,
+            fontSize: '1.5rem',
+            fontWeight: 600,
+            fontFamily: 'var(--font-serif)',
+            color: 'var(--text-main)',
+          }}>
+            Aún no hay reseñas
+          </h2>
+          <p style={{
+            margin: 0,
+            fontSize: '0.9375rem',
+            color: 'var(--text-muted)',
+            maxWidth: 420,
+            lineHeight: 1.5,
+          }}>
+            Las reseñas aparecerán aquí cuando los clientes escaneen los códigos NFC.
+          </p>
+        </div>
+      )}
 
       {/* ── Alerts ── */}
       {unreadLowCount > 0 && (
@@ -182,7 +239,7 @@ export default function DashboardView({
                   <span style={{ color: 'var(--gold)', fontSize: '2rem' }}>&#9733;</span>
                   {googleReviewCount != null && (
                     <span style={{ fontSize: '1rem', color: 'rgba(255,255,255,0.6)', marginLeft: 8 }}>
-                      {googleReviewCount.toLocaleString()} {t.dashboard.googleReviews}
+                      {fmt(googleReviewCount)} {t.dashboard.googleReviews}
                     </span>
                   )}
                 </div>
@@ -259,14 +316,36 @@ export default function DashboardView({
           </section>
         )}
 
-        {monthlyStats.length >= 2 && (
+        {monthlyStats.length >= 2 ? (
           <section className="card" style={{ padding: '1.5rem' }}>
             <h1 style={{ fontSize: '1.125rem', fontWeight: 600, color: 'var(--text-main)', margin: '0 0 1.25rem', fontFamily: 'var(--font-serif)' }}>
               {t.dashboard.monthlyTrend}
             </h1>
             <MonthlyChart data={monthlyStats} />
           </section>
-        )}
+        ) : roiStats.totalReviews > 0 ? (
+          <section className="card" style={{ padding: '1.5rem' }}>
+            <h1 style={{ fontSize: '1.125rem', fontWeight: 600, color: 'var(--text-main)', margin: '0 0 1.25rem', fontFamily: 'var(--font-serif)' }}>
+              {t.dashboard.monthlyTrend}
+            </h1>
+            <div style={{ padding: '2.5rem 1rem', textAlign: 'center' }}>
+              <p style={{
+                margin: 0,
+                fontSize: '0.65rem',
+                fontWeight: 700,
+                letterSpacing: '0.12em',
+                textTransform: 'uppercase',
+                color: 'var(--text-dim)',
+                marginBottom: '0.5rem',
+              }}>
+                EN PROGRESO
+              </p>
+              <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: '0.875rem' }}>
+                Se necesitan al menos 2 meses de datos para mostrar la tendencia.
+              </p>
+            </div>
+          </section>
+        ) : null}
       </div>
 
       {/* ── Leaderboard ── */}
@@ -301,9 +380,22 @@ export default function DashboardView({
         </div>
 
         {leaderboard.length === 0 ? (
-          <p style={{ color: 'var(--text-dim)', fontSize: '0.875rem', textAlign: 'center', padding: '3rem 0', margin: 0 }}>
-            {t.dashboard.noReviewsThisWeek}
-          </p>
+          <div style={{ padding: '3rem 1.5rem', textAlign: 'center' }}>
+            <p style={{
+              margin: 0,
+              fontSize: '0.65rem',
+              fontWeight: 700,
+              letterSpacing: '0.12em',
+              textTransform: 'uppercase',
+              color: 'var(--text-dim)',
+              marginBottom: '0.5rem',
+            }}>
+              ACTIVIDAD SEMANAL
+            </p>
+            <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: '0.9375rem', fontFamily: 'var(--font-serif)' }}>
+              Sin actividad esta semana
+            </p>
+          </div>
         ) : (
           <div style={{ overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
@@ -463,10 +555,10 @@ function GoogleRatingChart({ snapshots }: { snapshots: GoogleSnapshot[] }) {
         <text x={last.x} y={last.y - 14} textAnchor="end" fontSize={13} fontWeight={700} fill="var(--text-main)">{last.rating.toFixed(1)}</text>
 
         <text x={padX} y={H - 2} fontSize={11} fill="var(--text-dim)" textAnchor="start">
-          {firstDate.toLocaleDateString('es-MX', { month: 'short', day: 'numeric' })}
+          {formatDateES(firstDate)}
         </text>
         <text x={W - padX} y={H - 2} textAnchor="end" fontSize={11} fill="var(--text-dim)">
-          {lastDate.toLocaleDateString('es-MX', { month: 'short', day: 'numeric' })}
+          {formatDateES(lastDate)}
         </text>
       </svg>
     </div>
@@ -482,8 +574,8 @@ function MonthlyChart({ data }: { data: MonthlyStatEntry[] }) {
     <div style={{ overflowX: 'auto' }}>
       <div style={{ display: 'flex', alignItems: 'flex-end', gap: 12, minHeight: 140, minWidth: data.length * 50, padding: '0 0.5rem' }}>
         {data.map((d) => {
-          const [year, month] = d.month.split('-');
-          const label = new Date(parseInt(year), parseInt(month) - 1).toLocaleDateString('es-MX', { month: 'short' });
+          const [, month] = d.month.split('-');
+          const label = MONTHS_ES[parseInt(month) - 1];
           return (
             <div key={d.month} style={{ flex: 1, minWidth: 36, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
               <span style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-main)' }}>{d.reviewCount}</span>
