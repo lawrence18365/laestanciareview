@@ -5,26 +5,7 @@ import { drizzle } from 'drizzle-orm/neon-http';
 import { restaurants, staff } from './schema';
 import { eq } from 'drizzle-orm';
 import { hashPassword } from '../lib/auth';
-
-/**
- * Helper: turn a name like "JUAN CARLOS" into a staff code like "JUANCARLOS".
- * If duplicates exist in the same restaurant, a numeric suffix is appended.
- */
-function makeCode(name: string, usedCodes: Set<string>): string {
-  const base = name
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '') // strip accents
-    .replace(/[^A-Za-z]/g, '')       // remove spaces/punctuation
-    .toUpperCase();
-  let code = base;
-  let i = 2;
-  while (usedCodes.has(code)) {
-    code = `${base}${i}`;
-    i++;
-  }
-  usedCodes.add(code);
-  return code;
-}
+import { makeCode } from '../lib/staff-code';
 
 // ── Restaurant definitions with real GM contact info ──────────────────────────
 
@@ -51,7 +32,7 @@ const allRestaurants: RestaurantDef[] = [
     slug: 'estancia-angelopolis',
     googlePlaceId: 'ChIJ_41sFEfHz4UReU4Ibxwt7ZE',
     managerEmail: 'gerencia.ea.angelopolis@grupoestancia.com',
-    managerPhone: '2214256201',
+    managerPhone: '+522214256201',
     staff: [
       'JUAN CARLOS',
       'JUAN HUACHINA',
@@ -80,7 +61,7 @@ const allRestaurants: RestaurantDef[] = [
     slug: 'estancia-juarez',
     googlePlaceId: 'ChIJKWIzU9TGz4URvKPuW4Y3vwE',
     managerEmail: 'gerencia.ea.juarez@grupoestancia.com',
-    managerPhone: '2221362868',
+    managerPhone: '+522221362868',
     staff: [
       'EDUARDO LOPEZ',
       'LUIS ANGEL',
@@ -99,7 +80,7 @@ const allRestaurants: RestaurantDef[] = [
     slug: 'estancia-veracruz',
     googlePlaceId: 'ChIJ141TIDBBw4URPqBRbdzo5Vw',
     managerEmail: 'gerencia.ea.veracruz@grupoestancia.com',
-    managerPhone: '2221775746',
+    managerPhone: '+522221775746',
     staff: [
       'VICTOR LOPEZ',
       'JOSE ARMANDO',
@@ -123,7 +104,7 @@ const allRestaurants: RestaurantDef[] = [
     slug: 'estancia-xalapa',
     googlePlaceId: 'ChIJaSYEreUz24URIjxXUA0LOF8',
     managerEmail: 'gerencia.ea.xalapa@grupoestancia.com',
-    managerPhone: '4421198779',
+    managerPhone: '+524421198779',
     staff: [
       'ERIK ALEXANDER',
       'JORGE ARMANDO',
@@ -141,7 +122,7 @@ const allRestaurants: RestaurantDef[] = [
     slug: 'estancia-queretaro',
     googlePlaceId: 'ChIJy_ckRy9F04URgrAX2Hqek1o',
     managerEmail: 'esteban.ort@outlook.com',
-    managerPhone: '4426047157',
+    managerPhone: '+524426047157',
     staff: [
       'IVAN EDUARDO',
       'ERICK MARTINEZ',
@@ -185,7 +166,7 @@ const allRestaurants: RestaurantDef[] = [
     slug: 'la-silla-juarez',
     googlePlaceId: 'ChIJ7zN521PHz4URajdI1Mrgjyw',
     managerEmail: 'gerencia.ls.juarez@grupoestancia.com',
-    managerPhone: '5543565534',
+    managerPhone: '+525543565534',
     staff: [
       'ZABDIEL SANCHEZ',
       'MARIO BARBAN',
@@ -204,7 +185,7 @@ const allRestaurants: RestaurantDef[] = [
     slug: 'la-silla-huexotitla',
     googlePlaceId: 'ChIJxWZrJMjAz4URKG2NgyfCDzE',
     managerEmail: 'gerencia.ls.huexotitla@grupoestancia.com',
-    managerPhone: '2227875130',
+    managerPhone: '+522227875130',
     staff: [
       'SIMON PEREZ',
       'MARCOS MARTINEZ',
@@ -223,7 +204,7 @@ const allRestaurants: RestaurantDef[] = [
     slug: 'harbors-angelopolis',
     googlePlaceId: 'ChIJZxAQqW_Hz4URXMFcf152QiE',
     managerEmail: 'gerencia.h.angelopolis@grupoestancia.com',
-    managerPhone: '5525319180',
+    managerPhone: '+525525319180',
     staff: [
       'JUAN CARLOS',
       'VICTOR HUGO',
@@ -242,7 +223,7 @@ const allRestaurants: RestaurantDef[] = [
     slug: 'harbors-veracruz',
     googlePlaceId: 'ChIJP5xgoflAw4URaJpv0XvfXx8',
     managerEmail: 'gerencia.h.veracruz@grupoestancia.com',
-    managerPhone: '2293935085',
+    managerPhone: '+522293935085',
     staff: [
       'JUSTIN ALEXANDRO',
       'EDUARDO ZARATE',
@@ -262,7 +243,7 @@ const allRestaurants: RestaurantDef[] = [
     slug: 'steakcompany-queretaro',
     googlePlaceId: 'ChIJT7EE0gBa04URvcdg-PTV4F4',
     managerEmail: 'ricardoc3@gmail.com',
-    managerPhone: '2221099111',
+    managerPhone: '+522221099111',
     staff: [
       'OMAR PEREZ',
       'JUAN PABLO',
@@ -285,7 +266,7 @@ const allRestaurants: RestaurantDef[] = [
     slug: 'regio-norte',
     googlePlaceId: 'ChIJp_TjY77Hz4UROpI4_OVO14w',
     managerEmail: 'gerencia@regionorte.mx',
-    managerPhone: '2227875130',
+    managerPhone: '+522227875130',
     staff: [
       'EDGAR CELSO',
       'JOSE GERARDO',

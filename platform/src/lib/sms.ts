@@ -9,7 +9,20 @@ function getClient(): Telnyx | null {
   return _client;
 }
 
-const FROM = process.env.TELNYX_PHONE_NUMBER ?? '';
+const MESSAGING_PROFILE_ID = process.env.TELNYX_MESSAGING_PROFILE_ID ?? '';
+const SENDER_ID = 'RateTap';
+
+/**
+ * Normalize a phone number to E.164 format.
+ * If a 10-digit Mexican number is provided without country code, prepend +52.
+ */
+function normalizePhone(phone: string): string {
+  const digits = phone.replace(/\D/g, '');
+  if (phone.startsWith('+')) return phone;
+  if (digits.length === 10) return `+52${digits}`;
+  if (digits.length === 12 && digits.startsWith('52')) return `+${digits}`;
+  return `+${digits}`;
+}
 
 interface SMSAlertParams {
   to: string;
@@ -29,17 +42,33 @@ export async function sendSMSAlert({
   feedback,
 }: SMSAlertParams) {
   const client = getClient();
-  if (!client || !FROM) {
+  if (!client) {
     console.warn('[sms] Telnyx not configured — skipping SMS');
     return;
   }
 
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? 'https://app.ratetap.com';
+  const urgency = rating <= 2 ? '🔴' : rating <= 3 ? '🟡' : '🟢';
   const stars = '★'.repeat(rating) + '☆'.repeat(5 - rating);
-  const name = customerName || 'Anonymous';
-  const staff = staffName ? ` (staff: ${staffName})` : '';
-  const preview = feedback.length > 120 ? feedback.slice(0, 120) + '...' : feedback;
+  const customer = customerName || 'Anónimo';
+  const preview = feedback.length > 100 ? feedback.slice(0, 100) + '...' : feedback;
 
-  const text = `[RateTap] ${stars} at ${restaurantName}\n${name}${staff}\n"${preview}"\n\nView: ${process.env.NEXT_PUBLIC_BASE_URL ?? 'https://app.ratetapmx.com'}/inbox`;
+  const lines = [
+    `${urgency} ${restaurantName} — ${stars}`,
+  ];
+  if (staffName) lines.push(`Mesero: ${staffName}`);
+  lines.push(`Cliente: ${customer}`);
+  lines.push('');
+  lines.push(`"${preview}"`);
+  lines.push('');
+  lines.push(`${baseUrl}/inbox`);
 
-  await client.messages.send({ to, from: FROM, text });
+  const normalizedTo = normalizePhone(to);
+
+  await client.messages.send({
+    to: normalizedTo,
+    from: SENDER_ID,
+    text: lines.join('\n'),
+    messaging_profile_id: MESSAGING_PROFILE_ID,
+  });
 }
