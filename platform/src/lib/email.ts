@@ -26,26 +26,40 @@ function emailLayout(content: string, footerNote?: string): string {
   return `
 <!DOCTYPE html>
 <html lang="es">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
-<body style="margin: 0; padding: 0; background: #f5f0eb; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="x-apple-disable-message-reformatting">
+  <meta name="format-detection" content="telephone=no,address=no,email=no,date=no">
+  <style>
+    body, table, td { -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
+    @media only screen and (max-width: 480px) {
+      .email-container { width: 100% !important; padding: 16px 12px !important; }
+      .content-card { border-radius: 12px !important; }
+      .content-pad { padding-left: 20px !important; padding-right: 20px !important; }
+      .stat-value { font-size: 22px !important; }
+    }
+  </style>
+</head>
+<body style="margin: 0; padding: 0; background: #f5f0eb; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; -webkit-font-smoothing: antialiased;">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background: #f5f0eb;">
-    <tr><td align="center" style="padding: 32px 16px;">
-      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width: 540px;">
+    <tr><td align="center" class="email-container" style="padding: 32px 16px;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width: 520px;">
 
         <!-- Logo Header -->
-        <tr><td style="padding: 0 0 24px; text-align: center;">
+        <tr><td style="padding: 0 0 28px; text-align: center;">
           <a href="${BASE_URL}" style="text-decoration: none;">
-            <img src="${LOGO_URL}" alt="RateTap" width="240" style="display: inline-block; height: auto; max-height: 96px;" />
+            <img src="${LOGO_URL}" alt="RateTap" width="160" style="display: inline-block; width: 160px; height: auto;" />
           </a>
         </td></tr>
 
         <!-- Content Card -->
-        <tr><td style="background: #ffffff; border-radius: 16px; box-shadow: 0 2px 8px rgba(28,25,23,0.06);">
+        <tr><td class="content-card" style="background: #ffffff; border-radius: 16px; box-shadow: 0 1px 4px rgba(28,25,23,0.04), 0 4px 16px rgba(28,25,23,0.06);">
           ${content}
         </td></tr>
 
         <!-- Footer -->
-        <tr><td style="padding: 24px 0 0; text-align: center;">
+        <tr><td style="padding: 28px 16px 0; text-align: center;">
           ${footerNote ? `<p style="margin: 0 0 8px; font-size: 12px; color: #a8a29e;">${footerNote}</p>` : ''}
           <p style="margin: 0; font-size: 11px; color: #c4c0bb;">
             <a href="${BASE_URL}" style="color: #c4c0bb; text-decoration: none;">RateTap</a> &middot; Califica. Conecta. Crece.
@@ -88,43 +102,64 @@ export async function sendFeedbackAlert({
     return;
   }
 
-  const stars = '★'.repeat(rating) + '☆'.repeat(5 - rating);
-  const accentColor = rating >= 4 ? '#16a34a' : rating >= 3 ? '#eab308' : '#dc2626';
+  const filledStars = '★'.repeat(rating);
+  const emptyStars = '☆'.repeat(5 - rating);
+  const accentColor = rating >= 4 ? '#16a34a' : rating >= 3 ? '#ca8a04' : '#dc2626';
   const accentBg = rating >= 4 ? '#f0fdf4' : rating >= 3 ? '#fefce8' : '#fef2f2';
+  const urgencyLabel = rating <= 2 ? 'Urgente' : rating <= 3 ? 'Atención' : 'Positivo';
 
   const content = `
-    <div style="padding: 32px 28px;">
-      <!-- Header -->
-      <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
-        <tr>
-          <td>
-            <p style="margin: 0 0 2px; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: ${accentColor};">Nuevo Comentario</p>
-            <h1 style="margin: 0; font-size: 22px; font-weight: 700; color: #1c1917;">${escapeHtml(restaurantName)}</h1>
-          </td>
-          <td style="text-align: right; vertical-align: top;">
-            <div style="display: inline-block; padding: 6px 14px; background: ${accentBg}; border-radius: 999px;">
-              <span style="font-size: 18px; letter-spacing: 2px; color: ${accentColor};">${stars}</span>
-            </div>
-          </td>
-        </tr>
-      </table>
+    <!-- Colored accent bar -->
+    <div style="height: 4px; background: ${accentColor}; border-radius: 16px 16px 0 0;"></div>
 
-      <!-- Feedback -->
-      <div style="margin: 24px 0; padding: 20px; background: #faf8f6; border-radius: 12px; border-left: 4px solid ${accentColor};">
-        <p style="margin: 0; font-size: 15px; line-height: 1.6; color: #1c1917;">&ldquo;${escapeHtml(feedback)}&rdquo;</p>
+    <div class="content-pad" style="padding: 28px 32px 32px;">
+      <!-- Rating badge -->
+      <div style="text-align: center; margin-bottom: 24px;">
+        <div style="display: inline-block; padding: 10px 24px; background: ${accentBg}; border-radius: 12px;">
+          <span style="font-size: 24px; letter-spacing: 3px; color: ${accentColor};">${filledStars}</span><span style="font-size: 24px; letter-spacing: 3px; color: #d6d3d1;">${emptyStars}</span>
+        </div>
+        <p style="margin: 8px 0 0; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: ${accentColor};">${urgencyLabel}</p>
       </div>
 
-      <!-- Details -->
-      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="font-size: 14px; color: #44403c;">
-        ${customerName ? `<tr><td style="padding: 6px 0; color: #78716c; width: 90px;">Cliente</td><td style="padding: 6px 0; font-weight: 500;">${escapeHtml(customerName)}</td></tr>` : ''}
-        ${customerEmail ? `<tr><td style="padding: 6px 0; color: #78716c;">Email</td><td style="padding: 6px 0;"><a href="mailto:${encodeURIComponent(customerEmail)}" style="color: #b45309; text-decoration: none; font-weight: 500;">${escapeHtml(customerEmail)}</a></td></tr>` : ''}
-        ${staffName ? `<tr><td style="padding: 6px 0; color: #78716c;">Personal</td><td style="padding: 6px 0; font-weight: 500;">${escapeHtml(staffName)}</td></tr>` : ''}
-      </table>
+      <!-- Restaurant name -->
+      <h1 style="margin: 0 0 4px; font-size: 20px; font-weight: 700; color: #1c1917; text-align: center;">${escapeHtml(restaurantName)}</h1>
+      <p style="margin: 0 0 24px; font-size: 13px; color: #a8a29e; text-align: center;">Nuevo comentario de cliente</p>
+
+      <!-- Feedback quote -->
+      <div style="margin: 0 0 24px; padding: 20px 24px; background: #faf8f6; border-radius: 12px; border-left: 4px solid ${accentColor};">
+        <p style="margin: 0; font-size: 15px; line-height: 1.7; color: #1c1917; font-style: italic;">&ldquo;${escapeHtml(feedback)}&rdquo;</p>
+      </div>
+
+      <!-- Details cards -->
+      ${customerName || staffName || customerEmail ? `
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 24px;">
+        ${customerName ? `
+        <tr>
+          <td style="padding: 10px 0; border-bottom: 1px solid #f5f0eb;">
+            <span style="font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; color: #a8a29e;">Cliente</span><br/>
+            <span style="font-size: 15px; font-weight: 500; color: #1c1917;">${escapeHtml(customerName)}</span>
+          </td>
+        </tr>` : ''}
+        ${customerEmail ? `
+        <tr>
+          <td style="padding: 10px 0; border-bottom: 1px solid #f5f0eb;">
+            <span style="font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; color: #a8a29e;">Email</span><br/>
+            <a href="mailto:${encodeURIComponent(customerEmail)}" style="font-size: 15px; color: #b45309; text-decoration: none; font-weight: 500;">${escapeHtml(customerEmail)}</a>
+          </td>
+        </tr>` : ''}
+        ${staffName ? `
+        <tr>
+          <td style="padding: 10px 0;">
+            <span style="font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; color: #a8a29e;">Mesero</span><br/>
+            <span style="font-size: 15px; font-weight: 500; color: #1c1917;">${escapeHtml(staffName)}</span>
+          </td>
+        </tr>` : ''}
+      </table>` : ''}
 
       <!-- CTA -->
-      <div style="margin-top: 28px; text-align: center;">
-        <a href="${BASE_URL}/inbox" style="display: inline-block; padding: 12px 28px; background: #1c1917; color: #ffffff; border-radius: 10px; text-decoration: none; font-size: 14px; font-weight: 600;">
-          Ver en Buzon
+      <div style="text-align: center;">
+        <a href="${BASE_URL}/inbox" style="display: inline-block; padding: 14px 36px; background: #1c1917; color: #ffffff; border-radius: 10px; text-decoration: none; font-size: 15px; font-weight: 600; letter-spacing: 0.02em;">
+          Ver en Buzón
         </a>
       </div>
     </div>`;
@@ -199,9 +234,9 @@ export async function sendWeeklyDigest({
   const statCell = (value: string, label: string, extra: string, position: 'left' | 'mid' | 'right') => {
     const radius = position === 'left' ? '12px 0 0 12px' : position === 'right' ? '0 12px 12px 0' : '0';
     const border = position !== 'right' ? 'border-right: 1px solid #f0ece7;' : '';
-    return `<td style="padding: 18px 12px; background: #faf8f6; border-radius: ${radius}; text-align: center; width: 33%; ${border}">
-      <p style="margin: 0; font-size: 28px; font-weight: 700; color: #1c1917;">${value}</p>
-      <p style="margin: 4px 0 0; font-size: 11px; color: #78716c; text-transform: uppercase; letter-spacing: 0.06em;">${label}</p>
+    return `<td style="padding: 16px 8px; background: #faf8f6; border-radius: ${radius}; text-align: center; width: 33%; ${border}">
+      <p class="stat-value" style="margin: 0; font-size: 26px; font-weight: 700; color: #1c1917;">${value}</p>
+      <p style="margin: 4px 0 0; font-size: 10px; color: #78716c; text-transform: uppercase; letter-spacing: 0.06em;">${label}</p>
       ${extra ? `<p style="margin: 4px 0 0;">${extra}</p>` : ''}
     </td>`;
   };
