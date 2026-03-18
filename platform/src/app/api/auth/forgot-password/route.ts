@@ -31,7 +31,7 @@ export async function POST(req: NextRequest) {
   if (restaurant?.managerEmail) {
     try {
       const token = await generateResetToken(slug);
-      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? 'http://localhost:3000';
+      const baseUrl = (process.env.NEXT_PUBLIC_BASE_URL ?? 'http://localhost:3000').replace(/\\n/g, '').trim();
       const resetUrl = `${baseUrl}/reset-password?token=${token}`;
 
       await sendPasswordResetEmail({

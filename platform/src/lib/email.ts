@@ -3,12 +3,15 @@ import { Resend } from 'resend';
 let _resend: Resend | null = null;
 function getResend(): Resend | null {
   if (!process.env.RESEND_API_KEY) return null;
-  if (!_resend) _resend = new Resend(process.env.RESEND_API_KEY);
+  if (!_resend) _resend = new Resend(process.env.RESEND_API_KEY.trim());
   return _resend;
 }
 
-const FROM = process.env.EMAIL_FROM ?? 'RateTap <notifications@ratetapmx.com>';
-const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL ?? 'https://app.ratetapmx.com';
+/** Strip stray whitespace/newlines from env vars (Vercel CLI sometimes injects \\n). */
+const clean = (v: string | undefined, fallback: string) => (v ?? fallback).replace(/\\n/g, '').trim();
+
+const FROM = clean(process.env.EMAIL_FROM, 'RateTap <notifications@ratetapmx.com>');
+const BASE_URL = clean(process.env.NEXT_PUBLIC_BASE_URL, 'https://app.ratetapmx.com');
 const LOGO_URL = `${BASE_URL}/logos/ratetap_logo_transparent_background.png`;
 
 /** Escape HTML special characters to prevent injection. */
@@ -616,7 +619,7 @@ export async function sendGMFeedback({
   subject,
   message,
 }: GMFeedbackParams) {
-  const adminEmail = process.env.ADMIN_EMAIL;
+  const adminEmail = process.env.ADMIN_EMAIL?.replace(/\\n/g, '').trim();
   if (!adminEmail) {
     console.warn('[email] ADMIN_EMAIL not set — skipping GM feedback email');
     return;

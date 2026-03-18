@@ -5,11 +5,11 @@ let _client: Telnyx | null = null;
 function getClient(): Telnyx | null {
   const key = process.env.TELNYX_API_KEY;
   if (!key) return null;
-  if (!_client) _client = new Telnyx({ apiKey: key });
+  if (!_client) _client = new Telnyx({ apiKey: key.trim() });
   return _client;
 }
 
-const MESSAGING_PROFILE_ID = process.env.TELNYX_MESSAGING_PROFILE_ID ?? '';
+const MESSAGING_PROFILE_ID = (process.env.TELNYX_MESSAGING_PROFILE_ID ?? '').trim();
 const SENDER_ID = 'RateTap';
 
 /**
@@ -54,7 +54,7 @@ export async function sendSMSAlert({
     return;
   }
 
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? 'https://app.ratetap.com';
+  const baseUrl = (process.env.NEXT_PUBLIC_BASE_URL ?? 'https://app.ratetap.com').replace(/\\n/g, '').trim();
   const urgency = rating <= 2 ? '🔴' : rating <= 3 ? '🟡' : '🟢';
   const stars = '★'.repeat(rating) + '☆'.repeat(5 - rating);
   const customer = customerName || 'Anónimo';
