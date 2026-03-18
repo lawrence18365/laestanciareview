@@ -21,7 +21,9 @@ function escapeHtml(str: string): string {
     .replace(/'/g, '&#39;');
 }
 
-/** Branded email wrapper — header with logo, content area, footer. */
+/** Branded email wrapper — header with logo, content area, footer.
+ *  Dark-mode hardened: linear-gradient locks backgrounds against Gmail iOS inversion,
+ *  mix-blend-mode double-invert restores text/accent colors inside Gmail specifically. */
 function emailLayout(content: string, footerNote?: string): string {
   return `
 <!DOCTYPE html>
@@ -30,32 +32,46 @@ function emailLayout(content: string, footerNote?: string): string {
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="x-apple-disable-message-reformatting">
+  <meta name="color-scheme" content="light only">
+  <meta name="supported-color-schemes" content="light only">
   <meta name="format-detection" content="telephone=no,address=no,email=no,date=no">
   <style>
+    :root { color-scheme: light only; }
     body, table, td { -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
+    /* Gmail iOS dark mode: blend-mode double-invert (u + .body only matches Gmail) */
+    u + .body .gm-screen { background: #000; mix-blend-mode: screen; }
+    u + .body .gm-diff   { background: #000; mix-blend-mode: difference; }
     @media only screen and (max-width: 480px) {
       .email-container { width: 100% !important; padding: 16px 12px !important; }
       .content-card { border-radius: 12px !important; }
       .content-pad { padding-left: 20px !important; padding-right: 20px !important; }
       .stat-value { font-size: 22px !important; }
     }
+    @media (prefers-color-scheme: dark) {
+      .email-body { background: #f5f0eb !important; }
+      .content-card { background: #ffffff !important; }
+    }
   </style>
 </head>
-<body style="margin: 0; padding: 0; background: #f5f0eb; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; -webkit-font-smoothing: antialiased;">
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background: #f5f0eb;">
+<body class="body" style="margin: 0; padding: 0; background: #f5f0eb; background-image: linear-gradient(#f5f0eb, #f5f0eb); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; -webkit-font-smoothing: antialiased;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" class="email-body" style="background: #f5f0eb; background-image: linear-gradient(#f5f0eb, #f5f0eb);">
     <tr><td align="center" class="email-container" style="padding: 32px 16px;">
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width: 520px;">
 
         <!-- Logo Header -->
         <tr><td style="padding: 0 0 28px; text-align: center;">
+          <div class="gm-screen"><div class="gm-diff">
           <a href="${BASE_URL}" style="text-decoration: none;">
-            <img src="${LOGO_URL}" alt="RateTap" width="160" style="display: inline-block; width: 160px; height: auto;" />
+            <img src="${LOGO_URL}" alt="RateTap" width="160" style="display: inline-block; width: 160px; height: auto; background: #ffffff; background-image: linear-gradient(#ffffff, #ffffff); padding: 12px 16px; border-radius: 12px;" />
           </a>
+          </div></div>
         </td></tr>
 
         <!-- Content Card -->
-        <tr><td class="content-card" style="background: #ffffff; border-radius: 16px; box-shadow: 0 1px 4px rgba(28,25,23,0.04), 0 4px 16px rgba(28,25,23,0.06);">
+        <tr><td class="content-card" style="background: #ffffff; background-image: linear-gradient(#ffffff, #ffffff); border-radius: 16px; box-shadow: 0 1px 4px rgba(28,25,23,0.04), 0 4px 16px rgba(28,25,23,0.06);">
+          <div class="gm-screen"><div class="gm-diff">
           ${content}
+          </div></div>
         </td></tr>
 
         <!-- Footer -->
