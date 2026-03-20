@@ -3,6 +3,10 @@ import { reviews, staff, restaurants } from '@/db/schema';
 import { eq, and, gte, sql, desc, count, avg, asc } from 'drizzle-orm';
 import { startOfWeek } from 'date-fns';
 
+/** Helper: raw SQL count that returns a JS number (Postgres bigint → string otherwise). */
+const countSql = (strings: TemplateStringsArray, ...values: unknown[]) =>
+  sql<number>(strings, ...values).mapWith(Number);
+
 /** Resolve a restaurant by slug, returning null if not found. */
 export async function getRestaurantBySlug(slug: string) {
   const rows = await db
@@ -54,7 +58,7 @@ export async function getWeeklyStats(restaurantId: number) {
     .select({
       totalReviews: count(reviews.id),
       avgRating: avg(reviews.rating).mapWith(Number),
-      googleSends: sql<number>`count(*) filter (where ${reviews.sentToGoogle} = true)`,
+      googleSends: countSql`count(*) filter (where ${reviews.sentToGoogle} = true)`,
     })
     .from(reviews)
     .where(
@@ -77,8 +81,8 @@ export async function getLastWeekStats(restaurantId: number, threshold: number =
     .select({
       totalReviews: count(reviews.id),
       avgRating: avg(reviews.rating).mapWith(Number),
-      googleSends: sql<number>`count(*) filter (where ${reviews.sentToGoogle} = true)`,
-      intercepted: sql<number>`count(*) filter (where ${reviews.sentToGoogle} = false and ${reviews.rating} < ${threshold})`,
+      googleSends: countSql`count(*) filter (where ${reviews.sentToGoogle} = true)`,
+      intercepted: countSql`count(*) filter (where ${reviews.sentToGoogle} = false and ${reviews.rating} < ${threshold})`,
     })
     .from(reviews)
     .where(
@@ -198,8 +202,8 @@ export async function getAllTimeStats(restaurantId: number) {
     .select({
       totalReviews: count(reviews.id),
       avgRating: avg(reviews.rating).mapWith(Number),
-      googleSends: sql<number>`count(*) filter (where ${reviews.sentToGoogle} = true)`,
-      feedbackCount: sql<number>`count(*) filter (where ${reviews.feedback} is not null)`,
+      googleSends: countSql`count(*) filter (where ${reviews.sentToGoogle} = true)`,
+      feedbackCount: countSql`count(*) filter (where ${reviews.feedback} is not null)`,
     })
     .from(reviews)
     .where(eq(reviews.restaurantId, restaurantId));
@@ -240,10 +244,10 @@ export async function getOverviewStats(region?: string) {
       restaurantName: restaurants.name,
       slug: restaurants.slug,
       googleThreshold: restaurants.googleThreshold,
-      weeklyReviews: sql<number>`count(case when ${reviews.createdAt} >= ${monday} then 1 end)`,
-      weeklyAvg: sql<number>`avg(case when ${reviews.createdAt} >= ${monday} then ${reviews.rating} end)`,
-      weeklyGoogle: sql<number>`count(case when ${reviews.createdAt} >= ${monday} and ${reviews.sentToGoogle} = true then 1 end)`,
-      weeklyIntercepted: sql<number>`count(case when ${reviews.createdAt} >= ${monday} and ${reviews.sentToGoogle} = false and ${reviews.rating} < ${restaurants.googleThreshold} then 1 end)`,
+      weeklyReviews: countSql`count(case when ${reviews.createdAt} >= ${monday} then 1 end)`,
+      weeklyAvg: sql<number>`avg(case when ${reviews.createdAt} >= ${monday} then ${reviews.rating} end)`.mapWith(Number),
+      weeklyGoogle: countSql`count(case when ${reviews.createdAt} >= ${monday} and ${reviews.sentToGoogle} = true then 1 end)`,
+      weeklyIntercepted: countSql`count(case when ${reviews.createdAt} >= ${monday} and ${reviews.sentToGoogle} = false and ${reviews.rating} < ${restaurants.googleThreshold} then 1 end)`,
       totalReviews: count(reviews.id),
       totalAvg: avg(reviews.rating).mapWith(Number),
     })
@@ -266,8 +270,8 @@ export async function getWeekBeforeLastStats(restaurantId: number, threshold: nu
     .select({
       totalReviews: count(reviews.id),
       avgRating: avg(reviews.rating).mapWith(Number),
-      googleSends: sql<number>`count(*) filter (where ${reviews.sentToGoogle} = true)`,
-      intercepted: sql<number>`count(*) filter (where ${reviews.sentToGoogle} = false and ${reviews.rating} < ${threshold})`,
+      googleSends: countSql`count(*) filter (where ${reviews.sentToGoogle} = true)`,
+      intercepted: countSql`count(*) filter (where ${reviews.sentToGoogle} = false and ${reviews.rating} < ${threshold})`,
     })
     .from(reviews)
     .where(
@@ -334,11 +338,11 @@ export async function getLiveStats(restaurantId: number) {
   const totalsSelect = {
     totalScans: count(reviews.id),
     fiveStarCount:
-      sql<number>`count(*) filter (where ${reviews.rating} = 5)`,
+      countSql`count(*) filter (where ${reviews.rating} = 5)`,
     belowFourCount:
-      sql<number>`count(*) filter (where ${reviews.rating} < 4)`,
+      countSql`count(*) filter (where ${reviews.rating} < 4)`,
     sentToGoogle:
-      sql<number>`count(*) filter (where ${reviews.sentToGoogle} = true)`,
+      countSql`count(*) filter (where ${reviews.sentToGoogle} = true)`,
   };
 
   const [weekTotals, lastWeekTotals, todayTotals, staffReviewStats, allActiveStaff, recentScans] =
@@ -370,16 +374,16 @@ export async function getLiveStats(restaurantId: number) {
           staffCode: reviews.staffCode,
           totalScans: count(reviews.id),
           fiveStarCount:
-            sql<number>`count(*) filter (where ${reviews.rating} = 5)`,
+            countSql`count(*) filter (where ${reviews.rating} = 5)`,
           belowFourCount:
-            sql<number>`count(*) filter (where ${reviews.rating} < 4)`,
+            countSql`count(*) filter (where ${reviews.rating} < 4)`,
           avgRating: avg(reviews.rating).mapWith(Number),
           todayScans:
-            sql<number>`count(*) filter (where ${reviews.createdAt} >= ${todayStart})`,
+            countSql`count(*) filter (where ${reviews.createdAt} >= ${todayStart})`,
           todayFiveStars:
-            sql<number>`count(*) filter (where ${reviews.createdAt} >= ${todayStart} and ${reviews.rating} = 5)`,
+            countSql`count(*) filter (where ${reviews.createdAt} >= ${todayStart} and ${reviews.rating} = 5)`,
           todayBelowFour:
-            sql<number>`count(*) filter (where ${reviews.createdAt} >= ${todayStart} and ${reviews.rating} < 4)`,
+            countSql`count(*) filter (where ${reviews.createdAt} >= ${todayStart} and ${reviews.rating} < 4)`,
         })
         .from(reviews)
         .where(
@@ -428,9 +432,9 @@ export async function getROIStats(restaurantId: number, threshold: number) {
     .select({
       totalReviews: count(reviews.id),
       avgRating: avg(reviews.rating).mapWith(Number),
-      googleSends: sql<number>`count(*) filter (where ${reviews.sentToGoogle} = true)`,
-      intercepted: sql<number>`count(*) filter (where ${reviews.sentToGoogle} = false and ${reviews.rating} < ${threshold})`,
-      feedbackCount: sql<number>`count(*) filter (where ${reviews.feedback} is not null)`,
+      googleSends: countSql`count(*) filter (where ${reviews.sentToGoogle} = true)`,
+      intercepted: countSql`count(*) filter (where ${reviews.sentToGoogle} = false and ${reviews.rating} < ${threshold})`,
+      feedbackCount: countSql`count(*) filter (where ${reviews.feedback} is not null)`,
       firstReviewAt: sql<Date | null>`min(${reviews.createdAt})`,
     })
     .from(reviews)
@@ -456,8 +460,8 @@ export async function getMonthlyStats(restaurantId: number, months = 12, thresho
       month: sql<string>`to_char(${reviews.createdAt}, 'YYYY-MM')`,
       reviewCount: count(reviews.id),
       avgRating: avg(reviews.rating).mapWith(Number),
-      googleSends: sql<number>`count(*) filter (where ${reviews.sentToGoogle} = true)`,
-      intercepted: sql<number>`count(*) filter (where ${reviews.sentToGoogle} = false and ${reviews.rating} < ${threshold})`,
+      googleSends: countSql`count(*) filter (where ${reviews.sentToGoogle} = true)`,
+      intercepted: countSql`count(*) filter (where ${reviews.sentToGoogle} = false and ${reviews.rating} < ${threshold})`,
     })
     .from(reviews)
     .where(
@@ -474,8 +478,8 @@ export async function getMonthlyStats(restaurantId: number, months = 12, thresho
 export async function getGoogleConversionRate(restaurantId: number, threshold: number) {
   const rows = await db
     .select({
-      aboveThreshold: sql<number>`count(*) filter (where ${reviews.rating} >= ${threshold})`,
-      sentToGoogle: sql<number>`count(*) filter (where ${reviews.sentToGoogle} = true)`,
+      aboveThreshold: countSql`count(*) filter (where ${reviews.rating} >= ${threshold})`,
+      sentToGoogle: countSql`count(*) filter (where ${reviews.sentToGoogle} = true)`,
     })
     .from(reviews)
     .where(eq(reviews.restaurantId, restaurantId));

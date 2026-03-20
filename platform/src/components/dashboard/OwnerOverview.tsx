@@ -191,13 +191,12 @@ export default function OwnerOverview({ stats, unresolvedCounts, roiByLocation, 
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-      {/* ── PORTFOLIO ROI HERO ── */}
+      {/* ── PORTFOLIO SUMMARY ── */}
       <div
         style={{
-          background: '#111111',
-          border: '1px solid #111111',
-          padding: '2rem',
-          color: '#FAFAFA',
+          background: 'var(--panel-bg)',
+          border: '1px solid var(--border-dark)',
+          padding: '1.75rem 2rem',
           position: 'relative',
           overflow: 'hidden',
         }}
@@ -208,7 +207,7 @@ export default function OwnerOverview({ stats, unresolvedCounts, roiByLocation, 
             top: 0,
             left: 0,
             right: 0,
-            height: 2,
+            height: 3,
             background: '#D97706',
           }}
         />
@@ -220,78 +219,74 @@ export default function OwnerOverview({ stats, unresolvedCounts, roiByLocation, 
             letterSpacing: '0.14em',
             textTransform: 'uppercase',
             color: '#D97706',
-            marginBottom: '1.25rem',
+            marginBottom: '1.5rem',
           }}
         >
           {t.owner.portfolioImpact(stats.length)}
         </div>
 
-        <div style={{ marginBottom: '1.75rem' }}>
-          {portfolioROI.locationsWithGain > 0 ? (
-            <>
-              <div
-                className="editorial-serif"
-                style={{
-                  fontSize: '3.2rem',
-                  fontWeight: 700,
-                  lineHeight: 1,
-                }}
-              >
-                +{portfolioROI.avgRatingGain.toFixed(1)} <span style={{ color: '#D97706' }}>&#9733;</span>
-              </div>
-              <div style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.5)', marginTop: '0.4rem' }}>
-                {t.owner.avgGoogleRatingGain(portfolioROI.locationsWithGain)}
-              </div>
-            </>
-          ) : (
-            <>
-              <div
-                className="font-numeric"
-                style={{
-                  fontSize: '3.2rem',
-                  fontWeight: 700,
-                  lineHeight: 1,
-                }}
-              >
-                {fmt(portfolioROI.totalReviews)}
-              </div>
-              <div style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.5)', marginTop: '0.4rem' }}>
-                {t.owner.totalScansProcessed}
-              </div>
-            </>
-          )}
-        </div>
-
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
-            gap: '0.75rem',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+            gap: '1.25rem',
           }}
         >
-          <ROICard
-            label={t.owner.sentToGoogle}
-            value={fmt(portfolioROI.totalGoogleSends)}
-            sub={portfolioROI.totalReviewsGained > 0
-              ? t.owner.newGoogleReviewsConfirmed(portfolioROI.totalReviewsGained)
-              : t.owner.customersDirectedToGoogle}
-            color="#4ade80"
-            borderColor="rgba(34, 197, 94, 0.3)"
-          />
-          <ROICard
-            label={t.owner.badReviewsPrevented}
-            value={fmt(portfolioROI.totalIntercepted)}
-            sub={t.owner.negativeReviewsCaughtPrivately}
-            color="#fbbf24"
-            borderColor="rgba(245, 158, 11, 0.3)"
-          />
-          <ROICard
-            label={t.owner.totalScans}
-            value={fmt(portfolioROI.totalReviews)}
-            sub={t.owner.thisWeek(totalWeekly)}
-            color="#fafafa"
-            borderColor="rgba(255, 255, 255, 0.15)"
-          />
+          {/* Google Sends */}
+          <div>
+            <div style={{ fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: 6 }}>
+              {t.owner.sentToGoogle}
+            </div>
+            <div className="font-numeric" style={{ fontSize: '2rem', fontWeight: 700, color: 'var(--green)', lineHeight: 1 }}>
+              {fmt(portfolioROI.totalGoogleSends)}
+            </div>
+            <div style={{ fontSize: '0.75rem', color: 'var(--text-dim)', marginTop: 4 }}>
+              {portfolioROI.totalReviewsGained > 0
+                ? t.owner.newGoogleReviewsConfirmed(portfolioROI.totalReviewsGained)
+                : t.owner.customersDirectedToGoogle}
+            </div>
+          </div>
+
+          {/* Intercepted */}
+          <div>
+            <div style={{ fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: 6 }}>
+              {t.owner.badReviewsPrevented}
+            </div>
+            <div className="font-numeric" style={{ fontSize: '2rem', fontWeight: 700, color: 'var(--gold)', lineHeight: 1 }}>
+              {fmt(portfolioROI.totalIntercepted)}
+            </div>
+            <div style={{ fontSize: '0.75rem', color: 'var(--text-dim)', marginTop: 4 }}>
+              {t.owner.negativeReviewsCaughtPrivately}
+            </div>
+          </div>
+
+          {/* Total Scans */}
+          <div>
+            <div style={{ fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: 6 }}>
+              {t.owner.totalScans}
+            </div>
+            <div className="font-numeric" style={{ fontSize: '2rem', fontWeight: 700, color: 'var(--text-main)', lineHeight: 1 }}>
+              {fmt(portfolioROI.totalReviews)}
+            </div>
+            <div style={{ fontSize: '0.75rem', color: 'var(--text-dim)', marginTop: 4 }}>
+              {t.owner.thisWeek(totalWeekly)}
+            </div>
+          </div>
+
+          {/* Google Rating Change */}
+          {portfolioROI.locationsWithGain > 0 && (
+            <div>
+              <div style={{ fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: 6 }}>
+                Google &#9733;
+              </div>
+              <div className="font-numeric" style={{ fontSize: '2rem', fontWeight: 700, color: 'var(--green)', lineHeight: 1 }}>
+                +{portfolioROI.avgRatingGain.toFixed(1)}
+              </div>
+              <div style={{ fontSize: '0.75rem', color: 'var(--text-dim)', marginTop: 4 }}>
+                {t.owner.avgGoogleRatingGain(portfolioROI.locationsWithGain)}
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
@@ -563,46 +558,6 @@ export default function OwnerOverview({ stats, unresolvedCounts, roiByLocation, 
           </div>
         )}
       </section>
-    </div>
-  );
-}
-
-/* ── ROI Card ── */
-
-function ROICard({
-  label,
-  value,
-  sub,
-  color,
-  borderColor,
-}: {
-  label: string;
-  value: string;
-  sub: string;
-  color: string;
-  borderColor: string;
-}) {
-  return (
-    <div
-      style={{
-        border: `1px solid ${borderColor}`,
-        padding: '1rem 1.15rem',
-      }}
-    >
-      <div
-        style={{
-          fontSize: '0.6rem',
-          fontWeight: 700,
-          letterSpacing: '0.1em',
-          textTransform: 'uppercase',
-          color: 'rgba(255,255,255,0.5)',
-          marginBottom: 6,
-        }}
-      >
-        {label}
-      </div>
-      <div className="font-numeric" style={{ fontSize: '1.6rem', fontWeight: 700, color }}>{value}</div>
-      <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)', marginTop: 3 }}>{sub}</div>
     </div>
   );
 }

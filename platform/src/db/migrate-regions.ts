@@ -35,6 +35,7 @@ const regionalAccounts = [
   { name: 'Regional Querétaro', slug: 'regional-queretaro', region: 'queretaro' },
   { name: 'Regional Veracruz', slug: 'regional-veracruz', region: 'veracruz' },
   { name: 'Regional Central', slug: 'regional-central', region: 'central' },
+  { name: 'Regional León', slug: 'regional-leon', region: 'leon' },
 ];
 
 async function migrate() {
