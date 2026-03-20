@@ -15,7 +15,6 @@ const gmLinks = [
 
 const ownerLinks = [
   { href: '/overview', label: t.nav.overview },
-  { href: '/analytics', label: t.nav.analytics },
   { href: '/settings', label: t.nav.settings },
 ];
 
