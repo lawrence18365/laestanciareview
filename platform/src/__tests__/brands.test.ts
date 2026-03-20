@@ -22,7 +22,7 @@ describe('getBrandForSlug', () => {
 
   it('returns steakcompany brand for slugs starting with "steakcompany"', () => {
     const brand = getBrandForSlug('steakcompany-queretaro');
-    expect(brand.logo).toBe('/logos/steak-company-parrilla-urbana-logo.jpeg');
+    expect(brand.logo).toBe('/logos/steak-company-logo.jpeg');
     expect(brand.darkBg).toBe(true);
   });
 
