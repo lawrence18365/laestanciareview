@@ -23,7 +23,7 @@ const regionMap: Record<string, string> = {
   'harbors-veracruz': 'veracruz',
   'estancia-angelopolis': 'central',
   'estancia-juarez': 'central',
-  'estancia-leon': 'central',
+  'estancia-leon': 'leon',
   'la-silla-juarez': 'central',
   'la-silla-huexotitla': 'central',
   'harbors-angelopolis': 'central',

@@ -146,7 +146,7 @@ const allRestaurants: RestaurantDef[] = [
   {
     name: 'Estancia Leon',
     slug: 'estancia-leon',
-    region: 'central',
+    region: 'leon',
     googlePlaceId: 'ChIJM1x5LlW-K4QRrPy1SMe-04E',
     googleReviewUrl: 'https://g.page/r/Caz8tUjHvtOBEBM/review',
     googleThresholdOverride: 5,
