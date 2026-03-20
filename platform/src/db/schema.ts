@@ -26,6 +26,8 @@ export const restaurants = pgTable('restaurants', {
   googleThreshold: integer('google_threshold').notNull().default(4),
   adminPasswordHash: text('admin_password_hash'),
   isOwner: boolean('is_owner').notNull().default(false),
+  isRegional: boolean('is_regional').notNull().default(false),
+  region: text('region'),
   managerPhone: text('manager_phone'),
   alertPreference: text('alert_preference').notNull().default('all'),
   smsAlerts: boolean('sms_alerts').notNull().default(false),

@@ -16,6 +16,7 @@ import AnalyticsView from '@/components/dashboard/AnalyticsView';
 export default async function AnalyticsPage() {
   const session = await verifySession();
   if (!session) redirect('/login');
+  if (session.role === 'regional') redirect('/overview');
 
   const restaurant = await getRestaurantBySlug(session.slug);
   if (!restaurant) redirect('/login');

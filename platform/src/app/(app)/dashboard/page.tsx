@@ -17,8 +17,8 @@ export default async function DashboardPage() {
   const session = await verifySession();
   if (!session) redirect('/login');
 
-  // Owners land on /overview, not /dashboard
-  if (session.role === 'owner') redirect('/overview');
+  // Owners & regional managers land on /overview, not /dashboard
+  if (session.role === 'owner' || session.role === 'regional') redirect('/overview');
 
   const restaurant = await getRestaurantBySlug(session.slug);
   if (!restaurant) redirect('/login');

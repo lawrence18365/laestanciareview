@@ -222,9 +222,17 @@ export async function getNewFeedbackCount(restaurantId: number) {
   return rows[0]?.count ?? 0;
 }
 
-/** Overview stats for all restaurants (weekly). */
-export async function getOverviewStats() {
+/** Overview stats for restaurants (weekly). Optionally filter by region. */
+export async function getOverviewStats(region?: string) {
   const monday = startOfWeek(new Date(), { weekStartsOn: 1 });
+
+  const conditions = [
+    eq(restaurants.isOwner, false),
+    eq(restaurants.isRegional, false),
+  ];
+  if (region) {
+    conditions.push(eq(restaurants.region, region));
+  }
 
   return db
     .select({
@@ -241,6 +249,7 @@ export async function getOverviewStats() {
     })
     .from(restaurants)
     .leftJoin(reviews, eq(restaurants.id, reviews.restaurantId))
+    .where(and(...conditions))
     .groupBy(restaurants.id, restaurants.name, restaurants.slug, restaurants.googleThreshold)
     .orderBy(asc(restaurants.name));
 }

@@ -14,6 +14,7 @@ const brands: Record<string, BrandInfo> = {
   real: { logo: '/logos/real.jpeg', darkBg: false },
   regio: { logo: '/logos/regio-norte-cocina-del-norte-logo.jpeg', darkBg: false },
   owner: { logo: '/logos/grupo-estancia.png', darkBg: false },
+  regional: { logo: '/logos/grupo-estancia.png', darkBg: false },
 };
 
 export function getBrandForSlug(slug: string): BrandInfo {

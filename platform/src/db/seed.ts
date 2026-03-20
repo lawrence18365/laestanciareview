@@ -22,6 +22,7 @@ interface RestaurantDef {
   googleReviewUrl?: string;
   googlePlaceId?: string;
   googleThresholdOverride?: number;
+  region?: string;
   staff: (string | StaffMember)[];
 }
 
@@ -30,6 +31,7 @@ const allRestaurants: RestaurantDef[] = [
   {
     name: 'Estancia Angelopolis',
     slug: 'estancia-angelopolis',
+    region: 'central',
     googlePlaceId: 'ChIJ_41sFEfHz4UReU4Ibxwt7ZE',
     managerEmail: 'gerencia.ea.angelopolis@grupoestancia.com',
     managerPhone: '+522214256201',
@@ -59,6 +61,7 @@ const allRestaurants: RestaurantDef[] = [
   {
     name: 'Estancia Juarez',
     slug: 'estancia-juarez',
+    region: 'central',
     googlePlaceId: 'ChIJKWIzU9TGz4URvKPuW4Y3vwE',
     managerEmail: 'gerencia.ea.juarez@grupoestancia.com',
     managerPhone: '+522221362868',
@@ -78,6 +81,7 @@ const allRestaurants: RestaurantDef[] = [
   {
     name: 'Estancia Veracruz',
     slug: 'estancia-veracruz',
+    region: 'veracruz',
     googlePlaceId: 'ChIJ141TIDBBw4URPqBRbdzo5Vw',
     managerEmail: 'gerencia.ea.veracruz@grupoestancia.com',
     managerPhone: '+522221775746',
@@ -102,6 +106,7 @@ const allRestaurants: RestaurantDef[] = [
   {
     name: 'Estancia Xalapa',
     slug: 'estancia-xalapa',
+    region: 'veracruz',
     googlePlaceId: 'ChIJaSYEreUz24URIjxXUA0LOF8',
     managerEmail: 'gerencia.ea.xalapa@grupoestancia.com',
     managerPhone: '+524421198779',
@@ -120,6 +125,7 @@ const allRestaurants: RestaurantDef[] = [
   {
     name: 'Estancia Queretaro',
     slug: 'estancia-queretaro',
+    region: 'queretaro',
     googlePlaceId: 'ChIJy_ckRy9F04URgrAX2Hqek1o',
     managerEmail: 'esteban.ort@outlook.com',
     managerPhone: '+524426047157',
@@ -140,6 +146,8 @@ const allRestaurants: RestaurantDef[] = [
   {
     name: 'Estancia Leon',
     slug: 'estancia-leon',
+    region: 'central',
+    googlePlaceId: 'ChIJM1x5LlW-K4QRrPy1SMe-04E',
     googleReviewUrl: 'https://g.page/r/Caz8tUjHvtOBEBM/review',
     googleThresholdOverride: 5,
     staff: [
@@ -164,6 +172,7 @@ const allRestaurants: RestaurantDef[] = [
   {
     name: 'La Silla Juarez',
     slug: 'la-silla-juarez',
+    region: 'central',
     googlePlaceId: 'ChIJ7zN521PHz4URajdI1Mrgjyw',
     managerEmail: 'gerencia.ls.juarez@grupoestancia.com',
     managerPhone: '+525543565534',
@@ -183,6 +192,7 @@ const allRestaurants: RestaurantDef[] = [
   {
     name: 'La Silla Huexotitla',
     slug: 'la-silla-huexotitla',
+    region: 'central',
     googlePlaceId: 'ChIJxWZrJMjAz4URKG2NgyfCDzE',
     managerEmail: 'gerencia.ls.huexotitla@grupoestancia.com',
     managerPhone: '+522227875130',
@@ -202,6 +212,7 @@ const allRestaurants: RestaurantDef[] = [
   {
     name: "Harbor's Angelopolis",
     slug: 'harbors-angelopolis',
+    region: 'central',
     googlePlaceId: 'ChIJZxAQqW_Hz4URXMFcf152QiE',
     managerEmail: 'gerencia.h.angelopolis@grupoestancia.com',
     managerPhone: '+525525319180',
@@ -221,6 +232,7 @@ const allRestaurants: RestaurantDef[] = [
   {
     name: "Harbor's Veracruz",
     slug: 'harbors-veracruz',
+    region: 'veracruz',
     googlePlaceId: 'ChIJP5xgoflAw4URaJpv0XvfXx8',
     managerEmail: 'gerencia.h.veracruz@grupoestancia.com',
     managerPhone: '+522293935085',
@@ -241,6 +253,7 @@ const allRestaurants: RestaurantDef[] = [
   {
     name: 'SteakCompany Queretaro',
     slug: 'steakcompany-queretaro',
+    region: 'queretaro',
     googlePlaceId: 'ChIJT7EE0gBa04URvcdg-PTV4F4',
     managerEmail: 'ricardoc3@gmail.com',
     managerPhone: '+522221099111',
@@ -264,6 +277,7 @@ const allRestaurants: RestaurantDef[] = [
   {
     name: 'Regio Norte',
     slug: 'regio-norte',
+    region: 'central',
     googlePlaceId: 'ChIJp_TjY77Hz4UROpI4_OVO14w',
     managerEmail: 'gerencia@regionorte.mx',
     managerPhone: '+522227875130',
@@ -288,6 +302,13 @@ const ownerAccount = {
   isOwner: true,
 };
 
+// Regional manager accounts — each sees only their assigned restaurants
+const regionalAccounts = [
+  { name: 'Regional Querétaro', slug: 'regional-queretaro', region: 'queretaro' },
+  { name: 'Regional Veracruz', slug: 'regional-veracruz', region: 'veracruz' },
+  { name: 'Regional Central', slug: 'regional-central', region: 'central' },
+];
+
 async function seed() {
   const sql = neon(process.env.DATABASE_URL!);
   const db = drizzle(sql);
@@ -311,6 +332,7 @@ async function seed() {
         managerEmail: r.managerEmail ?? 'lawrencebrennan@gmail.com',
         managerPhone: r.managerPhone ?? null,
         alertPreference: 'all',
+        region: r.region ?? null,
       })
       .onConflictDoUpdate({
         target: restaurants.slug,
@@ -323,6 +345,7 @@ async function seed() {
           managerEmail: r.managerEmail ?? 'lawrencebrennan@gmail.com',
           managerPhone: r.managerPhone ?? null,
           alertPreference: 'all',
+          region: r.region ?? null,
         },
       })
       .returning();
@@ -378,7 +401,36 @@ async function seed() {
     .returning();
   console.log(`  Owner: ${owner.name} (id=${owner.id})`);
 
-  console.log(`\nSeeded ${allRestaurants.length} restaurants + 1 owner with ${totalStaff} total staff.`);
+  // Seed regional manager accounts
+  for (const r of regionalAccounts) {
+    const [regional] = await db
+      .insert(restaurants)
+      .values({
+        name: r.name,
+        slug: r.slug,
+        googleThreshold: 4,
+        adminPasswordHash: defaultPasswordHash,
+        isRegional: true,
+        region: r.region,
+        managerEmail: 'lawrencebrennan@gmail.com',
+        alertPreference: 'all',
+      })
+      .onConflictDoUpdate({
+        target: restaurants.slug,
+        set: {
+          name: r.name,
+          adminPasswordHash: defaultPasswordHash,
+          isRegional: true,
+          region: r.region,
+          managerEmail: 'lawrencebrennan@gmail.com',
+          alertPreference: 'all',
+        },
+      })
+      .returning();
+    console.log(`  Regional: ${regional.name} (id=${regional.id}, region=${r.region})`);
+  }
+
+  console.log(`\nSeeded ${allRestaurants.length} restaurants + 1 owner + ${regionalAccounts.length} regional managers with ${totalStaff} total staff.`);
   console.log('Done!');
 }
 

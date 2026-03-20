@@ -18,16 +18,25 @@ export default async function AppLayout({
 
   const brand = getBrandForSlug(session.slug);
   const isOwner = session.role === 'owner';
-  const newFeedbackCount = isOwner ? 0 : await getNewFeedbackCount(restaurant.id);
+  const isRegional = session.role === 'regional';
+  const isMultiView = isOwner || isRegional;
+  const newFeedbackCount = isMultiView ? 0 : await getNewFeedbackCount(restaurant.id);
+
+  const displayName = isOwner
+    ? t.nav.ownerDashboard
+    : isRegional
+      ? t.nav.regionalDashboard
+      : restaurant.name;
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg-base)' }}>
       <DashboardShell
-        restaurantName={isOwner ? t.nav.ownerDashboard : restaurant.name}
+        restaurantName={displayName}
         logoSrc={brand.logo}
         logoDarkBg={brand.darkBg}
         newFeedbackCount={newFeedbackCount}
-        isOwner={isOwner}
+        isOwner={isMultiView}
+        isRegional={isRegional}
         slug={session.slug}
       >
         {children}

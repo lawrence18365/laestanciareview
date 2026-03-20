@@ -44,7 +44,7 @@ export default function LoginPage() {
         return;
       }
 
-      router.push(data.role === 'owner' ? '/overview' : '/dashboard');
+      router.push(data.role === 'owner' || data.role === 'regional' ? '/overview' : '/dashboard');
     } catch {
       setError(t.login.somethingWrong);
     } finally {

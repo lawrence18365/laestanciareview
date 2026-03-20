@@ -3,11 +3,12 @@ import { cookies } from 'next/headers';
 const COOKIE_NAME = 'ratetap_session';
 const SEVEN_DAYS = 7 * 24 * 60 * 60; // seconds
 
-export type SessionRole = 'gm' | 'owner';
+export type SessionRole = 'gm' | 'owner' | 'regional';
 
 export interface SessionData {
   slug: string;
   role: SessionRole;
+  region?: string;
 }
 
 /**
@@ -54,11 +55,11 @@ async function hmacSign(message: string): Promise<string> {
 
 /**
  * Create a signed session cookie.
- * Cookie value: slug:role:expiry_unix:hmac
+ * Cookie value: slug:role:expiry_unix:hmac  OR  slug:role:region:expiry_unix:hmac
  */
-export async function createSession(slug: string, role: SessionRole = 'gm'): Promise<void> {
+export async function createSession(slug: string, role: SessionRole = 'gm', region?: string): Promise<void> {
   const expiry = Math.floor(Date.now() / 1000) + SEVEN_DAYS;
-  const payload = `${slug}:${role}:${expiry}`;
+  const payload = region ? `${slug}:${role}:${region}:${expiry}` : `${slug}:${role}:${expiry}`;
   const hmac = await hmacSign(payload);
   const value = `${payload}:${hmac}`;
 
@@ -122,6 +123,18 @@ async function parseSession(cookie: string): Promise<SessionData | null> {
     const expected = await hmacSign(`${slug}:${role}:${expiryStr}`);
     if (hmac !== expected) return null;
     return { slug, role: role as SessionRole };
+  }
+
+  // 5-part format: slug:role:region:expiry:hmac (regional managers)
+  if (parts.length === 5) {
+    const [slug, role, region, expiryStr, hmac] = parts;
+    if (role !== 'regional') return null;
+    const expiry = parseInt(expiryStr, 10);
+    if (isNaN(expiry)) return null;
+    if (Math.floor(Date.now() / 1000) > expiry) return null;
+    const expected = await hmacSign(`${slug}:${role}:${region}:${expiryStr}`);
+    if (hmac !== expected) return null;
+    return { slug, role: 'regional', region };
   }
 
   return null;

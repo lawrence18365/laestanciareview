@@ -13,6 +13,7 @@ export const t = {
     overview: 'Resumen',
     signOut: 'Cerrar Sesión',
     ownerDashboard: 'Panel del Propietario',
+    regionalDashboard: 'Panel Regional',
   },
 
   // ── Login ──

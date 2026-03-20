@@ -19,12 +19,18 @@ const ownerLinks = [
   { href: '/settings', label: t.nav.settings },
 ];
 
+const regionalLinks = [
+  { href: '/overview', label: t.nav.overview },
+  { href: '/settings', label: t.nav.settings },
+];
+
 export default function DashboardNav({
   restaurantName,
   logoSrc: _logoSrc,
   logoDarkBg: _logoDarkBg,
   newFeedbackCount,
   isOwner,
+  isRegional,
   onOpenGuide,
 }: {
   restaurantName: string;
@@ -32,11 +38,12 @@ export default function DashboardNav({
   logoDarkBg: boolean;
   newFeedbackCount?: number;
   isOwner?: boolean;
+  isRegional?: boolean;
   onOpenGuide?: () => void;
 }) {
   const router = useRouter();
   const pathname = usePathname();
-  const navLinks = isOwner ? ownerLinks : gmLinks;
+  const navLinks = isRegional ? regionalLinks : isOwner ? ownerLinks : gmLinks;
   const [mobileOpen, setMobileOpen] = useState(false);
 
   async function handleLogout() {

@@ -8,10 +8,10 @@ export default async function OverviewPage() {
   const session = await verifySession();
   if (!session) redirect('/login');
 
-  // Owner-only page
-  if (session.role !== 'owner') redirect('/dashboard');
+  // Owner & regional managers only
+  if (session.role !== 'owner' && session.role !== 'regional') redirect('/dashboard');
 
-  const stats = await getOverviewStats();
+  const stats = await getOverviewStats(session.role === 'regional' ? session.region : undefined);
 
   // Fetch unresolved counts, ROI stats, and Google trends in parallel
   const unresolvedCounts: Record<number, number> = {};

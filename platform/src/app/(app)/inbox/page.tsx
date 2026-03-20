@@ -7,7 +7,7 @@ export default async function InboxPage() {
   const session = await verifySession();
   if (!session) redirect('/login');
 
-  if (session.role === 'owner') redirect('/overview');
+  if (session.role === 'owner' || session.role === 'regional') redirect('/overview');
 
   const restaurant = await getRestaurantBySlug(session.slug);
   if (!restaurant) redirect('/login');

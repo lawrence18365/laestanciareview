@@ -58,8 +58,8 @@ export async function POST(req: NextRequest) {
         .where(eq(restaurants.id, restaurant.id));
     }
 
-    const role = restaurant.isOwner ? 'owner' : 'gm';
-    await createSession(slug, role);
+    const role = restaurant.isOwner ? 'owner' : restaurant.isRegional ? 'regional' : 'gm';
+    await createSession(slug, role, restaurant.isRegional ? (restaurant.region ?? undefined) : undefined);
 
     return Response.json({ ok: true, slug, role });
   } catch {

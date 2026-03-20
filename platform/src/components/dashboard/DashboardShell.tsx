@@ -10,6 +10,7 @@ export default function DashboardShell({
   logoDarkBg,
   newFeedbackCount,
   isOwner,
+  isRegional,
   slug,
   children,
 }: {
@@ -18,6 +19,7 @@ export default function DashboardShell({
   logoDarkBg: boolean;
   newFeedbackCount: number;
   isOwner: boolean;
+  isRegional?: boolean;
   slug: string;
   children: React.ReactNode;
 }) {
@@ -34,6 +36,7 @@ export default function DashboardShell({
         logoDarkBg={logoDarkBg}
         newFeedbackCount={newFeedbackCount}
         isOwner={isOwner}
+        isRegional={isRegional}
         onOpenGuide={openGuide}
       />
       <main>{children}</main>
