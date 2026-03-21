@@ -144,7 +144,7 @@ function mergeStaff(data: LiveData): MergedStaff[] {
     }
   }
 
-  merged.sort((a, b) => b.weekScans - a.weekScans);
+  merged.sort((a, b) => b.todayScans - a.todayScans || b.weekScans - a.weekScans);
   return merged;
 }
 
@@ -183,10 +183,10 @@ export default function LiveView({ restaurantName, logoSrc, logoDarkBg, googleRa
   const topPerformer = todayTopPerformers[0] || null;
 
   const protectionRate = useMemo(() => {
-    const total = data.week.totalScans;
+    const total = data.today.totalScans;
     if (total === 0) return 0;
-    return Math.round((data.week.sentToGoogle / total) * 100);
-  }, [data.week]);
+    return Math.round((data.today.sentToGoogle / total) * 100);
+  }, [data.today]);
 
   // Poll every 15s, pause when tab is hidden
   useEffect(() => {
@@ -434,7 +434,7 @@ export default function LiveView({ restaurantName, logoSrc, logoDarkBg, googleRa
       </div>
 
       {/* ── MAIN CONTENT: two columns ── */}
-      {data.week.totalScans === 0 && data.recentScans.length === 0 && team.length === 0 ? (
+      {data.today.totalScans === 0 && data.recentScans.length === 0 && team.length === 0 ? (
         <div style={{
           flex: 1,
           display: 'flex',
@@ -500,8 +500,8 @@ export default function LiveView({ restaurantName, logoSrc, logoDarkBg, googleRa
           {/* Protection Score Ring */}
           <ProtectionRing
             rate={protectionRate}
-            googleSends={data.week.sentToGoogle}
-            intercepted={data.week.belowFourCount}
+            googleSends={data.today.sentToGoogle}
+            intercepted={data.today.belowFourCount}
             large={fs}
           />
 
@@ -966,7 +966,6 @@ function StatBox({
   label,
   weekValue,
   todayValue,
-  lastWeekValue,
   large,
 }: {
   label: string;
@@ -976,8 +975,6 @@ function StatBox({
   large: boolean;
 }) {
   const fs = large;
-  const delta = weekValue - lastWeekValue;
-  const showDelta = lastWeekValue > 0 || weekValue > 0;
 
   return (
     <div
@@ -1000,7 +997,8 @@ function StatBox({
       >
         {label}
       </div>
-      
+
+      {/* Today = hero number */}
       <div
         className="editorial-serif"
         style={{
@@ -1011,12 +1009,12 @@ function StatBox({
           marginBottom: fs ? 16 : 12,
         }}
       >
-        {weekValue}
+        {todayValue}
       </div>
-      
-      <div style={{ 
-        display: 'flex', 
-        alignItems: 'center', 
+
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
         justifyContent: 'space-between',
         borderTop: `1px solid ${C.panelBorder}`,
         paddingTop: fs ? 12 : 10,
@@ -1024,25 +1022,12 @@ function StatBox({
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
            <span className="font-numeric" style={{ fontSize: fs ? '0.85rem' : '0.75rem', color: C.textMain, fontWeight: 500 }}>
-             {todayValue}
+             {weekValue}
            </span>
            <span style={{ fontSize: fs ? '0.6rem' : '0.55rem', color: C.textMuted, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-             HOY
+             ESTA SEMANA
            </span>
         </div>
-        {showDelta && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-            <span style={{ fontSize: fs ? '0.75rem' : '0.7rem', color: C.textMain }}>
-               {delta > 0 ? '↑' : delta < 0 ? '↓' : '-'}
-            </span>
-            <span className="font-numeric" style={{ fontSize: fs ? '0.85rem' : '0.75rem', fontWeight: 500, color: C.textMain }}>
-              {Math.abs(delta)}
-            </span>
-            <span style={{ fontSize: fs ? '0.6rem' : '0.55rem', color: C.textMuted, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-              VS SEMANA PASADA
-            </span>
-          </div>
-        )}
       </div>
     </div>
   );
@@ -1095,7 +1080,7 @@ function TeamTable({ team, large }: { team: MergedStaff[]; large: boolean }) {
           <tbody>
             {team.map((m, i) => {
               const rank = i + 1;
-              const hasActivity = m.weekScans > 0;
+              const hasActivity = m.todayScans > 0;
 
               return (
                 <tr
@@ -1115,23 +1100,10 @@ function TeamTable({ team, large }: { team: MergedStaff[]; large: boolean }) {
                   </TdCell>
                   <TdCell align="left" large={fs} style={{ fontWeight: 500, color: C.textMain }}>
                     {m.name}
-                    {m.todayScans > 0 && (
-                      <span style={{ 
-                        marginLeft: 10, 
-                        fontSize: '0.6rem', 
-                        color: C.textMuted, 
-                        border: `1px solid ${C.panelBorder}`,
-                        padding: '1px 5px', 
-                        fontWeight: 600,
-                        fontFamily: 'monospace'
-                      }}>
-                        +{m.todayScans}
-                      </span>
-                    )}
                   </TdCell>
-                  <TdCell align="right" large={fs} className="font-numeric" style={{ fontWeight: 500 }}>{m.weekScans}</TdCell>
-                  <TdCell align="right" large={fs} className="font-numeric" style={{ color: m.weekFiveStars > 0 ? C.textMain : C.textDim }}>{m.weekFiveStars}</TdCell>
-                  <TdCell align="right" large={fs} className="font-numeric" style={{ color: m.weekBelowFour > 0 ? C.textMain : C.textDim }}>{m.weekBelowFour}</TdCell>
+                  <TdCell align="right" large={fs} className="font-numeric" style={{ fontWeight: 500 }}>{m.todayScans}</TdCell>
+                  <TdCell align="right" large={fs} className="font-numeric" style={{ color: m.todayFiveStars > 0 ? C.textMain : C.textDim }}>{m.todayFiveStars}</TdCell>
+                  <TdCell align="right" large={fs} className="font-numeric" style={{ color: m.todayBelowFour > 0 ? C.textMain : C.textDim }}>{m.todayBelowFour}</TdCell>
                   <TdCell align="right" large={fs} className="font-numeric" style={{ color: C.textMuted }}>
                     {m.avgRating > 0 ? m.avgRating.toFixed(1) : '-'}
                   </TdCell>
