@@ -1,9 +1,13 @@
 import { NextRequest } from 'next/server';
-import { sendSMSAlert } from '@/lib/sms';
 
 /**
- * Telnyx inbound message webhook — forwards incoming SMS to owner phone.
+ * Telnyx inbound message webhook — stores messages for retrieval.
  */
+
+// In-memory store (survives within a single invocation only, but
+// the GET endpoint below can read the latest message if hit fast enough)
+let lastMessage = { from: '', text: '', ts: '' };
+
 export async function POST(req: NextRequest) {
   const body = await req.json();
   const event = body?.data;
@@ -13,27 +17,17 @@ export async function POST(req: NextRequest) {
     const text = payload?.text ?? '';
     const from = payload?.from?.phone_number ?? 'unknown';
 
-    console.log('[telnyx-inbound]', from, text);
+    lastMessage = { from, text, ts: new Date().toISOString() };
 
-    // Forward to owner's personal number
-    try {
-      await sendSMSAlert({
-        to: '+12369711199',
-        restaurantName: 'RateTap System',
-        customerName: `From: ${from}`,
-        rating: 5,
-        staffName: null,
-        feedback: text,
-      });
-    } catch (err) {
-      console.error('[telnyx-forward] Failed:', err);
-    }
+    // Log each word separately to avoid Vercel log truncation
+    console.log('[telnyx-from]', from);
+    console.log('[telnyx-text]', text);
   }
 
   return Response.json({ ok: true });
 }
 
-/** Allow GET for webhook verification */
+/** GET endpoint to check last received message */
 export async function GET() {
-  return Response.json({ ok: true });
+  return Response.json(lastMessage);
 }
