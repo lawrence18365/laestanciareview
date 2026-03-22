@@ -112,12 +112,11 @@ export async function POST(req: NextRequest) {
         );
       }
 
-      // WhatsApp alert (via CallMeBot)
-      if (restaurant.whatsappAlerts && restaurant.managerPhone && restaurant.callmebotApiKey) {
+      // WhatsApp alert (via Green API)
+      if (restaurant.whatsappAlerts && restaurant.managerPhone) {
         alerts.push(
           sendWhatsAppAlert({
             to: restaurant.managerPhone,
-            apiKey: restaurant.callmebotApiKey,
             restaurantName: restaurant.name,
             customerName: updated.customerName,
             rating: updated.rating,

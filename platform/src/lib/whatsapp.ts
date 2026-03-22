@@ -1,19 +1,40 @@
 /**
- * WhatsApp alert integration via CallMeBot (free, no business docs needed).
+ * WhatsApp alerts via Green API (green-api.com).
  *
- * Setup per manager:
- *   1. Add +34 644 20 47 56 to phone contacts
- *   2. Send "I allow callmebot to send me messages" via WhatsApp
- *   3. Receive API key, store it in restaurant settings (callmebotApiKey)
+ * Setup:
+ *   1. Sign up at https://console.green-api.com
+ *   2. Create an instance → get idInstance + apiTokenInstance
+ *   3. Scan QR code with WhatsApp (Settings > Linked Devices)
+ *   4. Set GREENAPI_ID_INSTANCE and GREENAPI_API_TOKEN in env
  *
- * Also supports Meta Cloud API as a fallback if configured.
+ * Cost: $12/mo Business plan (unlimited chats & messages)
+ * Docs: https://green-api.com/en/docs/api/sending/SendMessage/
  */
 
-// ── CallMeBot (primary — free, no verification) ─────────────────────
+function getConfig() {
+  const idInstance = process.env.GREENAPI_ID_INSTANCE?.trim();
+  const apiToken = process.env.GREENAPI_API_TOKEN?.trim();
+  if (!idInstance || !apiToken) return null;
+  return { idInstance, apiToken };
+}
+
+/**
+ * Format phone number as Green API chatId.
+ * Format: countrycode + number + @c.us (e.g. "5215551234567@c.us")
+ */
+function toChatId(phone: string): string {
+  let digits = phone.replace(/\D/g, '');
+  // Strip old Mexican mobile "1" prefix: 521XXXXXXXXXX → 52XXXXXXXXXX
+  if (digits.length === 13 && digits.startsWith('521')) {
+    digits = '52' + digits.slice(3);
+  }
+  // 10-digit Mexican number without country code
+  if (digits.length === 10) digits = '52' + digits;
+  return `${digits}@c.us`;
+}
 
 interface WhatsAppAlertParams {
   to: string;
-  apiKey: string;
   restaurantName: string;
   customerName: string | null;
   rating: number;
@@ -23,13 +44,18 @@ interface WhatsAppAlertParams {
 
 export async function sendWhatsAppAlert({
   to,
-  apiKey,
   restaurantName,
   customerName,
   rating,
   staffName,
   feedback,
 }: WhatsAppAlertParams) {
+  const cfg = getConfig();
+  if (!cfg) {
+    console.warn('[whatsapp] Green API not configured — skipping');
+    return;
+  }
+
   const baseUrl = (process.env.NEXT_PUBLIC_BASE_URL ?? 'https://app.ratetapmx.com')
     .replace(/\\n/g, '')
     .trim();
@@ -48,26 +74,22 @@ export async function sendWhatsAppAlert({
   lines.push('');
   lines.push(`📋 Ver en Inbox: ${baseUrl}/inbox`);
 
-  const message = lines.join('\n');
+  const chatId = toChatId(to);
 
-  // Normalize phone: ensure + prefix
-  let phone = to.trim();
-  if (!phone.startsWith('+')) phone = `+${phone}`;
-  // Strip old Mexican mobile "1" prefix: +521XXXXXXXXXX → +52XXXXXXXXXX
-  const digits = phone.replace(/\D/g, '');
-  if (digits.length === 13 && digits.startsWith('521')) {
-    phone = '+52' + digits.slice(3);
-  }
-
-  const url = new URL('https://api.callmebot.com/whatsapp.php');
-  url.searchParams.set('phone', phone);
-  url.searchParams.set('text', message);
-  url.searchParams.set('apikey', apiKey);
-
-  const res = await fetch(url.toString());
+  const res = await fetch(
+    `https://api.greenapi.com/waInstance${cfg.idInstance}/sendMessage/${cfg.apiToken}`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        chatId,
+        message: lines.join('\n'),
+      }),
+    },
+  );
 
   if (!res.ok) {
     const body = await res.text();
-    throw new Error(`CallMeBot error ${res.status}: ${body}`);
+    throw new Error(`Green API error ${res.status}: ${body}`);
   }
 }

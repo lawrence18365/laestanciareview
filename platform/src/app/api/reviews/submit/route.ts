@@ -89,9 +89,9 @@ export async function POST(req: NextRequest) {
             .catch((err) => console.error('[sms] Failed to send instant alert:', err)),
         );
       }
-      if (restaurant.whatsappAlerts && restaurant.managerPhone && restaurant.callmebotApiKey) {
+      if (restaurant.whatsappAlerts && restaurant.managerPhone) {
         alerts.push(
-          sendWhatsAppAlert({ to: restaurant.managerPhone, apiKey: restaurant.callmebotApiKey, ...alertParams })
+          sendWhatsAppAlert({ to: restaurant.managerPhone, ...alertParams })
             .catch((err) => console.error('[whatsapp] Failed to send instant alert:', err)),
         );
       }
