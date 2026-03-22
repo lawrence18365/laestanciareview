@@ -1,28 +1,28 @@
 /**
- * WhatsApp alerts via Green API (green-api.com).
+ * WhatsApp alerts via Twilio WhatsApp Sandbox.
  *
  * Setup:
- *   1. Sign up at https://console.green-api.com
- *   2. Create an instance → get idInstance + apiTokenInstance
- *   3. Scan QR code with WhatsApp (Settings > Linked Devices)
- *   4. Set GREENAPI_ID_INSTANCE and GREENAPI_API_TOKEN in env
+ *   1. Go to Twilio Console → Messaging → Try it out → WhatsApp
+ *   2. Note the sandbox code (e.g. "join xxx-yyy")
+ *   3. Set TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_WHATSAPP_FROM in env
+ *   4. Each GM must send "join <code>" to the sandbox number to opt in
  *
- * Cost: $12/mo Business plan (unlimited chats & messages)
- * Docs: https://green-api.com/en/docs/api/sending/SendMessage/
+ * Docs: https://www.twilio.com/docs/whatsapp/sandbox
  */
 
 function getConfig() {
-  const idInstance = process.env.GREENAPI_ID_INSTANCE?.trim();
-  const apiToken = process.env.GREENAPI_API_TOKEN?.trim();
-  if (!idInstance || !apiToken) return null;
-  return { idInstance, apiToken };
+  const accountSid = process.env.TWILIO_ACCOUNT_SID?.trim();
+  const authToken = process.env.TWILIO_AUTH_TOKEN?.trim();
+  const from = process.env.TWILIO_WHATSAPP_FROM?.trim();
+  if (!accountSid || !authToken || !from) return null;
+  return { accountSid, authToken, from };
 }
 
 /**
- * Format phone number as Green API chatId.
- * Format: countrycode + number + @c.us (e.g. "5215551234567@c.us")
+ * Format phone number to Twilio WhatsApp format.
+ * Returns "whatsapp:+521234567890".
  */
-function toChatId(phone: string): string {
+function toWhatsAppNumber(phone: string): string {
   let digits = phone.replace(/\D/g, '');
   // Strip old Mexican mobile "1" prefix: 521XXXXXXXXXX → 52XXXXXXXXXX
   if (digits.length === 13 && digits.startsWith('521')) {
@@ -30,7 +30,7 @@ function toChatId(phone: string): string {
   }
   // 10-digit Mexican number without country code
   if (digits.length === 10) digits = '52' + digits;
-  return `${digits}@c.us`;
+  return `whatsapp:+${digits}`;
 }
 
 interface WhatsAppAlertParams {
@@ -52,7 +52,7 @@ export async function sendWhatsAppAlert({
 }: WhatsAppAlertParams) {
   const cfg = getConfig();
   if (!cfg) {
-    console.warn('[whatsapp] Green API not configured — skipping');
+    console.warn('[whatsapp] Twilio not configured — skipping');
     return;
   }
 
@@ -74,22 +74,28 @@ export async function sendWhatsAppAlert({
   lines.push('');
   lines.push(`📋 Ver en Inbox: ${baseUrl}/inbox`);
 
-  const chatId = toChatId(to);
+  const auth = Buffer.from(`${cfg.accountSid}:${cfg.authToken}`).toString('base64');
+
+  const body = new URLSearchParams({
+    To: toWhatsAppNumber(to),
+    From: `whatsapp:${cfg.from}`,
+    Body: lines.join('\n'),
+  });
 
   const res = await fetch(
-    `https://api.greenapi.com/waInstance${cfg.idInstance}/sendMessage/${cfg.apiToken}`,
+    `https://api.twilio.com/2010-04-01/Accounts/${cfg.accountSid}/Messages.json`,
     {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        chatId,
-        message: lines.join('\n'),
-      }),
+      headers: {
+        Authorization: `Basic ${auth}`,
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: body.toString(),
     },
   );
 
   if (!res.ok) {
-    const body = await res.text();
-    throw new Error(`Green API error ${res.status}: ${body}`);
+    const text = await res.text();
+    throw new Error(`Twilio WhatsApp error ${res.status}: ${text}`);
   }
 }

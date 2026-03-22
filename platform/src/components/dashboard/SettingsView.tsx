@@ -14,7 +14,6 @@ interface Props {
     alertPreference: string;
     smsAlerts: boolean;
     whatsappAlerts: boolean;
-    callmebotApiKey: string;
   };
 }
 
@@ -76,7 +75,6 @@ export default function SettingsView({ settings }: Props) {
   const [alertPreference, setAlertPreference] = useState(settings.alertPreference);
   const [smsAlerts, setSmsAlerts] = useState(settings.smsAlerts);
   const [whatsappAlerts, setWhatsappAlerts] = useState(settings.whatsappAlerts);
-  const [callmebotApiKey, setCallmebotApiKey] = useState(settings.callmebotApiKey);
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -94,7 +92,7 @@ export default function SettingsView({ settings }: Props) {
       const res = await fetch('/api/auth/settings', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ googleReviewUrl, googleThreshold, managerEmail, managerPhone, alertPreference, smsAlerts, whatsappAlerts, callmebotApiKey }),
+        body: JSON.stringify({ googleReviewUrl, googleThreshold, managerEmail, managerPhone, alertPreference, smsAlerts, whatsappAlerts }),
       });
 
       if (!res.ok) {
@@ -327,16 +325,25 @@ export default function SettingsView({ settings }: Props) {
                 {t.settings.whatsappHint}
               </p>
               {whatsappAlerts && (
-                <div style={{ marginTop: '0.5rem', marginLeft: '1.6rem' }}>
-                  <input
-                    type="text"
-                    value={callmebotApiKey}
-                    onChange={(e) => setCallmebotApiKey(e.target.value)}
-                    placeholder={t.settings.callmebotPlaceholder}
-                    style={{ ...inputStyle, maxWidth: 300 }}
-                  />
-                  <p style={{ margin: '0.3rem 0 0', fontSize: '0.75rem', color: 'var(--text-dim)' }}>
-                    {t.settings.callmebotSetup}
+                <div style={{
+                  marginTop: '0.75rem',
+                  marginLeft: '1.6rem',
+                  padding: '1rem 1.25rem',
+                  background: 'rgba(37, 211, 102, 0.06)',
+                  borderLeft: '3px solid #25D366',
+                }}>
+                  <p style={{ margin: 0, fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-main)' }}>
+                    {t.settings.whatsappActivateTitle}
+                  </p>
+                  <p style={{ margin: '0.5rem 0 0', fontSize: '0.8rem', color: 'var(--text-dim)', lineHeight: 1.6 }}>
+                    {t.settings.whatsappActivateStep1}<br />
+                    {t.settings.whatsappActivateStep2(
+                      process.env.NEXT_PUBLIC_TWILIO_SANDBOX_CODE || 'join ***'
+                    )}<br />
+                    {t.settings.whatsappActivateStep3}
+                  </p>
+                  <p style={{ margin: '0.5rem 0 0', fontSize: '0.75rem', color: '#25D366', fontWeight: 500 }}>
+                    {t.settings.whatsappActivated}
                   </p>
                 </div>
               )}

@@ -22,7 +22,6 @@ export default async function SettingsPage() {
         alertPreference: restaurant.alertPreference ?? 'all',
         smsAlerts: restaurant.smsAlerts ?? false,
         whatsappAlerts: restaurant.whatsappAlerts ?? false,
-        callmebotApiKey: restaurant.callmebotApiKey ?? '',
       }}
     />
   );

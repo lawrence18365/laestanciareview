@@ -49,6 +49,10 @@ const palettes: Record<string, { bg: string; glow: string }> = {
     bg: 'linear-gradient(145deg, #0C0A09 0%, #292524 50%, #57534E 100%)',
     glow: 'radial-gradient(ellipse at 40% 60%, rgba(168,162,158,0.15) 0%, transparent 60%)',
   },
+  whatsapp: {
+    bg: 'linear-gradient(145deg, #064E3B 0%, #065F46 40%, #25D366 100%)',
+    glow: 'radial-gradient(ellipse at 50% 50%, rgba(37,211,102,0.3) 0%, transparent 60%)',
+  },
   ready: {
     bg: 'linear-gradient(145deg, #78350F 0%, #B45309 35%, #D97706 65%, #F59E0B 100%)',
     glow: 'radial-gradient(ellipse at 50% 50%, rgba(251,191,36,0.3) 0%, transparent 60%)',
@@ -65,6 +69,8 @@ function getPalette(id: string) {
 
 /* ── Step definitions ── */
 
+const sandboxCode = process.env.NEXT_PUBLIC_TWILIO_SANDBOX_CODE || 'join ***';
+
 const gmSteps: Step[] = [
   { id: 'welcome', icon: '★', title: t.onboarding.welcomeTitle, subtitle: t.onboarding.welcomeSubtitle, body: t.onboarding.welcomeBody, tip: t.onboarding.welcomeTip },
   { id: 'review-flow', icon: '📱', title: t.onboarding.reviewFlowTitle, subtitle: t.onboarding.reviewFlowSubtitle, body: t.onboarding.reviewFlowBody, tip: t.onboarding.reviewFlowTip },
@@ -74,6 +80,7 @@ const gmSteps: Step[] = [
   { id: 'staff', icon: '👥', title: t.onboarding.staffTitle, subtitle: t.onboarding.staffSubtitle, body: t.onboarding.staffBody, tip: t.onboarding.staffTip },
   { id: 'analytics', icon: '📈', title: t.onboarding.analyticsTitle, subtitle: t.onboarding.analyticsSubtitle, body: t.onboarding.analyticsBody },
   { id: 'settings', icon: '⚙', title: t.onboarding.settingsTitle, subtitle: t.onboarding.settingsSubtitle, body: t.onboarding.settingsBody, tip: t.onboarding.settingsTip },
+  { id: 'whatsapp', icon: '💬', title: t.onboarding.whatsappTitle, subtitle: t.onboarding.whatsappSubtitle, body: t.onboarding.whatsappBody, tip: t.onboarding.whatsappTip(sandboxCode) },
   { id: 'ready', icon: '🚀', title: t.onboarding.readyTitle, subtitle: t.onboarding.readySubtitle, body: t.onboarding.readyBody },
 ];
 

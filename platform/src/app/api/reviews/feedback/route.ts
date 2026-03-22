@@ -64,7 +64,6 @@ export async function POST(req: NextRequest) {
       alertPreference: restaurants.alertPreference,
       smsAlerts: restaurants.smsAlerts,
       whatsappAlerts: restaurants.whatsappAlerts,
-      callmebotApiKey: restaurants.callmebotApiKey,
       googleThreshold: restaurants.googleThreshold,
     })
     .from(restaurants)
@@ -112,7 +111,7 @@ export async function POST(req: NextRequest) {
         );
       }
 
-      // WhatsApp alert (via Green API)
+      // WhatsApp alert (via Twilio)
       if (restaurant.whatsappAlerts && restaurant.managerPhone) {
         alerts.push(
           sendWhatsAppAlert({
