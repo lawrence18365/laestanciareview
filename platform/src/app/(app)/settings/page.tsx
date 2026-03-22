@@ -21,6 +21,7 @@ export default async function SettingsPage() {
         managerPhone: restaurant.managerPhone ?? '',
         alertPreference: restaurant.alertPreference ?? 'all',
         smsAlerts: restaurant.smsAlerts ?? false,
+        whatsappAlerts: restaurant.whatsappAlerts ?? false,
       }}
     />
   );

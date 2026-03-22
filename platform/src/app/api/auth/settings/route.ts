@@ -22,6 +22,7 @@ export async function GET() {
     managerPhone: restaurant.managerPhone,
     alertPreference: restaurant.alertPreference,
     smsAlerts: restaurant.smsAlerts,
+    whatsappAlerts: restaurant.whatsappAlerts,
     googlePlaceId: restaurant.googlePlaceId,
     googleRating: restaurant.googleRating ? parseFloat(restaurant.googleRating) : null,
     googleReviewCount: restaurant.googleReviewCount,
@@ -66,6 +67,9 @@ export async function PATCH(req: Request) {
   }
   if (typeof body.smsAlerts === 'boolean') {
     updates.smsAlerts = body.smsAlerts;
+  }
+  if (typeof body.whatsappAlerts === 'boolean') {
+    updates.whatsappAlerts = body.whatsappAlerts;
   }
   if (typeof body.alertPreference === 'string' && ['all', 'low', 'threshold', 'off'].includes(body.alertPreference)) {
     updates.alertPreference = body.alertPreference;
@@ -118,6 +122,7 @@ export async function PATCH(req: Request) {
     managerPhone: updated.managerPhone,
     alertPreference: updated.alertPreference,
     smsAlerts: updated.smsAlerts,
+    whatsappAlerts: updated.whatsappAlerts,
     googlePlaceId: updated.googlePlaceId,
     googleRating: updated.googleRating ? parseFloat(updated.googleRating) : null,
     googleReviewCount: updated.googleReviewCount,

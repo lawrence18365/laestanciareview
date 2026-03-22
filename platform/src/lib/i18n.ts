@@ -242,9 +242,11 @@ export const t = {
     lowRatingsOnly: 'Solo calificaciones bajas (1-2 estrellas)',
     belowGoogleThreshold: 'Por debajo del umbral de Google',
     off: 'Desactivado',
-    alertHint: 'Controla cuándo recibes alertas por email y SMS sobre nuevos comentarios de clientes',
+    alertHint: 'Controla cuándo recibes alertas por email, SMS y WhatsApp sobre nuevos comentarios de clientes',
     enableSmsAlerts: 'Activar alertas SMS',
     smsHint: 'Envía un mensaje de texto a tu teléfono cuando un comentario coincida con el disparador de alerta',
+    enableWhatsappAlerts: 'Activar alertas WhatsApp',
+    whatsappHint: 'Envía un mensaje de WhatsApp al número del gerente cuando un comentario coincida con el disparador de alerta',
     saving: 'Guardando...',
     saveSettings: 'Guardar Ajustes',
     changePassword: 'Cambiar Contraseña',
@@ -373,8 +375,8 @@ export const t = {
 
     settingsTitle: 'Ajustes',
     settingsSubtitle: 'Configuración del restaurante — /settings',
-    settingsBody: 'Configura tu URL de Google Reviews, el umbral de redirección (qué calificación mínima va a Google), las alertas por email y SMS, y el teléfono del gerente. También puedes cambiar tu contraseña aquí.',
-    settingsTip: 'Recomendamos configurar las alertas SMS para recibir notificaciones instantáneas cuando llegue una reseña negativa.',
+    settingsBody: 'Configura tu URL de Google Reviews, el umbral de redirección (qué calificación mínima va a Google), las alertas por email, SMS y WhatsApp, y el teléfono del gerente. También puedes cambiar tu contraseña aquí.',
+    settingsTip: 'Recomendamos configurar las alertas por WhatsApp o SMS para recibir notificaciones instantáneas cuando llegue una reseña negativa.',
 
     readyTitle: '¡Todo Listo!',
     readySubtitle: 'Estás preparado para comenzar',

@@ -5,6 +5,7 @@ import { eq, and, isNull } from 'drizzle-orm';
 import { submitFeedbackSchema } from '@/lib/validations';
 import { sendFeedbackAlert } from '@/lib/email';
 import { sendSMSAlert } from '@/lib/sms';
+import { sendWhatsAppAlert } from '@/lib/whatsapp';
 import { checkRateLimitAsync, getClientIP, rateLimitResponse } from '@/lib/rate-limit';
 
 // 10 feedback submissions per minute per IP
@@ -62,6 +63,7 @@ export async function POST(req: NextRequest) {
       managerPhone: restaurants.managerPhone,
       alertPreference: restaurants.alertPreference,
       smsAlerts: restaurants.smsAlerts,
+      whatsappAlerts: restaurants.whatsappAlerts,
       googleThreshold: restaurants.googleThreshold,
     })
     .from(restaurants)
@@ -106,6 +108,20 @@ export async function POST(req: NextRequest) {
             staffName: updated.staffName,
             feedback: feedback,
           }).catch((err) => console.error('[sms] Failed to send alert:', err)),
+        );
+      }
+
+      // WhatsApp alert
+      if (restaurant.whatsappAlerts && restaurant.managerPhone) {
+        alerts.push(
+          sendWhatsAppAlert({
+            to: restaurant.managerPhone,
+            restaurantName: restaurant.name,
+            customerName: updated.customerName,
+            rating: updated.rating,
+            staffName: updated.staffName,
+            feedback: feedback,
+          }).catch((err) => console.error('[whatsapp] Failed to send alert:', err)),
         );
       }
 

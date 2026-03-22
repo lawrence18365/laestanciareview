@@ -13,6 +13,7 @@ interface Props {
     managerPhone: string;
     alertPreference: string;
     smsAlerts: boolean;
+    whatsappAlerts: boolean;
   };
 }
 
@@ -73,6 +74,7 @@ export default function SettingsView({ settings }: Props) {
   const [managerPhone, setManagerPhone] = useState(settings.managerPhone);
   const [alertPreference, setAlertPreference] = useState(settings.alertPreference);
   const [smsAlerts, setSmsAlerts] = useState(settings.smsAlerts);
+  const [whatsappAlerts, setWhatsappAlerts] = useState(settings.whatsappAlerts);
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -90,7 +92,7 @@ export default function SettingsView({ settings }: Props) {
       const res = await fetch('/api/auth/settings', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ googleReviewUrl, googleThreshold, managerEmail, managerPhone, alertPreference, smsAlerts }),
+        body: JSON.stringify({ googleReviewUrl, googleThreshold, managerEmail, managerPhone, alertPreference, smsAlerts, whatsappAlerts }),
       });
 
       if (!res.ok) {
@@ -304,6 +306,23 @@ export default function SettingsView({ settings }: Props) {
               </label>
               <p style={{ margin: '0.3rem 0 0 1.6rem', fontSize: '0.8rem', color: 'var(--text-dim)' }}>
                 {t.settings.smsHint}
+              </p>
+            </div>
+
+            <div>
+              <label style={{ ...labelStyle, display: 'flex', alignItems: 'center', gap: '0.6rem', cursor: 'pointer' }}>
+                <input
+                  type="checkbox"
+                  checked={whatsappAlerts}
+                  onChange={(e) => setWhatsappAlerts(e.target.checked)}
+                  style={{ width: 18, height: 18, accentColor: '#25D366', cursor: 'pointer' }}
+                />
+                <span style={{ textTransform: 'none', fontSize: '0.9rem', fontWeight: 500, color: 'var(--text-main)' }}>
+                  {t.settings.enableWhatsappAlerts}
+                </span>
+              </label>
+              <p style={{ margin: '0.3rem 0 0 1.6rem', fontSize: '0.8rem', color: 'var(--text-dim)' }}>
+                {t.settings.whatsappHint}
               </p>
             </div>
 
