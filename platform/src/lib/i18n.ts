@@ -247,6 +247,8 @@ export const t = {
     smsHint: 'Envía un mensaje de texto a tu teléfono cuando un comentario coincida con el disparador de alerta',
     enableWhatsappAlerts: 'Activar alertas WhatsApp',
     whatsappHint: 'Envía un mensaje de WhatsApp al número del gerente cuando un comentario coincida con el disparador de alerta',
+    callmebotPlaceholder: 'API Key de CallMeBot',
+    callmebotSetup: 'Agrega +34 644 20 47 56 a contactos → envía "I allow callmebot to send me messages" → recibirás tu API key',
     saving: 'Guardando...',
     saveSettings: 'Guardar Ajustes',
     changePassword: 'Cambiar Contraseña',

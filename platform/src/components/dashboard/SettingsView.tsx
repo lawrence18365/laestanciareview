@@ -14,6 +14,7 @@ interface Props {
     alertPreference: string;
     smsAlerts: boolean;
     whatsappAlerts: boolean;
+    callmebotApiKey: string;
   };
 }
 
@@ -75,6 +76,7 @@ export default function SettingsView({ settings }: Props) {
   const [alertPreference, setAlertPreference] = useState(settings.alertPreference);
   const [smsAlerts, setSmsAlerts] = useState(settings.smsAlerts);
   const [whatsappAlerts, setWhatsappAlerts] = useState(settings.whatsappAlerts);
+  const [callmebotApiKey, setCallmebotApiKey] = useState(settings.callmebotApiKey);
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -92,7 +94,7 @@ export default function SettingsView({ settings }: Props) {
       const res = await fetch('/api/auth/settings', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ googleReviewUrl, googleThreshold, managerEmail, managerPhone, alertPreference, smsAlerts, whatsappAlerts }),
+        body: JSON.stringify({ googleReviewUrl, googleThreshold, managerEmail, managerPhone, alertPreference, smsAlerts, whatsappAlerts, callmebotApiKey }),
       });
 
       if (!res.ok) {
@@ -324,6 +326,20 @@ export default function SettingsView({ settings }: Props) {
               <p style={{ margin: '0.3rem 0 0 1.6rem', fontSize: '0.8rem', color: 'var(--text-dim)' }}>
                 {t.settings.whatsappHint}
               </p>
+              {whatsappAlerts && (
+                <div style={{ marginTop: '0.5rem', marginLeft: '1.6rem' }}>
+                  <input
+                    type="text"
+                    value={callmebotApiKey}
+                    onChange={(e) => setCallmebotApiKey(e.target.value)}
+                    placeholder={t.settings.callmebotPlaceholder}
+                    style={{ ...inputStyle, maxWidth: 300 }}
+                  />
+                  <p style={{ margin: '0.3rem 0 0', fontSize: '0.75rem', color: 'var(--text-dim)' }}>
+                    {t.settings.callmebotSetup}
+                  </p>
+                </div>
+              )}
             </div>
 
             <div style={{ paddingTop: '0.5rem' }}>

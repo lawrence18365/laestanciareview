@@ -32,6 +32,7 @@ export const restaurants = pgTable('restaurants', {
   alertPreference: text('alert_preference').notNull().default('all'),
   smsAlerts: boolean('sms_alerts').notNull().default(false),
   whatsappAlerts: boolean('whatsapp_alerts').notNull().default(false),
+  callmebotApiKey: text('callmebot_api_key'),
   googlePlaceId: text('google_place_id'),
   googleRating: text('google_rating'),
   googleReviewCount: integer('google_review_count'),

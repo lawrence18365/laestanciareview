@@ -23,6 +23,7 @@ export async function GET() {
     alertPreference: restaurant.alertPreference,
     smsAlerts: restaurant.smsAlerts,
     whatsappAlerts: restaurant.whatsappAlerts,
+    callmebotApiKey: restaurant.callmebotApiKey,
     googlePlaceId: restaurant.googlePlaceId,
     googleRating: restaurant.googleRating ? parseFloat(restaurant.googleRating) : null,
     googleReviewCount: restaurant.googleReviewCount,
@@ -70,6 +71,9 @@ export async function PATCH(req: Request) {
   }
   if (typeof body.whatsappAlerts === 'boolean') {
     updates.whatsappAlerts = body.whatsappAlerts;
+  }
+  if (typeof body.callmebotApiKey === 'string') {
+    updates.callmebotApiKey = body.callmebotApiKey || null;
   }
   if (typeof body.alertPreference === 'string' && ['all', 'low', 'threshold', 'off'].includes(body.alertPreference)) {
     updates.alertPreference = body.alertPreference;
@@ -123,6 +127,7 @@ export async function PATCH(req: Request) {
     alertPreference: updated.alertPreference,
     smsAlerts: updated.smsAlerts,
     whatsappAlerts: updated.whatsappAlerts,
+    callmebotApiKey: updated.callmebotApiKey,
     googlePlaceId: updated.googlePlaceId,
     googleRating: updated.googleRating ? parseFloat(updated.googleRating) : null,
     googleReviewCount: updated.googleReviewCount,

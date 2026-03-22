@@ -1,39 +1,19 @@
 /**
- * WhatsApp Business Cloud API integration for sending alert messages.
+ * WhatsApp alert integration via CallMeBot (free, no business docs needed).
  *
- * Required env vars:
- *   WHATSAPP_TOKEN          – Permanent access token from Meta Business
- *   WHATSAPP_PHONE_ID       – Phone number ID (not the phone number itself)
+ * Setup per manager:
+ *   1. Add +34 644 20 47 56 to phone contacts
+ *   2. Send "I allow callmebot to send me messages" via WhatsApp
+ *   3. Receive API key, store it in restaurant settings (callmebotApiKey)
  *
- * Docs: https://developers.facebook.com/docs/whatsapp/cloud-api/messages/text-messages
+ * Also supports Meta Cloud API as a fallback if configured.
  */
 
-const API_VERSION = 'v21.0';
-
-function getConfig() {
-  const token = process.env.WHATSAPP_TOKEN?.trim();
-  const phoneId = process.env.WHATSAPP_PHONE_ID?.trim();
-  if (!token || !phoneId) return null;
-  return { token, phoneId };
-}
-
-/**
- * Normalize a phone number to E.164 (digits only, no +).
- * WhatsApp Cloud API expects the number WITHOUT the leading +.
- */
-function normalizePhone(phone: string): string {
-  let digits = phone.replace(/\D/g, '');
-  // Strip old Mexican mobile "1" prefix: 521XXXXXXXXXX → 52XXXXXXXXXX
-  if (digits.length === 13 && digits.startsWith('521')) {
-    digits = '52' + digits.slice(3);
-  }
-  // 10-digit Mexican number without country code
-  if (digits.length === 10) digits = '52' + digits;
-  return digits;
-}
+// ── CallMeBot (primary — free, no verification) ─────────────────────
 
 interface WhatsAppAlertParams {
   to: string;
+  apiKey: string;
   restaurantName: string;
   customerName: string | null;
   rating: number;
@@ -43,19 +23,14 @@ interface WhatsAppAlertParams {
 
 export async function sendWhatsAppAlert({
   to,
+  apiKey,
   restaurantName,
   customerName,
   rating,
   staffName,
   feedback,
 }: WhatsAppAlertParams) {
-  const cfg = getConfig();
-  if (!cfg) {
-    console.warn('[whatsapp] Not configured — skipping WhatsApp alert');
-    return;
-  }
-
-  const baseUrl = (process.env.NEXT_PUBLIC_BASE_URL ?? 'https://app.ratetap.com')
+  const baseUrl = (process.env.NEXT_PUBLIC_BASE_URL ?? 'https://app.ratetapmx.com')
     .replace(/\\n/g, '')
     .trim();
 
@@ -73,27 +48,26 @@ export async function sendWhatsAppAlert({
   lines.push('');
   lines.push(`📋 Ver en Inbox: ${baseUrl}/inbox`);
 
-  const normalizedTo = normalizePhone(to);
+  const message = lines.join('\n');
 
-  const res = await fetch(
-    `https://graph.facebook.com/${API_VERSION}/${cfg.phoneId}/messages`,
-    {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${cfg.token}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        messaging_product: 'whatsapp',
-        to: normalizedTo,
-        type: 'text',
-        text: { body: lines.join('\n') },
-      }),
-    },
-  );
+  // Normalize phone: ensure + prefix
+  let phone = to.trim();
+  if (!phone.startsWith('+')) phone = `+${phone}`;
+  // Strip old Mexican mobile "1" prefix: +521XXXXXXXXXX → +52XXXXXXXXXX
+  const digits = phone.replace(/\D/g, '');
+  if (digits.length === 13 && digits.startsWith('521')) {
+    phone = '+52' + digits.slice(3);
+  }
+
+  const url = new URL('https://api.callmebot.com/whatsapp.php');
+  url.searchParams.set('phone', phone);
+  url.searchParams.set('text', message);
+  url.searchParams.set('apikey', apiKey);
+
+  const res = await fetch(url.toString());
 
   if (!res.ok) {
     const body = await res.text();
-    throw new Error(`WhatsApp API error ${res.status}: ${body}`);
+    throw new Error(`CallMeBot error ${res.status}: ${body}`);
   }
 }
