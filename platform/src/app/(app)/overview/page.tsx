@@ -1,6 +1,6 @@
 import { verifySession } from '@/lib/session';
 import { redirect } from 'next/navigation';
-import { getOverviewStats, getNewFeedbackCount, getROIStats, getWeeklyHistory, getTotalReviewsBefore } from '@/lib/queries';
+import { getOverviewStats, getNewFeedbackCount, getROIStats, getWeeklyHistory, getTotalReviewsBefore, getWeeklyHistoryByRestaurant } from '@/lib/queries';
 import { getGoogleRatingTrendBatch } from '@/lib/google-places';
 import { startOfWeek } from 'date-fns';
 import OwnerOverview from '@/components/dashboard/OwnerOverview';
@@ -21,7 +21,7 @@ export default async function OverviewPage() {
 
   const regionFilter = session.role === 'regional' ? session.region : undefined;
 
-  const [, , googleTrends, weeklyHistory, baselineTotal] = await Promise.all([
+  const [, , googleTrends, weeklyHistory, baselineTotal, weeklyByRestaurant] = await Promise.all([
     // Unresolved feedback per location
     Promise.all(
       stats.map(async (r) => {
@@ -44,6 +44,8 @@ export default async function OverviewPage() {
       d.setDate(d.getDate() - 12 * 7);
       return getTotalReviewsBefore(startOfWeek(d, { weekStartsOn: 1 }), regionFilter);
     })(),
+    // Per-restaurant weekly history (last 12 weeks)
+    getWeeklyHistoryByRestaurant(regionFilter, 12),
   ]);
 
   return (
@@ -54,6 +56,7 @@ export default async function OverviewPage() {
       googleTrends={googleTrends}
       weeklyHistory={weeklyHistory}
       baselineTotal={baselineTotal}
+      weeklyByRestaurant={weeklyByRestaurant}
     />
   );
 }

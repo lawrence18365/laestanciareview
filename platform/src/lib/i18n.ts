@@ -232,6 +232,9 @@ export const t = {
     cumulative: 'Acumulado',
     currentWeek: 'Semana actual',
     noWeeklyData: 'Aún no hay datos semanales',
+    effectivenessPerUnit: 'Efectividad por Unidad',
+    effectivenessSubtitle: 'Encuestas semanales por ubicación',
+    unit: 'Unidad',
   },
 
   // ── Settings ──

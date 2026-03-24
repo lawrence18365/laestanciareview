@@ -49,6 +49,17 @@ interface WeeklyHistoryRow {
   intercepted: number;
 }
 
+interface WeeklyByRestaurantRow {
+  restaurantId: number;
+  restaurantName: string;
+  slug: string;
+  weekStart: string;
+  reviewCount: number;
+  avgRating: number | null;
+  googleSends: number;
+  intercepted: number;
+}
+
 interface Props {
   stats: RestaurantStats[];
   unresolvedCounts: Record<number, number>;
@@ -56,13 +67,14 @@ interface Props {
   googleTrends: Record<number, GoogleTrend | null>;
   weeklyHistory?: WeeklyHistoryRow[];
   baselineTotal?: number;
+  weeklyByRestaurant?: WeeklyByRestaurantRow[];
 }
 
 type SortKey = 'restaurantName' | 'weeklyReviews' | 'weeklyAvg' | 'totalReviews' | 'totalAvg' | 'unresolved' | 'roi' | 'ratingChange';
 
 /* ── Main Component ── */
 
-export default function OwnerOverview({ stats, unresolvedCounts, roiByLocation, googleTrends, weeklyHistory = [], baselineTotal = 0 }: Props) {
+export default function OwnerOverview({ stats, unresolvedCounts, roiByLocation, googleTrends, weeklyHistory = [], baselineTotal = 0, weeklyByRestaurant = [] }: Props) {
   const [sortKey, setSortKey] = useState<SortKey>('roi');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
   const [isMobile, setIsMobile] = useState(false);
@@ -319,6 +331,11 @@ export default function OwnerOverview({ stats, unresolvedCounts, roiByLocation, 
       {/* ── Weekly History ── */}
       {weeklyHistory.length > 0 && (
         <WeeklyHistorySection rows={weeklyHistory} baselineTotal={baselineTotal} />
+      )}
+
+      {/* ── Per-Unit Effectiveness ── */}
+      {weeklyByRestaurant.length > 0 && (
+        <PerUnitEffectivenessSection rows={weeklyByRestaurant} roiByLocation={roiByLocation} stats={stats} />
       )}
 
       {/* ── Location Table / Cards ── */}
@@ -712,6 +729,207 @@ function WeeklyHistorySection({ rows, baselineTotal }: { rows: WeeklyHistoryRow[
       </div>
     </section>
   );
+}
+
+/* ── Per-Unit Effectiveness Section ── */
+
+function PerUnitEffectivenessSection({
+  rows,
+  roiByLocation,
+  stats,
+}: {
+  rows: WeeklyByRestaurantRow[];
+  roiByLocation: Record<number, ROIStats>;
+  stats: RestaurantStats[];
+}) {
+  // Collect all unique weeks (sorted newest first for display)
+  const allWeeks = useMemo(() => {
+    const set = new Set<string>();
+    for (const r of rows) set.add(r.weekStart);
+    return [...set].sort().reverse();
+  }, [rows]);
+
+  // Show last 8 weeks max to keep the table readable
+  const displayWeeks = allWeeks.slice(0, 8);
+
+  // Build a map: restaurantId → { weekStart → row }
+  const dataMap = useMemo(() => {
+    const map: Record<number, Record<string, WeeklyByRestaurantRow>> = {};
+    for (const r of rows) {
+      if (!map[r.restaurantId]) map[r.restaurantId] = {};
+      map[r.restaurantId][r.weekStart] = r;
+    }
+    return map;
+  }, [rows]);
+
+  // Build restaurant list sorted by total weekly reviews (highest first)
+  const restaurantList = useMemo(() => {
+    const seen = new Map<number, { id: number; name: string; slug: string; totalInWindow: number }>();
+    for (const r of rows) {
+      const existing = seen.get(r.restaurantId);
+      if (existing) {
+        existing.totalInWindow += r.reviewCount;
+      } else {
+        seen.set(r.restaurantId, {
+          id: r.restaurantId,
+          name: r.restaurantName,
+          slug: r.slug,
+          totalInWindow: r.reviewCount,
+        });
+      }
+    }
+    // Include restaurants with 0 reviews in the window
+    for (const s of stats) {
+      if (!seen.has(s.restaurantId)) {
+        seen.set(s.restaurantId, {
+          id: s.restaurantId,
+          name: s.restaurantName,
+          slug: s.slug,
+          totalInWindow: 0,
+        });
+      }
+    }
+    return [...seen.values()].sort((a, b) => a.name.localeCompare(b.name));
+  }, [rows, stats]);
+
+  return (
+    <section style={{
+      background: 'var(--panel-bg)',
+      border: '1px solid var(--border-dark)',
+      padding: '1.5rem',
+    }}>
+      <h2 style={{
+        fontFamily: 'var(--font-serif)',
+        fontSize: '1.1rem',
+        fontWeight: 600,
+        color: 'var(--text-main)',
+        margin: 0,
+      }}>
+        {t.owner.effectivenessPerUnit}
+      </h2>
+      <p style={{
+        fontSize: '0.75rem',
+        color: 'var(--text-dim)',
+        margin: '0.25rem 0 1rem',
+      }}>
+        {t.owner.effectivenessSubtitle}
+      </p>
+
+      <div style={{ overflowX: 'auto' }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+          <thead>
+            <tr>
+              <th style={{
+                ...thStyle('left'),
+                position: 'sticky',
+                left: 0,
+                background: 'var(--panel-bg)',
+                zIndex: 1,
+                minWidth: 140,
+              }}>
+                {t.owner.unit}
+              </th>
+              {displayWeeks.map((w) => (
+                <th key={w} style={{ ...thStyle('center' as 'right'), textAlign: 'center', minWidth: 70 }}>
+                  {formatWeekShort(w)}
+                  {isCurrentWeek(w) && (
+                    <div style={{ color: '#D97706', fontSize: '0.5rem', marginTop: 1 }}>
+                      {t.owner.currentWeek}
+                    </div>
+                  )}
+                </th>
+              ))}
+              <th style={thStyle('right')}>{t.owner.cumulative}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {restaurantList.map((rest) => {
+              const roi = roiByLocation[rest.id];
+              const cumulative = roi?.totalReviews ?? 0;
+              const brand = getBrandForSlug(rest.slug);
+
+              return (
+                <tr key={rest.id} style={{ borderTop: '1px solid var(--panel-border)' }}>
+                  <td style={{
+                    padding: '0.5rem 0.75rem',
+                    fontSize: '0.8rem',
+                    fontWeight: 500,
+                    whiteSpace: 'nowrap',
+                    position: 'sticky',
+                    left: 0,
+                    background: 'var(--panel-bg)',
+                    zIndex: 1,
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                      <div style={{
+                        width: 20,
+                        height: 20,
+                        overflow: 'hidden',
+                        background: brand.darkBg ? '#000' : '#fff',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        flexShrink: 0,
+                        border: '1px solid var(--border-dark)',
+                      }}>
+                        <img
+                          src={brand.logo}
+                          alt={rest.name}
+                          style={{ width: '100%', height: '100%', objectFit: 'contain', padding: 1 }}
+                        />
+                      </div>
+                      {rest.name}
+                    </div>
+                  </td>
+                  {displayWeeks.map((w) => {
+                    const cell = dataMap[rest.id]?.[w];
+                    const count = cell?.reviewCount ?? 0;
+                    const avgR = cell?.avgRating;
+                    return (
+                      <td key={w} style={{ textAlign: 'center', padding: '0.5rem 0.4rem', fontSize: '0.85rem' }}>
+                        {count > 0 ? (
+                          <div>
+                            <span className="font-numeric" style={{
+                              fontWeight: 700,
+                              color: count >= 20 ? 'var(--green)' : count >= 10 ? 'var(--text-main)' : 'var(--text-dim)',
+                            }}>
+                              {count}
+                            </span>
+                            {avgR != null && (
+                              <div className="font-numeric" style={{
+                                fontSize: '0.6rem',
+                                color: Number(avgR) >= 4.5 ? 'var(--green)' : Number(avgR) >= 3.5 ? 'var(--text-dim)' : 'var(--red)',
+                                marginTop: 1,
+                              }}>
+                                {Number(avgR).toFixed(1)}
+                              </div>
+                            )}
+                          </div>
+                        ) : (
+                          <span style={{ color: 'var(--text-dim)', fontSize: '0.75rem' }}>–</span>
+                        )}
+                      </td>
+                    );
+                  })}
+                  <td style={{ textAlign: 'right', padding: '0.5rem 0.75rem' }}>
+                    <span className="font-numeric" style={{ fontWeight: 600, fontSize: '0.85rem' }}>
+                      {fmt(cumulative)}
+                    </span>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  );
+}
+
+function formatWeekShort(weekStartStr: string): string {
+  const d = new Date(weekStartStr + 'T00:00:00');
+  const months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+  return `${d.getDate()} ${months[d.getMonth()]}`;
 }
 
 const thStyle = (align: 'left' | 'right'): React.CSSProperties => ({

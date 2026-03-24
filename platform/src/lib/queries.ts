@@ -527,6 +527,41 @@ export async function getTotalReviewsBefore(before: Date, region?: string) {
   return rows[0]?.total ?? 0;
 }
 
+/** Weekly history per restaurant: review counts grouped by (restaurant, week). Optionally filter by region. */
+export async function getWeeklyHistoryByRestaurant(region?: string, weeks = 12) {
+  const since = new Date();
+  since.setDate(since.getDate() - weeks * 7);
+  const sinceMonday = startOfWeek(since, { weekStartsOn: 1 });
+
+  const conditions = [
+    eq(restaurants.isOwner, false),
+    eq(restaurants.isRegional, false),
+    gte(reviews.createdAt, sinceMonday),
+  ];
+  if (region) {
+    conditions.push(eq(restaurants.region, region));
+  }
+
+  const rows = await db
+    .select({
+      restaurantId: restaurants.id,
+      restaurantName: restaurants.name,
+      slug: restaurants.slug,
+      weekStart: sql<string>`to_char(date_trunc('week', ${reviews.createdAt}), 'YYYY-MM-DD')`,
+      reviewCount: count(reviews.id),
+      avgRating: avg(reviews.rating).mapWith(Number),
+      googleSends: countSql`count(*) filter (where ${reviews.sentToGoogle} = true)`,
+      intercepted: countSql`count(*) filter (where ${reviews.sentToGoogle} = false and ${reviews.rating} < ${restaurants.googleThreshold})`,
+    })
+    .from(reviews)
+    .innerJoin(restaurants, eq(reviews.restaurantId, restaurants.id))
+    .where(and(...conditions))
+    .groupBy(restaurants.id, restaurants.name, restaurants.slug, sql`date_trunc('week', ${reviews.createdAt})`)
+    .orderBy(asc(restaurants.name), sql`date_trunc('week', ${reviews.createdAt})`);
+
+  return rows;
+}
+
 /** Google conversion rate: sent / total for reviews above threshold. */
 export async function getGoogleConversionRate(restaurantId: number, threshold: number) {
   const rows = await db
