@@ -4,38 +4,38 @@
 
   <!-- Homepage -->
   <url>
-    <loc>https://ratetap.com/</loc>
-    <xhtml:link rel="alternate" hreflang="en-US" href="https://ratetap.com/"/>
-    <xhtml:link rel="alternate" hreflang="es-MX" href="https://ratetap.com/es/"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://ratetap.com/"/>
+    <loc>https://ratetapmx.com/</loc>
+    <xhtml:link rel="alternate" hreflang="en-US" href="https://ratetapmx.com/"/>
+    <xhtml:link rel="alternate" hreflang="es-MX" href="https://ratetapmx.com/es/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://ratetapmx.com/"/>
     <lastmod>2026-01-14</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://ratetap.com/es/</loc>
-    <xhtml:link rel="alternate" hreflang="en-US" href="https://ratetap.com/"/>
-    <xhtml:link rel="alternate" hreflang="es-MX" href="https://ratetap.com/es/"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://ratetap.com/"/>
+    <loc>https://ratetapmx.com/es/</loc>
+    <xhtml:link rel="alternate" hreflang="en-US" href="https://ratetapmx.com/"/>
+    <xhtml:link rel="alternate" hreflang="es-MX" href="https://ratetapmx.com/es/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://ratetapmx.com/"/>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
 
   <!-- Competitor Comparison Pages -->
   <url>
-    <loc>https://ratetap.com/ratetap-vs-ovation</loc>
-    <xhtml:link rel="alternate" hreflang="en-US" href="https://ratetap.com/ratetap-vs-ovation"/>
-    <xhtml:link rel="alternate" hreflang="es-MX" href="https://ratetap.com/es/ratetap-vs-ovation"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://ratetap.com/ratetap-vs-ovation"/>
+    <loc>https://ratetapmx.com/ratetap-vs-ovation</loc>
+    <xhtml:link rel="alternate" hreflang="en-US" href="https://ratetapmx.com/ratetap-vs-ovation"/>
+    <xhtml:link rel="alternate" hreflang="es-MX" href="https://ratetapmx.com/es/ratetap-vs-ovation"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://ratetapmx.com/ratetap-vs-ovation"/>
     <lastmod>2026-01-16</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://ratetap.com/es/ratetap-vs-ovation</loc>
-    <xhtml:link rel="alternate" hreflang="en-US" href="https://ratetap.com/ratetap-vs-ovation"/>
-    <xhtml:link rel="alternate" hreflang="es-MX" href="https://ratetap.com/es/ratetap-vs-ovation"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://ratetap.com/ratetap-vs-ovation"/>
+    <loc>https://ratetapmx.com/es/ratetap-vs-ovation</loc>
+    <xhtml:link rel="alternate" hreflang="en-US" href="https://ratetapmx.com/ratetap-vs-ovation"/>
+    <xhtml:link rel="alternate" hreflang="es-MX" href="https://ratetapmx.com/es/ratetap-vs-ovation"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://ratetapmx.com/ratetap-vs-ovation"/>
     <lastmod>2026-01-16</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
@@ -43,19 +43,19 @@
 
   <!-- Restaurant Review Management Software (Money Page) -->
   <url>
-    <loc>https://ratetap.com/restaurant-review-management-software</loc>
-    <xhtml:link rel="alternate" hreflang="en-US" href="https://ratetap.com/restaurant-review-management-software"/>
-    <xhtml:link rel="alternate" hreflang="es-MX" href="https://ratetap.com/es/software-gestion-resenas-restaurantes"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://ratetap.com/restaurant-review-management-software"/>
+    <loc>https://ratetapmx.com/restaurant-review-management-software</loc>
+    <xhtml:link rel="alternate" hreflang="en-US" href="https://ratetapmx.com/restaurant-review-management-software"/>
+    <xhtml:link rel="alternate" hreflang="es-MX" href="https://ratetapmx.com/es/software-gestion-resenas-restaurantes"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://ratetapmx.com/restaurant-review-management-software"/>
     <lastmod>2026-01-16</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.95</priority>
   </url>
   <url>
-    <loc>https://ratetap.com/es/software-gestion-resenas-restaurantes</loc>
-    <xhtml:link rel="alternate" hreflang="en-US" href="https://ratetap.com/restaurant-review-management-software"/>
-    <xhtml:link rel="alternate" hreflang="es-MX" href="https://ratetap.com/es/software-gestion-resenas-restaurantes"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://ratetap.com/restaurant-review-management-software"/>
+    <loc>https://ratetapmx.com/es/software-gestion-resenas-restaurantes</loc>
+    <xhtml:link rel="alternate" hreflang="en-US" href="https://ratetapmx.com/restaurant-review-management-software"/>
+    <xhtml:link rel="alternate" hreflang="es-MX" href="https://ratetapmx.com/es/software-gestion-resenas-restaurantes"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://ratetapmx.com/restaurant-review-management-software"/>
     <lastmod>2026-01-16</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.95</priority>
@@ -63,306 +63,306 @@
 
   <!-- NFC Google Review Cards -->
   <url>
-    <loc>https://ratetap.com/nfc-google-review-cards-for-restaurants</loc>
-    <xhtml:link rel="alternate" hreflang="en-US" href="https://ratetap.com/nfc-google-review-cards-for-restaurants"/>
-    <xhtml:link rel="alternate" hreflang="es-MX" href="https://ratetap.com/es/nfc-google-review-cards-for-restaurants"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://ratetap.com/nfc-google-review-cards-for-restaurants"/>
+    <loc>https://ratetapmx.com/nfc-google-review-cards-for-restaurants</loc>
+    <xhtml:link rel="alternate" hreflang="en-US" href="https://ratetapmx.com/nfc-google-review-cards-for-restaurants"/>
+    <xhtml:link rel="alternate" hreflang="es-MX" href="https://ratetapmx.com/es/nfc-google-review-cards-for-restaurants"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://ratetapmx.com/nfc-google-review-cards-for-restaurants"/>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://ratetap.com/es/nfc-google-review-cards-for-restaurants</loc>
-    <xhtml:link rel="alternate" hreflang="en-US" href="https://ratetap.com/nfc-google-review-cards-for-restaurants"/>
-    <xhtml:link rel="alternate" hreflang="es-MX" href="https://ratetap.com/es/nfc-google-review-cards-for-restaurants"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://ratetap.com/nfc-google-review-cards-for-restaurants"/>
+    <loc>https://ratetapmx.com/es/nfc-google-review-cards-for-restaurants</loc>
+    <xhtml:link rel="alternate" hreflang="en-US" href="https://ratetapmx.com/nfc-google-review-cards-for-restaurants"/>
+    <xhtml:link rel="alternate" hreflang="es-MX" href="https://ratetapmx.com/es/nfc-google-review-cards-for-restaurants"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://ratetapmx.com/nfc-google-review-cards-for-restaurants"/>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
 
   <!-- Get More Google Reviews -->
   <url>
-    <loc>https://ratetap.com/get-more-google-reviews-restaurants</loc>
-    <xhtml:link rel="alternate" hreflang="en-US" href="https://ratetap.com/get-more-google-reviews-restaurants"/>
-    <xhtml:link rel="alternate" hreflang="es-MX" href="https://ratetap.com/es/get-more-google-reviews-restaurants"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://ratetap.com/get-more-google-reviews-restaurants"/>
+    <loc>https://ratetapmx.com/get-more-google-reviews-restaurants</loc>
+    <xhtml:link rel="alternate" hreflang="en-US" href="https://ratetapmx.com/get-more-google-reviews-restaurants"/>
+    <xhtml:link rel="alternate" hreflang="es-MX" href="https://ratetapmx.com/es/get-more-google-reviews-restaurants"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://ratetapmx.com/get-more-google-reviews-restaurants"/>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://ratetap.com/es/get-more-google-reviews-restaurants</loc>
-    <xhtml:link rel="alternate" hreflang="en-US" href="https://ratetap.com/get-more-google-reviews-restaurants"/>
-    <xhtml:link rel="alternate" hreflang="es-MX" href="https://ratetap.com/es/get-more-google-reviews-restaurants"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://ratetap.com/get-more-google-reviews-restaurants"/>
+    <loc>https://ratetapmx.com/es/get-more-google-reviews-restaurants</loc>
+    <xhtml:link rel="alternate" hreflang="en-US" href="https://ratetapmx.com/get-more-google-reviews-restaurants"/>
+    <xhtml:link rel="alternate" hreflang="es-MX" href="https://ratetapmx.com/es/get-more-google-reviews-restaurants"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://ratetapmx.com/get-more-google-reviews-restaurants"/>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
 
   <!-- Track Waiter Performance Dashboard -->
   <url>
-    <loc>https://ratetap.com/track-waiter-performance-dashboard</loc>
-    <xhtml:link rel="alternate" hreflang="en-US" href="https://ratetap.com/track-waiter-performance-dashboard"/>
-    <xhtml:link rel="alternate" hreflang="es-MX" href="https://ratetap.com/es/track-waiter-performance-dashboard"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://ratetap.com/track-waiter-performance-dashboard"/>
+    <loc>https://ratetapmx.com/track-waiter-performance-dashboard</loc>
+    <xhtml:link rel="alternate" hreflang="en-US" href="https://ratetapmx.com/track-waiter-performance-dashboard"/>
+    <xhtml:link rel="alternate" hreflang="es-MX" href="https://ratetapmx.com/es/track-waiter-performance-dashboard"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://ratetapmx.com/track-waiter-performance-dashboard"/>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://ratetap.com/es/track-waiter-performance-dashboard</loc>
-    <xhtml:link rel="alternate" hreflang="en-US" href="https://ratetap.com/track-waiter-performance-dashboard"/>
-    <xhtml:link rel="alternate" hreflang="es-MX" href="https://ratetap.com/es/track-waiter-performance-dashboard"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://ratetap.com/track-waiter-performance-dashboard"/>
+    <loc>https://ratetapmx.com/es/track-waiter-performance-dashboard</loc>
+    <xhtml:link rel="alternate" hreflang="en-US" href="https://ratetapmx.com/track-waiter-performance-dashboard"/>
+    <xhtml:link rel="alternate" hreflang="es-MX" href="https://ratetapmx.com/es/track-waiter-performance-dashboard"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://ratetapmx.com/track-waiter-performance-dashboard"/>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
 
   <!-- Stop Bad Restaurant Reviews -->
   <url>
-    <loc>https://ratetap.com/stop-bad-restaurant-reviews</loc>
-    <xhtml:link rel="alternate" hreflang="en-US" href="https://ratetap.com/stop-bad-restaurant-reviews"/>
-    <xhtml:link rel="alternate" hreflang="es-MX" href="https://ratetap.com/es/stop-bad-restaurant-reviews"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://ratetap.com/stop-bad-restaurant-reviews"/>
+    <loc>https://ratetapmx.com/stop-bad-restaurant-reviews</loc>
+    <xhtml:link rel="alternate" hreflang="en-US" href="https://ratetapmx.com/stop-bad-restaurant-reviews"/>
+    <xhtml:link rel="alternate" hreflang="es-MX" href="https://ratetapmx.com/es/stop-bad-restaurant-reviews"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://ratetapmx.com/stop-bad-restaurant-reviews"/>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://ratetap.com/es/stop-bad-restaurant-reviews</loc>
-    <xhtml:link rel="alternate" hreflang="en-US" href="https://ratetap.com/stop-bad-restaurant-reviews"/>
-    <xhtml:link rel="alternate" hreflang="es-MX" href="https://ratetap.com/es/stop-bad-restaurant-reviews"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://ratetap.com/stop-bad-restaurant-reviews"/>
+    <loc>https://ratetapmx.com/es/stop-bad-restaurant-reviews</loc>
+    <xhtml:link rel="alternate" hreflang="en-US" href="https://ratetapmx.com/stop-bad-restaurant-reviews"/>
+    <xhtml:link rel="alternate" hreflang="es-MX" href="https://ratetapmx.com/es/stop-bad-restaurant-reviews"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://ratetapmx.com/stop-bad-restaurant-reviews"/>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
 
   <!-- Demo -->
   <url>
-    <loc>https://ratetap.com/demo</loc>
-    <xhtml:link rel="alternate" hreflang="en-US" href="https://ratetap.com/demo"/>
-    <xhtml:link rel="alternate" hreflang="es-MX" href="https://ratetap.com/es/demo"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://ratetap.com/demo"/>
+    <loc>https://ratetapmx.com/demo</loc>
+    <xhtml:link rel="alternate" hreflang="en-US" href="https://ratetapmx.com/demo"/>
+    <xhtml:link rel="alternate" hreflang="es-MX" href="https://ratetapmx.com/es/demo"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://ratetapmx.com/demo"/>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://ratetap.com/es/demo</loc>
-    <xhtml:link rel="alternate" hreflang="en-US" href="https://ratetap.com/demo"/>
-    <xhtml:link rel="alternate" hreflang="es-MX" href="https://ratetap.com/es/demo"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://ratetap.com/demo"/>
+    <loc>https://ratetapmx.com/es/demo</loc>
+    <xhtml:link rel="alternate" hreflang="en-US" href="https://ratetapmx.com/demo"/>
+    <xhtml:link rel="alternate" hreflang="es-MX" href="https://ratetapmx.com/es/demo"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://ratetapmx.com/demo"/>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
 
   <!-- ROI Calculator -->
   <url>
-    <loc>https://ratetap.com/roi-calculator</loc>
-    <xhtml:link rel="alternate" hreflang="en-US" href="https://ratetap.com/roi-calculator"/>
-    <xhtml:link rel="alternate" hreflang="es-MX" href="https://ratetap.com/es/roi-calculator"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://ratetap.com/roi-calculator"/>
+    <loc>https://ratetapmx.com/roi-calculator</loc>
+    <xhtml:link rel="alternate" hreflang="en-US" href="https://ratetapmx.com/roi-calculator"/>
+    <xhtml:link rel="alternate" hreflang="es-MX" href="https://ratetapmx.com/es/roi-calculator"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://ratetapmx.com/roi-calculator"/>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://ratetap.com/es/roi-calculator</loc>
-    <xhtml:link rel="alternate" hreflang="en-US" href="https://ratetap.com/roi-calculator"/>
-    <xhtml:link rel="alternate" hreflang="es-MX" href="https://ratetap.com/es/roi-calculator"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://ratetap.com/roi-calculator"/>
+    <loc>https://ratetapmx.com/es/roi-calculator</loc>
+    <xhtml:link rel="alternate" hreflang="en-US" href="https://ratetapmx.com/roi-calculator"/>
+    <xhtml:link rel="alternate" hreflang="es-MX" href="https://ratetapmx.com/es/roi-calculator"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://ratetapmx.com/roi-calculator"/>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
 
   <!-- Case Studies -->
   <url>
-    <loc>https://ratetap.com/case-studies</loc>
-    <xhtml:link rel="alternate" hreflang="en-US" href="https://ratetap.com/case-studies"/>
-    <xhtml:link rel="alternate" hreflang="es-MX" href="https://ratetap.com/es/case-studies"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://ratetap.com/case-studies"/>
+    <loc>https://ratetapmx.com/case-studies</loc>
+    <xhtml:link rel="alternate" hreflang="en-US" href="https://ratetapmx.com/case-studies"/>
+    <xhtml:link rel="alternate" hreflang="es-MX" href="https://ratetapmx.com/es/case-studies"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://ratetapmx.com/case-studies"/>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://ratetap.com/es/case-studies</loc>
-    <xhtml:link rel="alternate" hreflang="en-US" href="https://ratetap.com/case-studies"/>
-    <xhtml:link rel="alternate" hreflang="es-MX" href="https://ratetap.com/es/case-studies"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://ratetap.com/case-studies"/>
+    <loc>https://ratetapmx.com/es/case-studies</loc>
+    <xhtml:link rel="alternate" hreflang="en-US" href="https://ratetapmx.com/case-studies"/>
+    <xhtml:link rel="alternate" hreflang="es-MX" href="https://ratetapmx.com/es/case-studies"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://ratetapmx.com/case-studies"/>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
 
   <!-- VS Comment Cards -->
   <url>
-    <loc>https://ratetap.com/vs-comment-cards</loc>
-    <xhtml:link rel="alternate" hreflang="en-US" href="https://ratetap.com/vs-comment-cards"/>
-    <xhtml:link rel="alternate" hreflang="es-MX" href="https://ratetap.com/es/vs-comment-cards"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://ratetap.com/vs-comment-cards"/>
+    <loc>https://ratetapmx.com/vs-comment-cards</loc>
+    <xhtml:link rel="alternate" hreflang="en-US" href="https://ratetapmx.com/vs-comment-cards"/>
+    <xhtml:link rel="alternate" hreflang="es-MX" href="https://ratetapmx.com/es/vs-comment-cards"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://ratetapmx.com/vs-comment-cards"/>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://ratetap.com/es/vs-comment-cards</loc>
-    <xhtml:link rel="alternate" hreflang="en-US" href="https://ratetap.com/vs-comment-cards"/>
-    <xhtml:link rel="alternate" hreflang="es-MX" href="https://ratetap.com/es/vs-comment-cards"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://ratetap.com/vs-comment-cards"/>
+    <loc>https://ratetapmx.com/es/vs-comment-cards</loc>
+    <xhtml:link rel="alternate" hreflang="en-US" href="https://ratetapmx.com/vs-comment-cards"/>
+    <xhtml:link rel="alternate" hreflang="es-MX" href="https://ratetapmx.com/es/vs-comment-cards"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://ratetapmx.com/vs-comment-cards"/>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
 
   <!-- For Owners -->
   <url>
-    <loc>https://ratetap.com/for-owners</loc>
-    <xhtml:link rel="alternate" hreflang="en-US" href="https://ratetap.com/for-owners"/>
-    <xhtml:link rel="alternate" hreflang="es-MX" href="https://ratetap.com/es/for-owners"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://ratetap.com/for-owners"/>
+    <loc>https://ratetapmx.com/for-owners</loc>
+    <xhtml:link rel="alternate" hreflang="en-US" href="https://ratetapmx.com/for-owners"/>
+    <xhtml:link rel="alternate" hreflang="es-MX" href="https://ratetapmx.com/es/for-owners"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://ratetapmx.com/for-owners"/>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://ratetap.com/es/for-owners</loc>
-    <xhtml:link rel="alternate" hreflang="en-US" href="https://ratetap.com/for-owners"/>
-    <xhtml:link rel="alternate" hreflang="es-MX" href="https://ratetap.com/es/for-owners"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://ratetap.com/for-owners"/>
+    <loc>https://ratetapmx.com/es/for-owners</loc>
+    <xhtml:link rel="alternate" hreflang="en-US" href="https://ratetapmx.com/for-owners"/>
+    <xhtml:link rel="alternate" hreflang="es-MX" href="https://ratetapmx.com/es/for-owners"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://ratetapmx.com/for-owners"/>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
 
   <!-- For GMs -->
   <url>
-    <loc>https://ratetap.com/for-gms</loc>
-    <xhtml:link rel="alternate" hreflang="en-US" href="https://ratetap.com/for-gms"/>
-    <xhtml:link rel="alternate" hreflang="es-MX" href="https://ratetap.com/es/for-gms"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://ratetap.com/for-gms"/>
+    <loc>https://ratetapmx.com/for-gms</loc>
+    <xhtml:link rel="alternate" hreflang="en-US" href="https://ratetapmx.com/for-gms"/>
+    <xhtml:link rel="alternate" hreflang="es-MX" href="https://ratetapmx.com/es/for-gms"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://ratetapmx.com/for-gms"/>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://ratetap.com/es/for-gms</loc>
-    <xhtml:link rel="alternate" hreflang="en-US" href="https://ratetap.com/for-gms"/>
-    <xhtml:link rel="alternate" hreflang="es-MX" href="https://ratetap.com/es/for-gms"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://ratetap.com/for-gms"/>
+    <loc>https://ratetapmx.com/es/for-gms</loc>
+    <xhtml:link rel="alternate" hreflang="en-US" href="https://ratetapmx.com/for-gms"/>
+    <xhtml:link rel="alternate" hreflang="es-MX" href="https://ratetapmx.com/es/for-gms"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://ratetapmx.com/for-gms"/>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
 
   <!-- For Multi-Location -->
   <url>
-    <loc>https://ratetap.com/for-multi-location</loc>
-    <xhtml:link rel="alternate" hreflang="en-US" href="https://ratetap.com/for-multi-location"/>
-    <xhtml:link rel="alternate" hreflang="es-MX" href="https://ratetap.com/es/for-multi-location"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://ratetap.com/for-multi-location"/>
+    <loc>https://ratetapmx.com/for-multi-location</loc>
+    <xhtml:link rel="alternate" hreflang="en-US" href="https://ratetapmx.com/for-multi-location"/>
+    <xhtml:link rel="alternate" hreflang="es-MX" href="https://ratetapmx.com/es/for-multi-location"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://ratetapmx.com/for-multi-location"/>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://ratetap.com/es/for-multi-location</loc>
-    <xhtml:link rel="alternate" hreflang="en-US" href="https://ratetap.com/for-multi-location"/>
-    <xhtml:link rel="alternate" hreflang="es-MX" href="https://ratetap.com/es/for-multi-location"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://ratetap.com/for-multi-location"/>
+    <loc>https://ratetapmx.com/es/for-multi-location</loc>
+    <xhtml:link rel="alternate" hreflang="en-US" href="https://ratetapmx.com/for-multi-location"/>
+    <xhtml:link rel="alternate" hreflang="es-MX" href="https://ratetapmx.com/es/for-multi-location"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://ratetapmx.com/for-multi-location"/>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
 
   <!-- For Bars -->
   <url>
-    <loc>https://ratetap.com/for-bars</loc>
-    <xhtml:link rel="alternate" hreflang="en-US" href="https://ratetap.com/for-bars"/>
-    <xhtml:link rel="alternate" hreflang="es-MX" href="https://ratetap.com/es/for-bars"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://ratetap.com/for-bars"/>
+    <loc>https://ratetapmx.com/for-bars</loc>
+    <xhtml:link rel="alternate" hreflang="en-US" href="https://ratetapmx.com/for-bars"/>
+    <xhtml:link rel="alternate" hreflang="es-MX" href="https://ratetapmx.com/es/for-bars"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://ratetapmx.com/for-bars"/>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://ratetap.com/es/for-bars</loc>
-    <xhtml:link rel="alternate" hreflang="en-US" href="https://ratetap.com/for-bars"/>
-    <xhtml:link rel="alternate" hreflang="es-MX" href="https://ratetap.com/es/for-bars"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://ratetap.com/for-bars"/>
+    <loc>https://ratetapmx.com/es/for-bars</loc>
+    <xhtml:link rel="alternate" hreflang="en-US" href="https://ratetapmx.com/for-bars"/>
+    <xhtml:link rel="alternate" hreflang="es-MX" href="https://ratetapmx.com/es/for-bars"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://ratetapmx.com/for-bars"/>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
 
   <!-- For Cafes -->
   <url>
-    <loc>https://ratetap.com/for-cafes</loc>
-    <xhtml:link rel="alternate" hreflang="en-US" href="https://ratetap.com/for-cafes"/>
-    <xhtml:link rel="alternate" hreflang="es-MX" href="https://ratetap.com/es/for-cafes"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://ratetap.com/for-cafes"/>
+    <loc>https://ratetapmx.com/for-cafes</loc>
+    <xhtml:link rel="alternate" hreflang="en-US" href="https://ratetapmx.com/for-cafes"/>
+    <xhtml:link rel="alternate" hreflang="es-MX" href="https://ratetapmx.com/es/for-cafes"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://ratetapmx.com/for-cafes"/>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://ratetap.com/es/for-cafes</loc>
-    <xhtml:link rel="alternate" hreflang="en-US" href="https://ratetap.com/for-cafes"/>
-    <xhtml:link rel="alternate" hreflang="es-MX" href="https://ratetap.com/es/for-cafes"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://ratetap.com/for-cafes"/>
+    <loc>https://ratetapmx.com/es/for-cafes</loc>
+    <xhtml:link rel="alternate" hreflang="en-US" href="https://ratetapmx.com/for-cafes"/>
+    <xhtml:link rel="alternate" hreflang="es-MX" href="https://ratetapmx.com/es/for-cafes"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://ratetapmx.com/for-cafes"/>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
 
   <!-- For Fine Dining -->
   <url>
-    <loc>https://ratetap.com/for-fine-dining</loc>
-    <xhtml:link rel="alternate" hreflang="en-US" href="https://ratetap.com/for-fine-dining"/>
-    <xhtml:link rel="alternate" hreflang="es-MX" href="https://ratetap.com/es/for-fine-dining"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://ratetap.com/for-fine-dining"/>
+    <loc>https://ratetapmx.com/for-fine-dining</loc>
+    <xhtml:link rel="alternate" hreflang="en-US" href="https://ratetapmx.com/for-fine-dining"/>
+    <xhtml:link rel="alternate" hreflang="es-MX" href="https://ratetapmx.com/es/for-fine-dining"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://ratetapmx.com/for-fine-dining"/>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://ratetap.com/es/for-fine-dining</loc>
-    <xhtml:link rel="alternate" hreflang="en-US" href="https://ratetap.com/for-fine-dining"/>
-    <xhtml:link rel="alternate" hreflang="es-MX" href="https://ratetap.com/es/for-fine-dining"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://ratetap.com/for-fine-dining"/>
+    <loc>https://ratetapmx.com/es/for-fine-dining</loc>
+    <xhtml:link rel="alternate" hreflang="en-US" href="https://ratetapmx.com/for-fine-dining"/>
+    <xhtml:link rel="alternate" hreflang="es-MX" href="https://ratetapmx.com/es/for-fine-dining"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://ratetapmx.com/for-fine-dining"/>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
 
   <!-- Why Stuck at 4 Stars -->
   <url>
-    <loc>https://ratetap.com/why-stuck-at-4-stars</loc>
-    <xhtml:link rel="alternate" hreflang="en-US" href="https://ratetap.com/why-stuck-at-4-stars"/>
-    <xhtml:link rel="alternate" hreflang="es-MX" href="https://ratetap.com/es/why-stuck-at-4-stars"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://ratetap.com/why-stuck-at-4-stars"/>
+    <loc>https://ratetapmx.com/why-stuck-at-4-stars</loc>
+    <xhtml:link rel="alternate" hreflang="en-US" href="https://ratetapmx.com/why-stuck-at-4-stars"/>
+    <xhtml:link rel="alternate" hreflang="es-MX" href="https://ratetapmx.com/es/why-stuck-at-4-stars"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://ratetapmx.com/why-stuck-at-4-stars"/>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://ratetap.com/es/why-stuck-at-4-stars</loc>
-    <xhtml:link rel="alternate" hreflang="en-US" href="https://ratetap.com/why-stuck-at-4-stars"/>
-    <xhtml:link rel="alternate" hreflang="es-MX" href="https://ratetap.com/es/why-stuck-at-4-stars"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://ratetap.com/why-stuck-at-4-stars"/>
+    <loc>https://ratetapmx.com/es/why-stuck-at-4-stars</loc>
+    <xhtml:link rel="alternate" hreflang="en-US" href="https://ratetapmx.com/why-stuck-at-4-stars"/>
+    <xhtml:link rel="alternate" hreflang="es-MX" href="https://ratetapmx.com/es/why-stuck-at-4-stars"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://ratetapmx.com/why-stuck-at-4-stars"/>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
 
   <!-- Reputation Recovery -->
   <url>
-    <loc>https://ratetap.com/reputation-recovery</loc>
-    <xhtml:link rel="alternate" hreflang="en-US" href="https://ratetap.com/reputation-recovery"/>
-    <xhtml:link rel="alternate" hreflang="es-MX" href="https://ratetap.com/es/reputation-recovery"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://ratetap.com/reputation-recovery"/>
+    <loc>https://ratetapmx.com/reputation-recovery</loc>
+    <xhtml:link rel="alternate" hreflang="en-US" href="https://ratetapmx.com/reputation-recovery"/>
+    <xhtml:link rel="alternate" hreflang="es-MX" href="https://ratetapmx.com/es/reputation-recovery"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://ratetapmx.com/reputation-recovery"/>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://ratetap.com/es/reputation-recovery</loc>
-    <xhtml:link rel="alternate" hreflang="en-US" href="https://ratetap.com/reputation-recovery"/>
-    <xhtml:link rel="alternate" hreflang="es-MX" href="https://ratetap.com/es/reputation-recovery"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://ratetap.com/reputation-recovery"/>
+    <loc>https://ratetapmx.com/es/reputation-recovery</loc>
+    <xhtml:link rel="alternate" hreflang="en-US" href="https://ratetapmx.com/reputation-recovery"/>
+    <xhtml:link rel="alternate" hreflang="es-MX" href="https://ratetapmx.com/es/reputation-recovery"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://ratetapmx.com/reputation-recovery"/>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
 
   <!-- New Restaurant -->
   <url>
-    <loc>https://ratetap.com/new-restaurant</loc>
-    <xhtml:link rel="alternate" hreflang="en-US" href="https://ratetap.com/new-restaurant"/>
-    <xhtml:link rel="alternate" hreflang="es-MX" href="https://ratetap.com/es/new-restaurant"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://ratetap.com/new-restaurant"/>
+    <loc>https://ratetapmx.com/new-restaurant</loc>
+    <xhtml:link rel="alternate" hreflang="en-US" href="https://ratetapmx.com/new-restaurant"/>
+    <xhtml:link rel="alternate" hreflang="es-MX" href="https://ratetapmx.com/es/new-restaurant"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://ratetapmx.com/new-restaurant"/>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://ratetap.com/es/new-restaurant</loc>
-    <xhtml:link rel="alternate" hreflang="en-US" href="https://ratetap.com/new-restaurant"/>
-    <xhtml:link rel="alternate" hreflang="es-MX" href="https://ratetap.com/es/new-restaurant"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://ratetap.com/new-restaurant"/>
+    <loc>https://ratetapmx.com/es/new-restaurant</loc>
+    <xhtml:link rel="alternate" hreflang="en-US" href="https://ratetapmx.com/new-restaurant"/>
+    <xhtml:link rel="alternate" hreflang="es-MX" href="https://ratetapmx.com/es/new-restaurant"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://ratetapmx.com/new-restaurant"/>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
