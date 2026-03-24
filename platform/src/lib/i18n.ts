@@ -222,6 +222,16 @@ export const t = {
     total: 'Total',
     sentCaught: 'enviados / captados',
     avg: 'prom',
+    weeklyHistory: 'Historial Semanal',
+    weeklyHistorySubtitle: 'Revisión semanal — se actualiza cada lunes',
+    week: 'Semana',
+    surveys: 'Encuestas',
+    avgShort: 'Prom.',
+    sentToGoogleShort: 'Google',
+    interceptedShort: 'Captados',
+    cumulative: 'Acumulado',
+    currentWeek: 'Semana actual',
+    noWeeklyData: 'Aún no hay datos semanales',
   },
 
   // ── Settings ──

@@ -41,18 +41,28 @@ interface GoogleTrend {
   reviewsGained: number;
 }
 
+interface WeeklyHistoryRow {
+  weekStart: string;
+  reviewCount: number;
+  avgRating: number | null;
+  googleSends: number;
+  intercepted: number;
+}
+
 interface Props {
   stats: RestaurantStats[];
   unresolvedCounts: Record<number, number>;
   roiByLocation: Record<number, ROIStats>;
   googleTrends: Record<number, GoogleTrend | null>;
+  weeklyHistory?: WeeklyHistoryRow[];
+  baselineTotal?: number;
 }
 
 type SortKey = 'restaurantName' | 'weeklyReviews' | 'weeklyAvg' | 'totalReviews' | 'totalAvg' | 'unresolved' | 'roi' | 'ratingChange';
 
 /* ── Main Component ── */
 
-export default function OwnerOverview({ stats, unresolvedCounts, roiByLocation, googleTrends }: Props) {
+export default function OwnerOverview({ stats, unresolvedCounts, roiByLocation, googleTrends, weeklyHistory = [], baselineTotal = 0 }: Props) {
   const [sortKey, setSortKey] = useState<SortKey>('roi');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
   const [isMobile, setIsMobile] = useState(false);
@@ -304,6 +314,11 @@ export default function OwnerOverview({ stats, unresolvedCounts, roiByLocation, 
         >
           {t.owner.unresolvedFeedback(totalUnresolved)}
         </div>
+      )}
+
+      {/* ── Weekly History ── */}
+      {weeklyHistory.length > 0 && (
+        <WeeklyHistorySection rows={weeklyHistory} baselineTotal={baselineTotal} />
       )}
 
       {/* ── Location Table / Cards ── */}
@@ -561,6 +576,161 @@ export default function OwnerOverview({ stats, unresolvedCounts, roiByLocation, 
     </div>
   );
 }
+
+/* ── Weekly History Section ── */
+
+function formatWeekRange(weekStartStr: string): string {
+  const d = new Date(weekStartStr + 'T00:00:00');
+  const end = new Date(d);
+  end.setDate(end.getDate() + 6);
+
+  const months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+
+  if (d.getMonth() === end.getMonth()) {
+    return `${d.getDate()}–${end.getDate()} ${months[d.getMonth()]}`;
+  }
+  return `${d.getDate()} ${months[d.getMonth()]}–${end.getDate()} ${months[end.getMonth()]}`;
+}
+
+function isCurrentWeek(weekStartStr: string): boolean {
+  const ws = new Date(weekStartStr + 'T00:00:00');
+  const now = new Date();
+  // Monday of current week
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const dayOfWeek = today.getDay();
+  const monday = new Date(today);
+  monday.setDate(today.getDate() - ((dayOfWeek + 6) % 7));
+  return ws.getTime() === monday.getTime();
+}
+
+function WeeklyHistorySection({ rows, baselineTotal }: { rows: WeeklyHistoryRow[]; baselineTotal: number }) {
+  // Build cumulative totals (rows are ordered oldest → newest)
+  const withCumulative = useMemo(() => {
+    let running = baselineTotal;
+    return rows.map((r) => {
+      running += r.reviewCount;
+      return { ...r, cumulative: running };
+    });
+  }, [rows, baselineTotal]);
+
+  // Display newest first
+  const display = [...withCumulative].reverse();
+  const grandTotal = display[0]?.cumulative ?? baselineTotal;
+
+  return (
+    <section style={{
+      background: 'var(--panel-bg)',
+      border: '1px solid var(--border-dark)',
+      padding: '1.5rem',
+    }}>
+      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+        <div>
+          <h2 style={{
+            fontFamily: 'var(--font-serif)',
+            fontSize: '1.1rem',
+            fontWeight: 600,
+            color: 'var(--text-main)',
+            margin: 0,
+          }}>
+            {t.owner.weeklyHistory}
+          </h2>
+          <p style={{
+            fontSize: '0.75rem',
+            color: 'var(--text-dim)',
+            margin: '0.25rem 0 0',
+          }}>
+            {t.owner.weeklyHistorySubtitle}
+          </p>
+        </div>
+        <div style={{ textAlign: 'right' }}>
+          <div style={{ fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--text-muted)' }}>
+            {t.owner.cumulative}
+          </div>
+          <div className="font-numeric" style={{ fontSize: '1.75rem', fontWeight: 700, color: 'var(--text-main)', lineHeight: 1 }}>
+            {fmt(grandTotal)}
+          </div>
+        </div>
+      </div>
+
+      <div style={{ overflowX: 'auto' }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+          <thead>
+            <tr>
+              <th style={thStyle('left')}>{t.owner.week}</th>
+              <th style={thStyle('right')}>{t.owner.surveys}</th>
+              <th style={thStyle('right')}>{t.owner.avgShort}</th>
+              <th style={thStyle('right')}>{t.owner.sentToGoogleShort}</th>
+              <th style={thStyle('right')}>{t.owner.interceptedShort}</th>
+              <th style={thStyle('right')}>{t.owner.cumulative}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {display.map((r) => {
+              const current = isCurrentWeek(r.weekStart);
+              return (
+                <tr key={r.weekStart} style={{
+                  borderTop: '1px solid var(--panel-border)',
+                  background: current ? 'rgba(217, 119, 6, 0.04)' : undefined,
+                }}>
+                  <td style={{ padding: '0.5rem 0.75rem', fontSize: '0.85rem', whiteSpace: 'nowrap' }}>
+                    {formatWeekRange(r.weekStart)}
+                    {current && (
+                      <span style={{
+                        fontSize: '0.6rem',
+                        fontWeight: 700,
+                        color: '#D97706',
+                        marginLeft: 6,
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.05em',
+                      }}>
+                        {t.owner.currentWeek}
+                      </span>
+                    )}
+                  </td>
+                  <td style={tdNumStyle}>
+                    <span className="font-numeric" style={{ fontWeight: 600 }}>{r.reviewCount}</span>
+                  </td>
+                  <td style={tdNumStyle}>
+                    <span className="font-numeric" style={{ color: 'var(--text-dim)' }}>
+                      {r.avgRating != null ? Number(r.avgRating).toFixed(1) : '–'}
+                    </span>
+                  </td>
+                  <td style={tdNumStyle}>
+                    <span className="font-numeric" style={{ color: 'var(--green)', fontWeight: 600 }}>{r.googleSends}</span>
+                  </td>
+                  <td style={tdNumStyle}>
+                    <span className="font-numeric" style={{ color: 'var(--gold)', fontWeight: 600 }}>{r.intercepted}</span>
+                  </td>
+                  <td style={tdNumStyle}>
+                    <span className="font-numeric" style={{ fontWeight: 500, color: 'var(--text-muted)' }}>{fmt(r.cumulative)}</span>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  );
+}
+
+const thStyle = (align: 'left' | 'right'): React.CSSProperties => ({
+  textAlign: align,
+  padding: '0.5rem 0.75rem',
+  fontSize: '0.6rem',
+  fontWeight: 700,
+  textTransform: 'uppercase',
+  letterSpacing: '0.1em',
+  color: 'var(--text-muted)',
+  borderBottom: '1px solid var(--border-dark)',
+  whiteSpace: 'nowrap',
+});
+
+const tdNumStyle: React.CSSProperties = {
+  textAlign: 'right',
+  padding: '0.5rem 0.75rem',
+  fontSize: '0.85rem',
+};
 
 /* ── Table helpers ── */
 

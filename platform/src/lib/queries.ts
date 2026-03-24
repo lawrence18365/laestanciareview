@@ -474,6 +474,59 @@ export async function getMonthlyStats(restaurantId: number, months = 12, thresho
     .orderBy(sql`to_char(${reviews.createdAt}, 'YYYY-MM')`);
 }
 
+/** Weekly history: review counts grouped by week for the last N weeks. Optionally filter by region. */
+export async function getWeeklyHistory(region?: string, weeks = 12) {
+  const since = new Date();
+  since.setDate(since.getDate() - weeks * 7);
+  // Snap to Monday of that week
+  const sinceMonday = startOfWeek(since, { weekStartsOn: 1 });
+
+  const conditions = [
+    eq(restaurants.isOwner, false),
+    eq(restaurants.isRegional, false),
+    gte(reviews.createdAt, sinceMonday),
+  ];
+  if (region) {
+    conditions.push(eq(restaurants.region, region));
+  }
+
+  const rows = await db
+    .select({
+      weekStart: sql<string>`to_char(date_trunc('week', ${reviews.createdAt}), 'YYYY-MM-DD')`,
+      reviewCount: count(reviews.id),
+      avgRating: avg(reviews.rating).mapWith(Number),
+      googleSends: countSql`count(*) filter (where ${reviews.sentToGoogle} = true)`,
+      intercepted: countSql`count(*) filter (where ${reviews.sentToGoogle} = false and ${reviews.rating} < ${restaurants.googleThreshold})`,
+    })
+    .from(reviews)
+    .innerJoin(restaurants, eq(reviews.restaurantId, restaurants.id))
+    .where(and(...conditions))
+    .groupBy(sql`date_trunc('week', ${reviews.createdAt})`)
+    .orderBy(sql`date_trunc('week', ${reviews.createdAt})`);
+
+  return rows;
+}
+
+/** Total review count before a given date, for cumulative baseline. Optionally filter by region. */
+export async function getTotalReviewsBefore(before: Date, region?: string) {
+  const conditions = [
+    eq(restaurants.isOwner, false),
+    eq(restaurants.isRegional, false),
+    sql`${reviews.createdAt} < ${before}`,
+  ];
+  if (region) {
+    conditions.push(eq(restaurants.region, region));
+  }
+
+  const rows = await db
+    .select({ total: count(reviews.id) })
+    .from(reviews)
+    .innerJoin(restaurants, eq(reviews.restaurantId, restaurants.id))
+    .where(and(...conditions));
+
+  return rows[0]?.total ?? 0;
+}
+
 /** Google conversion rate: sent / total for reviews above threshold. */
 export async function getGoogleConversionRate(restaurantId: number, threshold: number) {
   const rows = await db
