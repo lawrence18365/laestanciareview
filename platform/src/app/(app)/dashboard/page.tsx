@@ -13,15 +13,29 @@ import {
 import { getGoogleRatingTrend, getGoogleRatingHistory } from '@/lib/google-places';
 import DashboardView from '@/components/dashboard/DashboardView';
 
-export default async function DashboardPage() {
+export default async function DashboardPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ slug?: string }>;
+}) {
   const session = await verifySession();
   if (!session) redirect('/login');
 
-  // Owners & regional managers land on /overview, not /dashboard
-  if (session.role === 'owner' || session.role === 'regional') redirect('/overview');
+  const params = await searchParams;
+  const isMultiView = session.role === 'owner' || session.role === 'regional';
 
-  const restaurant = await getRestaurantBySlug(session.slug);
-  if (!restaurant) redirect('/login');
+  // Owners & regional managers without a slug param land on /overview
+  if (isMultiView && !params.slug) redirect('/overview');
+
+  // Determine which slug to load
+  const targetSlug = isMultiView && params.slug ? params.slug : session.slug;
+  const restaurant = await getRestaurantBySlug(targetSlug);
+  if (!restaurant) redirect(isMultiView ? '/overview' : '/login');
+
+  // Regional managers can only view restaurants in their region
+  if (session.role === 'regional' && restaurant.region !== session.region) {
+    redirect('/overview');
+  }
 
   const [
     stats,

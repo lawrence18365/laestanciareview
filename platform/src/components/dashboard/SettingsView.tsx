@@ -157,7 +157,7 @@ export default function SettingsView({ settings }: Props) {
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem', maxWidth: 640 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem', maxWidth: 640, width: '100%', margin: '0 auto', padding: '1.5rem' }}>
       {/* Message banner */}
       {message && (
         <div
@@ -258,7 +258,7 @@ export default function SettingsView({ settings }: Props) {
                   id="googleThreshold"
                   value={googleThreshold}
                   onChange={(e) => setGoogleThreshold(Number(e.target.value))}
-                  style={{ ...inputStyle, width: 'auto' }}
+                  style={{ ...inputStyle, width: 'auto', maxWidth: '100%' }}
                 >
                   {[1, 2, 3, 4, 5].map((n) => (
                     <option key={n} value={n}>
@@ -280,7 +280,7 @@ export default function SettingsView({ settings }: Props) {
                 id="alertPreference"
                 value={alertPreference}
                 onChange={(e) => setAlertPreference(e.target.value)}
-                style={{ ...inputStyle, width: 'auto' }}
+                style={{ ...inputStyle, width: 'auto', maxWidth: '100%' }}
               >
                 <option value="all">{t.settings.allFeedback}</option>
                 <option value="low">{t.settings.lowRatingsOnly}</option>

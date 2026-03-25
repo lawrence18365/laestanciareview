@@ -389,7 +389,12 @@ export default function OwnerOverview({ stats, unresolvedCounts, roiByLocation, 
                         style={{ width: '100%', height: '100%', objectFit: 'contain', padding: 2 }}
                       />
                     </div>
-                    <span style={{ fontWeight: 600, fontSize: '0.95rem', color: 'var(--text-main)' }}>{r.restaurantName}</span>
+                    <a
+                      href={`/dashboard?slug=${r.slug}`}
+                      style={{ fontWeight: 600, fontSize: '0.95rem', color: 'var(--text-main)', textDecoration: 'none' }}
+                    >
+                      {r.restaurantName}
+                    </a>
                   </div>
 
                   {/* Card stats grid */}
@@ -504,7 +509,12 @@ export default function OwnerOverview({ stats, unresolvedCounts, roiByLocation, 
                               style={{ width: '100%', height: '100%', objectFit: 'contain', padding: 2 }}
                             />
                           </div>
-                          <span style={{ fontWeight: 500, fontSize: '0.9rem' }}>{r.restaurantName}</span>
+                          <a
+                            href={`/dashboard?slug=${r.slug}`}
+                            style={{ fontWeight: 500, fontSize: '0.9rem', color: 'inherit', textDecoration: 'none' }}
+                          >
+                            {r.restaurantName}
+                          </a>
                         </div>
                       </td>
 
