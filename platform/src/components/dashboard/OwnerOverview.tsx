@@ -636,11 +636,11 @@ function isCurrentWeek(weekStartStr: string): boolean {
 function WeeklyHistorySection({ rows, baselineTotal }: { rows: WeeklyHistoryRow[]; baselineTotal: number }) {
   // Build cumulative totals (rows are ordered oldest → newest)
   const withCumulative = useMemo(() => {
-    let running = baselineTotal;
-    return rows.map((r) => {
-      running += r.reviewCount;
-      return { ...r, cumulative: running };
-    });
+    return rows.reduce<(WeeklyHistoryRow & { cumulative: number })[]>((acc, r) => {
+      const prev = acc.length > 0 ? acc[acc.length - 1].cumulative : baselineTotal;
+      acc.push({ ...r, cumulative: prev + r.reviewCount });
+      return acc;
+    }, []);
   }, [rows, baselineTotal]);
 
   // Display newest first
