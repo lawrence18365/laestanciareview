@@ -562,6 +562,39 @@ export async function getWeeklyHistoryByRestaurant(region?: string, weeks = 12) 
   return rows;
 }
 
+/** All intercepted reviews across restaurants (for owner/regional drilldown). */
+export async function getInterceptedReviews(region?: string) {
+  const conditions = [
+    eq(restaurants.isOwner, false),
+    eq(restaurants.isRegional, false),
+    sql`${reviews.sentToGoogle} = false`,
+    sql`${reviews.rating} < ${restaurants.googleThreshold}`,
+  ];
+  if (region) {
+    conditions.push(eq(restaurants.region, region));
+  }
+
+  return db
+    .select({
+      id: reviews.id,
+      restaurantId: restaurants.id,
+      restaurantName: restaurants.name,
+      slug: restaurants.slug,
+      rating: reviews.rating,
+      feedback: reviews.feedback,
+      customerName: reviews.customerName,
+      customerEmail: reviews.customerEmail,
+      staffName: reviews.staffName,
+      staffCode: reviews.staffCode,
+      status: reviews.status,
+      createdAt: reviews.createdAt,
+    })
+    .from(reviews)
+    .innerJoin(restaurants, eq(reviews.restaurantId, restaurants.id))
+    .where(and(...conditions))
+    .orderBy(desc(reviews.createdAt));
+}
+
 /** Google conversion rate: sent / total for reviews above threshold. */
 export async function getGoogleConversionRate(restaurantId: number, threshold: number) {
   const rows = await db

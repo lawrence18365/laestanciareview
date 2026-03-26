@@ -284,6 +284,7 @@ export async function sendWeeklyDigest({
       <p style="margin: 0; font-size: 14px; font-weight: 600; color: #92400e;">
         🛡️ ${lastWeek.intercepted} ${lastWeek.intercepted === 1 ? 'reseña negativa captada' : 'reseñas negativas captadas'} en privado esta semana
       </p>
+      <p style="margin: 6px 0 0;"><a href="${BASE_URL}/inbox" style="font-size: 12px; color: #b45309; text-decoration: underline;">Ver detalle en Buzón →</a></p>
     </div>` : '';
 
   const unresolvedBanner = unresolvedCount > 0 ? `
@@ -399,6 +400,7 @@ export async function sendOwnerDigest({ to, locations, dashboardUrl }: OwnerDige
       <p style="margin: 0; font-size: 14px; font-weight: 600; color: #92400e;">
         🛡️ ${totalIntercepted} ${totalIntercepted === 1 ? 'reseña negativa captada' : 'reseñas negativas captadas'} en privado en todas las ubicaciones
       </p>
+      <p style="margin: 6px 0 0;"><a href="${BASE_URL}/intercepted" style="font-size: 12px; color: #b45309; text-decoration: underline;">Ver detalle por ubicación →</a></p>
     </div>` : '';
 
   const unresolvedBanner = totalUnresolved > 0 ? `

@@ -263,6 +263,7 @@ export default function DashboardView({
               label={t.dashboard.badReviewsPrevented}
               value={roiStats.intercepted}
               sub={t.dashboard.negativeReviewsCaughtPrivately}
+              href="/inbox"
             />
             <ImpactMetric
               label={t.dashboard.reviewVelocity}
@@ -440,14 +441,15 @@ export default function DashboardView({
 
 /* ── Impact Metric ── */
 
-function ImpactMetric({ label, value, valueSuffix, sub }: {
+function ImpactMetric({ label, value, valueSuffix, sub, href }: {
   label: string;
   value: string | number;
   valueSuffix?: string;
   sub: string;
+  href?: string;
 }) {
-  return (
-    <div className="impact-metric-item">
+  const content = (
+    <>
       <p style={{ margin: '0 0 0.5rem', fontSize: '0.75rem', fontWeight: 600, color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
         {label}
       </p>
@@ -458,8 +460,18 @@ function ImpactMetric({ label, value, valueSuffix, sub }: {
       <p style={{ margin: '0.5rem 0 0', fontSize: '0.8125rem', color: 'rgba(255,255,255,0.6)' }}>
         {sub}
       </p>
-    </div>
+    </>
   );
+
+  if (href) {
+    return (
+      <a href={href} className="impact-metric-item" style={{ textDecoration: 'none', color: 'inherit' }}>
+        {content}
+      </a>
+    );
+  }
+
+  return <div className="impact-metric-item">{content}</div>;
 }
 
 /* ── Stat Card ── */

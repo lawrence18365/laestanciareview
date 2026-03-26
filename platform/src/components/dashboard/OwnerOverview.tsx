@@ -270,7 +270,7 @@ export default function OwnerOverview({ stats, unresolvedCounts, roiByLocation, 
           </div>
 
           {/* Intercepted */}
-          <div>
+          <a href="/intercepted" style={{ textDecoration: 'none', color: 'inherit' }}>
             <div style={{ fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: 6 }}>
               {t.owner.badReviewsPrevented}
             </div>
@@ -280,7 +280,10 @@ export default function OwnerOverview({ stats, unresolvedCounts, roiByLocation, 
             <div style={{ fontSize: '0.75rem', color: 'var(--text-dim)', marginTop: 4 }}>
               {t.owner.negativeReviewsCaughtPrivately}
             </div>
-          </div>
+            <div style={{ fontSize: '0.65rem', color: 'var(--gold)', marginTop: 6, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              {t.owner.viewDetails} &rarr;
+            </div>
+          </a>
 
           {/* Total Scans */}
           <div>
