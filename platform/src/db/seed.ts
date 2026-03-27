@@ -279,6 +279,7 @@ const allRestaurants: RestaurantDef[] = [
     slug: 'regio-norte',
     region: 'central',
     googlePlaceId: 'ChIJp_TjY77Hz4UROpI4_OVO14w',
+    googleReviewUrl: 'https://search.google.com/local/writereview?placeid=ChIJp_TjY77Hz4UROpI4_OVO14w',
     managerEmail: 'gerencia@regionorte.mx',
     managerPhone: '+522227875130',
     staff: [

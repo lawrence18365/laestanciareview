@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server';
 import { db } from '@/db';
 import { reviews } from '@/db/schema';
+import { eq } from 'drizzle-orm';
 import { submitReviewSchema } from '@/lib/validations';
 import { getRestaurantBySlug, getStaffByCode } from '@/lib/queries';
 import { checkRateLimitAsync, getClientIP, rateLimitResponse } from '@/lib/rate-limit';
@@ -56,7 +57,7 @@ export async function POST(req: NextRequest) {
     })
     .returning();
 
-  // Instant alert on negative ratings (don't wait for feedback form)
+  // Send alert on negative ratings (this is the single alert per review)
   if (!sentToGoogle) {
     const pref = restaurant.alertPreference ?? 'all';
     let shouldSend = false;
@@ -66,37 +67,48 @@ export async function POST(req: NextRequest) {
     else if (pref === 'threshold') shouldSend = rating < restaurant.googleThreshold;
 
     if (shouldSend) {
-      const placeholderFeedback = '(sin comentario aún — el cliente está en el formulario)';
       const alertParams = {
         restaurantName: restaurant.name,
         customerName: null as string | null,
         rating,
         staffName: review.staffName,
-        feedback: placeholderFeedback,
+        feedback: '(sin comentario aún — el cliente está en el formulario)',
       };
+
+      const errors: string[] = [];
 
       const alerts: Promise<void>[] = [];
 
       if (restaurant.managerEmail) {
         alerts.push(
           sendFeedbackAlert({ to: restaurant.managerEmail, customerEmail: null, ...alertParams })
-            .catch((err) => console.error('[email] Failed to send instant alert:', err)),
+            .catch((err) => { errors.push(`email: ${err?.message ?? err}`); }),
         );
       }
       if (restaurant.smsAlerts && restaurant.managerPhone) {
         alerts.push(
           sendSMSAlert({ to: restaurant.managerPhone, ...alertParams })
-            .catch((err) => console.error('[sms] Failed to send instant alert:', err)),
+            .catch((err) => { errors.push(`sms: ${err?.message ?? err}`); }),
         );
       }
       if (restaurant.whatsappAlerts && restaurant.managerPhone) {
         alerts.push(
           sendWhatsAppAlert({ to: restaurant.managerPhone, ...alertParams })
-            .catch((err) => console.error('[whatsapp] Failed to send instant alert:', err)),
+            .catch((err) => { errors.push(`whatsapp: ${err?.message ?? err}`); }),
         );
       }
 
       await Promise.all(alerts);
+
+      // Record alert outcome on the review
+      await db.update(reviews).set({
+        alertSentAt: errors.length === 0 && alerts.length > 0 ? new Date() : null,
+        alertError: errors.length > 0 ? errors.join('; ') : null,
+      }).where(eq(reviews.id, review.id));
+
+      if (errors.length > 0) {
+        console.error(`[alert] Review #${review.id} (${restaurant.name}) alert errors: ${errors.join('; ')}`);
+      }
     }
   }
 

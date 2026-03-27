@@ -61,41 +61,63 @@ async function check() {
     console.log();
   }
 
-  // Check recent reviews for La Silla Juárez specifically
-  console.log('=== Last 5 La Silla Juárez reviews ===\n');
-  const laSilla = allRestaurants.find(r => r.slug === 'la-silla-juarez');
-  if (laSilla) {
-    const recentReviews = await db
-      .select({
-        id: reviews.id,
-        rating: reviews.rating,
-        feedback: reviews.feedback,
-        customerName: reviews.customerName,
-        sentToGoogle: reviews.sentToGoogle,
-        createdAt: reviews.createdAt,
-      })
-      .from(reviews)
-      .where(eq(reviews.restaurantId, laSilla.id))
-      .orderBy(desc(reviews.createdAt))
-      .limit(5);
+  // Check recent alert failures across all restaurants
+  console.log('=== Recent alert failures ===\n');
+  const failures = await db
+    .select({
+      id: reviews.id,
+      restaurantId: reviews.restaurantId,
+      rating: reviews.rating,
+      alertError: reviews.alertError,
+      alertSentAt: reviews.alertSentAt,
+      createdAt: reviews.createdAt,
+    })
+    .from(reviews)
+    .where(isNotNull(reviews.alertError))
+    .orderBy(desc(reviews.createdAt))
+    .limit(10);
 
-    if (recentReviews.length === 0) {
-      console.log('  No reviews found for La Silla Juárez');
-    } else {
-      for (const r of recentReviews) {
-        const hasFeedback = !!r.feedback;
-        console.log(`  Review #${r.id}: ★${r.rating} | feedback: ${hasFeedback ? 'YES' : 'NO'} | google: ${r.sentToGoogle ? 'YES' : 'NO'} | ${r.createdAt}`);
-        if (hasFeedback) console.log(`    "${r.feedback?.slice(0, 80)}..."`);
-      }
+  if (failures.length === 0) {
+    console.log('  No alert failures recorded (or reviews predate tracking)');
+  } else {
+    for (const f of failures) {
+      const rest = allRestaurants.find(r => r.id === f.restaurantId);
+      console.log(`  Review #${f.id}: ★${f.rating} | ${rest?.name ?? 'unknown'} | ${f.createdAt}`);
+      console.log(`    Error: ${f.alertError}`);
     }
+  }
+
+  // Check recent non-Google reviews without alert tracking (pre-migration)
+  console.log('\n=== Last 10 intercepted reviews (alert status) ===\n');
+  const recentIntercepted = await db
+    .select({
+      id: reviews.id,
+      restaurantId: reviews.restaurantId,
+      rating: reviews.rating,
+      feedback: reviews.feedback,
+      sentToGoogle: reviews.sentToGoogle,
+      alertSentAt: reviews.alertSentAt,
+      alertError: reviews.alertError,
+      createdAt: reviews.createdAt,
+    })
+    .from(reviews)
+    .where(eq(reviews.sentToGoogle, false))
+    .orderBy(desc(reviews.createdAt))
+    .limit(10);
+
+  for (const r of recentIntercepted) {
+    const rest = allRestaurants.find(x => x.id === r.restaurantId);
+    const alertStatus = r.alertSentAt ? '✅ sent' : r.alertError ? `❌ ${r.alertError}` : '⚪ no tracking';
+    console.log(`  #${r.id}: ★${r.rating} | ${rest?.name ?? 'unknown'} | alert: ${alertStatus} | ${r.createdAt}`);
   }
 
   console.log('\n=== Environment check ===');
   console.log(`RESEND_API_KEY: ${process.env.RESEND_API_KEY ? 'SET' : 'MISSING'}`);
   console.log(`TELNYX_API_KEY: ${process.env.TELNYX_API_KEY ? 'SET' : 'MISSING'}`);
   console.log(`TELNYX_MESSAGING_PROFILE_ID: ${process.env.TELNYX_MESSAGING_PROFILE_ID ? 'SET' : 'MISSING'}`);
-  console.log(`WHATSAPP_TOKEN: ${process.env.WHATSAPP_TOKEN ? 'SET' : 'MISSING'}`);
-  console.log(`WHATSAPP_PHONE_ID: ${process.env.WHATSAPP_PHONE_ID ? 'SET' : 'MISSING'}`);
+  console.log(`TWILIO_ACCOUNT_SID: ${process.env.TWILIO_ACCOUNT_SID ? 'SET' : 'MISSING'}`);
+  console.log(`TWILIO_AUTH_TOKEN: ${process.env.TWILIO_AUTH_TOKEN ? 'SET' : 'MISSING'}`);
+  console.log(`TWILIO_WHATSAPP_FROM: ${process.env.TWILIO_WHATSAPP_FROM ? 'SET' : 'MISSING'}`);
 }
 
 check().catch((err) => {

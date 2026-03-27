@@ -55,78 +55,90 @@ export async function POST(req: NextRequest) {
     return Response.json({ error: 'Review not found or feedback already submitted' }, { status: 404 });
   }
 
-  // Send email alert to GM (non-blocking), respecting alert preference
-  const [restaurant] = await db
-    .select({
-      name: restaurants.name,
-      managerEmail: restaurants.managerEmail,
-      managerPhone: restaurants.managerPhone,
-      alertPreference: restaurants.alertPreference,
-      smsAlerts: restaurants.smsAlerts,
-      whatsappAlerts: restaurants.whatsappAlerts,
-      googleThreshold: restaurants.googleThreshold,
-    })
-    .from(restaurants)
-    .where(eq(restaurants.id, updated.restaurantId))
-    .limit(1);
+  // Only send alert here if the submit route didn't already send one
+  // (alertSentAt is null AND alertError is null means no attempt was made)
+  const alreadyAlerted = updated.alertSentAt !== null || updated.alertError !== null;
 
-  if (restaurant) {
-    const pref = restaurant.alertPreference ?? 'all';
-    let shouldSend = false;
+  if (!alreadyAlerted) {
+    const [restaurant] = await db
+      .select({
+        name: restaurants.name,
+        managerEmail: restaurants.managerEmail,
+        managerPhone: restaurants.managerPhone,
+        alertPreference: restaurants.alertPreference,
+        smsAlerts: restaurants.smsAlerts,
+        whatsappAlerts: restaurants.whatsappAlerts,
+        googleThreshold: restaurants.googleThreshold,
+      })
+      .from(restaurants)
+      .where(eq(restaurants.id, updated.restaurantId))
+      .limit(1);
 
-    if (pref === 'all') shouldSend = true;
-    else if (pref === 'low') shouldSend = updated.rating <= 2;
-    else if (pref === 'threshold') shouldSend = updated.rating < restaurant.googleThreshold;
-    // pref === 'off' -> shouldSend stays false
+    if (restaurant) {
+      const pref = restaurant.alertPreference ?? 'all';
+      let shouldSend = false;
 
-    if (shouldSend) {
-      const alerts: Promise<void>[] = [];
+      if (pref === 'all') shouldSend = true;
+      else if (pref === 'low') shouldSend = updated.rating <= 2;
+      else if (pref === 'threshold') shouldSend = updated.rating < restaurant.googleThreshold;
+      // pref === 'off' -> shouldSend stays false
 
-      // Email alert
-      if (restaurant.managerEmail) {
-        alerts.push(
-          sendFeedbackAlert({
-            to: restaurant.managerEmail,
-            restaurantName: restaurant.name,
-            customerName: updated.customerName,
-            customerEmail: updated.customerEmail,
-            rating: updated.rating,
-            staffName: updated.staffName,
-            feedback: feedback,
-          }).catch((err) => console.error('[email] Failed to send alert:', err)),
-        );
+      if (shouldSend) {
+        const errors: string[] = [];
+        const alerts: Promise<void>[] = [];
+
+        if (restaurant.managerEmail) {
+          alerts.push(
+            sendFeedbackAlert({
+              to: restaurant.managerEmail,
+              restaurantName: restaurant.name,
+              customerName: updated.customerName,
+              customerEmail: updated.customerEmail,
+              rating: updated.rating,
+              staffName: updated.staffName,
+              feedback: feedback,
+            }).catch((err) => { errors.push(`email: ${err?.message ?? err}`); }),
+          );
+        }
+
+        if (restaurant.smsAlerts && restaurant.managerPhone) {
+          alerts.push(
+            sendSMSAlert({
+              to: restaurant.managerPhone,
+              restaurantName: restaurant.name,
+              customerName: updated.customerName,
+              rating: updated.rating,
+              staffName: updated.staffName,
+              feedback: feedback,
+            }).catch((err) => { errors.push(`sms: ${err?.message ?? err}`); }),
+          );
+        }
+
+        if (restaurant.whatsappAlerts && restaurant.managerPhone) {
+          alerts.push(
+            sendWhatsAppAlert({
+              to: restaurant.managerPhone,
+              restaurantName: restaurant.name,
+              customerName: updated.customerName,
+              rating: updated.rating,
+              staffName: updated.staffName,
+              feedback: feedback,
+            }).catch((err) => { errors.push(`whatsapp: ${err?.message ?? err}`); }),
+          );
+        }
+
+        await Promise.all(alerts);
+
+        // Record alert outcome
+        await db.update(reviews).set({
+          alertSentAt: errors.length === 0 && alerts.length > 0 ? new Date() : null,
+          alertError: errors.length > 0 ? errors.join('; ') : null,
+        }).where(eq(reviews.id, updated.id));
+
+        if (errors.length > 0) {
+          console.error(`[alert] Review #${updated.id} feedback alert errors: ${errors.join('; ')}`);
+        }
       }
-
-      // SMS alert
-      if (restaurant.smsAlerts && restaurant.managerPhone) {
-        alerts.push(
-          sendSMSAlert({
-            to: restaurant.managerPhone,
-            restaurantName: restaurant.name,
-            customerName: updated.customerName,
-            rating: updated.rating,
-            staffName: updated.staffName,
-            feedback: feedback,
-          }).catch((err) => console.error('[sms] Failed to send alert:', err)),
-        );
-      }
-
-      // WhatsApp alert (via Twilio)
-      if (restaurant.whatsappAlerts && restaurant.managerPhone) {
-        alerts.push(
-          sendWhatsAppAlert({
-            to: restaurant.managerPhone,
-            restaurantName: restaurant.name,
-            customerName: updated.customerName,
-            rating: updated.rating,
-            staffName: updated.staffName,
-            feedback: feedback,
-          }).catch((err) => console.error('[whatsapp] Failed to send alert:', err)),
-        );
-      }
-
-      // Await alerts so serverless function doesn't terminate early
-      await Promise.all(alerts);
     }
   }
 

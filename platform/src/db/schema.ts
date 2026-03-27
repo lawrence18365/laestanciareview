@@ -80,6 +80,8 @@ export const reviews = pgTable(
     feedback: text('feedback'),
     status: reviewStatusEnum('status').notNull().default('new'),
     sentToGoogle: boolean('sent_to_google').notNull().default(false),
+    alertSentAt: timestamp('alert_sent_at', { withTimezone: true }),
+    alertError: text('alert_error'),
     createdAt: timestamp('created_at', { withTimezone: true })
       .notNull()
       .defaultNow(),
