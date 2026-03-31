@@ -20,6 +20,7 @@ interface Prospect {
 
 const prospects: Prospect[] = [
   // ── HOTTEST: below average, most pain ──
+  { name: '3 Campos Almuerzos Regionales', placeId: 'ChIJ30pIeLm_K4QRpbEMyqpUNRk', rating: 4.1, reviews: 287, phone: '524775208324', tag: 'hot', note: 'Debajo del promedio, Blvr Escobedo' },
   { name: 'Mendozzinos Pizza', placeId: 'ChIJc2coYNm-K4QRa8zjE_XfiS4', rating: 3.8, reviews: 513, phone: '524774333585', tag: 'hot', note: '0.4★ debajo del promedio — MÁS URGENCIA' },
   { name: 'Vancouver Wings León', placeId: 'ChIJR8bxY02-K4QR_DBOrbwkHXU', rating: 3.9, reviews: 1150, phone: '524777112551', tag: 'hot', note: '0.3★ debajo, 1,150 reseñas' },
   { name: 'Don Carbón León', placeId: 'ChIJNRcD11G_K4QRlOGA4pHOn_g', rating: 4.0, reviews: 1656, phone: '524778304295', tag: 'hot', note: '0.2★ debajo del promedio' },
