@@ -43,8 +43,8 @@ async function getNearbyCompetitors(lat: number, lng: number, excludePlaceId: st
   const res = await fetch(url, { next: { revalidate: REVALIDATE } });
   const data = await res.json();
   const results: NearbyPlace[] = (data.results || [])
-    .filter((p: any) => p.place_id !== excludePlaceId && p.rating && p.user_ratings_total >= 10)
-    .map((p: any) => ({
+    .filter((p: NearbyPlace & { place_id: string }) => p.place_id !== excludePlaceId && p.rating && p.user_ratings_total >= 10)
+    .map((p: NearbyPlace & { place_id: string }) => ({
       place_id: p.place_id,
       name: p.name,
       rating: p.rating,

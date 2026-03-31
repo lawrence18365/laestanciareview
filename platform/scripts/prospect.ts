@@ -110,14 +110,6 @@ function makeWhatsAppLink(place: Place, areaAvg: number): string {
   return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(msg)}`;
 }
 
-// The message the PROSPECT would send (for the audit page CTA)
-function makeProspectWhatsAppLink(place: Place): string {
-  const msg =
-    `Hola, vi el diagnóstico de ${place.name} en RateTap. ` +
-    `Me interesa mejorar mi calificación de Google. ` +
-    `¿Me pueden explicar cómo funciona?`;
-  return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(msg)}`;
-}
 
 // ─── Main ───
 async function main() {

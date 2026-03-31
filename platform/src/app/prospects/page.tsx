@@ -5,7 +5,6 @@ export const metadata: Metadata = {
   robots: 'noindex',
 };
 
-const WHATSAPP_NUMBER = '523311479086';
 const BASE_URL = 'https://app.ratetapmx.com';
 
 interface Prospect {
@@ -180,7 +179,7 @@ export default function ProspectsPage() {
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            {premium.map((p, i) => (
+            {premium.map((p) => (
               <div key={p.placeId} style={{
                 background: '#1E293B',
                 borderRadius: '12px',
