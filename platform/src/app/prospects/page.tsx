@@ -19,22 +19,43 @@ interface Prospect {
 }
 
 const prospects: Prospect[] = [
-  // Sweet spot — most pain, most likely to convert
+  // ── HOTTEST: below average, most pain ──
+  { name: 'Mendozzinos Pizza', placeId: 'ChIJc2coYNm-K4QRa8zjE_XfiS4', rating: 3.8, reviews: 513, phone: '524774333585', tag: 'hot', note: '0.4★ debajo del promedio — MÁS URGENCIA' },
+  { name: 'Vancouver Wings León', placeId: 'ChIJR8bxY02-K4QR_DBOrbwkHXU', rating: 3.9, reviews: 1150, phone: '524777112551', tag: 'hot', note: '0.3★ debajo, 1,150 reseñas' },
+  { name: 'Don Carbón León', placeId: 'ChIJNRcD11G_K4QRlOGA4pHOn_g', rating: 4.0, reviews: 1656, phone: '524778304295', tag: 'hot', note: '0.2★ debajo del promedio' },
+
+  // ── HOT: big names, at or near average ──
   { name: 'El Braserío', placeId: 'ChIJtYGwFgC_K4QRrzcK2V5ekvk', rating: 4.2, reviews: 3020, phone: '524772150991', tag: 'hot', note: 'Steakhouse, competidor directo' },
   { name: 'Restaurant Martin', placeId: 'ChIJxVr-253AK4QRD6kqlPZWjtY', rating: 4.3, reviews: 2449, phone: '524777626373', tag: 'hot', note: 'Gran nombre local' },
   { name: 'Las Fabulosas Papas León', placeId: 'ChIJEbdGtq2_K4QRnFmJzJO05yw', rating: 4.3, reviews: 2505, phone: '524777709000', tag: 'hot' },
+  { name: 'Tortas Poncho', placeId: 'ChIJT82CJke_K4QR2iTJjzM_4Lw', rating: 4.1, reviews: 1469, phone: '524773295686', tag: 'hot', note: '1,469 reseñas, debajo del promedio' },
   { name: 'Lupillos', placeId: 'ChIJ15erbVC_K4QRp6TEVSFCVl4', rating: 4.3, reviews: 1238, phone: '524777176557', tag: 'hot', note: '3 sucursales — ganas 1, ganas 3' },
-  { name: 'Don Carbón León', placeId: 'ChIJNRcD11G_K4QRlOGA4pHOn_g', rating: 4.0, reviews: 1656, phone: '524778304295', tag: 'hot', note: '0.2★ debajo del promedio' },
-  { name: 'Mendozzinos Pizza', placeId: 'ChIJc2coYNm-K4QRa8zjE_XfiS4', rating: 3.8, reviews: 513, phone: '524774333585', tag: 'hot', note: '0.4★ debajo — MÁS URGENCIA' },
   { name: 'Factory Pizza Alitas & Bar', placeId: 'ChIJdxI8Zwu_K4QREiAJb9f578I', rating: 4.2, reviews: 1300, phone: '524777141515', tag: 'hot' },
+  { name: 'KSushi León', placeId: 'ChIJE9s_OOS-K4QR33YCnDJuFZk', rating: 4.3, reviews: 1181, phone: '524777710720', tag: 'hot', note: '1,181 reseñas' },
   { name: 'Okuma Mariano Escobedo', placeId: 'ChIJwbiQs62_K4QRc_sAxxrZ8u8', rating: 4.3, reviews: 943, phone: '524773901175', tag: 'hot', note: 'Sushi, les importa su imagen' },
-  { name: 'El Patito 4A Generación', placeId: 'ChIJBRq4c1C_K4QRdWh__kenbbw', rating: 4.1, reviews: 431, phone: '524777172966', tag: 'hot', note: '4a generación — orgullo familiar' },
-  { name: 'Mariscos Gus', placeId: 'ChIJi7ZeDKfAK4QR4My4-5IHyPw', rating: 4.3, reviews: 569, phone: '524774708986', tag: 'hot' },
+  { name: 'Sushitai', placeId: 'ChIJ31mFRa-_K4QRSwoHexkPADc', rating: 4.3, reviews: 883, phone: '524777161400', tag: 'hot' },
+  { name: "Wing's Army", placeId: 'ChIJRyrXNlG_K4QRnl0izmLmp_8', rating: 4.1, reviews: 839, phone: '524777173602', tag: 'hot', note: 'Debajo del promedio' },
   { name: 'Green Place', placeId: 'ChIJF9bogK6_K4QRL323Kxbhl5M', rating: 4.2, reviews: 606, phone: '524773327070', tag: 'hot' },
-  // Premium — already good, want to protect
-  { name: 'Panteón Taurino', placeId: 'ChIJYw2tO3K_K4QR8uM9bpU1sHQ', rating: 4.5, reviews: 9121, phone: '524777134969', tag: 'premium', note: '9K+ reseñas, pez gordo' },
+  { name: 'Mariscos Gus', placeId: 'ChIJi7ZeDKfAK4QR4My4-5IHyPw', rating: 4.3, reviews: 569, phone: '524774708986', tag: 'hot' },
+  { name: 'Sushi Star', placeId: 'ChIJKwmgylG_K4QRtpZGsdv0-_o', rating: 4.3, reviews: 544, phone: '524772055252', tag: 'hot' },
+  { name: 'Banquetes Danny', placeId: 'ChIJ_fBdvkW_K4QR8UULhUiWmgU', rating: 4.3, reviews: 534, phone: '524773602639', tag: 'hot', note: 'Eventos — buen ticket promedio' },
+  { name: 'El Patito 4A Generación', placeId: 'ChIJBRq4c1C_K4QRdWh__kenbbw', rating: 4.1, reviews: 431, phone: '524777172966', tag: 'hot', note: '4a generación — orgullo familiar' },
+  { name: 'Tamales 5 de Mayo', placeId: 'ChIJbTc9ewu_K4QRuirSpEdjeXg', rating: 4.2, reviews: 410, phone: '524777131060', tag: 'hot' },
+  { name: 'deligo!', placeId: 'ChIJ9UHPwQC_K4QRVAmGEw9tD1I', rating: 4.2, reviews: 408, phone: '524777143354', tag: 'hot' },
+  { name: 'Novelli Pizzería', placeId: 'ChIJo8OE7HC_K4QR7qHz3n1rEEk', rating: 4.3, reviews: 396, phone: '524777163115', tag: 'hot' },
+  { name: 'Woki Tokee', placeId: 'ChIJe8u9dkW_K4QR-T3jipzmVO4', rating: 4.1, reviews: 300, phone: '524777795999', tag: 'hot', note: 'Debajo del promedio' },
+
+  // ── PREMIUM: already good, big fish ──
+  { name: 'Mr. Pampas do Brasil', placeId: 'ChIJl4Ekp02-K4QR9C3a2N5CKWo', rating: 4.6, reviews: 11197, phone: '524777710333', tag: 'premium', note: '11K+ reseñas — el pez más gordo de León' },
+  { name: 'Panteón Taurino', placeId: 'ChIJYw2tO3K_K4QR8uM9bpU1sHQ', rating: 4.5, reviews: 9121, phone: '524777134969', tag: 'premium', note: '9K+ reseñas, ícono de León' },
+  { name: 'Las Moras Café', placeId: 'ChIJPRnjume-K4QRRguNXgDgMg8', rating: 4.6, reviews: 8802, phone: '524775286631', tag: 'premium', note: '8.8K reseñas' },
+  { name: 'TACOS EL PATA LEÓN', placeId: 'ChIJYaB-OOS_K4QRixgZQpyfJ_g', rating: 4.4, reviews: 5429, phone: '524777735746', tag: 'premium', note: '5.4K reseñas' },
   { name: 'Estación Madero', placeId: 'ChIJsQ98bAi_K4QRNf4tHolU4hQ', rating: 4.5, reviews: 3618, phone: '524776986693', tag: 'premium' },
+  { name: 'Brasil 2000', placeId: 'ChIJN_o95aW_K4QRGfFfNCT-93Y', rating: 4.5, reviews: 3230, phone: '528911145138', tag: 'premium', note: '3.2K reseñas' },
   { name: 'Pizzas Del Moral Buffet', placeId: 'ChIJNVatBEG_K4QRQxxy2AG0_NM', rating: 4.4, reviews: 2840, phone: '524777186382', tag: 'premium' },
+  { name: 'Carnitas CUIC', placeId: 'ChIJ69M5ToDAK4QRuchub5WeyLw', rating: 4.4, reviews: 2732, phone: '524776369421', tag: 'premium', note: '2.7K reseñas' },
+  { name: 'Restaurant Bar Jaibol', placeId: 'ChIJh3gr9gu_K4QRU6lt2YLXh0c', rating: 4.6, reviews: 2699, phone: '524778106931', tag: 'premium', note: '4.6★ con 2.7K reseñas' },
+  { name: 'El Rincón Gaucho', placeId: 'ChIJ-Wjgn06_K4QRcmqQSThsdxM', rating: 4.5, reviews: 2604, phone: '524777187235', tag: 'premium', note: '2.6K reseñas' },
 ];
 
 function makeWhatsAppUrl(p: Prospect) {
