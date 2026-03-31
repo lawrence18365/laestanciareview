@@ -367,4 +367,56 @@
     <priority>0.7</priority>
   </url>
 
+  <!-- Contacto (Meta Ads Landing Page) -->
+  <url>
+    <loc>https://ratetapmx.com/contacto</loc>
+    <lastmod>2026-03-31</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <!-- Mejorar Calificación Google Restaurante (High-Intent SEO) -->
+  <url>
+    <loc>https://ratetapmx.com/es/mejorar-calificacion-google-restaurante</loc>
+    <xhtml:link rel="alternate" hreflang="es-MX" href="https://ratetapmx.com/es/mejorar-calificacion-google-restaurante"/>
+    <xhtml:link rel="alternate" hreflang="en-US" href="https://ratetapmx.com/reputation-recovery"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://ratetapmx.com/reputation-recovery"/>
+    <lastmod>2026-03-31</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.95</priority>
+  </url>
+
+  <!-- Tarjetas NFC Restaurantes México (High-Intent SEO) -->
+  <url>
+    <loc>https://ratetapmx.com/es/tarjetas-nfc-restaurantes-mexico</loc>
+    <xhtml:link rel="alternate" hreflang="es-MX" href="https://ratetapmx.com/es/tarjetas-nfc-restaurantes-mexico"/>
+    <xhtml:link rel="alternate" hreflang="en-US" href="https://ratetapmx.com/nfc-google-review-cards-for-restaurants"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://ratetapmx.com/nfc-google-review-cards-for-restaurants"/>
+    <lastmod>2026-03-31</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.95</priority>
+  </url>
+
+  <!-- Medir Desempeño Meseros (High-Intent SEO) -->
+  <url>
+    <loc>https://ratetapmx.com/es/medir-desempeno-meseros</loc>
+    <xhtml:link rel="alternate" hreflang="es-MX" href="https://ratetapmx.com/es/medir-desempeno-meseros"/>
+    <xhtml:link rel="alternate" hreflang="en-US" href="https://ratetapmx.com/track-waiter-performance-dashboard"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://ratetapmx.com/track-waiter-performance-dashboard"/>
+    <lastmod>2026-03-31</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <!-- Evitar Malas Reseñas Restaurante (High-Intent SEO) -->
+  <url>
+    <loc>https://ratetapmx.com/es/evitar-malas-resenas-restaurante</loc>
+    <xhtml:link rel="alternate" hreflang="es-MX" href="https://ratetapmx.com/es/evitar-malas-resenas-restaurante"/>
+    <xhtml:link rel="alternate" hreflang="en-US" href="https://ratetapmx.com/stop-bad-restaurant-reviews"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://ratetapmx.com/stop-bad-restaurant-reviews"/>
+    <lastmod>2026-03-31</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
 </urlset>
