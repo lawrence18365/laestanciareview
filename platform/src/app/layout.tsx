@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import ServiceWorkerRegistrar from "@/components/ServiceWorkerRegistrar";
 
 export const metadata: Metadata = {
   title: "RateTap",
@@ -14,6 +15,12 @@ export default function RootLayout({
   return (
     <html lang="es">
       <head>
+        <link rel="manifest" href="/manifest.json" />
+        <meta name="theme-color" content="#18181b" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        <meta name="apple-mobile-web-app-title" content="RateTap" />
+        <link rel="apple-touch-icon" href="/logos/ratetap_logo_transparent_background.png" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link
@@ -22,6 +29,7 @@ export default function RootLayout({
         />
       </head>
       <body className="antialiased">
+        <ServiceWorkerRegistrar />
         {children}
       </body>
     </html>

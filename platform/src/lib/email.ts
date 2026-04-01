@@ -576,6 +576,78 @@ export async function sendTestEmail(to: string) {
 }
 
 // ────────────────────────────────────────────────────────────
+// Feature Announcement
+// ────────────────────────────────────────────────────────────
+
+interface FeatureAnnouncementParams {
+  to: string;
+  restaurantName: string;
+}
+
+export async function sendFeatureAnnouncement({
+  to,
+  restaurantName,
+}: FeatureAnnouncementParams) {
+  const resend = getResend();
+  if (!resend) {
+    console.warn('[email] RESEND_API_KEY not set — skipping feature announcement');
+    return;
+  }
+
+  const content = `
+    <div style="padding: 32px 28px;">
+      <div style="margin-bottom: 16px;">
+        <span style="display: inline-block; padding: 4px 12px; border-radius: 999px; font-size: 12px; font-weight: 700; background: #eff6ff; color: #2563eb;">
+          Nueva Funcion
+        </span>
+      </div>
+
+      <h1 style="margin: 0 0 8px; font-size: 22px; font-weight: 700; color: #1c1917;">
+        Notificaciones Push en tu Celular
+      </h1>
+      <p style="margin: 0 0 24px; font-size: 15px; line-height: 1.6; color: #44403c;">
+        Hola! Ahora <strong>${escapeHtml(restaurantName)}</strong> puede recibir alertas instantaneas cuando un cliente deje una resena negativa — directo en tu iPhone, como un mensaje de WhatsApp.
+      </p>
+
+      <div style="padding: 20px; background: #faf8f6; border-radius: 12px; margin-bottom: 24px;">
+        <p style="margin: 0 0 12px; font-size: 13px; font-weight: 700; color: #78716c; text-transform: uppercase; letter-spacing: 0.06em;">Como funciona</p>
+
+        <div style="display: flex; align-items: flex-start; gap: 12px; margin-bottom: 14px;">
+          <span style="display: inline-block; width: 24px; height: 24px; border-radius: 50%; background: #2563eb; color: white; text-align: center; line-height: 24px; font-size: 13px; font-weight: 700; flex-shrink: 0;">1</span>
+          <p style="margin: 0; font-size: 14px; color: #44403c; line-height: 1.5;">Abre tu panel de RateTap en Safari en tu iPhone</p>
+        </div>
+        <div style="display: flex; align-items: flex-start; gap: 12px; margin-bottom: 14px;">
+          <span style="display: inline-block; width: 24px; height: 24px; border-radius: 50%; background: #2563eb; color: white; text-align: center; line-height: 24px; font-size: 13px; font-weight: 700; flex-shrink: 0;">2</span>
+          <p style="margin: 0; font-size: 14px; color: #44403c; line-height: 1.5;">Agrega RateTap a tu pantalla de inicio (Compartir → Agregar a pantalla de inicio)</p>
+        </div>
+        <div style="display: flex; align-items: flex-start; gap: 12px;">
+          <span style="display: inline-block; width: 24px; height: 24px; border-radius: 50%; background: #2563eb; color: white; text-align: center; line-height: 24px; font-size: 13px; font-weight: 700; flex-shrink: 0;">3</span>
+          <p style="margin: 0; font-size: 14px; color: #44403c; line-height: 1.5;">Abre RateTap desde la pantalla de inicio y toca <strong>"Activar Notificaciones"</strong></p>
+        </div>
+      </div>
+
+      <div style="padding: 16px 20px; background: #fffbeb; border-radius: 10px; border-left: 4px solid #f59e0b; margin-bottom: 28px;">
+        <p style="margin: 0; font-size: 14px; color: #92400e; line-height: 1.5;">
+          Cuando un cliente deje una resena de 3 estrellas o menos, recibiras una notificacion al instante en tu celular — para que puedas actuar de inmediato.
+        </p>
+      </div>
+
+      <div style="text-align: center;">
+        <a href="${BASE_URL}/dashboard" style="display: inline-block; padding: 14px 36px; background: #1c1917; color: #ffffff; border-radius: 10px; text-decoration: none; font-size: 15px; font-weight: 600;">
+          Abrir Mi Panel
+        </a>
+      </div>
+    </div>`;
+
+  await resend.emails.send({
+    from: FROM,
+    to,
+    subject: `📱 Nuevo: Notificaciones push en tu celular — ${restaurantName}`,
+    html: emailLayout(content),
+  });
+}
+
+// ────────────────────────────────────────────────────────────
 // GM Feedback (to admin)
 // ────────────────────────────────────────────────────────────
 

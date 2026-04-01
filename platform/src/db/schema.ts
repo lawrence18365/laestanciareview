@@ -124,6 +124,26 @@ export const googleRatingSnapshotsRelations = relations(
   }),
 );
 
+export const pushSubscriptions = pgTable(
+  'push_subscriptions',
+  {
+    id: serial('id').primaryKey(),
+    restaurantId: integer('restaurant_id')
+      .notNull()
+      .references(() => restaurants.id, { onDelete: 'cascade' }),
+    endpoint: text('endpoint').notNull(),
+    p256dh: text('p256dh').notNull(),
+    auth: text('auth').notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [
+    index('push_subs_restaurant_id_idx').on(t.restaurantId),
+    unique('push_subs_endpoint_uniq').on(t.endpoint),
+  ],
+);
+
 // Relations
 export const restaurantsRelations = relations(restaurants, ({ many }) => ({
   staff: many(staff),

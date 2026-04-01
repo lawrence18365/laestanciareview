@@ -8,6 +8,7 @@ import { checkRateLimitAsync, getClientIP, rateLimitResponse } from '@/lib/rate-
 import { sendFeedbackAlert } from '@/lib/email';
 import { sendSMSAlert } from '@/lib/sms';
 import { sendWhatsAppAlert } from '@/lib/whatsapp';
+import { sendPushToRestaurant } from '@/lib/push';
 
 // 30 reviews per minute per IP (generous for busy restaurants with shared tablet)
 const SUBMIT_LIMIT = 30;
@@ -97,6 +98,16 @@ export async function POST(req: NextRequest) {
             .catch((err) => { errors.push(`whatsapp: ${err?.message ?? err}`); }),
         );
       }
+
+      // Push notification — instant alert on GM's phone
+      alerts.push(
+        sendPushToRestaurant(restaurant.id, {
+          title: `⚠️ Reseña de ${rating} estrella${rating === 1 ? '' : 's'}`,
+          body: `${review.staffName} — ${restaurant.name}`,
+          url: '/inbox',
+          tag: `review-${review.id}`,
+        }).then(() => {}).catch((err) => { errors.push(`push: ${err?.message ?? err}`); }),
+      );
 
       await Promise.all(alerts);
 

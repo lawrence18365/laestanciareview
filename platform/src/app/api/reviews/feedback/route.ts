@@ -6,6 +6,7 @@ import { submitFeedbackSchema } from '@/lib/validations';
 import { sendFeedbackAlert } from '@/lib/email';
 import { sendSMSAlert } from '@/lib/sms';
 import { sendWhatsAppAlert } from '@/lib/whatsapp';
+import { sendPushToRestaurant } from '@/lib/push';
 import { checkRateLimitAsync, getClientIP, rateLimitResponse } from '@/lib/rate-limit';
 
 // 10 feedback submissions per minute per IP
@@ -126,6 +127,16 @@ export async function POST(req: NextRequest) {
             }).catch((err) => { errors.push(`whatsapp: ${err?.message ?? err}`); }),
           );
         }
+
+        // Push notification with the actual feedback
+        alerts.push(
+          sendPushToRestaurant(updated.restaurantId, {
+            title: `⚠️ Reseña de ${updated.rating} estrella${updated.rating === 1 ? '' : 's'}`,
+            body: feedback.length > 100 ? feedback.slice(0, 100) + '…' : feedback,
+            url: '/inbox',
+            tag: `review-${updated.id}`,
+          }).then(() => {}).catch((err) => { errors.push(`push: ${err?.message ?? err}`); }),
+        );
 
         await Promise.all(alerts);
 

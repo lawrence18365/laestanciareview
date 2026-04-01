@@ -3,6 +3,8 @@
 import { useState, useCallback } from 'react';
 import DashboardNav from './DashboardNav';
 import OnboardingWizard from './OnboardingWizard';
+import FeatureAnnouncementBanner from './FeatureAnnouncementBanner';
+import PushNotificationBanner from './PushNotificationBanner';
 
 export default function DashboardShell({
   restaurantName,
@@ -39,6 +41,8 @@ export default function DashboardShell({
         isRegional={isRegional}
         onOpenGuide={openGuide}
       />
+      <FeatureAnnouncementBanner slug={slug} />
+      <PushNotificationBanner slug={slug} />
       <main>{children}</main>
       <OnboardingWizard
         slug={slug}
