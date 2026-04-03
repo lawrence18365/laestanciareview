@@ -3,15 +3,33 @@ import { db } from '@/db';
 import { pushSubscriptions } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 
-const VAPID_PUBLIC_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!;
-const VAPID_PRIVATE_KEY = process.env.VAPID_PRIVATE_KEY!;
+const VAPID_PUBLIC_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY?.trim() ?? '';
+const VAPID_PRIVATE_KEY = process.env.VAPID_PRIVATE_KEY?.trim() ?? '';
 
-if (VAPID_PUBLIC_KEY && VAPID_PRIVATE_KEY) {
-  webpush.setVapidDetails(
-    'mailto:soporte@ratetap.com',
-    VAPID_PUBLIC_KEY,
-    VAPID_PRIVATE_KEY,
-  );
+let pushConfigured: boolean | null = null;
+
+function ensurePushConfigured(): boolean {
+  if (pushConfigured !== null) return pushConfigured;
+
+  if (!VAPID_PUBLIC_KEY || !VAPID_PRIVATE_KEY) {
+    console.warn('[push] VAPID keys not configured, skipping push');
+    pushConfigured = false;
+    return pushConfigured;
+  }
+
+  try {
+    webpush.setVapidDetails(
+      'mailto:soporte@ratetap.com',
+      VAPID_PUBLIC_KEY,
+      VAPID_PRIVATE_KEY,
+    );
+    pushConfigured = true;
+  } catch (error) {
+    console.error('[push] Invalid VAPID configuration, disabling push notifications', error);
+    pushConfigured = false;
+  }
+
+  return pushConfigured;
 }
 
 interface PushPayload {
@@ -29,8 +47,7 @@ export async function sendPushToRestaurant(
   restaurantId: number,
   payload: PushPayload,
 ): Promise<{ sent: number; failed: number }> {
-  if (!VAPID_PUBLIC_KEY || !VAPID_PRIVATE_KEY) {
-    console.warn('[push] VAPID keys not configured, skipping push');
+  if (!ensurePushConfigured()) {
     return { sent: 0, failed: 0 };
   }
 
