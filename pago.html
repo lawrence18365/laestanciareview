@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Pago Mensual — RateTap</title>
+<meta content="Paga tu suscripcion mensual de RateTap. Acepta transferencia SPEI, Mercado Pago y tarjeta de credito via Stripe." name="description"/>
+<link href="https://ratetapmx.com/pago" rel="canonical"/>
+<!-- Open Graph -->
+<meta content="website" property="og:type"/>
+<meta content="https://ratetapmx.com/pago" property="og:url"/>
+<meta content="Pago Mensual — RateTap" property="og:title"/>
+<meta content="Paga tu suscripcion mensual de RateTap de forma rapida y segura." property="og:description"/>
+<meta content="https://ratetapmx.com/assets/og-image.png" property="og:image"/>
+<meta content="es_MX" property="og:locale"/>
+<meta content="RateTap" property="og:site_name"/>
+<!-- Meta Pixel Code -->
+<script>
+!function(f,b,e,v,n,t,s)
+{if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+n.queue=[];t=b.createElement(e);t.async=!0;
+t.src=v;s=b.getElementsByTagName(e)[0];
+s.parentNode.insertBefore(t,s)}(window, document,'script',
+'https://connect.facebook.net/en_US/fbevents.js');
+fbq('init', '1578821303344121');
+fbq('track', 'PageView');
+</script>
+<noscript>
+<img height="1" src="https://www.facebook.com/tr?id=1578821303344121&ev=PageView&noscript=1" style="display:none" width="1"/>
+</noscript>
+<!-- End Meta Pixel Code -->
+<link as="style" href="styles.css" rel="preload"/>
+<link href="styles.css" rel="stylesheet"/>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"/>
+<style>
+  .pago-hero {
+    min-height: 100dvh;
+    display: flex;
+    align-items: center;
+    padding: 7rem 0 4rem;
+  }
+
+  .pago-header {
+    text-align: center;
+    max-width: 640px;
+    margin: 0 auto 3.5rem;
+  }
+
+  .pago-header h1 {
+    font-size: clamp(2.4rem, 5vw, 4rem);
+    margin-bottom: 0.75rem;
+    letter-spacing: -0.02em;
+  }
+
+  .pago-header p {
+    color: var(--text-secondary);
+    font-size: 1.1rem;
+    line-height: 1.6;
+  }
+
+  .pago-amount {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0.35rem;
+    margin-bottom: 1rem;
+  }
+
+  .pago-amount .currency {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--text-secondary);
+  }
+
+  .pago-amount .price {
+    font-family: 'Instrument Serif', serif;
+    font-size: 4.5rem;
+    font-weight: 400;
+    color: var(--brand-charcoal);
+    line-height: 1;
+  }
+
+  .pago-amount .period {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+  }
+
+  /* Payment methods grid */
+  .pago-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+    max-width: 640px;
+    margin: 0 auto;
+  }
+
+  .pago-card {
+    padding: 2rem 2.25rem;
+    background: rgba(255,255,255,0.82);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-radius: 20px;
+    border: 1px solid rgba(255,255,255,0.9);
+    box-shadow: 0 8px 32px -8px rgba(0,0,0,0.06);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+
+  .pago-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 16px 40px -8px rgba(0,0,0,0.1);
+  }
+
+  .pago-card-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .pago-card-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    flex-shrink: 0;
+  }
+
+  .pago-card-icon.stripe {
+    background: linear-gradient(135deg, #635bff, #7a73ff);
+    color: white;
+  }
+
+  .pago-card-icon.revolut {
+    background: linear-gradient(135deg, #0075eb, #00a2ff);
+    color: white;
+  }
+
+  .pago-card-icon.mercadopago {
+    background: linear-gradient(135deg, #009ee3, #00b8f5);
+    color: white;
+  }
+
+  .pago-card-header h3 {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--brand-charcoal);
+    margin: 0;
+  }
+
+  .pago-card-header .pago-badge {
+    margin-left: auto;
+    padding: 0.25rem 0.75rem;
+    border-radius: 999px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+  }
+
+  .pago-badge.recommended {
+    background: linear-gradient(135deg, rgba(45,156,219,0.12), rgba(45,156,219,0.06));
+    color: var(--brand-blue);
+  }
+
+  .pago-badge.spei {
+    background: rgba(15,23,42,0.06);
+    color: var(--text-secondary);
+  }
+
+  .pago-card-body p {
+    font-size: 0.92rem;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    margin-bottom: 1rem;
+  }
+
+  /* CLABE field */
+  .clabe-field {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    background: #f8f9fb;
+    border-radius: 12px;
+    border: 1px solid #e8ecf1;
+    overflow: hidden;
+    transition: border-color 0.2s;
+  }
+
+  .clabe-field:focus-within {
+    border-color: var(--brand-blue);
+  }
+
+  .clabe-label {
+    padding: 0.75rem 1rem;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+    border-right: 1px solid #e8ecf1;
+    background: #f1f3f6;
+  }
+
+  .clabe-value {
+    flex: 1;
+    padding: 0.75rem 1rem;
+    font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--brand-charcoal);
+    letter-spacing: 0.04em;
+    user-select: all;
+  }
+
+  .clabe-copy {
+    padding: 0.75rem 1rem;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--brand-blue);
+    font-size: 1rem;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    white-space: nowrap;
+  }
+
+  .clabe-copy:hover {
+    color: #1a7abd;
+  }
+
+  .clabe-copy .copy-label {
+    font-size: 0.78rem;
+    font-weight: 700;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+  }
+
+  .clabe-copy.copied {
+    color: #10b981;
+  }
+
+  .clabe-beneficiary {
+    margin-top: 0.75rem;
+    font-size: 0.82rem;
+    color: var(--text-secondary);
+  }
+
+  .clabe-beneficiary strong {
+    color: var(--brand-charcoal);
+    font-weight: 600;
+  }
+
+  /* Stripe CTA */
+  .stripe-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.6rem;
+    width: 100%;
+    padding: 1rem 2rem;
+    background: #635bff;
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 1rem;
+    font-weight: 700;
+    text-decoration: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 16px -4px rgba(99,91,255,0.4);
+  }
+
+  .stripe-btn:hover {
+    background: #5349e0;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px -4px rgba(99,91,255,0.5);
+  }
+
+  .stripe-btn i {
+    font-size: 1.1rem;
+  }
+
+  .stripe-powered {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    margin-top: 0.75rem;
+    font-size: 0.78rem;
+    color: #a0a0b0;
+  }
+
+  /* Divider */
+  .pago-divider {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin: 0.5rem 0;
+  }
+
+  .pago-divider::before,
+  .pago-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, #dde1e8, transparent);
+  }
+
+  .pago-divider span {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+
+  /* Help footer */
+  .pago-help {
+    text-align: center;
+    margin-top: 3rem;
+    padding: 1.5rem;
+    max-width: 640px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .pago-help p {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    line-height: 1.6;
+  }
+
+  .pago-help a {
+    color: var(--brand-blue);
+    font-weight: 600;
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+
+  .pago-help a:hover {
+    color: #1a7abd;
+    text-decoration: underline;
+  }
+
+  /* Trust badges */
+  .pago-trust {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1.5rem;
+    margin-top: 2.5rem;
+    flex-wrap: wrap;
+  }
+
+  .pago-trust-item {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.82rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+  }
+
+  .pago-trust-item i {
+    color: var(--brand-blue);
+    font-size: 0.9rem;
+  }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .pago-hero {
+      padding: 6rem 0 3rem;
+    }
+
+    .pago-card {
+      padding: 1.5rem;
+    }
+
+    .clabe-field {
+      flex-wrap: wrap;
+    }
+
+    .clabe-label {
+      width: 100%;
+      border-right: none;
+      border-bottom: 1px solid #e8ecf1;
+      padding: 0.6rem 1rem;
+    }
+
+    .clabe-value {
+      font-size: 0.82rem;
+      padding: 0.6rem 0.75rem;
+      min-width: 0;
+    }
+
+    .clabe-copy .copy-label {
+      display: none;
+    }
+
+    .pago-amount .price {
+      font-size: 3.5rem;
+    }
+
+    .pago-trust {
+      gap: 1rem;
+    }
+  }
+</style>
+</head>
+
+<body>
+<div class="ambient-canvas"></div>
+
+<!-- Navigation -->
+<nav class="navbar" id="navbar">
+  <a class="nav-brand" href="es/index.html">
+    <img src="assets/logo-new.png" alt="RateTap" width="1536" height="1024" decoding="async" loading="eager">
+  </a>
+  <div class="nav-menu" id="nav-menu">
+    <a class="nav-link" href="es/index.html#how-it-works">Como Funciona</a>
+    <a class="nav-link" href="es/index.html#features">Caracteristicas</a>
+    <a class="nav-link" href="es/roi-calculator.html">Calculadora ROI</a>
+  </div>
+  <div class="nav-actions">
+    <a class="btn btn-primary" href="contacto.html" style="padding: 0.7rem 1.8rem; font-size: 0.9rem;">Contacto</a>
+  </div>
+</nav>
+
+<!-- Payment Page -->
+<section class="pago-hero">
+  <div class="container">
+
+    <!-- Header -->
+    <div class="pago-header">
+      <span class="hero-eyebrow">PAGO MENSUAL</span>
+      <h1>Tu suscripcion<br><span class="serif-italic">RateTap</span></h1>
+
+      <div class="pago-amount">
+        <span class="currency">$</span>
+        <span class="price">700</span>
+        <span class="period">MXN / mes</span>
+      </div>
+
+      <p>Elige tu metodo de pago preferido. Transferencia SPEI o tarjeta de credito — lo que te quede mejor.</p>
+    </div>
+
+    <!-- Payment Methods -->
+    <div class="pago-grid">
+
+      <!-- Stripe (recommended) -->
+      <div class="pago-card" style="border: 1.5px solid rgba(99,91,255,0.2);">
+        <div class="pago-card-header">
+          <div class="pago-card-icon stripe">
+            <i class="fa-solid fa-credit-card"></i>
+          </div>
+          <h3>Tarjeta de Credito / Debito</h3>
+          <span class="pago-badge recommended">Recomendado</span>
+        </div>
+        <div class="pago-card-body">
+          <p>Paga con Visa, Mastercard o American Express de forma segura a traves de Stripe. Se procesa al instante.</p>
+          <a href="https://buy.stripe.com/5kQ5kwaQ1cTt0iEcr83ks00" target="_blank" rel="noopener" class="stripe-btn">
+            <i class="fa-solid fa-lock"></i>
+            Pagar $700 MXN con Tarjeta
+          </a>
+          <div class="stripe-powered">
+            <i class="fa-solid fa-shield-halved"></i>
+            Pago seguro procesado por Stripe
+          </div>
+        </div>
+      </div>
+
+      <!-- Divider -->
+      <div class="pago-divider">
+        <span>o transferencia SPEI</span>
+      </div>
+
+      <!-- Revolut -->
+      <div class="pago-card">
+        <div class="pago-card-header">
+          <div class="pago-card-icon revolut">
+            <i class="fa-solid fa-building-columns"></i>
+          </div>
+          <h3>Revolut</h3>
+          <span class="pago-badge spei">SPEI</span>
+        </div>
+        <div class="pago-card-body">
+          <p>Transfiere desde tu banca en linea o app bancaria usando la CLABE de Revolut:</p>
+          <div class="clabe-field">
+            <span class="clabe-label">CLABE</span>
+            <span class="clabe-value" id="clabe-revolut">646990404044265764</span>
+            <button class="clabe-copy" onclick="copyCLABE('clabe-revolut', this)" type="button">
+              <i class="fa-regular fa-copy"></i>
+              <span class="copy-label">Copiar</span>
+            </button>
+          </div>
+          <p class="clabe-beneficiary">Beneficiario: <strong>RateTap</strong></p>
+        </div>
+      </div>
+
+      <!-- Mercado Pago -->
+      <div class="pago-card">
+        <div class="pago-card-header">
+          <div class="pago-card-icon mercadopago">
+            <i class="fa-solid fa-wallet"></i>
+          </div>
+          <h3>Mercado Pago</h3>
+          <span class="pago-badge spei">SPEI</span>
+        </div>
+        <div class="pago-card-body">
+          <p>Transfiere a nuestra cuenta de Mercado Pago usando esta CLABE:</p>
+          <div class="clabe-field">
+            <span class="clabe-label">CLABE</span>
+            <span class="clabe-value" id="clabe-mp">722969014301260802</span>
+            <button class="clabe-copy" onclick="copyCLABE('clabe-mp', this)" type="button">
+              <i class="fa-regular fa-copy"></i>
+              <span class="copy-label">Copiar</span>
+            </button>
+          </div>
+          <p class="clabe-beneficiary">Beneficiario: <strong>RateTap</strong></p>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Trust badges -->
+    <div class="pago-trust">
+      <div class="pago-trust-item">
+        <i class="fa-solid fa-shield-halved"></i>
+        Pagos seguros
+      </div>
+      <div class="pago-trust-item">
+        <i class="fa-solid fa-lock"></i>
+        Datos encriptados
+      </div>
+      <div class="pago-trust-item">
+        <i class="fa-solid fa-receipt"></i>
+        Facturacion disponible
+      </div>
+    </div>
+
+    <!-- Help -->
+    <div class="pago-help">
+      <p>
+        Despues de transferir, envía tu comprobante por WhatsApp para confirmar tu pago.
+        <br>Si tienes dudas, escribenos a <a href="https://wa.me/5212228822360">WhatsApp</a> o a <a href="mailto:soporte@ratetapmx.com">soporte@ratetapmx.com</a>
+      </p>
+    </div>
+
+  </div>
+</section>
+
+<script>
+  function copyCLABE(id, btn) {
+    var text = document.getElementById(id).textContent.trim();
+    navigator.clipboard.writeText(text).then(function() {
+      btn.classList.add('copied');
+      btn.querySelector('i').className = 'fa-solid fa-check';
+      btn.querySelector('.copy-label').textContent = 'Copiado';
+      setTimeout(function() {
+        btn.classList.remove('copied');
+        btn.querySelector('i').className = 'fa-regular fa-copy';
+        btn.querySelector('.copy-label').textContent = 'Copiar';
+      }, 2000);
+    });
+  }
+
+  // Navbar scroll effect (reuse site behavior)
+  var navbar = document.getElementById('navbar');
+  window.addEventListener('scroll', function() {
+    if (window.scrollY > 20) {
+      navbar.classList.add('scrolled');
+    } else {
+      navbar.classList.remove('scrolled');
+    }
+  });
+</script>
+
+</body>
+</html>
