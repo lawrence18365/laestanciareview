@@ -2,7 +2,7 @@ import { verifySession } from '@/lib/session';
 import { redirect } from 'next/navigation';
 import { getRestaurantBySlug, getLiveStats } from '@/lib/queries';
 import { getBrandForSlug } from '@/lib/brands';
-import { refreshGoogleRating, getGoogleRatingTrend } from '@/lib/google-places';
+import { refreshGoogleRating, getGoogleRatingTrend, getGoogleReviewsAddedToday } from '@/lib/google-places';
 import LiveView from '@/components/dashboard/LiveView';
 
 export default async function LivePage() {
@@ -30,11 +30,15 @@ export default async function LivePage() {
   const [freshRestaurant, initialData, trend] = await Promise.all([
     // Re-fetch restaurant to get potentially updated rating
     getRestaurantBySlug(session.slug).then((r) => r ?? restaurant),
-    getLiveStats(restaurant.id),
+    getLiveStats(restaurant.id, restaurant.googleThreshold),
     restaurant.googlePlaceId
       ? getGoogleRatingTrend(restaurant.id)
       : null,
   ]);
+
+  const googleReviewsToday = freshRestaurant.googlePlaceId
+    ? await getGoogleReviewsAddedToday(restaurant.id, freshRestaurant.googleReviewCount ?? null)
+    : null;
 
   return (
     <LiveView
@@ -47,6 +51,7 @@ export default async function LivePage() {
           : null
       }
       googleReviewCount={freshRestaurant.googleReviewCount ?? null}
+      googleReviewsToday={googleReviewsToday}
       googleTrend={trend}
       initialData={initialData}
     />

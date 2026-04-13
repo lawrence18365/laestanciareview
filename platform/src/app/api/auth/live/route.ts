@@ -1,6 +1,6 @@
 import { verifySession } from '@/lib/session';
 import { getRestaurantBySlug, getLiveStats } from '@/lib/queries';
-import { getGoogleRatingTrend } from '@/lib/google-places';
+import { getGoogleRatingTrend, getGoogleReviewsAddedToday } from '@/lib/google-places';
 
 export const dynamic = 'force-dynamic';
 
@@ -19,10 +19,13 @@ export async function GET() {
   if (!restaurant)
     return Response.json({ error: 'Not found' }, { status: 404 });
 
-  const [data, trend] = await Promise.all([
-    getLiveStats(restaurant.id),
+  const [data, trend, googleReviewsToday] = await Promise.all([
+    getLiveStats(restaurant.id, restaurant.googleThreshold),
     restaurant.googlePlaceId
       ? getGoogleRatingTrend(restaurant.id)
+      : null,
+    restaurant.googlePlaceId
+      ? getGoogleReviewsAddedToday(restaurant.id, restaurant.googleReviewCount ?? null)
       : null,
   ]);
 
@@ -32,6 +35,7 @@ export async function GET() {
       ? parseFloat(restaurant.googleRating)
       : null,
     googleReviewCount: restaurant.googleReviewCount ?? null,
+    googleReviewsToday,
     googleTrend: trend,
     ...data,
   });

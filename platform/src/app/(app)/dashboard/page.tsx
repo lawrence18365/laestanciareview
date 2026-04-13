@@ -10,7 +10,7 @@ import {
   getROIStats,
   getMonthlyStats,
 } from '@/lib/queries';
-import { getGoogleRatingTrend, getGoogleRatingHistory } from '@/lib/google-places';
+import { getGoogleRatingTrend, getGoogleRatingHistory, getGoogleReviewsAddedToday } from '@/lib/google-places';
 import DashboardView from '@/components/dashboard/DashboardView';
 
 export default async function DashboardPage({
@@ -63,6 +63,10 @@ export default async function DashboardPage({
       : [],
   ]);
 
+  const googleReviewsToday = restaurant.googlePlaceId
+    ? await getGoogleReviewsAddedToday(restaurant.id, restaurant.googleReviewCount ?? null)
+    : null;
+
   return (
     <DashboardView
       stats={stats}
@@ -76,6 +80,7 @@ export default async function DashboardPage({
       googleHistory={googleHistory}
       googleRating={restaurant.googleRating ? parseFloat(restaurant.googleRating) : null}
       googleReviewCount={restaurant.googleReviewCount ?? null}
+      googleReviewsToday={googleReviewsToday}
     />
   );
 }

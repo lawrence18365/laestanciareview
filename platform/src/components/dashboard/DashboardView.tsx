@@ -10,8 +10,17 @@ function fmt(n: number): string {
 
 const MONTHS_ES = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
 
+const MEXICO_DATE_PARTS = new Intl.DateTimeFormat('en-US', {
+  timeZone: 'America/Mexico_City',
+  day: 'numeric',
+  month: 'numeric',
+});
+
 function formatDateES(d: Date): string {
-  return `${d.getUTCDate()} ${MONTHS_ES[d.getUTCMonth()]}`;
+  const parts = MEXICO_DATE_PARTS.formatToParts(d);
+  const day = parts.find((p) => p.type === 'day')?.value ?? '';
+  const month = parts.find((p) => p.type === 'month')?.value ?? '1';
+  return `${day} ${MONTHS_ES[parseInt(month, 10) - 1]}`;
 }
 
 /* ── Types ── */
@@ -76,6 +85,7 @@ interface Props {
   googleHistory: GoogleSnapshot[];
   googleRating: number | null;
   googleReviewCount: number | null;
+  googleReviewsToday: number | null;
 }
 
 /* ── Main Component ── */
@@ -92,6 +102,7 @@ export default function DashboardView({
   googleHistory,
   googleRating,
   googleReviewCount,
+  googleReviewsToday,
 }: Props) {
   const firstReview = roiStats.firstReviewAt ? new Date(roiStats.firstReviewAt) : null;
   const weeksActive = useMemo(() => {
@@ -303,6 +314,11 @@ export default function DashboardView({
           value={stats.googleSends}
           delta={stats.googleSends - lastWeekStats.googleSends}
           deltaLabel={t.dashboard.vsLastWeek}
+          footnote={
+            googleReviewsToday != null
+              ? `Google hoy: +${googleReviewsToday}`
+              : null
+          }
         />
       </div>
 
@@ -477,13 +493,14 @@ function ImpactMetric({ label, value, valueSuffix, sub, href }: {
 /* ── Stat Card ── */
 
 function StatCard({
-  label, value, suffix, delta, deltaLabel,
+  label, value, suffix, delta, deltaLabel, footnote,
 }: {
   label: string;
   value: string | number;
   suffix?: string;
   delta?: number | null;
   deltaLabel?: string;
+  footnote?: string | null;
 }) {
   const showDelta = delta != null && delta !== 0;
   const positive = delta != null && delta > 0;
@@ -505,6 +522,11 @@ function StatCard({
       {!showDelta && (
         <p style={{ margin: 0, fontSize: '0.875rem', color: 'var(--text-dim)' }}>
           esta semana
+        </p>
+      )}
+      {footnote && (
+        <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--green)', fontWeight: 600 }}>
+          {footnote}
         </p>
       )}
     </div>

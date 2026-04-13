@@ -1,6 +1,7 @@
 import { db } from '@/db';
 import { restaurants, googleRatingSnapshots } from '@/db/schema';
 import { eq, sql, asc, desc, inArray } from 'drizzle-orm';
+import { startOfTodayMexico } from '@/lib/mexico-tz';
 
 /**
  * Fetch a restaurant's current Google rating and review count
@@ -146,6 +147,33 @@ export async function getGoogleRatingTrend(restaurantId: number) {
     ratingChange: parseFloat(latest.rating) - parseFloat(first.rating),
     reviewsGained: latest.reviewCount - first.reviewCount,
   };
+}
+
+/**
+ * Google reviews added today: live cached count minus the most recent
+ * snapshot captured before Mexico-midnight today. Returns null when there's
+ * no prior snapshot to diff against.
+ */
+export async function getGoogleReviewsAddedToday(
+  restaurantId: number,
+  currentCount: number | null,
+): Promise<number | null> {
+  if (currentCount == null) return null;
+
+  const todayStart = startOfTodayMexico();
+  const rows = await db
+    .select({ reviewCount: googleRatingSnapshots.reviewCount })
+    .from(googleRatingSnapshots)
+    .where(
+      sql`${googleRatingSnapshots.restaurantId} = ${restaurantId}
+          AND ${googleRatingSnapshots.capturedAt} < ${todayStart}`,
+    )
+    .orderBy(desc(googleRatingSnapshots.capturedAt))
+    .limit(1);
+
+  if (rows.length === 0) return null;
+  const diff = currentCount - rows[0].reviewCount;
+  return diff < 0 ? 0 : diff;
 }
 
 /**

@@ -13,6 +13,7 @@ interface LiveTotals {
   totalScans: number;
   fiveStarCount: number;
   belowFourCount: number;
+  intercepted: number;
   sentToGoogle: number;
 }
 
@@ -83,6 +84,7 @@ interface Props {
   logoDarkBg: boolean;
   googleRating: number | null;
   googleReviewCount: number | null;
+  googleReviewsToday: number | null;
   googleTrend: GoogleTrend | null;
   initialData: LiveData;
 }
@@ -160,10 +162,11 @@ function relativeTime(date: Date, now: Date): string {
 
 /* ── Main Component ─────────────────────────────── */
 
-export default function LiveView({ restaurantName, logoSrc, logoDarkBg, googleRating: initialGoogleRating, googleReviewCount: initialGoogleReviewCount, googleTrend: initialGoogleTrend, initialData }: Props) {
+export default function LiveView({ restaurantName, logoSrc, logoDarkBg, googleRating: initialGoogleRating, googleReviewCount: initialGoogleReviewCount, googleReviewsToday: initialGoogleReviewsToday, googleTrend: initialGoogleTrend, initialData }: Props) {
   const [data, setData] = useState<LiveData>(initialData);
   const [gRating, setGRating] = useState(initialGoogleRating);
   const [gReviewCount, setGReviewCount] = useState(initialGoogleReviewCount);
+  const [gReviewsToday, setGReviewsToday] = useState<number | null>(initialGoogleReviewsToday);
   const [gTrend, setGTrend] = useState<GoogleTrend | null>(initialGoogleTrend);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [lastUpdate, setLastUpdate] = useState(new Date());
@@ -200,6 +203,7 @@ export default function LiveView({ restaurantName, logoSrc, logoDarkBg, googleRa
           setData(json);
           if (json.googleRating != null) setGRating(json.googleRating);
           if (json.googleReviewCount != null) setGReviewCount(json.googleReviewCount);
+          setGReviewsToday(json.googleReviewsToday ?? null);
           if (json.googleTrend) setGTrend(json.googleTrend);
           setLastUpdate(new Date());
         }
@@ -501,7 +505,7 @@ export default function LiveView({ restaurantName, logoSrc, logoDarkBg, googleRa
           <ProtectionRing
             rate={protectionRate}
             googleSends={data.today.sentToGoogle}
-            intercepted={data.today.belowFourCount}
+            intercepted={data.today.intercepted}
             large={fs}
           />
 
@@ -525,13 +529,18 @@ export default function LiveView({ restaurantName, logoSrc, logoDarkBg, googleRa
               weekValue={data.week.sentToGoogle}
               todayValue={data.today.sentToGoogle}
               lastWeekValue={data.lastWeek.sentToGoogle}
+              footnote={
+                gReviewsToday != null
+                  ? `Google hoy: +${gReviewsToday}`
+                  : null
+              }
               large={fs}
             />
             <StatBox
               label="INTERCEPTADOS"
-              weekValue={data.week.belowFourCount}
-              todayValue={data.today.belowFourCount}
-              lastWeekValue={data.lastWeek.belowFourCount}
+              weekValue={data.week.intercepted}
+              todayValue={data.today.intercepted}
+              lastWeekValue={data.lastWeek.intercepted}
               large={fs}
             />
           </div>
@@ -966,12 +975,14 @@ function StatBox({
   label,
   weekValue,
   todayValue,
+  footnote,
   large,
 }: {
   label: string;
   weekValue: number;
   todayValue: number;
   lastWeekValue: number;
+  footnote?: string | null;
   large: boolean;
 }) {
   const fs = large;
@@ -1028,6 +1039,19 @@ function StatBox({
              ESTA SEMANA
            </span>
         </div>
+        {footnote && (
+          <span
+            className="font-numeric"
+            style={{
+              fontSize: fs ? '0.7rem' : '0.6rem',
+              color: C.green,
+              fontWeight: 600,
+              letterSpacing: '0.02em',
+            }}
+          >
+            {footnote}
+          </span>
+        )}
       </div>
     </div>
   );

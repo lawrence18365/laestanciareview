@@ -2,6 +2,7 @@ import { db } from '@/db';
 import { reviews, staff, restaurants } from '@/db/schema';
 import { eq, and, gte, sql, desc, count, avg, asc } from 'drizzle-orm';
 import { startOfWeek } from 'date-fns';
+import { startOfWeekMexico, startOfTodayMexico } from '@/lib/mexico-tz';
 
 /** Helper: raw SQL count that returns a JS number (Postgres bigint → string otherwise). */
 const countSql = (strings: TemplateStringsArray, ...values: unknown[]) =>
@@ -17,19 +18,19 @@ export async function getRestaurantBySlug(slug: string) {
   return rows[0] ?? null;
 }
 
-/** Resolve a staff member by code within a restaurant. */
+/** Resolve a staff member by code within a restaurant (case-insensitive). */
 export async function getStaffByCode(restaurantId: number, code: string) {
   const rows = await db
     .select()
     .from(staff)
-    .where(and(eq(staff.restaurantId, restaurantId), eq(staff.code, code)))
+    .where(and(eq(staff.restaurantId, restaurantId), sql`lower(${staff.code}) = lower(${code})`))
     .limit(1);
   return rows[0] ?? null;
 }
 
 /** Staff leaderboard: average rating + review count per staff member this week. */
 export async function getLeaderboard(restaurantId: number) {
-  const monday = startOfWeek(new Date(), { weekStartsOn: 1 });
+  const monday = startOfWeekMexico();
 
   return db
     .select({
@@ -52,7 +53,7 @@ export async function getLeaderboard(restaurantId: number) {
 
 /** Weekly stats: total reviews, average rating, google sends this week. */
 export async function getWeeklyStats(restaurantId: number) {
-  const monday = startOfWeek(new Date(), { weekStartsOn: 1 });
+  const monday = startOfWeekMexico();
 
   const rows = await db
     .select({
@@ -73,7 +74,7 @@ export async function getWeeklyStats(restaurantId: number) {
 
 /** Last week's stats for comparison. */
 export async function getLastWeekStats(restaurantId: number, threshold: number = 4) {
-  const thisMonday = startOfWeek(new Date(), { weekStartsOn: 1 });
+  const thisMonday = startOfWeekMexico();
   const lastMonday = new Date(thisMonday);
   lastMonday.setDate(lastMonday.getDate() - 7);
 
@@ -140,7 +141,7 @@ export async function getStaffList(restaurantId: number) {
 }
 
 /** All feedback for a restaurant, with optional status filter. */
-export async function getAllFeedback(restaurantId: number, status?: string) {
+export async function getAllFeedback(restaurantId: number, status?: string, limit = 500) {
   const conditions = [
     eq(reviews.restaurantId, restaurantId),
     sql`${reviews.feedback} is not null`,
@@ -153,7 +154,8 @@ export async function getAllFeedback(restaurantId: number, status?: string) {
     .select()
     .from(reviews)
     .where(and(...conditions))
-    .orderBy(desc(reviews.createdAt));
+    .orderBy(desc(reviews.createdAt))
+    .limit(limit);
 }
 
 /** Rating distribution: count of each star (1–5) for a restaurant. */
@@ -228,7 +230,7 @@ export async function getNewFeedbackCount(restaurantId: number) {
 
 /** Overview stats for restaurants (weekly). Optionally filter by region. */
 export async function getOverviewStats(region?: string) {
-  const monday = startOfWeek(new Date(), { weekStartsOn: 1 });
+  const monday = startOfWeekMexico();
 
   const conditions = [
     eq(restaurants.isOwner, false),
@@ -260,7 +262,7 @@ export async function getOverviewStats(region?: string) {
 
 /** Week before last stats (for digest comparison). */
 export async function getWeekBeforeLastStats(restaurantId: number, threshold: number = 4) {
-  const thisMonday = startOfWeek(new Date(), { weekStartsOn: 1 });
+  const thisMonday = startOfWeekMexico();
   const lastMonday = new Date(thisMonday);
   lastMonday.setDate(lastMonday.getDate() - 7);
   const twoWeeksAgo = new Date(lastMonday);
@@ -287,7 +289,7 @@ export async function getWeekBeforeLastStats(restaurantId: number, threshold: nu
 
 /** Last week's leaderboard (top performers). */
 export async function getLastWeekLeaderboard(restaurantId: number, limit = 5) {
-  const thisMonday = startOfWeek(new Date(), { weekStartsOn: 1 });
+  const thisMonday = startOfWeekMexico();
   const lastMonday = new Date(thisMonday);
   lastMonday.setDate(lastMonday.getDate() - 7);
 
@@ -328,12 +330,11 @@ export async function getOwnerAccounts() {
 }
 
 /** Live view stats: real-time team data for the fullscreen tablet display. */
-export async function getLiveStats(restaurantId: number) {
-  const monday = startOfWeek(new Date(), { weekStartsOn: 1 });
+export async function getLiveStats(restaurantId: number, threshold: number = 4) {
+  const monday = startOfWeekMexico();
   const lastMonday = new Date(monday);
   lastMonday.setDate(lastMonday.getDate() - 7);
-  const todayStart = new Date();
-  todayStart.setHours(0, 0, 0, 0);
+  const todayStart = startOfTodayMexico();
 
   const totalsSelect = {
     totalScans: count(reviews.id),
@@ -341,6 +342,8 @@ export async function getLiveStats(restaurantId: number) {
       countSql`count(*) filter (where ${reviews.rating} = 5)`,
     belowFourCount:
       countSql`count(*) filter (where ${reviews.rating} < 4)`,
+    intercepted:
+      countSql`count(*) filter (where ${reviews.sentToGoogle} = false and ${reviews.rating} < ${threshold})`,
     sentToGoogle:
       countSql`count(*) filter (where ${reviews.sentToGoogle} = true)`,
   };
@@ -397,7 +400,9 @@ export async function getLiveStats(restaurantId: number) {
         and(eq(staff.restaurantId, restaurantId), eq(staff.active, true)),
       ).orderBy(staff.name),
 
-      // Recent scans for live activity feed (last 20 this week)
+      // Recent scans for live activity feed (today only, last 20).
+      // Single source of truth: the feed and the "today" counters cover
+      // the same window, so they can never disagree.
       db
         .select({
           id: reviews.id,
@@ -408,13 +413,13 @@ export async function getLiveStats(restaurantId: number) {
         })
         .from(reviews)
         .where(
-          and(eq(reviews.restaurantId, restaurantId), gte(reviews.createdAt, monday)),
+          and(eq(reviews.restaurantId, restaurantId), gte(reviews.createdAt, todayStart)),
         )
         .orderBy(desc(reviews.createdAt))
         .limit(20),
     ]);
 
-  const emptyTotals = { totalScans: 0, fiveStarCount: 0, belowFourCount: 0, sentToGoogle: 0 };
+  const emptyTotals = { totalScans: 0, fiveStarCount: 0, belowFourCount: 0, intercepted: 0, sentToGoogle: 0 };
 
   return {
     week: weekTotals[0] ?? emptyTotals,
@@ -563,7 +568,7 @@ export async function getWeeklyHistoryByRestaurant(region?: string, weeks = 12) 
 }
 
 /** All intercepted reviews across restaurants (for owner/regional drilldown). */
-export async function getInterceptedReviews(region?: string) {
+export async function getInterceptedReviews(region?: string, limit = 1000) {
   const conditions = [
     eq(restaurants.isOwner, false),
     eq(restaurants.isRegional, false),
@@ -592,7 +597,8 @@ export async function getInterceptedReviews(region?: string) {
     .from(reviews)
     .innerJoin(restaurants, eq(reviews.restaurantId, restaurants.id))
     .where(and(...conditions))
-    .orderBy(desc(reviews.createdAt));
+    .orderBy(desc(reviews.createdAt))
+    .limit(limit);
 }
 
 /** Google conversion rate: sent / total for reviews above threshold. */
