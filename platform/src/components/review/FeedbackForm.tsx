@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { t } from '@/lib/i18n';
 
 interface FeedbackFormProps {
@@ -73,6 +73,19 @@ export default function FeedbackForm({
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState(false);
   const [feedbackLength, setFeedbackLength] = useState(0);
+  const [showReminder, setShowReminder] = useState(false);
+  const reminderTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  function armReminder() {
+    if (reminderTimer.current) clearTimeout(reminderTimer.current);
+    reminderTimer.current = setTimeout(() => setShowReminder(true), 30_000);
+  }
+
+  useEffect(() => {
+    return () => {
+      if (reminderTimer.current) clearTimeout(reminderTimer.current);
+    };
+  }, []);
 
   const isValidReviewId = reviewId !== null && reviewId !== '' && !isNaN(parseInt(reviewId, 10));
 
@@ -127,6 +140,8 @@ export default function FeedbackForm({
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (!reviewId) return;
+    if (reminderTimer.current) clearTimeout(reminderTimer.current);
+    setShowReminder(false);
     setSubmitting(true);
     setError(false);
 
@@ -305,8 +320,14 @@ export default function FeedbackForm({
               ...inputStyle,
               resize: 'none',
             }}
-            onChange={(e) => setFeedbackLength(e.target.value.length)}
-            onFocus={(e) => { e.target.style.boxShadow = '0 0 0 2px rgba(217,119,6,0.15)'; }}
+            onChange={(e) => {
+              setFeedbackLength(e.target.value.length);
+              if (e.target.value.length > 0) armReminder();
+            }}
+            onFocus={(e) => {
+              e.target.style.boxShadow = '0 0 0 2px rgba(217,119,6,0.15)';
+              armReminder();
+            }}
             onBlur={(e) => { e.target.style.boxShadow = 'none'; }}
           />
           <p style={{
@@ -321,29 +342,60 @@ export default function FeedbackForm({
           </p>
         </div>
 
-        <button
-          type="submit"
-          disabled={submitting}
+        <div
           style={{
-            width: '100%',
-            padding: '0.8rem',
-            border: 'none',
-            borderRadius: 0,
-            background: '#111',
-            color: '#fff',
-            fontWeight: 700,
-            fontSize: '0.7rem',
-            letterSpacing: '0.1em',
-            textTransform: 'uppercase',
-            cursor: submitting ? 'not-allowed' : 'pointer',
-            opacity: submitting ? 0.6 : 1,
-            transition: 'all 0.15s ease',
-            fontFamily: 'var(--font-sans)',
+            position: 'sticky',
+            bottom: 0,
             marginTop: '0.25rem',
+            marginLeft: '-1.75rem',
+            marginRight: '-1.75rem',
+            marginBottom: '-2rem',
+            padding: '1rem 1.75rem 1.25rem',
+            background: 'linear-gradient(to bottom, rgba(255,255,255,0) 0%, #fff 35%)',
           }}
         >
-          {submitting ? t.feedbackForm.submitting : t.feedbackForm.shareFeedback}
-        </button>
+          {showReminder && (
+            <div
+              role="status"
+              style={{
+                padding: '0.55rem 0.75rem',
+                marginBottom: '0.6rem',
+                border: '1px solid #D97706',
+                background: 'rgba(217,119,6,0.08)',
+                color: '#92400E',
+                fontSize: '0.8rem',
+                fontWeight: 500,
+                textAlign: 'center',
+                animation: 'fbFadeIn 0.3s ease-out',
+              }}
+            >
+              {t.feedbackForm.submitReminder}
+            </div>
+          )}
+          <button
+            type="submit"
+            disabled={submitting}
+            style={{
+              width: '100%',
+              padding: '0.9rem',
+              border: 'none',
+              borderRadius: 0,
+              background: '#111',
+              color: '#fff',
+              fontWeight: 700,
+              fontSize: '0.75rem',
+              letterSpacing: '0.1em',
+              textTransform: 'uppercase',
+              cursor: submitting ? 'not-allowed' : 'pointer',
+              opacity: submitting ? 0.6 : 1,
+              transition: 'all 0.15s ease',
+              fontFamily: 'var(--font-sans)',
+              boxShadow: '0 -2px 8px rgba(0,0,0,0.04)',
+            }}
+          >
+            {submitting ? t.feedbackForm.submitting : t.feedbackForm.shareFeedback}
+          </button>
+        </div>
       </form>
 
       {/* Keyframes */}

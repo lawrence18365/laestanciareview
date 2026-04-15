@@ -372,6 +372,7 @@ export const t = {
     tellUsAboutExperience: 'Cuéntanos sobre tu experiencia...',
     submitting: 'Enviando\u2026',
     shareFeedback: 'Compartir Comentario',
+    submitReminder: 'No olvides tocar "Compartir Comentario" para enviar tu opinión.',
     somethingWrong: 'Algo salió mal. Por favor intenta de nuevo.',
     invalidLink: 'Enlace inválido. Por favor escanea tu código de nuevo.',
   },
