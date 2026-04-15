@@ -1,14 +1,9 @@
 import { NextRequest } from 'next/server';
 import { db } from '@/db';
 import { reviews } from '@/db/schema';
-import { eq } from 'drizzle-orm';
 import { submitReviewSchema } from '@/lib/validations';
 import { getRestaurantBySlug, getStaffByCode } from '@/lib/queries';
 import { checkRateLimitAsync, getClientIP, rateLimitResponse } from '@/lib/rate-limit';
-import { sendFeedbackAlert } from '@/lib/email';
-import { sendSMSAlert } from '@/lib/sms';
-import { sendWhatsAppAlert } from '@/lib/whatsapp';
-import { sendPushToRestaurant } from '@/lib/push';
 
 // 30 reviews per minute per IP (generous for busy restaurants with shared tablet)
 const SUBMIT_LIMIT = 30;
@@ -58,70 +53,10 @@ export async function POST(req: NextRequest) {
     })
     .returning();
 
-  // Send alert on negative ratings (this is the single alert per review)
-  if (!sentToGoogle) {
-    const pref = restaurant.alertPreference ?? 'all';
-    let shouldSend = false;
-
-    if (pref === 'all') shouldSend = true;
-    else if (pref === 'low') shouldSend = rating <= 2;
-    else if (pref === 'threshold') shouldSend = rating < restaurant.googleThreshold;
-
-    if (shouldSend) {
-      const alertParams = {
-        restaurantName: restaurant.name,
-        customerName: null as string | null,
-        rating,
-        staffName: review.staffName,
-        feedback: '(sin comentario aún — el cliente está en el formulario)',
-      };
-
-      const errors: string[] = [];
-
-      const alerts: Promise<void>[] = [];
-
-      if (restaurant.managerEmail) {
-        alerts.push(
-          sendFeedbackAlert({ to: restaurant.managerEmail, customerEmail: null, ...alertParams })
-            .catch((err) => { errors.push(`email: ${err?.message ?? err}`); }),
-        );
-      }
-      if (restaurant.smsAlerts && restaurant.managerPhone) {
-        alerts.push(
-          sendSMSAlert({ to: restaurant.managerPhone, ...alertParams })
-            .catch((err) => { errors.push(`sms: ${err?.message ?? err}`); }),
-        );
-      }
-      if (restaurant.whatsappAlerts && restaurant.managerPhone) {
-        alerts.push(
-          sendWhatsAppAlert({ to: restaurant.managerPhone, ...alertParams })
-            .catch((err) => { errors.push(`whatsapp: ${err?.message ?? err}`); }),
-        );
-      }
-
-      // Push notification — instant alert on GM's phone
-      alerts.push(
-        sendPushToRestaurant(restaurant.id, {
-          title: `⚠️ Reseña de ${rating} estrella${rating === 1 ? '' : 's'}`,
-          body: `${review.staffName} — ${restaurant.name}`,
-          url: '/inbox',
-          tag: `review-${review.id}`,
-        }).then(() => {}).catch((err) => { errors.push(`push: ${err?.message ?? err}`); }),
-      );
-
-      await Promise.all(alerts);
-
-      // Record alert outcome on the review
-      await db.update(reviews).set({
-        alertSentAt: errors.length === 0 && alerts.length > 0 ? new Date() : null,
-        alertError: errors.length > 0 ? errors.join('; ') : null,
-      }).where(eq(reviews.id, review.id));
-
-      if (errors.length > 0) {
-        console.error(`[alert] Review #${review.id} (${restaurant.name}) alert errors: ${errors.join('; ')}`);
-      }
-    }
-  }
+  // Alerts are fired only when the customer actually submits feedback (see
+  // /api/reviews/feedback). Tapping a star alone is not enough signal — too many
+  // customers open the form and abandon, which used to flood GM inboxes with
+  // placeholder "(sin comentario aún)" alerts.
 
   return Response.json({
     reviewId: review.id,
