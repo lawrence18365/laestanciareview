@@ -79,3 +79,42 @@ export async function sendSMSAlert({
     messaging_profile_id: MESSAGING_PROFILE_ID,
   });
 }
+
+interface TrialEndingSmsParams {
+  to: string;
+  restaurantName: string;
+  daysLeft: number;
+  amountMxn: number;
+  paymentUrl: string;
+}
+
+export async function sendTrialEndingSms({
+  to,
+  restaurantName,
+  daysLeft,
+  amountMxn,
+  paymentUrl,
+}: TrialEndingSmsParams) {
+  const client = getClient();
+  if (!client) {
+    console.warn('[sms] Telnyx not configured — skipping trial-ending SMS');
+    return;
+  }
+
+  const amount = new Intl.NumberFormat('es-MX', {
+    style: 'currency',
+    currency: 'MXN',
+    minimumFractionDigits: 0,
+  }).format(amountMxn);
+
+  const text =
+    `RateTap: ${restaurantName}, tu prueba termina en ${daysLeft} días. ` +
+    `Cobraremos ${amount} a tu tarjeta. Administra: ${paymentUrl}`;
+
+  await client.messages.send({
+    to: normalizePhone(to),
+    from: SENDER_ID,
+    text,
+    messaging_profile_id: MESSAGING_PROFILE_ID,
+  });
+}

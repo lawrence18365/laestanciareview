@@ -721,3 +721,307 @@ export async function sendGMFeedback({
     html: emailLayout(content),
   });
 }
+
+// ────────────────────────────────────────────────────────────
+// Self-serve signup + Stripe trial emails
+// ────────────────────────────────────────────────────────────
+
+const OWNER_NOTIFICATION_EMAIL =
+  clean(process.env.OWNER_NOTIFICATION_EMAIL, '') || clean(process.env.ADMIN_EMAIL, '');
+
+function mxnFmt(amount: number): string {
+  return new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN', minimumFractionDigits: 0 }).format(amount);
+}
+
+interface WelcomeEmailParams {
+  to: string;
+  restaurantName: string;
+  slug: string;
+  qrDataUrl: string;
+  reviewUrl: string;
+  trialEndsAt: Date;
+}
+
+export async function sendWelcomeEmail({
+  to,
+  restaurantName,
+  slug,
+  qrDataUrl,
+  reviewUrl,
+  trialEndsAt,
+}: WelcomeEmailParams) {
+  const resend = getResend();
+  if (!resend) {
+    console.warn('[email] RESEND_API_KEY not set — skipping welcome email');
+    return;
+  }
+
+  const trialEndStr = trialEndsAt.toLocaleDateString('es-MX', { day: 'numeric', month: 'long', year: 'numeric' });
+
+  const content = `
+    <div class="content-pad" style="padding: 32px 28px;">
+      <h1 style="margin: 0 0 12px; font-size: 24px; font-weight: 700; color: #1c1917;">¡Bienvenido a RateTap! 🎉</h1>
+      <p style="margin: 0 0 20px; font-size: 15px; line-height: 1.6; color: #57534e;">
+        Hola <strong>${escapeHtml(restaurantName)}</strong>, tu prueba gratis de 15 días ya está activa hasta el <strong>${escapeHtml(trialEndStr)}</strong>.
+      </p>
+
+      <div style="text-align: center; padding: 24px; background: #faf8f6; border-radius: 12px; margin: 0 0 20px;">
+        <img src="${qrDataUrl}" alt="QR de ${escapeHtml(restaurantName)}" width="220" style="display: block; margin: 0 auto 12px; width: 220px; height: 220px; background: #fff; border-radius: 12px; padding: 8px;" />
+        <p style="margin: 0 0 6px; font-size: 13px; color: #78716c;">Tu enlace personalizado:</p>
+        <p style="margin: 0; font-size: 13px; font-weight: 600; color: #1c1917; word-break: break-all;">
+          <a href="${reviewUrl}" style="color: #1c1917;">${escapeHtml(reviewUrl)}</a>
+        </p>
+      </div>
+
+      <p style="margin: 0 0 20px; font-size: 15px; line-height: 1.6; color: #57534e;">
+        Imprime este QR y colócalo en tus mesas hoy mismo. En cuanto confirmes tu pago el día 15, te enviaremos tus tarjetas NFC físicas.
+      </p>
+
+      <table role="presentation" cellpadding="0" cellspacing="0" style="margin: 0 auto;">
+        <tr><td style="background: #1c1917; border-radius: 10px;">
+          <a href="${BASE_URL}/dashboard" style="display: inline-block; padding: 13px 28px; color: #ffffff; text-decoration: none; font-weight: 600; font-size: 15px;">
+            Entrar a mi panel
+          </a>
+        </td></tr>
+      </table>
+
+      <p style="margin: 24px 0 0; font-size: 13px; color: #a8a29e; text-align: center;">
+        Código de acceso: <strong>${escapeHtml(slug)}</strong>
+      </p>
+    </div>`;
+
+  await resend.emails.send({
+    from: FROM,
+    to,
+    subject: `Bienvenido a RateTap, ${restaurantName} 🎉`,
+    html: emailLayout(content, 'Tu prueba es gratis por 15 días. Puedes cancelar cuando quieras.'),
+  });
+}
+
+interface TrialEndingEmailParams {
+  to: string;
+  restaurantName: string;
+  daysLeft: number;
+  amountMxn: number;
+}
+
+export async function sendTrialEndingEmail({ to, restaurantName, daysLeft, amountMxn }: TrialEndingEmailParams) {
+  const resend = getResend();
+  if (!resend) return;
+
+  const content = `
+    <div class="content-pad" style="padding: 32px 28px;">
+      <h1 style="margin: 0 0 12px; font-size: 22px; font-weight: 700; color: #1c1917;">Tu prueba termina en ${daysLeft} días</h1>
+      <p style="margin: 0 0 20px; font-size: 15px; line-height: 1.6; color: #57534e;">
+        Hola <strong>${escapeHtml(restaurantName)}</strong>, en ${daysLeft} días cobraremos <strong>${mxnFmt(amountMxn)}</strong> a la tarjeta que registraste y seguirás usando RateTap sin interrupciones.
+      </p>
+      <p style="margin: 0 0 20px; font-size: 15px; line-height: 1.6; color: #57534e;">
+        Si no quieres continuar, puedes cancelar desde tu panel antes de esa fecha y no se cobrará nada.
+      </p>
+      <table role="presentation" cellpadding="0" cellspacing="0" style="margin: 0 auto;">
+        <tr><td style="background: #1c1917; border-radius: 10px;">
+          <a href="${BASE_URL}/dashboard" style="display: inline-block; padding: 13px 28px; color: #ffffff; text-decoration: none; font-weight: 600; font-size: 15px;">
+            Ir a mi panel
+          </a>
+        </td></tr>
+      </table>
+    </div>`;
+
+  await resend.emails.send({
+    from: FROM,
+    to,
+    subject: `Tu prueba de RateTap termina en ${daysLeft} días`,
+    html: emailLayout(content),
+  });
+}
+
+interface ReceiptEmailParams {
+  to: string;
+  restaurantName: string;
+  amountMxn: number;
+  periodEnd: Date;
+  invoiceUrl?: string;
+}
+
+export async function sendReceiptEmail({ to, restaurantName, amountMxn, periodEnd, invoiceUrl }: ReceiptEmailParams) {
+  const resend = getResend();
+  if (!resend) return;
+
+  const nextStr = periodEnd.toLocaleDateString('es-MX', { day: 'numeric', month: 'long', year: 'numeric' });
+
+  const content = `
+    <div class="content-pad" style="padding: 32px 28px;">
+      <h1 style="margin: 0 0 12px; font-size: 22px; font-weight: 700; color: #1c1917;">Pago confirmado ✓</h1>
+      <p style="margin: 0 0 20px; font-size: 15px; line-height: 1.6; color: #57534e;">
+        Gracias, <strong>${escapeHtml(restaurantName)}</strong>. Recibimos tu pago de <strong>${mxnFmt(amountMxn)}</strong>.
+      </p>
+      <div style="padding: 16px; background: #faf8f6; border-radius: 12px; margin: 0 0 20px;">
+        <p style="margin: 0; font-size: 14px; color: #57534e;">Próximo cobro: <strong style="color: #1c1917;">${escapeHtml(nextStr)}</strong></p>
+      </div>
+      ${invoiceUrl ? `
+      <table role="presentation" cellpadding="0" cellspacing="0" style="margin: 0 auto;">
+        <tr><td style="border: 1px solid #1c1917; border-radius: 10px;">
+          <a href="${invoiceUrl}" style="display: inline-block; padding: 12px 24px; color: #1c1917; text-decoration: none; font-weight: 600; font-size: 14px;">
+            Ver recibo
+          </a>
+        </td></tr>
+      </table>` : ''}
+    </div>`;
+
+  await resend.emails.send({
+    from: FROM,
+    to,
+    subject: `Recibo de RateTap — ${mxnFmt(amountMxn)}`,
+    html: emailLayout(content),
+  });
+}
+
+interface PaymentFailedEmailParams {
+  to: string;
+  restaurantName: string;
+  amountMxn: number;
+  updatePaymentUrl: string;
+}
+
+export async function sendPaymentFailedEmail({ to, restaurantName, amountMxn, updatePaymentUrl }: PaymentFailedEmailParams) {
+  const resend = getResend();
+  if (!resend) return;
+
+  const content = `
+    <div class="content-pad" style="padding: 32px 28px;">
+      <h1 style="margin: 0 0 12px; font-size: 22px; font-weight: 700; color: #b91c1c;">No pudimos procesar tu pago</h1>
+      <p style="margin: 0 0 20px; font-size: 15px; line-height: 1.6; color: #57534e;">
+        Hola <strong>${escapeHtml(restaurantName)}</strong>, intentamos cobrar <strong>${mxnFmt(amountMxn)}</strong> a tu tarjeta pero fue rechazada. Actualiza tu método de pago para seguir usando RateTap.
+      </p>
+      <table role="presentation" cellpadding="0" cellspacing="0" style="margin: 0 auto;">
+        <tr><td style="background: #1c1917; border-radius: 10px;">
+          <a href="${updatePaymentUrl}" style="display: inline-block; padding: 13px 28px; color: #ffffff; text-decoration: none; font-weight: 600; font-size: 15px;">
+            Actualizar tarjeta
+          </a>
+        </td></tr>
+      </table>
+    </div>`;
+
+  await resend.emails.send({
+    from: FROM,
+    to,
+    subject: `Problema con tu pago de RateTap`,
+    html: emailLayout(content),
+  });
+}
+
+// ── Owner (Lawrence) notifications ───────────────────────────
+
+interface OwnerSignupParams {
+  restaurantName: string;
+  contactName: string;
+  email: string;
+  phone: string;
+  city: string;
+  slug: string;
+  googlePlaceId?: string;
+}
+
+export async function sendOwnerSignupNotification(p: OwnerSignupParams) {
+  const resend = getResend();
+  if (!resend || !OWNER_NOTIFICATION_EMAIL) return;
+
+  const content = `
+    <div class="content-pad" style="padding: 28px 24px;">
+      <h1 style="margin: 0 0 12px; font-size: 20px; font-weight: 700; color: #1c1917;">🎉 Nuevo signup</h1>
+      <table cellpadding="6" cellspacing="0" style="width: 100%; font-size: 14px; color: #1c1917;">
+        <tr><td style="color: #78716c;">Negocio</td><td><strong>${escapeHtml(p.restaurantName)}</strong></td></tr>
+        <tr><td style="color: #78716c;">Contacto</td><td>${escapeHtml(p.contactName)}</td></tr>
+        <tr><td style="color: #78716c;">Email</td><td><a href="mailto:${escapeHtml(p.email)}">${escapeHtml(p.email)}</a></td></tr>
+        <tr><td style="color: #78716c;">Teléfono</td><td>${escapeHtml(p.phone)}</td></tr>
+        <tr><td style="color: #78716c;">Ciudad</td><td>${escapeHtml(p.city)}</td></tr>
+        <tr><td style="color: #78716c;">Slug</td><td><code>${escapeHtml(p.slug)}</code></td></tr>
+        ${p.googlePlaceId ? `<tr><td style="color: #78716c;">Place ID</td><td><code>${escapeHtml(p.googlePlaceId)}</code></td></tr>` : ''}
+      </table>
+    </div>`;
+
+  await resend.emails.send({
+    from: FROM,
+    to: OWNER_NOTIFICATION_EMAIL,
+    subject: `🎉 Nuevo signup: ${p.restaurantName}`,
+    html: emailLayout(content),
+  });
+}
+
+interface OwnerConversionParams {
+  restaurantName: string;
+  contactName: string;
+  email: string;
+  phone: string;
+  shippingAddress: {
+    line1: string;
+    line2?: string;
+    city: string;
+    state: string;
+    postalCode: string;
+    notes?: string;
+  };
+  amountMxn: number;
+}
+
+export async function sendOwnerConversionNotification(p: OwnerConversionParams) {
+  const resend = getResend();
+  if (!resend || !OWNER_NOTIFICATION_EMAIL) return;
+
+  const addr = p.shippingAddress;
+  const addressLines = [
+    addr.line1,
+    addr.line2,
+    `${addr.city}, ${addr.state} ${addr.postalCode}`,
+    addr.notes ? `Notas: ${addr.notes}` : null,
+  ].filter(Boolean).join('<br>');
+
+  const content = `
+    <div class="content-pad" style="padding: 28px 24px;">
+      <h1 style="margin: 0 0 12px; font-size: 20px; font-weight: 700; color: #16a34a;">💰 Conversión — enviar tarjetas NFC</h1>
+      <p style="margin: 0 0 16px; font-size: 15px; color: #1c1917;">
+        <strong>${escapeHtml(p.restaurantName)}</strong> pagó ${mxnFmt(p.amountMxn)}. Enviar tarjetas NFC físicas a:
+      </p>
+      <div style="padding: 16px; background: #faf8f6; border-radius: 10px; margin: 0 0 16px; font-size: 14px; line-height: 1.6; color: #1c1917;">
+        <strong>${escapeHtml(p.contactName)}</strong><br>
+        ${addressLines}
+      </div>
+      <p style="margin: 0; font-size: 13px; color: #78716c;">
+        Contacto: <a href="mailto:${escapeHtml(p.email)}">${escapeHtml(p.email)}</a> · ${escapeHtml(p.phone)}
+      </p>
+    </div>`;
+
+  await resend.emails.send({
+    from: FROM,
+    to: OWNER_NOTIFICATION_EMAIL,
+    subject: `💰 Conversión + envío: ${p.restaurantName}`,
+    html: emailLayout(content),
+  });
+}
+
+interface OwnerLapsedParams {
+  restaurantName: string;
+  contactName: string | null;
+  email: string | null;
+}
+
+export async function sendOwnerTrialLapsedNotification(p: OwnerLapsedParams) {
+  const resend = getResend();
+  if (!resend || !OWNER_NOTIFICATION_EMAIL) return;
+
+  const content = `
+    <div class="content-pad" style="padding: 28px 24px;">
+      <h1 style="margin: 0 0 12px; font-size: 20px; font-weight: 700; color: #78716c;">😞 Prueba expirada sin pago</h1>
+      <p style="margin: 0 0 8px; font-size: 15px; color: #1c1917;">
+        <strong>${escapeHtml(p.restaurantName)}</strong> no convirtió. Cuenta desactivada.
+      </p>
+      ${p.contactName ? `<p style="margin: 0; font-size: 13px; color: #78716c;">Contacto: ${escapeHtml(p.contactName)}${p.email ? ` · <a href="mailto:${escapeHtml(p.email)}">${escapeHtml(p.email)}</a>` : ''}</p>` : ''}
+    </div>`;
+
+  await resend.emails.send({
+    from: FROM,
+    to: OWNER_NOTIFICATION_EMAIL,
+    subject: `Prueba expirada: ${p.restaurantName}`,
+    html: emailLayout(content),
+  });
+}

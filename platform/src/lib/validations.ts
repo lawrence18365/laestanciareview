@@ -42,6 +42,27 @@ export const createRestaurantSchema = z.object({
   adminPassword: z.string().min(8).max(128).optional(),
 });
 
+// Self-serve signup (public /contacto form)
+export const signupSchema = z.object({
+  businessName: z.string().min(1).max(200),
+  contactName: z.string().min(1).max(200),
+  email: z.string().email().max(254),
+  phone: z.string().min(7).max(32),
+  city: z.string().min(1).max(120),
+  password: z.string().min(8).max(128),
+  googlePlaceId: z.string().min(1).max(300).optional(),
+  shippingAddress: z
+    .object({
+      line1: z.string().min(1).max(300),
+      line2: z.string().max(300).optional(),
+      city: z.string().min(1).max(120),
+      state: z.string().min(1).max(120),
+      postalCode: z.string().min(3).max(20),
+      notes: z.string().max(500).optional(),
+    }),
+});
+export type SignupInput = z.infer<typeof signupSchema>;
+
 // Settings update
 export const updateSettingsSchema = z.object({
   googleReviewUrl: z.string().url().max(500).optional(),

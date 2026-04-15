@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation';
 import { getBrandForSlug } from '@/lib/brands';
 import { t } from '@/lib/i18n';
 import DashboardShell from '@/components/dashboard/DashboardShell';
+import SubscriptionBlocked from '@/components/dashboard/SubscriptionBlocked';
 
 export default async function AppLayout({
   children,
@@ -15,6 +16,18 @@ export default async function AppLayout({
 
   const restaurant = await getRestaurantBySlug(session.slug);
   if (!restaurant) redirect('/login');
+
+  if (
+    restaurant.subscriptionStatus === 'canceled' ||
+    restaurant.subscriptionStatus === 'past_due'
+  ) {
+    return (
+      <SubscriptionBlocked
+        status={restaurant.subscriptionStatus}
+        restaurantName={restaurant.name}
+      />
+    );
+  }
 
   const brand = getBrandForSlug(session.slug);
   const isOwner = session.role === 'owner';

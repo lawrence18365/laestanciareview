@@ -37,7 +37,22 @@ export const restaurants = pgTable('restaurants', {
   googleRating: text('google_rating'),
   googleReviewCount: integer('google_review_count'),
   googleRatingUpdatedAt: timestamp('google_rating_updated_at', { withTimezone: true }),
+  contactName: text('contact_name'),
+  city: text('city'),
+  stripeCustomerId: text('stripe_customer_id'),
+  stripeSubscriptionId: text('stripe_subscription_id'),
+  subscriptionStatus: text('subscription_status').notNull().default('active'),
+  trialEndsAt: timestamp('trial_ends_at', { withTimezone: true }),
+  shippingAddress: text('shipping_address'),
+  nfcCardsShippedAt: timestamp('nfc_cards_shipped_at', { withTimezone: true }),
   createdAt: timestamp('created_at', { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+
+export const processedStripeEvents = pgTable('processed_stripe_events', {
+  eventId: text('event_id').primaryKey(),
+  processedAt: timestamp('processed_at', { withTimezone: true })
     .notNull()
     .defaultNow(),
 });
