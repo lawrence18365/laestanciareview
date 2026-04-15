@@ -17,6 +17,7 @@ import {
 } from '@/lib/email';
 import { sendTrialEndingSms } from '@/lib/sms';
 import { sendPurchaseEvent } from '@/lib/meta-conversions';
+import { sendWhatsAppWelcome } from '@/lib/whatsapp';
 
 export const runtime = 'nodejs';
 // Webhooks must not be statically analyzed / cached
@@ -162,6 +163,13 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
       slug,
       googlePlaceId: md.googlePlaceId || undefined,
     }),
+    md.phone
+      ? sendWhatsAppWelcome({
+          to: md.phone,
+          restaurantName: md.businessName,
+          trialEndsAt,
+        })
+      : Promise.resolve(),
   ]);
 }
 

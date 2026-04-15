@@ -99,3 +99,66 @@ export async function sendWhatsAppAlert({
     throw new Error(`Twilio WhatsApp error ${res.status}: ${text}`);
   }
 }
+
+interface WhatsAppWelcomeParams {
+  to: string;
+  restaurantName: string;
+  trialEndsAt: Date;
+}
+
+export async function sendWhatsAppWelcome({
+  to,
+  restaurantName,
+  trialEndsAt,
+}: WhatsAppWelcomeParams) {
+  const cfg = getConfig();
+  if (!cfg) {
+    console.warn('[whatsapp] Twilio not configured — skipping welcome');
+    return;
+  }
+
+  const baseUrl = (process.env.NEXT_PUBLIC_BASE_URL ?? 'https://app.ratetapmx.com')
+    .replace(/\\n/g, '')
+    .trim()
+    .replace(/\/$/, '');
+
+  const endDate = trialEndsAt.toLocaleDateString('es-MX', {
+    day: 'numeric',
+    month: 'long',
+  });
+
+  const lines = [
+    `🎉 *¡Bienvenido a RateTap, ${restaurantName}!*`,
+    '',
+    `Tu prueba gratis de 15 días ya está activa (hasta el ${endDate}).`,
+    '',
+    `📊 Tu panel: ${baseUrl}/dashboard`,
+    '',
+    '¿Dudas? Responde a este mensaje y te ayudamos.',
+  ];
+
+  const auth = Buffer.from(`${cfg.accountSid}:${cfg.authToken}`).toString('base64');
+
+  const body = new URLSearchParams({
+    To: toWhatsAppNumber(to),
+    From: `whatsapp:${cfg.from}`,
+    Body: lines.join('\n'),
+  });
+
+  const res = await fetch(
+    `https://api.twilio.com/2010-04-01/Accounts/${cfg.accountSid}/Messages.json`,
+    {
+      method: 'POST',
+      headers: {
+        Authorization: `Basic ${auth}`,
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: body.toString(),
+    },
+  );
+
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Twilio WhatsApp welcome error ${res.status}: ${text}`);
+  }
+}
