@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 
 interface StatusResponse {
@@ -13,6 +13,14 @@ interface StatusResponse {
 }
 
 export default function BienvenidaPage() {
+  return (
+    <Suspense fallback={<Shell><div style={{ textAlign: 'center', color: '#57534e' }}>Cargando…</div></Shell>}>
+      <BienvenidaInner />
+    </Suspense>
+  );
+}
+
+function BienvenidaInner() {
   const params = useSearchParams();
   const sessionId = params.get('session_id');
   const [status, setStatus] = useState<StatusResponse | null>(null);
