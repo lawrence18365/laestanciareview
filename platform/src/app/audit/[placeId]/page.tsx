@@ -1,5 +1,6 @@
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
+import { AuditTracker } from '@/components/audit/AuditTracker';
 
 // ─── CONFIG ───
 const API_KEY = process.env.GOOGLE_PLACES_API_KEY;
@@ -102,6 +103,7 @@ export default async function AuditPage({
 
   return (
     <div style={{ minHeight: '100vh', background: '#0F172A', fontFamily: "'Inter', -apple-system, sans-serif" }}>
+      <AuditTracker placeId={placeId} restaurantName={place.name} rating={place.rating} />
       {/* ─── Header ─── */}
       <div style={{
         background: 'linear-gradient(135deg, #0F172A 0%, #1E293B 100%)',
@@ -398,12 +400,10 @@ export default async function AuditPage({
 
         {/* ─── CTA ─── */}
         <a
-          href={whatsappUrl}
-          target="_blank"
-          rel="noopener noreferrer"
+          href={`${BASE_URL}/contacto`}
           style={{
             display: 'block',
-            background: '#25D366',
+            background: '#10B981',
             color: '#FFFFFF',
             textAlign: 'center',
             padding: '18px 24px',
@@ -412,10 +412,30 @@ export default async function AuditPage({
             fontWeight: 700,
             textDecoration: 'none',
             marginBottom: '12px',
-            boxShadow: '0 4px 24px rgba(37,211,102,0.3)',
+            boxShadow: '0 4px 24px rgba(16,185,129,0.3)',
           }}
         >
-          Quiero mejorar mi calificación →
+          Empezar prueba gratis de 15 días →
+        </a>
+        <a
+          href={whatsappUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{
+            display: 'block',
+            background: 'transparent',
+            color: '#25D366',
+            textAlign: 'center',
+            padding: '14px 24px',
+            borderRadius: '14px',
+            fontSize: '15px',
+            fontWeight: 600,
+            textDecoration: 'none',
+            marginBottom: '8px',
+            border: '1px solid rgba(37,211,102,0.4)',
+          }}
+        >
+          Prefiero hablar por WhatsApp →
         </a>
         <p style={{
           textAlign: 'center',
@@ -423,7 +443,7 @@ export default async function AuditPage({
           fontSize: '13px',
           margin: '0 0 40px',
         }}>
-          Te respondemos en menos de 1 hora por WhatsApp
+          Sin tarjeta de crédito · Cancela cuando quieras
         </p>
 
         {/* ─── Footer ─── */}

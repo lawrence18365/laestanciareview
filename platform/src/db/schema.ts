@@ -159,6 +159,16 @@ export const pushSubscriptions = pgTable(
   ],
 );
 
+export const prospectViews = pgTable('prospect_views', {
+  placeId: text('place_id').primaryKey(),
+  restaurantName: text('restaurant_name').notNull(),
+  rating: text('rating'),
+  viewCount: integer('view_count').notNull().default(1),
+  firstViewAt: timestamp('first_view_at', { withTimezone: true }).notNull().defaultNow(),
+  lastViewAt: timestamp('last_view_at', { withTimezone: true }).notNull().defaultNow(),
+  lastNotifiedAt: timestamp('last_notified_at', { withTimezone: true }),
+});
+
 // Relations
 export const restaurantsRelations = relations(restaurants, ({ many }) => ({
   staff: many(staff),
