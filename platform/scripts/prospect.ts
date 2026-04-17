@@ -17,7 +17,7 @@ if (!API_KEY) {
   process.exit(1);
 }
 
-const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'https://app.ratetapmx.com';
+const BASE_URL = 'https://app.ratetapmx.com';
 
 // ─── CHANGE THIS to your real WhatsApp number (with country code, no +) ───
 const WHATSAPP_NUMBER = '523311479086';
