@@ -159,6 +159,26 @@ export const pushSubscriptions = pgTable(
   ],
 );
 
+export const prospectQueue = pgTable('prospect_queue', {
+  placeId: text('place_id').primaryKey(),
+  restaurantName: text('restaurant_name').notNull(),
+  rating: text('rating'),
+  reviewCount: integer('review_count'),
+  phone: text('phone'),
+  city: text('city'),
+  status: text('status').notNull().default('pending'),
+  contactedAt: timestamp('contacted_at', { withTimezone: true }),
+  repliedAt: timestamp('replied_at', { withTimezone: true }),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const nurtureEvents = pgTable('nurture_events', {
+  id: serial('id').primaryKey(),
+  restaurantId: integer('restaurant_id').notNull().references(() => restaurants.id, { onDelete: 'cascade' }),
+  event: text('event').notNull(), // 'day3', 'day7', 'day12'
+  sentAt: timestamp('sent_at', { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [unique('nurture_restaurant_event_uniq').on(t.restaurantId, t.event)]);
+
 export const prospectViews = pgTable('prospect_views', {
   placeId: text('place_id').primaryKey(),
   restaurantName: text('restaurant_name').notNull(),
