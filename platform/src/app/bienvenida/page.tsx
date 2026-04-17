@@ -2,6 +2,8 @@
 
 import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
+import { SUPPORT_WHATSAPP_URL } from '@/lib/support';
+
 
 interface StatusResponse {
   ready: boolean;
@@ -24,7 +26,7 @@ function BienvenidaInner() {
   const params = useSearchParams();
   const sessionId = params.get('session_id');
   const [status, setStatus] = useState<StatusResponse | null>(null);
-  const [attempts, setAttempts] = useState(0);
+  const [timedOut, setTimedOut] = useState(false);
 
   useEffect(() => {
     if (!sessionId) return;
@@ -42,14 +44,19 @@ function BienvenidaInner() {
       } catch {
         /* swallow and retry */
       }
-      setAttempts((n) => n + 1);
     }
 
     poll();
-    const id = setInterval(poll, 2000);
+    const pollId = setInterval(poll, 2000);
+    // Hard timeout: 30 seconds. Payment succeeded — webhook is just slow.
+    const timeoutId = setTimeout(() => {
+      if (!cancelled) setTimedOut(true);
+    }, 30_000);
+
     return () => {
       cancelled = true;
-      clearInterval(id);
+      clearInterval(pollId);
+      clearTimeout(timeoutId);
     };
   }, [sessionId]);
 
@@ -61,6 +68,23 @@ function BienvenidaInner() {
   }
 
   if (!status?.ready) {
+    if (timedOut) {
+      return <Shell>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ fontSize: '2rem', marginBottom: '0.75rem' }}>✉️</div>
+          <h1 style={h1Style}>Tu pago fue exitoso</h1>
+          <p style={{ color: '#57534e', lineHeight: 1.6, marginBottom: '1.25rem' }}>
+            Estamos terminando de activar tu cuenta — normalmente tarda menos de 5 minutos.
+            Te enviamos un email con tu QR y el acceso a tu panel en cuanto esté lista.
+          </p>
+          <p style={{ color: '#a8a29e', fontSize: '0.8rem' }}>
+            ¿No recibes el email? Revisa tu carpeta de spam o escríbenos por{' '}
+            <a href={SUPPORT_WHATSAPP_URL} style={{ color: '#1c1917', fontWeight: 600 }}>WhatsApp</a>.
+          </p>
+        </div>
+      </Shell>;
+    }
+
     return <Shell>
       <div style={{ textAlign: 'center' }}>
         <div style={{
@@ -76,7 +100,6 @@ function BienvenidaInner() {
         <h1 style={h1Style}>Activando tu cuenta…</h1>
         <p style={{ color: '#57534e' }}>
           Estamos configurando tu panel. Esto tarda unos segundos.
-          {attempts > 5 && ' Si tarda mucho, revisa tu email — puede que ya esté lista.'}
         </p>
       </div>
     </Shell>;

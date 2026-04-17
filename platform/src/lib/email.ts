@@ -785,8 +785,8 @@ export async function sendWelcomeEmail({
         </td></tr>
       </table>
 
-      <p style="margin: 24px 0 0; font-size: 13px; color: #a8a29e; text-align: center;">
-        Código de acceso: <strong>${escapeHtml(slug)}</strong>
+      <p style="margin: 24px 0 0; font-size: 13px; color: #a8a29e; text-align: center; line-height: 1.5;">
+        Tu página de reseñas: <a href="${reviewUrl}" style="color: #78716c;">${escapeHtml(reviewUrl)}</a>
       </p>
     </div>`;
 

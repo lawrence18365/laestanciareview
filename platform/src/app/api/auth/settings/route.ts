@@ -80,6 +80,10 @@ export async function PATCH(req: Request) {
   }
   if (typeof body.googlePlaceId === 'string') {
     updates.googlePlaceId = body.googlePlaceId || null;
+    // Auto-derive review URL from place ID when no URL is set yet and none is being explicitly provided
+    if (body.googlePlaceId && !restaurant.googleReviewUrl && typeof body.googleReviewUrl !== 'string') {
+      updates.googleReviewUrl = `https://search.google.com/local/writereview?placeid=${body.googlePlaceId}`;
+    }
   }
   if (typeof body.newPassword === 'string' && body.newPassword.length >= 8) {
     // Require current password verification before allowing a change

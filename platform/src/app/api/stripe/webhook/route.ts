@@ -134,6 +134,9 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
     city: md.city ?? null,
     managerPhone: md.phone ?? null,
     googlePlaceId: md.googlePlaceId || null,
+    googleReviewUrl: md.googlePlaceId
+      ? `https://search.google.com/local/writereview?placeid=${md.googlePlaceId}`
+      : null,
     adminPasswordHash: md.passwordHash,
     shippingAddress: md.shippingAddress ?? null,
     stripeCustomerId: customerId,
