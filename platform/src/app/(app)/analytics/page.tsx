@@ -4,10 +4,9 @@ import {
   getRestaurantBySlug,
   getWeeklyStats,
   getAllTimeStats,
-  getRatingDistribution,
   getDailyReviewCounts,
   getGoogleConversionRate,
-  getLeaderboard,
+  getAllTimeStaffRanking,
   getROIStats,
 } from '@/lib/queries';
 import { getGoogleRatingTrend } from '@/lib/google-places';
@@ -21,14 +20,13 @@ export default async function AnalyticsPage() {
   const restaurant = await getRestaurantBySlug(session.slug);
   if (!restaurant) redirect('/login');
 
-  const [weeklyStats, allTimeStats, ratingDist, dailyCounts, conversion, leaderboard, roiStats, googleTrend] =
+  const [weeklyStats, allTimeStats, dailyCounts, conversion, staffRanking, roiStats, googleTrend] =
     await Promise.all([
       getWeeklyStats(restaurant.id),
       getAllTimeStats(restaurant.id),
-      getRatingDistribution(restaurant.id),
       getDailyReviewCounts(restaurant.id, 30),
       getGoogleConversionRate(restaurant.id, restaurant.googleThreshold),
-      getLeaderboard(restaurant.id),
+      getAllTimeStaffRanking(restaurant.id),
       getROIStats(restaurant.id, restaurant.googleThreshold),
       restaurant.googlePlaceId
         ? getGoogleRatingTrend(restaurant.id)
@@ -39,10 +37,9 @@ export default async function AnalyticsPage() {
     <AnalyticsView
       weeklyStats={weeklyStats}
       allTimeStats={allTimeStats}
-      ratingDistribution={ratingDist}
       dailyCounts={dailyCounts}
       conversion={conversion}
-      leaderboard={leaderboard}
+      staffRanking={staffRanking}
       roiStats={roiStats}
       googleTrend={googleTrend}
     />

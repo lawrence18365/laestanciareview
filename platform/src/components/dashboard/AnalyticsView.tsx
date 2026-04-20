@@ -33,15 +33,16 @@ interface Props {
     googleSends: number;
     feedbackCount: number;
   };
-  ratingDistribution: Record<number, number>;
   dailyCounts: { date: string; count: number; avgRating: number }[];
   conversion: { rate: number; above: number; sent: number };
-  leaderboard: {
+  staffRanking: {
     staffId: number | null;
     staffName: string | null;
     staffCode: string | null;
-    avgRating: number;
     reviewCount: number;
+    avgRating: number;
+    fiveStarCount: number;
+    belowFourCount: number;
   }[];
   roiStats: ROIStats;
   googleTrend: GoogleTrend | null;
@@ -52,15 +53,12 @@ interface Props {
 export default function AnalyticsView({
   weeklyStats,
   allTimeStats,
-  ratingDistribution,
   dailyCounts,
   conversion,
-  leaderboard,
+  staffRanking,
   roiStats,
   googleTrend,
 }: Props) {
-  const totalRatings = Object.values(ratingDistribution).reduce((a, b) => a + b, 0);
-  const maxBar = Math.max(...Object.values(ratingDistribution), 1);
 
   return (
     <div className="page-container">
@@ -193,88 +191,87 @@ export default function AnalyticsView({
         />
       </div>}
 
-      {/* ── Rating Distribution ── */}
+      {/* ── Ranking de Personal (all-time) ── */}
       {roiStats.totalReviews > 0 && <section className="card stagger-4" style={{ overflow: 'hidden' }}>
         <div style={{
           display: 'flex', justifyContent: 'space-between', alignItems: 'center',
           padding: '1.25rem 1.5rem', borderBottom: '1px solid var(--panel-border)',
         }}>
           <h2 style={{ margin: 0, fontSize: '1.125rem', fontWeight: 600, fontFamily: 'var(--font-serif)', color: 'var(--text-main)' }}>
-            {t.analytics.ratingDistribution}
+            Ranking de Personal
           </h2>
-          <button
-            className="btn btn-outline"
-            onClick={() =>
-              downloadCSV(
-                [5, 4, 3, 2, 1].map((star) => ({
-                  Estrellas: star,
-                  Cantidad: ratingDistribution[star] || 0,
-                  Porcentaje: totalRatings > 0 ? `${Math.round(((ratingDistribution[star] || 0) / totalRatings) * 100)}%` : '0%',
-                })),
-                'distribucion-calificaciones.csv',
-              )
-            }
-            style={{ fontSize: '0.8125rem', padding: '0.4rem 1rem' }}
-          >
-            {t.analytics.exportCsv}
-          </button>
+          {staffRanking.length > 0 && (
+            <button
+              className="btn btn-outline"
+              onClick={() =>
+                downloadCSV(
+                  staffRanking.map((s, i) => ({
+                    Rango: i + 1,
+                    Personal: s.staffName ?? s.staffCode ?? 'Desconocido',
+                    Código: s.staffCode ?? '',
+                    Reseñas: s.reviewCount,
+                    '5 Estrellas': s.fiveStarCount,
+                    'Menos de 4': s.belowFourCount,
+                    'Calif. Prom.': s.avgRating ? s.avgRating.toFixed(1) : '',
+                  })),
+                  'ranking-personal.csv',
+                )
+              }
+              style={{ fontSize: '0.8125rem', padding: '0.4rem 1rem' }}
+            >
+              {t.analytics.exportCsv}
+            </button>
+          )}
         </div>
-        <div style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-          {[5, 4, 3, 2, 1].map((star) => {
-            const cnt = ratingDistribution[star] || 0;
-            const pct = totalRatings > 0 ? Math.round((cnt / totalRatings) * 100) : 0;
-            return (
-              <div key={star} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                <span
-                  className="font-numeric"
-                  style={{
-                    width: 50,
-                    textAlign: 'right',
-                    fontSize: '0.875rem',
-                    fontWeight: 600,
-                    color: 'var(--text-main)',
-                  }}
-                >
-                  {star} &#9733;
-                </span>
-                <div
-                  style={{
-                    flex: 1,
-                    height: 24,
-                    background: 'var(--bg-base)',
-                    border: '1px solid var(--panel-border)',
-                    overflow: 'hidden',
-                  }}
-                >
-                  <div
-                    style={{
-                      width: `${(cnt / maxBar) * 100}%`,
-                      height: '100%',
-                      background:
-                        star >= 4
-                          ? 'var(--green)'
-                          : star === 3
-                            ? 'var(--gold)'
-                            : 'var(--red)',
-                      transition: 'width 0.4s ease',
-                      minWidth: cnt > 0 ? 4 : 0,
-                    }}
-                  />
-                </div>
-                <span
-                  className="font-numeric"
-                  style={{
-                    width: 80,
-                    fontSize: '0.8125rem',
-                    color: 'var(--text-muted)',
-                  }}
-                >
-                  {cnt} ({pct}%)
-                </span>
-              </div>
-            );
-          })}
-        </div>
+        {staffRanking.length === 0 ? (
+          <p style={{ color: 'var(--text-dim)', fontSize: '0.875rem', textAlign: 'center', padding: '3rem 0', margin: 0 }}>
+            {t.analytics.noReviewsThisWeek}
+          </p>
+        ) : (
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <thead>
+                <tr style={{ background: 'var(--bg-base)' }}>
+                  <Th align="center" w={60}>#</Th>
+                  <Th align="left">Personal</Th>
+                  <Th align="right">Reseñas</Th>
+                  <Th align="right">5 ★</Th>
+                  <Th align="right">&lt; 4 ★</Th>
+                  <Th align="right">Prom.</Th>
+                </tr>
+              </thead>
+              <tbody>
+                {staffRanking.map((entry, i) => (
+                  <tr key={entry.staffId ?? `${entry.staffCode}-${i}`} style={{ borderTop: '1px solid var(--panel-border)' }}>
+                    <td style={{ textAlign: 'center', padding: '1rem 1.5rem', fontSize: '0.875rem', color: 'var(--text-dim)', fontWeight: 500, fontFamily: 'var(--font-mono)' }}>
+                      {String(i + 1).padStart(2, '0')}
+                    </td>
+                    <td style={{ padding: '1rem 1.5rem', fontSize: '0.9375rem' }}>
+                      <span style={{ fontWeight: 500 }}>{entry.staffName ?? 'Desconocido'}</span>
+                      {entry.staffCode && (
+                        <span style={{ color: 'var(--text-dim)', marginLeft: 12, fontSize: '0.8125rem', fontFamily: 'var(--font-mono)' }}>
+                          {entry.staffCode}
+                        </span>
+                      )}
+                    </td>
+                    <td className="font-numeric" style={{ textAlign: 'right', padding: '1rem 1.5rem', fontSize: '0.9375rem', fontWeight: 600 }}>
+                      {entry.reviewCount}
+                    </td>
+                    <td className="font-numeric" style={{ textAlign: 'right', padding: '1rem 1.5rem', fontSize: '0.9375rem', color: entry.fiveStarCount > 0 ? 'var(--text-main)' : 'var(--text-dim)' }}>
+                      {entry.fiveStarCount}
+                    </td>
+                    <td className="font-numeric" style={{ textAlign: 'right', padding: '1rem 1.5rem', fontSize: '0.9375rem', color: entry.belowFourCount > 0 ? 'var(--text-main)' : 'var(--text-dim)' }}>
+                      {entry.belowFourCount}
+                    </td>
+                    <td className="font-numeric" style={{ textAlign: 'right', padding: '1rem 1.5rem', fontSize: '0.9375rem', color: 'var(--text-muted)' }}>
+                      {entry.avgRating ? entry.avgRating.toFixed(1) : '-'}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </section>}
 
       {/* ── Daily Activity ── */}
@@ -368,58 +365,6 @@ export default function AnalyticsView({
         </div>
       </section>}
 
-      {/* ── Top Performers ── */}
-      {roiStats.totalReviews > 0 && <section className="card stagger-5" style={{ overflow: 'hidden' }}>
-        <div style={{
-          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-          padding: '1.25rem 1.5rem', borderBottom: '1px solid var(--panel-border)',
-        }}>
-          <h2 style={{ margin: 0, fontSize: '1.125rem', fontWeight: 600, fontFamily: 'var(--font-serif)', color: 'var(--text-main)' }}>
-            {t.analytics.topPerformers}
-          </h2>
-        </div>
-        {leaderboard.length === 0 ? (
-          <p style={{ color: 'var(--text-dim)', fontSize: '0.875rem', textAlign: 'center', padding: '3rem 0', margin: 0 }}>
-            {t.analytics.noReviewsThisWeek}
-          </p>
-        ) : (
-          <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-              <thead>
-                <tr style={{ background: 'var(--bg-base)' }}>
-                  <Th align="center" w={60}>#</Th>
-                  <Th align="left">Personal</Th>
-                  <Th align="right">Calif. Prom.</Th>
-                  <Th align="right">{t.analytics.reviews}</Th>
-                </tr>
-              </thead>
-              <tbody>
-                {leaderboard.slice(0, 5).map((entry, i) => (
-                  <tr key={entry.staffId ?? i} style={{ borderTop: '1px solid var(--panel-border)' }}>
-                    <td style={{ textAlign: 'center', padding: '1rem 1.5rem', fontSize: '0.875rem', color: 'var(--text-dim)', fontWeight: 500, fontFamily: 'var(--font-mono)' }}>
-                      {String(i + 1).padStart(2, '0')}
-                    </td>
-                    <td style={{ padding: '1rem 1.5rem', fontSize: '0.9375rem' }}>
-                      <span style={{ fontWeight: 500 }}>{entry.staffName ?? 'Desconocido'}</span>
-                      {entry.staffCode && (
-                        <span style={{ color: 'var(--text-dim)', marginLeft: 12, fontSize: '0.8125rem', fontFamily: 'var(--font-mono)' }}>
-                          {entry.staffCode}
-                        </span>
-                      )}
-                    </td>
-                    <td className="font-numeric" style={{ textAlign: 'right', padding: '1rem 1.5rem', fontSize: '0.9375rem', fontWeight: 600 }}>
-                      {entry.avgRating.toFixed(1)}
-                    </td>
-                    <td className="font-numeric" style={{ textAlign: 'right', padding: '1rem 1.5rem', fontSize: '0.9375rem', color: 'var(--text-muted)' }}>
-                      {entry.reviewCount}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </section>}
     </div>
   );
 }

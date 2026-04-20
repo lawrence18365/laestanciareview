@@ -51,6 +51,26 @@ export async function getLeaderboard(restaurantId: number) {
     .orderBy(desc(avg(reviews.rating)), desc(count(reviews.id)));
 }
 
+/** All-time staff ranking with 5★ and <4 breakdown for the analytics page. */
+export async function getAllTimeStaffRanking(restaurantId: number) {
+  return db
+    .select({
+      staffId: reviews.staffId,
+      staffName: reviews.staffName,
+      staffCode: reviews.staffCode,
+      reviewCount: count(reviews.id),
+      avgRating: avg(reviews.rating).mapWith(Number),
+      fiveStarCount:
+        countSql`count(*) filter (where ${reviews.rating} = 5)`,
+      belowFourCount:
+        countSql`count(*) filter (where ${reviews.rating} < 4)`,
+    })
+    .from(reviews)
+    .where(eq(reviews.restaurantId, restaurantId))
+    .groupBy(reviews.staffId, reviews.staffName, reviews.staffCode)
+    .orderBy(desc(count(reviews.id)), desc(avg(reviews.rating)));
+}
+
 /** Weekly stats: total reviews, average rating, google sends this week. */
 export async function getWeeklyStats(restaurantId: number) {
   const monday = startOfWeekMexico();
