@@ -30,6 +30,16 @@ interface StaffStat {
   todayBelowFour: number;
 }
 
+interface LastWeekStaffStat {
+  staffId: number | null;
+  staffName: string | null;
+  staffCode: string | null;
+  totalScans: number;
+  fiveStarCount: number;
+  belowFourCount: number;
+  avgRating: number;
+}
+
 interface StaffMember {
   id: number;
   name: string;
@@ -50,6 +60,7 @@ interface LiveData {
   lastWeek: LiveTotals;
   today: LiveTotals;
   staffStats: StaffStat[];
+  lastWeekStaffStats: LastWeekStaffStat[];
   allStaff: StaffMember[];
   recentScans: RecentScan[];
 }
@@ -65,7 +76,13 @@ interface MergedStaff {
   todayScans: number;
   todayFiveStars: number;
   todayBelowFour: number;
+  lastWeekScans: number;
+  lastWeekFiveStars: number;
+  lastWeekBelowFour: number;
+  lastWeekAvgRating: number;
 }
+
+type TeamPeriod = 'today' | 'week' | 'lastWeek';
 
 interface GoogleTrend {
   baselineRating: number;
@@ -113,8 +130,16 @@ function mergeStaff(data: LiveData): MergedStaff[] {
     if (s.staffId != null) statsMap.set(s.staffId, s);
   }
 
+  const lastWeekMap = new Map<number, LastWeekStaffStat>();
+  const lastWeekOrphans: LastWeekStaffStat[] = [];
+  for (const s of data.lastWeekStaffStats ?? []) {
+    if (s.staffId != null) lastWeekMap.set(s.staffId, s);
+    else lastWeekOrphans.push(s);
+  }
+
   const merged: MergedStaff[] = data.allStaff.map((s) => {
     const stat = statsMap.get(s.id);
+    const lw = lastWeekMap.get(s.id);
     return {
       id: s.id,
       name: s.name,
@@ -126,11 +151,23 @@ function mergeStaff(data: LiveData): MergedStaff[] {
       todayScans: stat?.todayScans ?? 0,
       todayFiveStars: stat?.todayFiveStars ?? 0,
       todayBelowFour: stat?.todayBelowFour ?? 0,
+      lastWeekScans: lw?.totalScans ?? 0,
+      lastWeekFiveStars: lw?.fiveStarCount ?? 0,
+      lastWeekBelowFour: lw?.belowFourCount ?? 0,
+      lastWeekAvgRating: lw?.avgRating ?? 0,
     };
   });
 
   for (const s of data.staffStats) {
     if (s.staffId == null || !data.allStaff.some((a) => a.id === s.staffId)) {
+      // Match orphan last-week rows by staffCode or name when possible.
+      const lw =
+        (s.staffCode
+          ? lastWeekOrphans.find((o) => o.staffCode === s.staffCode)
+          : undefined) ??
+        (s.staffName
+          ? lastWeekOrphans.find((o) => o.staffName === s.staffName)
+          : undefined);
       merged.push({
         id: -(merged.length + 1),
         name: s.staffName ?? s.staffCode ?? 'Unknown',
@@ -142,6 +179,40 @@ function mergeStaff(data: LiveData): MergedStaff[] {
         todayScans: s.todayScans,
         todayFiveStars: s.todayFiveStars,
         todayBelowFour: s.todayBelowFour,
+        lastWeekScans: lw?.totalScans ?? 0,
+        lastWeekFiveStars: lw?.fiveStarCount ?? 0,
+        lastWeekBelowFour: lw?.belowFourCount ?? 0,
+        lastWeekAvgRating: lw?.avgRating ?? 0,
+      });
+    }
+  }
+
+  // Surface staff who only have last-week activity (left the team, etc.) so the
+  // "semana pasada" view still accounts for every review.
+  for (const s of data.lastWeekStaffStats ?? []) {
+    const alreadyIncluded =
+      (s.staffId != null && merged.some((m) => m.id === s.staffId)) ||
+      merged.some(
+        (m) =>
+          (s.staffCode && m.code === s.staffCode) ||
+          (s.staffName && m.name === s.staffName),
+      );
+    if (!alreadyIncluded) {
+      merged.push({
+        id: -(merged.length + 1),
+        name: s.staffName ?? s.staffCode ?? 'Unknown',
+        code: s.staffCode ?? '',
+        weekScans: 0,
+        weekFiveStars: 0,
+        weekBelowFour: 0,
+        avgRating: 0,
+        todayScans: 0,
+        todayFiveStars: 0,
+        todayBelowFour: 0,
+        lastWeekScans: s.totalScans,
+        lastWeekFiveStars: s.fiveStarCount,
+        lastWeekBelowFour: s.belowFourCount,
+        lastWeekAvgRating: s.avgRating,
       });
     }
   }
@@ -171,6 +242,7 @@ export default function LiveView({ restaurantName, logoSrc, logoDarkBg, googleRa
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [lastUpdate, setLastUpdate] = useState(new Date());
   const [clock, setClock] = useState(new Date());
+  const [teamPeriod, setTeamPeriod] = useState<TeamPeriod>('today');
   const containerRef = useRef<HTMLDivElement>(null);
 
   const team = useMemo(() => mergeStaff(data), [data]);
@@ -546,7 +618,7 @@ export default function LiveView({ restaurantName, logoSrc, logoDarkBg, googleRa
           </div>
 
           {/* Team Leaderboard Table */}
-          <TeamTable team={team} large={fs} />
+          <TeamTable team={team} large={fs} period={teamPeriod} onPeriodChange={setTeamPeriod} />
         </div>
       </div>}
 
@@ -1059,8 +1131,55 @@ function StatBox({
 
 /* ── Team Leaderboard Table ─────────────────────── */
 
-function TeamTable({ team, large }: { team: MergedStaff[]; large: boolean }) {
+function TeamTable({
+  team,
+  large,
+  period,
+  onPeriodChange,
+}: {
+  team: MergedStaff[];
+  large: boolean;
+  period: TeamPeriod;
+  onPeriodChange: (p: TeamPeriod) => void;
+}) {
   const fs = large;
+
+  const rows = useMemo(() => {
+    const pick = (m: MergedStaff) => {
+      if (period === 'today') {
+        return {
+          scans: m.todayScans,
+          fiveStars: m.todayFiveStars,
+          belowFour: m.todayBelowFour,
+          avg: m.avgRating,
+        };
+      }
+      if (period === 'week') {
+        return {
+          scans: m.weekScans,
+          fiveStars: m.weekFiveStars,
+          belowFour: m.weekBelowFour,
+          avg: m.avgRating,
+        };
+      }
+      return {
+        scans: m.lastWeekScans,
+        fiveStars: m.lastWeekFiveStars,
+        belowFour: m.lastWeekBelowFour,
+        avg: m.lastWeekAvgRating,
+      };
+    };
+
+    return team
+      .map((m) => ({ m, v: pick(m) }))
+      .sort((a, b) => b.v.scans - a.v.scans || b.v.avg - a.v.avg);
+  }, [team, period]);
+
+  const tabs: { key: TeamPeriod; label: string }[] = [
+    { key: 'today', label: 'HOY' },
+    { key: 'week', label: 'ESTA SEMANA' },
+    { key: 'lastWeek', label: 'SEMANA PASADA' },
+  ];
 
   return (
     <div
@@ -1076,18 +1195,53 @@ function TeamTable({ team, large }: { team: MergedStaff[]; large: boolean }) {
     >
       <div
         style={{
-          fontSize: '0.65rem',
-          fontWeight: 700,
-          letterSpacing: '0.1em',
-          textTransform: 'uppercase' as const,
-          color: C.textMain,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: 12,
           padding: fs ? '1.25rem 1.5rem' : '1rem 1.25rem',
           flexShrink: 0,
           background: '#FAFAFA',
           borderBottom: `1px solid ${C.panelBorder}`,
         }}
       >
-        ÍNDICE DE PERSONAL
+        <div
+          style={{
+            fontSize: '0.65rem',
+            fontWeight: 700,
+            letterSpacing: '0.1em',
+            textTransform: 'uppercase' as const,
+            color: C.textMain,
+          }}
+        >
+          ÍNDICE DE PERSONAL
+        </div>
+        <div style={{ display: 'flex', border: `1px solid ${C.borderDark}` }}>
+          {tabs.map((t, i) => {
+            const active = t.key === period;
+            return (
+              <button
+                key={t.key}
+                onClick={() => onPeriodChange(t.key)}
+                style={{
+                  padding: fs ? '6px 12px' : '5px 10px',
+                  fontSize: fs ? '0.65rem' : '0.6rem',
+                  fontWeight: 700,
+                  letterSpacing: '0.08em',
+                  textTransform: 'uppercase',
+                  background: active ? C.textMain : 'transparent',
+                  color: active ? C.panelBg : C.textMain,
+                  border: 'none',
+                  borderLeft: i === 0 ? 'none' : `1px solid ${C.borderDark}`,
+                  cursor: 'pointer',
+                  transition: 'background 0.15s, color 0.15s',
+                }}
+              >
+                {t.label}
+              </button>
+            );
+          })}
+        </div>
       </div>
       <div style={{ flex: 1, overflow: 'auto' }}>
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
@@ -1102,9 +1256,9 @@ function TeamTable({ team, large }: { team: MergedStaff[]; large: boolean }) {
             </tr>
           </thead>
           <tbody>
-            {team.map((m, i) => {
+            {rows.map(({ m, v }, i) => {
               const rank = i + 1;
-              const hasActivity = m.todayScans > 0;
+              const hasActivity = v.scans > 0;
 
               return (
                 <tr
@@ -1125,18 +1279,18 @@ function TeamTable({ team, large }: { team: MergedStaff[]; large: boolean }) {
                   <TdCell align="left" large={fs} style={{ fontWeight: 500, color: C.textMain }}>
                     {m.name}
                   </TdCell>
-                  <TdCell align="right" large={fs} className="font-numeric" style={{ fontWeight: 500 }}>{m.todayScans}</TdCell>
-                  <TdCell align="right" large={fs} className="font-numeric" style={{ color: m.todayFiveStars > 0 ? C.textMain : C.textDim }}>{m.todayFiveStars}</TdCell>
-                  <TdCell align="right" large={fs} className="font-numeric" style={{ color: m.todayBelowFour > 0 ? C.textMain : C.textDim }}>{m.todayBelowFour}</TdCell>
+                  <TdCell align="right" large={fs} className="font-numeric" style={{ fontWeight: 500 }}>{v.scans}</TdCell>
+                  <TdCell align="right" large={fs} className="font-numeric" style={{ color: v.fiveStars > 0 ? C.textMain : C.textDim }}>{v.fiveStars}</TdCell>
+                  <TdCell align="right" large={fs} className="font-numeric" style={{ color: v.belowFour > 0 ? C.textMain : C.textDim }}>{v.belowFour}</TdCell>
                   <TdCell align="right" large={fs} className="font-numeric" style={{ color: C.textMuted }}>
-                    {m.avgRating > 0 ? m.avgRating.toFixed(1) : '-'}
+                    {v.avg > 0 ? v.avg.toFixed(1) : '-'}
                   </TdCell>
                 </tr>
               );
             })}
           </tbody>
         </table>
-        {team.length === 0 && (
+        {rows.length === 0 && (
           <div style={{ textAlign: 'center', padding: '4rem 0', color: C.textDim, fontSize: '0.85rem', fontFamily: 'Georgia, serif', fontStyle: 'italic' }}>
             No hay registros para mostrar
           </div>

@@ -348,7 +348,7 @@ export async function getLiveStats(restaurantId: number, threshold: number = 4) 
       countSql`count(*) filter (where ${reviews.sentToGoogle} = true)`,
   };
 
-  const [weekTotals, lastWeekTotals, todayTotals, staffReviewStats, allActiveStaff, recentScans] =
+  const [weekTotals, lastWeekTotals, todayTotals, staffReviewStats, lastWeekStaffStatsRaw, allActiveStaff, recentScans] =
     await Promise.all([
       // This week totals
       db.select(totalsSelect).from(reviews).where(
@@ -395,6 +395,30 @@ export async function getLiveStats(restaurantId: number, threshold: number = 4) 
         .groupBy(reviews.staffId, reviews.staffName, reviews.staffCode)
         .orderBy(desc(count(reviews.id))),
 
+      // Per-staff stats last week (Mon-Sun prior to this week's Monday)
+      db
+        .select({
+          staffId: reviews.staffId,
+          staffName: reviews.staffName,
+          staffCode: reviews.staffCode,
+          totalScans: count(reviews.id),
+          fiveStarCount:
+            countSql`count(*) filter (where ${reviews.rating} = 5)`,
+          belowFourCount:
+            countSql`count(*) filter (where ${reviews.rating} < 4)`,
+          avgRating: avg(reviews.rating).mapWith(Number),
+        })
+        .from(reviews)
+        .where(
+          and(
+            eq(reviews.restaurantId, restaurantId),
+            gte(reviews.createdAt, lastMonday),
+            sql`${reviews.createdAt} < ${monday}`,
+          ),
+        )
+        .groupBy(reviews.staffId, reviews.staffName, reviews.staffCode)
+        .orderBy(desc(count(reviews.id))),
+
       // All active staff
       db.select().from(staff).where(
         and(eq(staff.restaurantId, restaurantId), eq(staff.active, true)),
@@ -426,6 +450,7 @@ export async function getLiveStats(restaurantId: number, threshold: number = 4) 
     lastWeek: lastWeekTotals[0] ?? emptyTotals,
     today: todayTotals[0] ?? emptyTotals,
     staffStats: staffReviewStats,
+    lastWeekStaffStats: lastWeekStaffStatsRaw,
     allStaff: allActiveStaff,
     recentScans,
   };
