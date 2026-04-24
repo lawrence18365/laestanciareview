@@ -53,6 +53,10 @@ const palettes: Record<string, { bg: string; glow: string }> = {
     bg: 'linear-gradient(145deg, #064E3B 0%, #065F46 40%, #25D366 100%)',
     glow: 'radial-gradient(ellipse at 50% 50%, rgba(37,211,102,0.3) 0%, transparent 60%)',
   },
+  notifications: {
+    bg: 'linear-gradient(145deg, #0F172A 0%, #1E3A5F 50%, #2563EB 100%)',
+    glow: 'radial-gradient(ellipse at 50% 40%, rgba(59,130,246,0.3) 0%, transparent 60%)',
+  },
   ready: {
     bg: 'linear-gradient(145deg, #78350F 0%, #B45309 35%, #D97706 65%, #F59E0B 100%)',
     glow: 'radial-gradient(ellipse at 50% 50%, rgba(251,191,36,0.3) 0%, transparent 60%)',
@@ -81,6 +85,7 @@ const gmSteps: Step[] = [
   { id: 'analytics', icon: '📈', title: t.onboarding.analyticsTitle, subtitle: t.onboarding.analyticsSubtitle, body: t.onboarding.analyticsBody },
   { id: 'settings', icon: '⚙', title: t.onboarding.settingsTitle, subtitle: t.onboarding.settingsSubtitle, body: t.onboarding.settingsBody, tip: t.onboarding.settingsTip },
   { id: 'whatsapp', icon: '💬', title: t.onboarding.whatsappTitle, subtitle: t.onboarding.whatsappSubtitle, body: t.onboarding.whatsappBody, tip: t.onboarding.whatsappTip(sandboxCode) },
+  { id: 'notifications', icon: '🔔', title: t.onboarding.notificationsTitle, subtitle: t.onboarding.notificationsSubtitle, body: t.onboarding.notificationsBody, tip: t.onboarding.notificationsTip },
   { id: 'ready', icon: '🚀', title: t.onboarding.readyTitle, subtitle: t.onboarding.readySubtitle, body: t.onboarding.readyBody },
 ];
 

@@ -432,6 +432,11 @@ export const t = {
     whatsappBody: 'Cuando un cliente deja una reseña negativa, necesitas saberlo al instante para poder reaccionar. Con las alertas de WhatsApp, cada comentario negativo te llega como mensaje directo con la calificación, el nombre del mesero y lo que escribió el cliente. Activarlo toma 30 segundos y es el paso más importante de tu configuración.',
     whatsappTip: (code: string) => `Abre WhatsApp en tu celular → envía "${code}" al número +1 415 523 8886 → espera la confirmación. ¡Listo! Ya recibirás alertas al instante.`,
 
+    notificationsTitle: 'Notificaciones Push',
+    notificationsSubtitle: 'Alertas en tu celular, sin WhatsApp',
+    notificationsBody: 'Activa las notificaciones push para recibir alertas instantáneas directamente en tu pantalla — incluso cuando el teléfono está bloqueado. En iOS, primero agrega RateTap a tu pantalla de inicio (botón Compartir → Agregar a inicio), luego activa las notificaciones desde el banner en el dashboard. En Android, el navegador te pedirá permiso automáticamente.',
+    notificationsTip: 'Las notificaciones push funcionan mejor junto con WhatsApp. Activa ambas para asegurarte de no perder ninguna reseña negativa, sin importar qué app tengas abierta.',
+
     readyTitle: '¡Todo Listo!',
     readySubtitle: 'Estás preparado para comenzar',
     readyBody: 'Ya conoces todas las herramientas. Tu siguiente paso: ve a Personal para agregar a tus meseros, luego reparte las tarjetas NFC. Cada escaneo fortalece la reputación de tu restaurante en Google. Puedes volver a ver esta guía en cualquier momento desde el botón "Guía" en la barra de navegación.',

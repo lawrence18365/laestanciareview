@@ -21,16 +21,11 @@ type BannerState =
 
 const DISMISS_KEY = 'ratetap_push_dismissed';
 
-// Only show push notification banner for these restaurants during testing
-const ENABLED_SLUGS = ['estancia-leon'];
-
-export default function PushNotificationBanner({ slug }: { slug: string }) {
+export default function PushNotificationBanner({ slug: _slug }: { slug: string }) {
   const [state, setState] = useState<BannerState>('loading');
   const [subscribing, setSubscribing] = useState(false);
-  const enabled = ENABLED_SLUGS.includes(slug);
 
   useEffect(() => {
-    if (!enabled) return;
 
     async function check() {
       // If dismissed this session, don't show
@@ -71,7 +66,7 @@ export default function PushNotificationBanner({ slug }: { slug: string }) {
       setState('prompt');
     }
     check();
-  }, [enabled]);
+  }, []);
 
   const handleSubscribe = useCallback(async () => {
     setSubscribing(true);
@@ -85,8 +80,7 @@ export default function PushNotificationBanner({ slug }: { slug: string }) {
     setState('dismissed');
   }, []);
 
-  // Don't render for disabled slugs or inactive states
-  if (!enabled || state === 'loading' || state === 'subscribed' || state === 'unsupported' || state === 'dismissed') {
+  if (state === 'loading' || state === 'subscribed' || state === 'unsupported' || state === 'dismissed') {
     return null;
   }
 
