@@ -69,3 +69,46 @@ export const updateSettingsSchema = z.object({
   googleThreshold: z.number().int().min(1).max(5).optional(),
   managerEmail: z.string().email().max(254).optional(),
 });
+
+// Guest Capture CRM — public form on /g/[slug]. Dedup key is (whatsapp, brand).
+export const guestCaptureSchema = z.object({
+  restaurantSlug: z.string().min(1).max(100),
+  name: z.string().min(1).max(255),
+  whatsapp: z
+    .string()
+    .min(10)
+    .max(20)
+    .regex(/^[\d+\s\-()]+$/, 'WhatsApp contiene caracteres inválidos'),
+  // Mexican guests expect DD/MM; strict to avoid EU/US ambiguity downstream.
+  birthdayMmdd: z
+    .string()
+    .regex(/^(0[1-9]|[12]\d|3[01])\/(0[1-9]|1[0-2])$/, 'Usa el formato DD/MM'),
+  preferences: z.array(z.string().min(1).max(50)).max(10).optional(),
+  marketingConsent: z.boolean().optional().default(false),
+  promoType: z.string().max(50).optional(),
+  utmSource: z.string().max(100).optional(),
+  utmMedium: z.string().max(100).optional(),
+  utmCampaign: z.string().max(100).optional(),
+});
+export type GuestCaptureInput = z.infer<typeof guestCaptureSchema>;
+
+// Staff-side redemption confirmation.
+export const guestValidateSchema = z.object({
+  restaurantSlug: z.string().min(1).max(100),
+  code: z.string().regex(/^\d{4}$/, 'Código inválido'),
+  staffCode: z.string().min(1).max(50),
+  redemptionType: z.enum(['copa_vino', 'postre', 'otro']),
+  notes: z.string().max(500).optional(),
+});
+
+// GM-side mutations on a captured guest.
+export const guestUpdateSchema = z.object({
+  notes: z.string().max(2000).optional(),
+  preferences: z.array(z.string().min(1).max(50)).max(10).optional(),
+  marketingConsent: z.boolean().optional(),
+});
+
+export const guestManualVisitSchema = z.object({
+  notes: z.string().max(500).optional(),
+  staffCode: z.string().min(1).max(50).optional(),
+});

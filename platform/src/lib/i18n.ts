@@ -7,6 +7,7 @@ export const t = {
     dashboard: 'Panel',
     live: 'En Vivo',
     inbox: 'Buzón',
+    guests: 'Invitados',
     staff: 'Personal',
     analytics: 'Analíticas',
     settings: 'Ajustes',

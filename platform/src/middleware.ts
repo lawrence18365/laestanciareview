@@ -33,7 +33,8 @@ export async function middleware(req: NextRequest) {
     pathname.startsWith('/staff') ||
     pathname.startsWith('/settings') ||
     pathname.startsWith('/feedback') ||
-    pathname.startsWith('/live');
+    pathname.startsWith('/live') ||
+    pathname.startsWith('/guests');
 
   if (isAppRoute) {
     const cookie = req.cookies.get(COOKIE_NAME)?.value;
@@ -63,6 +64,7 @@ export const config = {
     '/settings/:path*',
     '/feedback/:path*',
     '/live/:path*',
+    '/guests/:path*',
     '/api/:path*',
     '/login',
     '/forgot-password',

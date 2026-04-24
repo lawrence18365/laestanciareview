@@ -8,13 +8,26 @@ import {
   pgEnum,
   index,
   unique,
+  jsonb,
 } from 'drizzle-orm/pg-core';
-import { relations, sql } from 'drizzle-orm';
+import { relations } from 'drizzle-orm';
 
 export const reviewStatusEnum = pgEnum('review_status', [
   'new',
   'reviewed',
   'resolved',
+]);
+
+export const guestStatusEnum = pgEnum('guest_status', [
+  'pending_validation',
+  'validated',
+  'expired',
+]);
+
+export const redemptionTypeEnum = pgEnum('redemption_type', [
+  'copa_vino',
+  'postre',
+  'otro',
 ]);
 
 export const restaurants = pgTable('restaurants', {
@@ -28,6 +41,10 @@ export const restaurants = pgTable('restaurants', {
   isOwner: boolean('is_owner').notNull().default(false),
   isRegional: boolean('is_regional').notNull().default(false),
   region: text('region'),
+  // Brand slug ('estancia', 'harbors', etc.). Mirrors the in-memory lookup
+  // in lib/brands.ts. Scopes guest-capture dedup and the agency-tier view.
+  // Nullable on owner/regional rows since those aren't single-brand.
+  brand: text('brand'),
   managerPhone: text('manager_phone'),
   alertPreference: text('alert_preference').notNull().default('all'),
   smsAlerts: boolean('sms_alerts').notNull().default(false),
@@ -189,10 +206,77 @@ export const prospectViews = pgTable('prospect_views', {
   lastNotifiedAt: timestamp('last_notified_at', { withTimezone: true }),
 });
 
+// Guest Capture CRM — phase 1 of the high-ticket tier. Dedup key: (whatsapp, brand).
+// brand is denormalised from restaurants.brand so cross-location dedup within
+// a brand doesn't require a join on every write.
+export const guests = pgTable(
+  'guests',
+  {
+    id: serial('id').primaryKey(),
+    restaurantId: integer('restaurant_id')
+      .notNull()
+      .references(() => restaurants.id, { onDelete: 'cascade' }),
+    brand: text('brand').notNull(),
+    name: text('name').notNull(),
+    whatsapp: text('whatsapp').notNull(),
+    birthdayMmdd: text('birthday_mmdd'),
+    preferences: text('preferences').array(),
+    marketingConsent: boolean('marketing_consent').notNull().default(false),
+    validationCode: text('validation_code'),
+    status: guestStatusEnum('status').notNull().default('pending_validation'),
+    validatedAt: timestamp('validated_at', { withTimezone: true }),
+    validatedBy: integer('validated_by').references(() => staff.id, {
+      onDelete: 'set null',
+    }),
+    redemptionType: redemptionTypeEnum('redemption_type'),
+    promoType: text('promo_type'),
+    capturedAt: timestamp('captured_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    utmSource: text('utm_source'),
+    utmMedium: text('utm_medium'),
+    utmCampaign: text('utm_campaign'),
+    notes: text('notes'),
+    metadata: jsonb('metadata'),
+  },
+  (t) => [
+    unique('guests_whatsapp_brand_uniq').on(t.whatsapp, t.brand),
+    index('guests_birthday_idx').on(t.birthdayMmdd),
+    index('guests_restaurant_idx').on(t.restaurantId),
+    index('guests_status_idx').on(t.status),
+    index('guests_brand_idx').on(t.brand),
+  ],
+);
+
+export const guestVisits = pgTable(
+  'guest_visits',
+  {
+    id: serial('id').primaryKey(),
+    guestId: integer('guest_id')
+      .notNull()
+      .references(() => guests.id, { onDelete: 'cascade' }),
+    restaurantId: integer('restaurant_id')
+      .notNull()
+      .references(() => restaurants.id, { onDelete: 'cascade' }),
+    visitDate: timestamp('visit_date', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    notes: text('notes'),
+    loggedBy: integer('logged_by').references(() => staff.id, {
+      onDelete: 'set null',
+    }),
+  },
+  (t) => [
+    index('guest_visits_guest_idx').on(t.guestId),
+    index('guest_visits_restaurant_idx').on(t.restaurantId),
+  ],
+);
+
 // Relations
 export const restaurantsRelations = relations(restaurants, ({ many }) => ({
   staff: many(staff),
   reviews: many(reviews),
+  guests: many(guests),
 }));
 
 export const staffRelations = relations(staff, ({ one, many }) => ({
@@ -210,6 +294,33 @@ export const reviewsRelations = relations(reviews, ({ one }) => ({
   }),
   staffMember: one(staff, {
     fields: [reviews.staffId],
+    references: [staff.id],
+  }),
+}));
+
+export const guestsRelations = relations(guests, ({ one, many }) => ({
+  restaurant: one(restaurants, {
+    fields: [guests.restaurantId],
+    references: [restaurants.id],
+  }),
+  validatedByStaff: one(staff, {
+    fields: [guests.validatedBy],
+    references: [staff.id],
+  }),
+  visits: many(guestVisits),
+}));
+
+export const guestVisitsRelations = relations(guestVisits, ({ one }) => ({
+  guest: one(guests, {
+    fields: [guestVisits.guestId],
+    references: [guests.id],
+  }),
+  restaurant: one(restaurants, {
+    fields: [guestVisits.restaurantId],
+    references: [restaurants.id],
+  }),
+  loggedByStaff: one(staff, {
+    fields: [guestVisits.loggedBy],
     references: [staff.id],
   }),
 }));
