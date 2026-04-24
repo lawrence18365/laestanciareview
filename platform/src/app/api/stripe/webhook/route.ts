@@ -16,7 +16,7 @@ import {
   sendOwnerTrialLapsedNotification,
 } from '@/lib/email';
 import { sendTrialEndingSms } from '@/lib/sms';
-import { sendPurchaseEvent } from '@/lib/meta-conversions';
+import { sendPurchaseEvent, sendCompleteRegistrationEvent } from '@/lib/meta-conversions';
 import { sendWhatsAppWelcome } from '@/lib/whatsapp';
 
 export const runtime = 'nodejs';
@@ -173,6 +173,11 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
           trialEndsAt,
         })
       : Promise.resolve(),
+    sendCompleteRegistrationEvent({
+      email: md.email,
+      phone: md.phone,
+      eventId: session.id,
+    }),
   ]);
 }
 

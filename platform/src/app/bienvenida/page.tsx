@@ -1,9 +1,11 @@
 'use client';
 
-import { Suspense, useEffect, useState } from 'react';
+import { Suspense, useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
+import Script from 'next/script';
 import { SUPPORT_WHATSAPP_URL } from '@/lib/support';
 
+const PIXEL_ID = process.env.NEXT_PUBLIC_META_PIXEL_ID ?? '1578821303344121';
 
 interface StatusResponse {
   ready: boolean;
@@ -16,9 +18,19 @@ interface StatusResponse {
 
 export default function BienvenidaPage() {
   return (
-    <Suspense fallback={<Shell><div style={{ textAlign: 'center', color: '#57534e' }}>Cargando…</div></Shell>}>
-      <BienvenidaInner />
-    </Suspense>
+    <>
+      <Script id="meta-pixel" strategy="afterInteractive">{`
+        !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+        n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;
+        n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;
+        t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,
+        document,'script','https://connect.facebook.net/en_US/fbevents.js');
+        fbq('init', '${PIXEL_ID}'); fbq('track', 'PageView');
+      `}</Script>
+      <Suspense fallback={<Shell><div style={{ textAlign: 'center', color: '#57534e' }}>Cargando…</div></Shell>}>
+        <BienvenidaInner />
+      </Suspense>
+    </>
   );
 }
 
@@ -27,6 +39,19 @@ function BienvenidaInner() {
   const sessionId = params.get('session_id');
   const [status, setStatus] = useState<StatusResponse | null>(null);
   const [timedOut, setTimedOut] = useState(false);
+  const pixelFiredRef = useRef(false);
+
+  useEffect(() => {
+    if (!status?.ready || pixelFiredRef.current || !sessionId) return;
+    const key = `rt_creg_fired:${sessionId}`;
+    try {
+      if (sessionStorage.getItem(key)) { pixelFiredRef.current = true; return; }
+      sessionStorage.setItem(key, '1');
+    } catch { /* sessionStorage blocked — fall through */ }
+    const fbq = (window as unknown as { fbq?: (...args: unknown[]) => void }).fbq;
+    if (fbq) fbq('track', 'CompleteRegistration', { value: 0, currency: 'MXN' }, { eventID: sessionId });
+    pixelFiredRef.current = true;
+  }, [status?.ready, sessionId]);
 
   useEffect(() => {
     if (!sessionId) return;

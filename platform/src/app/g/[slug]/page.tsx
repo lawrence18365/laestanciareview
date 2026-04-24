@@ -8,8 +8,8 @@ import GuestCaptureForm from './GuestCaptureForm';
 // and the local-market account get a follow prompt on every redemption.
 const igByBrand: Record<string, Array<{ handle: string; label: string }>> = {
   estancia: [
-    { handle: 'estanciaargentinaoficial', label: 'Grupo Estancia' },
-    { handle: 'laestancialeon', label: 'La Estancia León' },
+    { handle: 'laestanciamx', label: 'Grupo Estancia' },
+    { handle: 'laestanciaargentinaleon', label: 'La Estancia León' },
   ],
 };
 
