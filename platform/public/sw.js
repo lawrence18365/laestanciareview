@@ -12,10 +12,12 @@ self.addEventListener('push', (event) => {
 
   const options = {
     body: data.body || '',
-    icon: '/logos/ratetap_logo_transparent_background.png',
-    badge: '/logos/ratetap_logo_transparent_background.png',
+    icon: '/icons/icon-192.png',
+    badge: '/icons/notification-badge.png',
     tag: data.tag || 'ratetap-review',
     renotify: true,
+    vibrate: [200, 100, 200],
+    requireInteraction: data.requireInteraction || false,
     data: { url: data.url || '/dashboard' },
   };
 
@@ -28,18 +30,15 @@ self.addEventListener('notificationclick', (event) => {
 
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
-      // Focus existing window if open
       for (const client of windowClients) {
-        if (client.url.includes('/dashboard') && 'focus' in client) {
+        if (client.url.includes(url) && 'focus' in client) {
           return client.focus();
         }
       }
-      // Otherwise open new window
       return clients.openWindow(url);
     })
   );
 });
 
-// Basic install/activate — no caching strategy needed for now
 self.addEventListener('install', () => self.skipWaiting());
 self.addEventListener('activate', (event) => event.waitUntil(self.clients.claim()));
