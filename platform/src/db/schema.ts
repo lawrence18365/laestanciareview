@@ -324,3 +324,67 @@ export const guestVisitsRelations = relations(guestVisits, ({ one }) => ({
     references: [staff.id],
   }),
 }));
+
+// ── Quote Builder ──────────────────────────────────────────────────────────
+
+export const quotes = pgTable(
+  'quotes',
+  {
+    id: serial('id').primaryKey(),
+    restaurantId: integer('restaurant_id')
+      .notNull()
+      .references(() => restaurants.id, { onDelete: 'cascade' }),
+    quoteNumber: text('quote_number'),
+    status: text('status').notNull().default('draft'), // draft | sent | accepted | expired
+    clientName: text('client_name').notNull(),
+    clientPhone: text('client_phone'),
+    clientEmail: text('client_email'),
+    clientCompany: text('client_company'),
+    eventDate: text('event_date'),
+    eventType: text('event_type'),
+    guestCount: integer('guest_count').notNull().default(1),
+    eventNotes: text('event_notes'),
+    pricePerPerson: text('price_per_person').notNull().default('0'),
+    serviceChargePercent: text('service_charge_percent').notNull().default('10'),
+    ivaPercent: text('iva_percent').notNull().default('16'),
+    packageName: text('package_name'),
+    terms: text('terms'),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    index('quotes_restaurant_idx').on(t.restaurantId),
+    index('quotes_created_at_idx').on(t.createdAt),
+    index('quotes_status_idx').on(t.status),
+  ],
+);
+
+export const quoteItems = pgTable(
+  'quote_items',
+  {
+    id: serial('id').primaryKey(),
+    quoteId: integer('quote_id')
+      .notNull()
+      .references(() => quotes.id, { onDelete: 'cascade' }),
+    category: text('category').notNull(), // entrada|ensalada|corte|guarnicion|postre|bebida|vino|extra
+    name: text('name').notNull(),
+    notes: text('notes'),
+    sortOrder: integer('sort_order').notNull().default(0),
+  },
+  (t) => [index('quote_items_quote_idx').on(t.quoteId)],
+);
+
+export const quotesRelations = relations(quotes, ({ one, many }) => ({
+  restaurant: one(restaurants, {
+    fields: [quotes.restaurantId],
+    references: [restaurants.id],
+  }),
+  items: many(quoteItems),
+}));
+
+export const quoteItemsRelations = relations(quoteItems, ({ one }) => ({
+  quote: one(quotes, {
+    fields: [quoteItems.quoteId],
+    references: [quotes.id],
+  }),
+}));
