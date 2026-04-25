@@ -2,6 +2,8 @@ import { NextRequest } from 'next/server';
 import { db } from '@/db';
 import { prospectViews } from '@/db/schema';
 import { eq } from 'drizzle-orm';
+import { requireSameOrigin } from '@/lib/origin';
+import { checkRateLimitAsync, getClientIP, rateLimitResponse } from '@/lib/rate-limit';
 
 export const dynamic = 'force-dynamic';
 
@@ -42,6 +44,14 @@ async function notifyOwner(restaurantName: string, placeId: string, rating: stri
 }
 
 export async function POST(req: NextRequest) {
+  const csrf = requireSameOrigin(req);
+  if (csrf) return csrf;
+
+  // Bound the WhatsApp-notify spam vector: 30 hits/min/IP across all placeIds.
+  const ip = getClientIP(req);
+  const rl = await checkRateLimitAsync(`audit-track:${ip}`, 30, 60_000);
+  if (!rl.allowed) return rateLimitResponse(rl.resetAt);
+
   try {
     const { placeId, restaurantName, rating } = (await req.json()) as {
       placeId: string;
@@ -49,7 +59,13 @@ export async function POST(req: NextRequest) {
       rating?: string;
     };
 
-    if (!placeId || !restaurantName) return Response.json({ ok: false }, { status: 400 });
+    if (
+      !placeId || typeof placeId !== 'string' || placeId.length > 300 ||
+      !restaurantName || typeof restaurantName !== 'string' || restaurantName.length > 300 ||
+      (rating !== undefined && (typeof rating !== 'string' || rating.length > 20))
+    ) {
+      return Response.json({ ok: false }, { status: 400 });
+    }
 
     const now = new Date();
     const existing = await db.select().from(prospectViews).where(eq(prospectViews.placeId, placeId)).limit(1);

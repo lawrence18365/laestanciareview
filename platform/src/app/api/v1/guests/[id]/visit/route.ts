@@ -5,6 +5,7 @@ import { guests, guestVisits, staff } from '@/db/schema';
 import { guestManualVisitSchema } from '@/lib/validations';
 import { verifySession } from '@/lib/session';
 import { getRestaurantBySlug } from '@/lib/queries';
+import { requireSameOrigin } from '@/lib/origin';
 
 export const runtime = 'nodejs';
 
@@ -12,6 +13,9 @@ export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
+  const csrf = requireSameOrigin(req);
+  if (csrf) return csrf;
+
   const session = await verifySession();
   if (!session || session.role !== 'gm') {
     return Response.json({ error: 'Unauthorized' }, { status: 401 });

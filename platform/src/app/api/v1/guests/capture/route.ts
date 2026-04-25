@@ -1,13 +1,16 @@
 import { NextRequest } from 'next/server';
-import { and, eq } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 import { db } from '@/db';
 import { guests, guestVisits, restaurants } from '@/db/schema';
 import { guestCaptureSchema } from '@/lib/validations';
 import { checkRateLimitAsync, getClientIP, rateLimitResponse } from '@/lib/rate-limit';
 import { sendLeadEvent } from '@/lib/meta-conversions';
 import { normaliseMexicanPhone } from '@/lib/phone';
+import { requireSameOrigin } from '@/lib/origin';
 
 export const runtime = 'nodejs';
+
+const VALIDATION_CODE_TTL_MS = 24 * 60 * 60 * 1000;
 
 // Full 10k-code space (0000-9999). At ~50 pending codes/restaurant, collision
 // probability on a new capture is ~0.5% — acceptable for MVP scale.
@@ -18,6 +21,9 @@ function generateValidationCode(): string {
 }
 
 export async function POST(req: NextRequest) {
+  const csrf = requireSameOrigin(req);
+  if (csrf) return csrf;
+
   const ip = getClientIP(req);
   const ipLimit = await checkRateLimitAsync(`guest-capture-ip:${ip}`, 5, 60_000);
   if (!ipLimit.allowed) return rateLimitResponse(ipLimit.resetAt);
@@ -64,62 +70,56 @@ export async function POST(req: NextRequest) {
   if (!waLimit.allowed) return rateLimitResponse(waLimit.resetAt);
 
   const validationCode = generateValidationCode();
+  const validationCodeExpiresAt = new Date(Date.now() + VALIDATION_CODE_TTL_MS);
 
-  // Dedup on (whatsapp, brand): update existing guest + log a new visit row,
-  // else create a new guest. SELECT-then-branch is not atomic, but with the
-  // rate limits above, the race window is effectively zero for MVP.
-  const existing = await db
-    .select()
-    .from(guests)
-    .where(and(eq(guests.whatsapp, whatsapp), eq(guests.brand, brand)))
-    .limit(1);
-
-  let guestId: number;
-  let isNew = false;
-
-  if (existing[0]) {
-    const prev = existing[0];
-    guestId = prev.id;
-    await db
-      .update(guests)
-      .set({
+  // UPSERT on the (whatsapp, brand) unique constraint. This collapses the
+  // previous SELECT-then-branch race window into a single atomic operation.
+  const upserted = await db
+    .insert(guests)
+    .values({
+      restaurantId: restaurant.id,
+      brand,
+      name: input.name,
+      whatsapp,
+      birthdayMmdd: input.birthdayMmdd,
+      preferences: input.preferences,
+      marketingConsent: input.marketingConsent,
+      validationCode,
+      validationCodeExpiresAt,
+      promoType: input.promoType,
+      utmSource: input.utmSource,
+      utmMedium: input.utmMedium,
+      utmCampaign: input.utmCampaign,
+    })
+    .onConflictDoUpdate({
+      target: [guests.whatsapp, guests.brand],
+      set: {
         name: input.name,
         birthdayMmdd: input.birthdayMmdd,
-        preferences: input.preferences ?? prev.preferences,
-        marketingConsent: input.marketingConsent || prev.marketingConsent,
+        preferences: input.preferences ?? undefined,
+        // Marketing consent is monotonic — once granted, never revoked silently.
+        marketingConsent: input.marketingConsent || undefined,
         validationCode,
+        validationCodeExpiresAt,
         status: 'pending_validation',
         validatedAt: null,
         validatedBy: null,
         redemptionType: null,
         promoType: input.promoType ?? null,
         restaurantId: restaurant.id,
-        utmSource: input.utmSource ?? prev.utmSource,
-        utmMedium: input.utmMedium ?? prev.utmMedium,
-        utmCampaign: input.utmCampaign ?? prev.utmCampaign,
-      })
-      .where(eq(guests.id, guestId));
-  } else {
-    const inserted = await db
-      .insert(guests)
-      .values({
-        restaurantId: restaurant.id,
-        brand,
-        name: input.name,
-        whatsapp,
-        birthdayMmdd: input.birthdayMmdd,
-        preferences: input.preferences,
-        marketingConsent: input.marketingConsent,
-        validationCode,
-        promoType: input.promoType,
-        utmSource: input.utmSource,
-        utmMedium: input.utmMedium,
-        utmCampaign: input.utmCampaign,
-      })
-      .returning({ id: guests.id });
-    guestId = inserted[0].id;
-    isNew = true;
-  }
+        utmSource: input.utmSource ?? undefined,
+        utmMedium: input.utmMedium ?? undefined,
+        utmCampaign: input.utmCampaign ?? undefined,
+      },
+    })
+    .returning({ id: guests.id, capturedAt: guests.capturedAt });
+
+  const guestId = upserted[0].id;
+  // capturedAt is set by `defaultNow()` on insert; with onConflictDoUpdate it
+  // returns the existing row's timestamp, so a row whose captured_at differs
+  // from "now" (allowing a small skew) was not freshly inserted.
+  const isNew =
+    Math.abs(Date.now() - new Date(upserted[0].capturedAt).getTime()) < 5_000;
 
   // Always log a visit row so per-visit counts match per-capture counts.
   await db.insert(guestVisits).values({
@@ -150,3 +150,4 @@ export async function POST(req: NextRequest) {
     isNew,
   });
 }
+

@@ -4,12 +4,16 @@ import { reviews } from '@/db/schema';
 import { submitReviewSchema } from '@/lib/validations';
 import { getRestaurantBySlug, getStaffByCode } from '@/lib/queries';
 import { checkRateLimitAsync, getClientIP, rateLimitResponse } from '@/lib/rate-limit';
+import { requireSameOrigin } from '@/lib/origin';
 
 // 30 reviews per minute per IP (generous for busy restaurants with shared tablet)
 const SUBMIT_LIMIT = 30;
 const SUBMIT_WINDOW = 60_000;
 
 export async function POST(req: NextRequest) {
+  const csrf = requireSameOrigin(req);
+  if (csrf) return csrf;
+
   const ip = getClientIP(req);
   const rl = await checkRateLimitAsync(`submit:${ip}`, SUBMIT_LIMIT, SUBMIT_WINDOW);
   if (!rl.allowed) return rateLimitResponse(rl.resetAt);

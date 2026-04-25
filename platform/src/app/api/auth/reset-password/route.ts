@@ -1,17 +1,21 @@
 import { NextRequest } from 'next/server';
-import { verifyResetToken } from '@/lib/reset-token';
+import { consumeResetToken } from '@/lib/reset-token';
 import { hashPassword } from '@/lib/auth';
 import { getRestaurantBySlug } from '@/lib/queries';
 import { db } from '@/db';
 import { restaurants } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 import { checkRateLimitAsync, getClientIP, rateLimitResponse } from '@/lib/rate-limit';
+import { requireSameOrigin } from '@/lib/origin';
 
 // 5 attempts per 15 minutes per IP
 const LIMIT = 5;
 const WINDOW = 15 * 60_000;
 
 export async function POST(req: NextRequest) {
+  const csrf = requireSameOrigin(req);
+  if (csrf) return csrf;
+
   const ip = getClientIP(req);
   const rl = await checkRateLimitAsync(`reset-pw:${ip}`, LIMIT, WINDOW);
   if (!rl.allowed) return rateLimitResponse(rl.resetAt);
@@ -32,17 +36,18 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  if (password.length < 8) {
+  if (password.length < 8 || password.length > 128) {
     return Response.json(
-      { error: 'La contraseña debe tener al menos 8 caracteres' },
+      { error: 'La contraseña debe tener entre 8 y 128 caracteres' },
       { status: 400 },
     );
   }
 
-  const slug = await verifyResetToken(token);
+  // consumeResetToken atomically marks the token used; replay returns null.
+  const slug = await consumeResetToken(token);
   if (!slug) {
     return Response.json(
-      { error: 'Enlace invalido o expirado. Solicita uno nuevo.' },
+      { error: 'Enlace invalido, expirado o ya utilizado. Solicita uno nuevo.' },
       { status: 400 },
     );
   }

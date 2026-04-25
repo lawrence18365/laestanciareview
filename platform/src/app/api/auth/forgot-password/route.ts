@@ -3,12 +3,16 @@ import { getRestaurantBySlug } from '@/lib/queries';
 import { generateResetToken } from '@/lib/reset-token';
 import { sendPasswordResetEmail } from '@/lib/email';
 import { checkRateLimitAsync, getClientIP, rateLimitResponse } from '@/lib/rate-limit';
+import { requireSameOrigin } from '@/lib/origin';
 
 // 3 requests per 15 minutes per IP
 const RESET_LIMIT = 3;
 const RESET_WINDOW = 15 * 60_000;
 
 export async function POST(req: NextRequest) {
+  const csrf = requireSameOrigin(req);
+  if (csrf) return csrf;
+
   const ip = getClientIP(req);
   const rl = await checkRateLimitAsync(`reset:${ip}`, RESET_LIMIT, RESET_WINDOW);
   if (!rl.allowed) return rateLimitResponse(rl.resetAt);
@@ -21,7 +25,7 @@ export async function POST(req: NextRequest) {
   }
 
   const { slug } = body;
-  if (!slug) {
+  if (!slug || typeof slug !== 'string' || slug.length > 100) {
     return Response.json({ error: 'Slug is required' }, { status: 400 });
   }
 
@@ -31,14 +35,16 @@ export async function POST(req: NextRequest) {
   if (restaurant?.managerEmail) {
     try {
       const token = await generateResetToken(slug);
-      const baseUrl = (process.env.NEXT_PUBLIC_BASE_URL ?? 'http://localhost:3000').replace(/\\n/g, '').trim();
-      const resetUrl = `${baseUrl}/reset-password?token=${token}`;
+      if (token) {
+        const baseUrl = (process.env.NEXT_PUBLIC_BASE_URL ?? 'http://localhost:3000').replace(/\\n/g, '').trim();
+        const resetUrl = `${baseUrl}/reset-password?token=${encodeURIComponent(token)}`;
 
-      await sendPasswordResetEmail({
-        to: restaurant.managerEmail,
-        restaurantName: restaurant.name,
-        resetUrl,
-      });
+        await sendPasswordResetEmail({
+          to: restaurant.managerEmail,
+          restaurantName: restaurant.name,
+          resetUrl,
+        });
+      }
     } catch (err) {
       console.error('[reset] Failed to send reset email:', err);
     }

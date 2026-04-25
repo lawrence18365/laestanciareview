@@ -2,10 +2,14 @@ import { NextRequest } from 'next/server';
 import { getStripe } from '@/lib/stripe';
 import { verifySession } from '@/lib/session';
 import { getRestaurantBySlug } from '@/lib/queries';
+import { requireSameOrigin } from '@/lib/origin';
 
 export const dynamic = 'force-dynamic';
 
 export async function POST(req: NextRequest) {
+  const csrf = requireSameOrigin(req);
+  if (csrf) return csrf;
+
   const session = await verifySession();
   if (!session) {
     return Response.json({ error: 'Unauthorized' }, { status: 401 });

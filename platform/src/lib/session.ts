@@ -1,4 +1,5 @@
 import { cookies } from 'next/headers';
+import { timingSafeEqual } from './timing';
 
 const COOKIE_NAME = 'ratetap_session';
 const SEVEN_DAYS = 7 * 24 * 60 * 60; // seconds
@@ -12,12 +13,13 @@ export interface SessionData {
 }
 
 /**
- * Derive a session-specific signing key from ADMIN_API_KEY.
- * This ensures the session secret is distinct from the API key itself.
+ * Derive a session-specific signing key from SESSION_SECRET.
+ * SESSION_SECRET MUST be set independently of ADMIN_API_KEY: collapsing them
+ * means a single secret leak compromises both session forgery and admin auth.
  */
 async function getSigningKey(): Promise<CryptoKey> {
-  const secret = process.env.SESSION_SECRET ?? process.env.ADMIN_API_KEY;
-  if (!secret) throw new Error('SESSION_SECRET or ADMIN_API_KEY must be set');
+  const secret = process.env.SESSION_SECRET;
+  if (!secret) throw new Error('SESSION_SECRET must be set');
 
   const encoder = new TextEncoder();
   // Derive a session-specific key using HKDF-like approach
@@ -110,7 +112,7 @@ async function parseSession(cookie: string): Promise<SessionData | null> {
     if (isNaN(expiry)) return null;
     if (Math.floor(Date.now() / 1000) > expiry) return null;
     const expected = await hmacSign(`${slug}:${expiryStr}`);
-    if (hmac !== expected) return null;
+    if (!timingSafeEqual(hmac, expected)) return null;
     return { slug, role: 'gm' };
   }
 
@@ -121,7 +123,7 @@ async function parseSession(cookie: string): Promise<SessionData | null> {
     if (isNaN(expiry)) return null;
     if (Math.floor(Date.now() / 1000) > expiry) return null;
     const expected = await hmacSign(`${slug}:${role}:${expiryStr}`);
-    if (hmac !== expected) return null;
+    if (!timingSafeEqual(hmac, expected)) return null;
     return { slug, role: role as SessionRole };
   }
 
@@ -133,7 +135,7 @@ async function parseSession(cookie: string): Promise<SessionData | null> {
     if (isNaN(expiry)) return null;
     if (Math.floor(Date.now() / 1000) > expiry) return null;
     const expected = await hmacSign(`${slug}:${role}:${region}:${expiryStr}`);
-    if (hmac !== expected) return null;
+    if (!timingSafeEqual(hmac, expected)) return null;
     return { slug, role: 'regional', region };
   }
 

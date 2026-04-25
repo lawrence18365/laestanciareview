@@ -4,10 +4,19 @@ import { db } from '@/db';
 import { guests, guestVisits, restaurants, staff } from '@/db/schema';
 import { guestValidateSchema } from '@/lib/validations';
 import { checkRateLimitAsync, getClientIP, rateLimitResponse } from '@/lib/rate-limit';
+import { requireSameOrigin } from '@/lib/origin';
 
 export const runtime = 'nodejs';
 
+// Per-(restaurant, code) lockout: cap miss attempts so the 10k code space
+// can't be brute-forced. 5 misses in 10 minutes locks that specific code.
+const CODE_MISS_LIMIT = 5;
+const CODE_MISS_WINDOW_MS = 10 * 60 * 1000;
+
 export async function POST(req: NextRequest) {
+  const csrf = requireSameOrigin(req);
+  if (csrf) return csrf;
+
   const ip = getClientIP(req);
   // Higher than capture because a single tablet legitimately fires many per hour.
   const ipLimit = await checkRateLimitAsync(`guest-validate-ip:${ip}`, 60, 60_000);
@@ -36,6 +45,16 @@ export async function POST(req: NextRequest) {
     .limit(1);
   const restaurant = restaurantRow[0];
   if (!restaurant) return Response.json({ error: 'Restaurante no encontrado' }, { status: 404 });
+
+  // Per-code attempt limit. Each call (even a successful one) consumes a token,
+  // but on success the customer is moving on; only attackers iterate codes.
+  const codeLimitKey = `guest-validate-code:${restaurant.id}:${input.code}`;
+  const codeLimit = await checkRateLimitAsync(
+    codeLimitKey,
+    CODE_MISS_LIMIT,
+    CODE_MISS_WINDOW_MS,
+  );
+  if (!codeLimit.allowed) return rateLimitResponse(codeLimit.resetAt);
 
   const staffRow = await db
     .select()
@@ -71,6 +90,17 @@ export async function POST(req: NextRequest) {
   if (guest.status === 'expired') {
     return Response.json({ error: 'Este código expiró' }, { status: 409 });
   }
+  if (
+    guest.validationCodeExpiresAt &&
+    guest.validationCodeExpiresAt.getTime() < Date.now()
+  ) {
+    // Mark as expired so subsequent attempts skip straight to the 409 above.
+    await db
+      .update(guests)
+      .set({ status: 'expired' })
+      .where(eq(guests.id, guest.id));
+    return Response.json({ error: 'Este código expiró' }, { status: 409 });
+  }
 
   const now = new Date();
   await db
@@ -80,6 +110,10 @@ export async function POST(req: NextRequest) {
       validatedAt: now,
       validatedBy: staffMember.id,
       redemptionType: input.redemptionType,
+      // Clear the code on validation so a leaked DB dump or re-read of the
+      // pending row can't replay a redemption attempt.
+      validationCode: null,
+      validationCodeExpiresAt: null,
       notes: input.notes ? [guest.notes, input.notes].filter(Boolean).join('\n').slice(0, 2000) : guest.notes,
     })
     .where(eq(guests.id, guest.id));

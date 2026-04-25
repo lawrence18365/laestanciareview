@@ -128,18 +128,20 @@ export async function checkRateLimitAsync(
 /**
  * Get client IP from request headers.
  * On Vercel, x-real-ip is set by the platform and is trustworthy.
- * Falls back to x-forwarded-for (last entry = closest proxy).
+ * Falls back to x-forwarded-for: by RFC convention the leftmost entry is the
+ * originating client; using the rightmost would collapse all callers behind
+ * the closest proxy into a single rate-limit bucket.
  */
 export function getClientIP(req: Request): string {
   // Vercel sets x-real-ip to the actual client IP
   const realIp = req.headers.get('x-real-ip');
   if (realIp) return realIp.trim();
 
-  // Fallback: use the rightmost (most trusted) x-forwarded-for entry
+  // Fallback: leftmost entry is the originating client.
   const forwarded = req.headers.get('x-forwarded-for');
   if (forwarded) {
-    const parts = forwarded.split(',');
-    return parts[parts.length - 1].trim();
+    const first = forwarded.split(',')[0];
+    if (first && first.trim()) return first.trim();
   }
 
   return 'unknown';

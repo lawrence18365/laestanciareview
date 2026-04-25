@@ -4,10 +4,12 @@ import { db } from '@/db';
 import { quotes, quoteItems, restaurants } from '@/db/schema';
 import { verifySession } from '@/lib/session';
 import { DEFAULT_TERMS } from '@/lib/quote-defaults';
+import { quoteCreateSchema } from '@/lib/validations';
+import { requireSameOrigin } from '@/lib/origin';
 
 export const runtime = 'nodejs';
 
-export async function GET(req: NextRequest) {
+export async function GET() {
   const session = await verifySession();
   if (!session || session.role !== 'gm') {
     return Response.json({ error: 'Unauthorized' }, { status: 401 });
@@ -30,6 +32,9 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
+  const csrf = requireSameOrigin(req);
+  if (csrf) return csrf;
+
   const session = await verifySession();
   if (!session || session.role !== 'gm') {
     return Response.json({ error: 'Unauthorized' }, { status: 401 });
@@ -49,33 +54,34 @@ export async function POST(req: NextRequest) {
     return Response.json({ error: 'Invalid JSON' }, { status: 400 });
   }
 
-  const b = body as Record<string, unknown>;
-
-  // Validate required fields
-  if (!b.clientName || typeof b.clientName !== 'string') {
-    return Response.json({ error: 'clientName required' }, { status: 400 });
+  const parsed = quoteCreateSchema.safeParse(body);
+  if (!parsed.success) {
+    return Response.json(
+      { error: 'Validation failed', details: parsed.error.flatten() },
+      { status: 400 },
+    );
   }
-  const guestCount = typeof b.guestCount === 'number' ? b.guestCount : parseInt(String(b.guestCount ?? '1'), 10);
+  const data = parsed.data;
 
   const [inserted] = await db
     .insert(quotes)
     .values({
       restaurantId: restaurant[0].id,
       status: 'draft',
-      clientName: b.clientName as string,
-      clientPhone: (b.clientPhone as string) || null,
-      clientEmail: (b.clientEmail as string) || null,
-      clientCompany: (b.clientCompany as string) || null,
-      eventDate: (b.eventDate as string) || null,
-      eventType: (b.eventType as string) || null,
-      guestCount,
-      eventNotes: (b.eventNotes as string) || null,
-      pricePerPerson: String(b.pricePerPerson ?? '0'),
-      serviceChargePercent: String(b.serviceChargePercent ?? '10'),
-      ivaPercent: String(b.ivaPercent ?? '16'),
-      packageName: (b.packageName as string) || null,
-      terms: (b.terms as string) || DEFAULT_TERMS,
-      configJson: (b.configJson ?? null) as object | null,
+      clientName: data.clientName,
+      clientPhone: data.clientPhone ?? null,
+      clientEmail: data.clientEmail ?? null,
+      clientCompany: data.clientCompany ?? null,
+      eventDate: data.eventDate ?? null,
+      eventType: data.eventType ?? null,
+      guestCount: data.guestCount,
+      eventNotes: data.eventNotes ?? null,
+      pricePerPerson: data.pricePerPerson,
+      serviceChargePercent: data.serviceChargePercent,
+      ivaPercent: data.ivaPercent,
+      packageName: data.packageName ?? null,
+      terms: data.terms ?? DEFAULT_TERMS,
+      configJson: (data.configJson ?? null) as object | null,
       quoteNumber: null,
     })
     .returning();
@@ -85,14 +91,14 @@ export async function POST(req: NextRequest) {
   await db.update(quotes).set({ quoteNumber }).where(eq(quotes.id, inserted.id));
 
   // Insert quote items if provided
-  const itemsMap = b.items as Record<string, string[]> | undefined;
-  if (itemsMap && typeof itemsMap === 'object') {
+  if (data.items) {
     const rows: { quoteId: number; category: string; name: string; sortOrder: number }[] = [];
-    for (const [category, names] of Object.entries(itemsMap)) {
+    for (const [category, names] of Object.entries(data.items)) {
       if (!Array.isArray(names)) continue;
       names.forEach((name, i) => {
-        if (typeof name === 'string' && name.trim()) {
-          rows.push({ quoteId: inserted.id, category, name: name.trim(), sortOrder: i });
+        const trimmed = typeof name === 'string' ? name.trim() : '';
+        if (trimmed) {
+          rows.push({ quoteId: inserted.id, category, name: trimmed, sortOrder: i });
         }
       });
     }

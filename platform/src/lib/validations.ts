@@ -102,7 +102,20 @@ export const guestValidateSchema = z.object({
 });
 
 // GM-side mutations on a captured guest.
+// Includes core identity fields so a typo can be corrected without recapturing.
 export const guestUpdateSchema = z.object({
+  name: z.string().min(1).max(255).optional(),
+  whatsapp: z
+    .string()
+    .min(10)
+    .max(20)
+    .regex(/^[\d+\s\-()]+$/, 'WhatsApp contiene caracteres inválidos')
+    .optional(),
+  birthdayMmdd: z
+    .string()
+    .regex(/^(0[1-9]|[12]\d|3[01])\/(0[1-9]|1[0-2])$/, 'Usa el formato DD/MM')
+    .optional()
+    .or(z.literal('').transform(() => undefined)),
   notes: z.string().max(2000).optional(),
   preferences: z.array(z.string().min(1).max(50)).max(10).optional(),
   marketingConsent: z.boolean().optional(),
@@ -111,4 +124,73 @@ export const guestUpdateSchema = z.object({
 export const guestManualVisitSchema = z.object({
   notes: z.string().max(500).optional(),
   staffCode: z.string().min(1).max(50).optional(),
+});
+
+// /api/auth/staff — session-protected staff CRUD body schemas.
+export const sessionStaffCreateSchema = z.object({
+  name: z.string().min(1).max(200),
+  code: z.string().min(1).max(50),
+});
+
+export const sessionStaffUpdateSchema = z.object({
+  id: z.number().int().positive(),
+  name: z.string().min(1).max(200).optional(),
+  code: z.string().min(1).max(50).optional(),
+  active: z.boolean().optional(),
+});
+
+export const sessionStaffDeleteSchema = z.object({
+  id: z.number().int().positive(),
+});
+
+// /api/auth/feedback — PATCH body for changing review status.
+export const sessionFeedbackPatchSchema = z.object({
+  reviewId: z.number().int().positive(),
+  status: z.enum(['new', 'reviewed', 'resolved']),
+});
+
+// Quote builder — POST/PUT body schema. Numeric strings are bounded so a
+// negative or absurd input cannot produce a malformed quote.
+const moneyString = z
+  .union([z.string(), z.number()])
+  .transform((v) => (typeof v === 'number' ? String(v) : v))
+  .refine((v) => /^-?\d+(\.\d+)?$/.test(v), 'Must be a number')
+  .refine((v) => {
+    const n = parseFloat(v);
+    return Number.isFinite(n) && n >= 0 && n <= 10_000_000;
+  }, 'Out of range');
+
+const percentString = z
+  .union([z.string(), z.number()])
+  .transform((v) => (typeof v === 'number' ? String(v) : v))
+  .refine((v) => /^-?\d+(\.\d+)?$/.test(v), 'Must be a number')
+  .refine((v) => {
+    const n = parseFloat(v);
+    return Number.isFinite(n) && n >= 0 && n <= 100;
+  }, 'Must be between 0 and 100');
+
+const quoteItemsMap = z
+  .record(z.string().min(1).max(50), z.array(z.string().min(1).max(300)).max(50))
+  .optional();
+
+export const quoteCreateSchema = z.object({
+  clientName: z.string().min(1).max(200),
+  clientPhone: z.string().max(50).optional().nullable(),
+  clientEmail: z.string().email().max(254).optional().nullable(),
+  clientCompany: z.string().max(200).optional().nullable(),
+  eventDate: z.string().max(40).optional().nullable(),
+  eventType: z.string().max(80).optional().nullable(),
+  guestCount: z.coerce.number().int().min(1).max(10000).default(1),
+  eventNotes: z.string().max(5000).optional().nullable(),
+  pricePerPerson: moneyString.optional().default('0'),
+  serviceChargePercent: percentString.optional().default('10'),
+  ivaPercent: percentString.optional().default('16'),
+  packageName: z.string().max(200).optional().nullable(),
+  terms: z.string().max(20000).optional().nullable(),
+  configJson: z.unknown().optional(),
+  items: quoteItemsMap,
+});
+
+export const quoteUpdateSchema = quoteCreateSchema.extend({
+  status: z.enum(['draft', 'sent', 'accepted', 'expired']).optional(),
 });

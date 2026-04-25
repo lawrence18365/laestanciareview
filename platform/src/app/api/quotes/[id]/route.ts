@@ -3,6 +3,8 @@ import { eq, and } from 'drizzle-orm';
 import { db } from '@/db';
 import { quotes, quoteItems, restaurants } from '@/db/schema';
 import { verifySession } from '@/lib/session';
+import { quoteUpdateSchema } from '@/lib/validations';
+import { requireSameOrigin } from '@/lib/origin';
 
 export const runtime = 'nodejs';
 
@@ -51,6 +53,9 @@ export async function PUT(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
+  const csrf = requireSameOrigin(req);
+  if (csrf) return csrf;
+
   const session = await verifySession();
   if (!session || session.role !== 'gm') {
     return Response.json({ error: 'Unauthorized' }, { status: 401 });
@@ -77,31 +82,34 @@ export async function PUT(
   } catch {
     return Response.json({ error: 'Invalid JSON' }, { status: 400 });
   }
-  const b = body as Record<string, unknown>;
-
-  const guestCount =
-    typeof b.guestCount === 'number'
-      ? b.guestCount
-      : parseInt(String(b.guestCount ?? '1'), 10);
+  const parsed = quoteUpdateSchema.safeParse(body);
+  if (!parsed.success) {
+    return Response.json(
+      { error: 'Validation failed', details: parsed.error.flatten() },
+      { status: 400 },
+    );
+  }
+  const data = parsed.data;
 
   await db
     .update(quotes)
     .set({
-      status: (b.status as string) || 'draft',
-      clientName: (b.clientName as string) || '',
-      clientPhone: (b.clientPhone as string) || null,
-      clientEmail: (b.clientEmail as string) || null,
-      clientCompany: (b.clientCompany as string) || null,
-      eventDate: (b.eventDate as string) || null,
-      eventType: (b.eventType as string) || null,
-      guestCount,
-      eventNotes: (b.eventNotes as string) || null,
-      pricePerPerson: String(b.pricePerPerson ?? '0'),
-      serviceChargePercent: String(b.serviceChargePercent ?? '10'),
-      ivaPercent: String(b.ivaPercent ?? '16'),
-      packageName: (b.packageName as string) || null,
-      terms: (b.terms as string) || null,
-      configJson: b.configJson !== undefined ? (b.configJson as object | null) : undefined,
+      status: data.status ?? 'draft',
+      clientName: data.clientName,
+      clientPhone: data.clientPhone ?? null,
+      clientEmail: data.clientEmail ?? null,
+      clientCompany: data.clientCompany ?? null,
+      eventDate: data.eventDate ?? null,
+      eventType: data.eventType ?? null,
+      guestCount: data.guestCount,
+      eventNotes: data.eventNotes ?? null,
+      pricePerPerson: data.pricePerPerson,
+      serviceChargePercent: data.serviceChargePercent,
+      ivaPercent: data.ivaPercent,
+      packageName: data.packageName ?? null,
+      terms: data.terms ?? null,
+      configJson:
+        data.configJson !== undefined ? (data.configJson as object | null) : undefined,
       updatedAt: new Date(),
     })
     .where(eq(quotes.id, quoteId));
@@ -109,14 +117,14 @@ export async function PUT(
   // Replace items entirely
   await db.delete(quoteItems).where(eq(quoteItems.quoteId, quoteId));
 
-  const itemsMap = b.items as Record<string, string[]> | undefined;
-  if (itemsMap && typeof itemsMap === 'object') {
+  if (data.items) {
     const rows: { quoteId: number; category: string; name: string; sortOrder: number }[] = [];
-    for (const [category, names] of Object.entries(itemsMap)) {
+    for (const [category, names] of Object.entries(data.items)) {
       if (!Array.isArray(names)) continue;
       names.forEach((name, i) => {
-        if (typeof name === 'string' && name.trim()) {
-          rows.push({ quoteId, category, name: name.trim(), sortOrder: i });
+        const trimmed = typeof name === 'string' ? name.trim() : '';
+        if (trimmed) {
+          rows.push({ quoteId, category, name: trimmed, sortOrder: i });
         }
       });
     }
@@ -129,9 +137,12 @@ export async function PUT(
 }
 
 export async function DELETE(
-  _req: NextRequest,
+  req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
+  const csrf = requireSameOrigin(req);
+  if (csrf) return csrf;
+
   const session = await verifySession();
   if (!session || session.role !== 'gm') {
     return Response.json({ error: 'Unauthorized' }, { status: 401 });

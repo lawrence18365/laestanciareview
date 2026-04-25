@@ -5,6 +5,7 @@ import { verifySession } from '@/lib/session';
 import { getRestaurantBySlug } from '@/lib/queries';
 import { hashPassword, verifyPassword } from '@/lib/auth';
 import { refreshGoogleRating } from '@/lib/google-places';
+import { requireSameOrigin } from '@/lib/origin';
 
 export async function GET() {
   const session = await verifySession();
@@ -31,6 +32,9 @@ export async function GET() {
 }
 
 export async function PATCH(req: Request) {
+  const csrf = requireSameOrigin(req);
+  if (csrf) return csrf;
+
   const session = await verifySession();
   if (!session) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 

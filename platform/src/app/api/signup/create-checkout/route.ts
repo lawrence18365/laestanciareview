@@ -3,11 +3,15 @@ import { checkRateLimitAsync, getClientIP, rateLimitResponse } from '@/lib/rate-
 import { signupSchema } from '@/lib/validations';
 import { hashPassword } from '@/lib/auth';
 import { getStripe, STRIPE_PRICE_ID, TRIAL_DAYS } from '@/lib/stripe';
+import { requireSameOrigin } from '@/lib/origin';
 
 const SIGNUP_LIMIT = 5;
 const SIGNUP_WINDOW = 10 * 60_000; // 5 signups per 10 min per IP
 
 export async function POST(req: NextRequest) {
+  const csrf = requireSameOrigin(req);
+  if (csrf) return csrf;
+
   try {
     if (!STRIPE_PRICE_ID) {
       return Response.json({ error: 'Stripe not configured (missing STRIPE_PRICE_ID)' }, { status: 500 });

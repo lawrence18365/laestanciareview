@@ -8,12 +8,16 @@ import { sendSMSAlert } from '@/lib/sms';
 import { sendWhatsAppAlert } from '@/lib/whatsapp';
 import { sendPushToRestaurant } from '@/lib/push';
 import { checkRateLimitAsync, getClientIP, rateLimitResponse } from '@/lib/rate-limit';
+import { requireSameOrigin } from '@/lib/origin';
 
 // 10 feedback submissions per minute per IP
 const FEEDBACK_LIMIT = 10;
 const FEEDBACK_WINDOW = 60_000;
 
 export async function POST(req: NextRequest) {
+  const csrf = requireSameOrigin(req);
+  if (csrf) return csrf;
+
   const ip = getClientIP(req);
   const rl = await checkRateLimitAsync(`feedback:${ip}`, FEEDBACK_LIMIT, FEEDBACK_WINDOW);
   if (!rl.allowed) return rateLimitResponse(rl.resetAt);

@@ -4,8 +4,12 @@ import { pushSubscriptions } from '@/db/schema';
 import { eq, and } from 'drizzle-orm';
 import { verifySession } from '@/lib/session';
 import { getRestaurantBySlug } from '@/lib/queries';
+import { requireSameOrigin } from '@/lib/origin';
 
 export async function POST(req: NextRequest) {
+  const csrf = requireSameOrigin(req);
+  if (csrf) return csrf;
+
   const session = await verifySession();
   if (!session) {
     return Response.json({ error: 'No autorizado' }, { status: 401 });
@@ -28,7 +32,11 @@ export async function POST(req: NextRequest) {
     keys?: { p256dh?: string; auth?: string };
   };
 
-  if (!endpoint || !keys?.p256dh || !keys?.auth) {
+  if (
+    !endpoint || typeof endpoint !== 'string' || endpoint.length > 1024 ||
+    !keys?.p256dh || typeof keys.p256dh !== 'string' || keys.p256dh.length > 256 ||
+    !keys?.auth || typeof keys.auth !== 'string' || keys.auth.length > 64
+  ) {
     return Response.json({ error: 'Suscripción inválida' }, { status: 400 });
   }
 
@@ -54,6 +62,9 @@ export async function POST(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
+  const csrf = requireSameOrigin(req);
+  if (csrf) return csrf;
+
   const session = await verifySession();
   if (!session) {
     return Response.json({ error: 'No autorizado' }, { status: 401 });
@@ -72,7 +83,7 @@ export async function DELETE(req: NextRequest) {
   }
 
   const { endpoint } = body as { endpoint?: string };
-  if (!endpoint) {
+  if (!endpoint || typeof endpoint !== 'string' || endpoint.length > 1024) {
     return Response.json({ error: 'Endpoint requerido' }, { status: 400 });
   }
 

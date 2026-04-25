@@ -67,6 +67,26 @@ export const restaurants = pgTable('restaurants', {
     .defaultNow(),
 });
 
+export const passwordResetTokens = pgTable(
+  'password_reset_tokens',
+  {
+    id: serial('id').primaryKey(),
+    restaurantId: integer('restaurant_id')
+      .notNull()
+      .references(() => restaurants.id, { onDelete: 'cascade' }),
+    tokenHash: text('token_hash').notNull().unique(),
+    expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+    usedAt: timestamp('used_at', { withTimezone: true }),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [
+    index('password_reset_tokens_restaurant_idx').on(t.restaurantId),
+    index('password_reset_tokens_expires_idx').on(t.expiresAt),
+  ],
+);
+
 export const processedStripeEvents = pgTable('processed_stripe_events', {
   eventId: text('event_id').primaryKey(),
   processedAt: timestamp('processed_at', { withTimezone: true })
@@ -223,6 +243,9 @@ export const guests = pgTable(
     preferences: text('preferences').array(),
     marketingConsent: boolean('marketing_consent').notNull().default(false),
     validationCode: text('validation_code'),
+    validationCodeExpiresAt: timestamp('validation_code_expires_at', {
+      withTimezone: true,
+    }),
     status: guestStatusEnum('status').notNull().default('pending_validation'),
     validatedAt: timestamp('validated_at', { withTimezone: true }),
     validatedBy: integer('validated_by').references(() => staff.id, {

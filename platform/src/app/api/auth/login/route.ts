@@ -3,6 +3,7 @@ import { getRestaurantBySlug } from '@/lib/queries';
 import { verifyPassword, hashPassword } from '@/lib/auth';
 import { createSession } from '@/lib/session';
 import { checkRateLimitAsync, getClientIP, rateLimitResponse } from '@/lib/rate-limit';
+import { requireSameOrigin } from '@/lib/origin';
 import { db } from '@/db';
 import { restaurants } from '@/db/schema';
 import { eq } from 'drizzle-orm';
@@ -12,14 +13,30 @@ const LOGIN_LIMIT = 5;
 const LOGIN_WINDOW = 60_000;
 
 export async function POST(req: NextRequest) {
+  const csrf = requireSameOrigin(req);
+  if (csrf) return csrf;
+
   try {
     const ip = getClientIP(req);
     const rl = await checkRateLimitAsync(`login:${ip}`, LOGIN_LIMIT, LOGIN_WINDOW);
     if (!rl.allowed) return rateLimitResponse(rl.resetAt);
 
-    const { slug, password } = await req.json();
+    let parsed: { slug?: unknown; password?: unknown };
+    try {
+      parsed = await req.json();
+    } catch {
+      return Response.json({ error: 'Invalid JSON' }, { status: 400 });
+    }
+    const { slug, password } = parsed;
 
-    if (!slug || !password) {
+    if (
+      typeof slug !== 'string' ||
+      typeof password !== 'string' ||
+      !slug ||
+      !password ||
+      slug.length > 100 ||
+      password.length > 256
+    ) {
       return Response.json(
         { error: 'Restaurante y contraseña son requeridos' },
         { status: 400 },

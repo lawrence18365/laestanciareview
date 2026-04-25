@@ -358,22 +358,36 @@ function GuestDrawer({
   onClose: () => void;
   onSaved: () => void;
 }) {
+  const [editing, setEditing] = useState(false);
+  const [name, setName] = useState(guest.name);
+  const [whatsapp, setWhatsapp] = useState(guest.whatsapp);
+  const [birthdayMmdd, setBirthdayMmdd] = useState(guest.birthdayMmdd ?? '');
   const [notes, setNotes] = useState(guest.notes ?? '');
   const [saving, setSaving] = useState(false);
   const [visiting, setVisiting] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const save = async () => {
     setError(null);
     setSaving(true);
     try {
+      const payload: Record<string, unknown> = { notes };
+      if (editing) {
+        if (name.trim() && name.trim() !== guest.name) payload.name = name.trim();
+        if (whatsapp.trim() && whatsapp.trim() !== guest.whatsapp) payload.whatsapp = whatsapp.trim();
+        if (birthdayMmdd.trim() !== (guest.birthdayMmdd ?? '')) {
+          payload.birthdayMmdd = birthdayMmdd.trim();
+        }
+      }
       const res = await fetch(`/api/v1/guests/${guest.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ notes }),
+        body: JSON.stringify(payload),
       });
       if (!res.ok) {
-        setError('No se pudo guardar');
+        const data = await res.json().catch(() => ({}));
+        setError(data?.error ?? 'No se pudo guardar');
         return;
       }
       onSaved();
@@ -405,6 +419,28 @@ function GuestDrawer({
     }
   };
 
+  const remove = async () => {
+    if (!confirm(`¿Eliminar a ${guest.name}? Esta acción no se puede deshacer.`)) return;
+    setError(null);
+    setDeleting(true);
+    try {
+      const res = await fetch(`/api/v1/guests/${guest.id}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setError(data?.error ?? 'No se pudo eliminar');
+        return;
+      }
+      onSaved();
+    } catch {
+      setError('Sin conexión');
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   return (
     <div
       onClick={onClose}
@@ -422,13 +458,47 @@ function GuestDrawer({
         className="guests-drawer"
       >
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.25rem' }}>
-          <div>
-            <h2 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 800, color: '#1c1917', letterSpacing: '-0.02em' }}>
-              {guest.name}
-            </h2>
-            <p style={{ margin: '0.25rem 0 0', fontSize: '0.78rem', color: '#78716c', fontFamily: 'ui-monospace, Menlo, monospace' }}>
-              {formatPhone(guest.whatsapp)}
-            </p>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            {editing ? (
+              <input
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                maxLength={255}
+                style={{
+                  width: '100%',
+                  fontSize: '1.1rem',
+                  fontWeight: 800,
+                  color: '#1c1917',
+                  border: '1.5px solid #d6d3d1',
+                  padding: '0.4rem 0.5rem',
+                  fontFamily: 'inherit',
+                }}
+              />
+            ) : (
+              <h2 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 800, color: '#1c1917', letterSpacing: '-0.02em' }}>
+                {guest.name}
+              </h2>
+            )}
+            {editing ? (
+              <input
+                value={whatsapp}
+                onChange={(e) => setWhatsapp(e.target.value)}
+                maxLength={20}
+                placeholder="WhatsApp"
+                style={{
+                  marginTop: 6,
+                  width: '100%',
+                  fontSize: '0.82rem',
+                  fontFamily: 'ui-monospace, Menlo, monospace',
+                  border: '1.5px solid #d6d3d1',
+                  padding: '0.35rem 0.5rem',
+                }}
+              />
+            ) : (
+              <p style={{ margin: '0.25rem 0 0', fontSize: '0.78rem', color: '#78716c', fontFamily: 'ui-monospace, Menlo, monospace' }}>
+                {formatPhone(guest.whatsapp)}
+              </p>
+            )}
           </div>
           <button
             onClick={onClose}
@@ -439,6 +509,7 @@ function GuestDrawer({
               cursor: 'pointer',
               color: '#78716c',
               padding: '0 0.25rem',
+              marginLeft: 8,
             }}
             aria-label="Cerrar"
           >
@@ -447,7 +518,29 @@ function GuestDrawer({
         </div>
 
         <dl style={{ margin: '0 0 1.25rem', fontSize: '0.82rem', color: '#1c1917' }}>
-          <DlRow label="Cumpleaños" value={guest.birthdayMmdd ?? '—'} />
+          {editing ? (
+            <DlRow
+              label="Cumpleaños"
+              value={
+                <input
+                  value={birthdayMmdd}
+                  onChange={(e) => setBirthdayMmdd(e.target.value)}
+                  maxLength={5}
+                  placeholder="DD/MM"
+                  style={{
+                    width: 90,
+                    textAlign: 'right',
+                    fontSize: '0.82rem',
+                    border: '1.5px solid #d6d3d1',
+                    padding: '0.2rem 0.4rem',
+                    fontFamily: 'inherit',
+                  }}
+                />
+              }
+            />
+          ) : (
+            <DlRow label="Cumpleaños" value={guest.birthdayMmdd ?? '—'} />
+          )}
           <DlRow label="Preferencias" value={guest.preferences?.join(', ') || '—'} />
           <DlRow label="Visitas" value={String(guest.visitCount)} />
           <DlRow label="Primera captura" value={formatDate(guest.capturedAt)} />
@@ -498,42 +591,87 @@ function GuestDrawer({
           </div>
         )}
 
-        <div style={{ display: 'flex', gap: '0.5rem' }}>
+        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
           <button
             onClick={save}
-            disabled={saving}
+            disabled={saving || deleting}
             style={{
-              flex: 1,
+              flex: '1 1 45%',
               padding: '0.8rem',
               background: saving ? '#78716c' : '#111',
               color: '#fff',
               border: 'none',
               fontWeight: 700,
-              fontSize: '0.76rem',
+              fontSize: '0.74rem',
               letterSpacing: '0.08em',
               textTransform: 'uppercase',
               cursor: saving ? 'wait' : 'pointer',
             }}
           >
-            {saving ? 'Guardando…' : 'Guardar notas'}
+            {saving ? 'Guardando…' : editing ? 'Guardar cambios' : 'Guardar notas'}
           </button>
           <button
             onClick={logVisit}
-            disabled={visiting}
+            disabled={visiting || deleting}
             style={{
-              flex: 1,
+              flex: '1 1 45%',
               padding: '0.8rem',
               background: '#fff',
               color: '#111',
               border: '1.5px solid #111',
               fontWeight: 700,
-              fontSize: '0.76rem',
+              fontSize: '0.74rem',
               letterSpacing: '0.08em',
               textTransform: 'uppercase',
               cursor: visiting ? 'wait' : 'pointer',
             }}
           >
             {visiting ? 'Registrando…' : '+ Visita'}
+          </button>
+          <button
+            onClick={() => {
+              if (editing) {
+                // Cancel: reset draft fields to current values.
+                setName(guest.name);
+                setWhatsapp(guest.whatsapp);
+                setBirthdayMmdd(guest.birthdayMmdd ?? '');
+              }
+              setEditing(!editing);
+              setError(null);
+            }}
+            disabled={saving || deleting}
+            style={{
+              flex: '1 1 45%',
+              padding: '0.7rem',
+              background: editing ? '#f5f4f2' : '#fff',
+              color: '#1c1917',
+              border: '1px solid #d6d3d1',
+              fontWeight: 600,
+              fontSize: '0.7rem',
+              letterSpacing: '0.06em',
+              textTransform: 'uppercase',
+              cursor: 'pointer',
+            }}
+          >
+            {editing ? 'Cancelar' : 'Editar datos'}
+          </button>
+          <button
+            onClick={remove}
+            disabled={deleting || saving}
+            style={{
+              flex: '1 1 45%',
+              padding: '0.7rem',
+              background: '#fff',
+              color: '#991b1b',
+              border: '1px solid #fecaca',
+              fontWeight: 700,
+              fontSize: '0.7rem',
+              letterSpacing: '0.06em',
+              textTransform: 'uppercase',
+              cursor: deleting ? 'wait' : 'pointer',
+            }}
+          >
+            {deleting ? 'Eliminando…' : 'Eliminar'}
           </button>
         </div>
       </aside>
