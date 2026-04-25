@@ -75,6 +75,7 @@ export async function POST(req: NextRequest) {
       ivaPercent: String(b.ivaPercent ?? '16'),
       packageName: (b.packageName as string) || null,
       terms: (b.terms as string) || DEFAULT_TERMS,
+      configJson: (b.configJson ?? null) as object | null,
       quoteNumber: null,
     })
     .returning();

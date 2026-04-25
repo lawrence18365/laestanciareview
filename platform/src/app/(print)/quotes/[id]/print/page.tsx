@@ -3,7 +3,10 @@ import { eq, and } from 'drizzle-orm';
 import { db } from '@/db';
 import { quotes, quoteItems, restaurants } from '@/db/schema';
 import { verifySession } from '@/lib/session';
+import { getBrandForSlug } from '@/lib/brands';
 import { CATEGORY_LABELS, type MenuCategory } from '@/lib/quote-defaults';
+import type { QuoteConfig } from '@/lib/quote-data';
+import QuotePreview from '@/components/quotes/QuotePreview';
 import PrintButton from './PrintButton';
 
 function formatMXN(n: number) {
@@ -33,20 +36,74 @@ export default async function PrintQuotePage({ params }: { params: Promise<{ id:
   const quoteId = parseInt(id, 10);
   if (isNaN(quoteId)) notFound();
 
-  const restaurant = await db
+  const [restaurant] = await db
     .select({ id: restaurants.id, name: restaurants.name, city: restaurants.city })
     .from(restaurants)
     .where(eq(restaurants.slug, session.slug))
     .limit(1);
-  if (!restaurant[0]) redirect('/login');
+  if (!restaurant) redirect('/login');
+  const brand = getBrandForSlug(session.slug);
 
   const [quote] = await db
     .select()
     .from(quotes)
-    .where(and(eq(quotes.id, quoteId), eq(quotes.restaurantId, restaurant[0].id)))
+    .where(and(eq(quotes.id, quoteId), eq(quotes.restaurantId, restaurant.id)))
     .limit(1);
   if (!quote) notFound();
 
+  const quoteNumber = quote.quoteNumber ?? `Q-${String(quoteId).padStart(4, '0')}`;
+
+  // V2 quotes: render from configJson
+  if (quote.configJson && typeof quote.configJson === 'object') {
+    const config = quote.configJson as QuoteConfig;
+    return (
+      <>
+        <style>{`
+          @media print {
+            body, html { background: white !important; margin: 0 !important; }
+            .q-no-print { display: none !important; }
+            @page { margin: 1.5cm; }
+          }
+        `}</style>
+
+        <div className="q-no-print" style={{
+          background: '#1a1a1a',
+          padding: '0.75rem 1.5rem',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: '1rem',
+          flexWrap: 'wrap',
+          position: 'sticky',
+          top: 0,
+          zIndex: 100,
+        }}>
+          <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+            <a href={`/quotes/${quoteId}`} style={{ color: '#aaa', fontSize: '0.72rem', textDecoration: 'none', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
+              ← Editar cotización
+            </a>
+            <span style={{ color: '#555', fontSize: '0.7rem', fontFamily: 'monospace' }}>
+              {quoteNumber}
+            </span>
+          </div>
+          <PrintButton />
+        </div>
+
+        <div style={{ background: '#F5F2EC', minHeight: '100vh', padding: '2rem 1rem' }}>
+          <div style={{ maxWidth: 780, margin: '0 auto' }}>
+            <QuotePreview
+              config={config}
+              folio={quoteNumber}
+              restaurantName={restaurant.name}
+              logoSrc={brand.logo}
+            />
+          </div>
+        </div>
+      </>
+    );
+  }
+
+  // Legacy rendering path (rows created before V2 shipped)
   const items = await db
     .select()
     .from(quoteItems)
@@ -70,12 +127,10 @@ export default async function PrintQuotePage({ params }: { params: Promise<{ id:
   const ivaAmt = subtotalWithSC * (ivaPct / 100);
   const total = subtotalWithSC + ivaAmt;
 
-  const quoteNumber = quote.quoteNumber ?? `Q-${String(quoteId).padStart(4, '0')}`;
   const hasItems = Object.values(grouped).some((arr) => arr && arr.length > 0);
 
   return (
     <>
-      {/* Print-specific styles */}
       <style>{`
         .quote-print-page body,
         body { background: #f5f5f0 !important; }
@@ -93,7 +148,6 @@ export default async function PrintQuotePage({ params }: { params: Promise<{ id:
         }
       `}</style>
 
-      {/* Print controls */}
       <div className="q-no-print" style={{
         background: '#1a1a1a',
         padding: '0.75rem 1.5rem',
@@ -107,10 +161,7 @@ export default async function PrintQuotePage({ params }: { params: Promise<{ id:
         zIndex: 100,
       }}>
         <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
-          <a
-            href={`/quotes/${quoteId}`}
-            style={{ color: '#aaa', fontSize: '0.72rem', textDecoration: 'none', letterSpacing: '0.05em', textTransform: 'uppercase', fontFamily: 'sans-serif' }}
-          >
+          <a href={`/quotes/${quoteId}`} style={{ color: '#aaa', fontSize: '0.72rem', textDecoration: 'none', letterSpacing: '0.05em', textTransform: 'uppercase', fontFamily: 'sans-serif' }}>
             ← Editar cotización
           </a>
           <span style={{ color: '#555', fontSize: '0.7rem', fontFamily: 'monospace' }}>
@@ -120,7 +171,6 @@ export default async function PrintQuotePage({ params }: { params: Promise<{ id:
         <PrintButton />
       </div>
 
-      {/* Quote document */}
       <div style={{ background: '#f5f5f0', minHeight: '100vh', padding: '2rem 1rem' }}>
         <div className="q-page" style={{
           maxWidth: 780,
@@ -132,7 +182,6 @@ export default async function PrintQuotePage({ params }: { params: Promise<{ id:
           color: '#1a1a1a',
         }}>
 
-          {/* Header */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '2.5rem', flexWrap: 'wrap', gap: '1rem' }}>
             <div>
               <h1 style={{ margin: 0, fontSize: '2rem', fontWeight: 400, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#1a1a1a', fontFamily: "Georgia, serif" }}>
@@ -140,7 +189,7 @@ export default async function PrintQuotePage({ params }: { params: Promise<{ id:
               </h1>
               <p style={{ margin: '0.15rem 0 0', fontSize: '0.75rem', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#888', fontFamily: 'sans-serif' }}>
                 Restaurante Argentino
-                {restaurant[0].city ? ` · ${restaurant[0].city}` : ''}
+                {restaurant.city ? ` · ${restaurant.city}` : ''}
               </p>
             </div>
             <div style={{ textAlign: 'right' }}>
@@ -158,7 +207,6 @@ export default async function PrintQuotePage({ params }: { params: Promise<{ id:
 
           <div style={{ borderTop: '2px solid #1a1a1a', marginBottom: '2rem' }} />
 
-          {/* Client + Event */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem', marginBottom: '2rem' }}>
             <div>
               <p style={{ margin: '0 0 0.5rem', fontSize: '0.62rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#888', fontFamily: 'sans-serif' }}>
@@ -199,7 +247,6 @@ export default async function PrintQuotePage({ params }: { params: Promise<{ id:
             </div>
           </div>
 
-          {/* Menu */}
           {hasItems && (
             <div style={{ borderTop: '1px solid #e0e0e0', paddingTop: '1.5rem', marginBottom: '1.5rem' }}>
               <p style={{ margin: '0 0 1.25rem', fontSize: '0.62rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#888', fontFamily: 'sans-serif' }}>
@@ -226,7 +273,6 @@ export default async function PrintQuotePage({ params }: { params: Promise<{ id:
             </div>
           )}
 
-          {/* Pricing */}
           <div style={{ borderTop: '1px solid #e0e0e0', paddingTop: '1.5rem', marginBottom: '1.5rem' }}>
             <p style={{ margin: '0 0 1rem', fontSize: '0.62rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#888', fontFamily: 'sans-serif' }}>
               Resumen de Precios
@@ -251,7 +297,6 @@ export default async function PrintQuotePage({ params }: { params: Promise<{ id:
             </table>
           </div>
 
-          {/* Terms */}
           {quote.terms && (
             <div style={{ borderTop: '1px solid #e0e0e0', paddingTop: '1.5rem' }}>
               <p style={{ margin: '0 0 0.75rem', fontSize: '0.62rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#888', fontFamily: 'sans-serif' }}>
@@ -263,10 +308,9 @@ export default async function PrintQuotePage({ params }: { params: Promise<{ id:
             </div>
           )}
 
-          {/* Footer */}
           <div style={{ borderTop: '1px solid #e0e0e0', marginTop: '2rem', paddingTop: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <p style={{ margin: 0, fontSize: '0.65rem', color: '#aaa', letterSpacing: '0.06em', fontFamily: 'sans-serif' }}>
-              {restaurant[0].name}
+              {restaurant.name}
             </p>
             <p style={{ margin: 0, fontSize: '0.65rem', color: '#aaa', fontFamily: 'monospace' }}>
               {quoteNumber}

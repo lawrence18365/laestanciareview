@@ -1,10 +1,11 @@
 import { redirect, notFound } from 'next/navigation';
 import { eq, and } from 'drizzle-orm';
 import { db } from '@/db';
-import { quotes, quoteItems, restaurants } from '@/db/schema';
+import { quotes, restaurants } from '@/db/schema';
 import { verifySession } from '@/lib/session';
-import QuoteBuilder from '@/components/quotes/QuoteBuilder';
-import { type QuoteItemsMap, emptyItemsMap } from '@/lib/quote-defaults';
+import { getBrandForSlug } from '@/lib/brands';
+import QuoteBuilderV2 from '@/components/quotes/QuoteBuilderV2';
+import { emptyConfig, type QuoteConfig } from '@/lib/quote-data';
 
 export default async function EditQuotePage({ params }: { params: Promise<{ id: string }> }) {
   const session = await verifySession();
@@ -15,51 +16,49 @@ export default async function EditQuotePage({ params }: { params: Promise<{ id: 
   const quoteId = parseInt(id, 10);
   if (isNaN(quoteId)) notFound();
 
-  const restaurant = await db
-    .select({ id: restaurants.id })
+  const [restaurant] = await db
+    .select({ id: restaurants.id, name: restaurants.name })
     .from(restaurants)
     .where(eq(restaurants.slug, session.slug))
     .limit(1);
-  if (!restaurant[0]) redirect('/login');
+  if (!restaurant) redirect('/login');
+  const brand = getBrandForSlug(session.slug);
 
   const [quote] = await db
     .select()
     .from(quotes)
-    .where(and(eq(quotes.id, quoteId), eq(quotes.restaurantId, restaurant[0].id)))
+    .where(and(eq(quotes.id, quoteId), eq(quotes.restaurantId, restaurant.id)))
     .limit(1);
   if (!quote) notFound();
 
-  const items = await db
-    .select()
-    .from(quoteItems)
-    .where(eq(quoteItems.quoteId, quoteId))
-    .orderBy(quoteItems.sortOrder);
-
-  // Rebuild items map from flat list
-  const itemsMap: QuoteItemsMap = emptyItemsMap();
-  for (const item of items) {
-    const cat = item.category as keyof QuoteItemsMap;
-    if (cat in itemsMap) {
-      itemsMap[cat].push(item.name);
-    }
+  // Prefer the stored builder state. Legacy rows without configJson get a
+  // blank config seeded with the top-level client/event data.
+  let initialConfig: QuoteConfig;
+  if (quote.configJson && typeof quote.configJson === 'object') {
+    initialConfig = quote.configJson as QuoteConfig;
+  } else {
+    const c = emptyConfig();
+    c.evento = {
+      ...c.evento,
+      cliente: quote.clientName ?? '',
+      telefono: quote.clientPhone ?? '',
+      fecha: quote.eventDate ?? '',
+      tipo: quote.eventType || 'Otro',
+      personas: quote.guestCount || 1,
+    };
+    if (quote.terms) c.terms = quote.terms;
+    initialConfig = c;
   }
 
-  const initialData = {
-    clientName: quote.clientName,
-    clientPhone: quote.clientPhone ?? '',
-    clientEmail: quote.clientEmail ?? '',
-    clientCompany: quote.clientCompany ?? '',
-    eventDate: quote.eventDate ?? '',
-    eventType: quote.eventType ?? '',
-    guestCount: String(quote.guestCount),
-    eventNotes: quote.eventNotes ?? '',
-    packageName: quote.packageName ?? '',
-    pricePerPerson: quote.pricePerPerson,
-    serviceChargePercent: quote.serviceChargePercent,
-    ivaPercent: quote.ivaPercent,
-    terms: quote.terms ?? '',
-    items: itemsMap,
-  };
+  const quoteNumber = quote.quoteNumber ?? `Q-${String(quoteId).padStart(4, '0')}`;
 
-  return <QuoteBuilder initialData={initialData} quoteId={quoteId} />;
+  return (
+    <QuoteBuilderV2
+      initialConfig={initialConfig}
+      quoteId={quoteId}
+      quoteNumber={quoteNumber}
+      restaurantName={restaurant.name}
+      logoSrc={brand.logo}
+    />
+  );
 }

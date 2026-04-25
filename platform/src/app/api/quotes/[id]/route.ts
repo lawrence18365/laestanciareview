@@ -101,6 +101,7 @@ export async function PUT(
       ivaPercent: String(b.ivaPercent ?? '16'),
       packageName: (b.packageName as string) || null,
       terms: (b.terms as string) || null,
+      configJson: b.configJson !== undefined ? (b.configJson as object | null) : undefined,
       updatedAt: new Date(),
     })
     .where(eq(quotes.id, quoteId));

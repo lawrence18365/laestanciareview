@@ -349,6 +349,9 @@ export const quotes = pgTable(
     ivaPercent: text('iva_percent').notNull().default('16'),
     packageName: text('package_name'),
     terms: text('terms'),
+    // Full builder state (modo + evento + per-mode state). Nullable for
+    // legacy rows created before the V2 builder shipped.
+    configJson: jsonb('config_json'),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },
