@@ -184,6 +184,11 @@ export default function QuoteBuilderV2({
       setTab('plantillas');
       return;
     }
+    if (!config.evento.personas || config.evento.personas < 1) {
+      setError('Indica el número de personas (mínimo 1).');
+      setTab('plantillas');
+      return;
+    }
     setError('');
     setSaving(true);
     try {
@@ -358,10 +363,41 @@ export default function QuoteBuilderV2({
                   </select>
                 </Field>
                 <Field label="Personas">
-                  <input type="number" min={1} value={config.evento.personas} onChange={(e) => patchEvento({ personas: parseInt(e.target.value) || 1 })} />
+                  {/* type=text + inputMode=numeric forces the iOS numpad without
+                      the up/down spinner that traps the cursor when min is set.
+                      Empty input is stored as 0 (treated as "unset") so the
+                      hostess can clear and retype; pricing math already guards
+                      with Math.max(1, personas) downstream. */}
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    value={config.evento.personas === 0 ? '' : String(config.evento.personas)}
+                    onChange={(e) => {
+                      const digits = e.target.value.replace(/[^0-9]/g, '');
+                      patchEvento({ personas: digits === '' ? 0 : parseInt(digits, 10) });
+                    }}
+                    placeholder="Ej. 80"
+                    autoComplete="off"
+                    autoCorrect="off"
+                    spellCheck={false}
+                  />
                 </Field>
                 <Field label="Presupuesto/pp">
-                  <input type="number" value={config.evento.presupuesto || ''} onChange={(e) => patchEvento({ presupuesto: parseFloat(e.target.value) || 0 })} placeholder="$" />
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    value={config.evento.presupuesto === 0 ? '' : String(config.evento.presupuesto)}
+                    onChange={(e) => {
+                      const digits = e.target.value.replace(/[^0-9]/g, '');
+                      patchEvento({ presupuesto: digits === '' ? 0 : parseInt(digits, 10) });
+                    }}
+                    placeholder="$"
+                    autoComplete="off"
+                    autoCorrect="off"
+                    spellCheck={false}
+                  />
                 </Field>
                 <Field label="Prioridad">
                   <select value={config.evento.prioridad} onChange={(e) => patchEvento({ prioridad: e.target.value })}>
