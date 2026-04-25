@@ -42,7 +42,7 @@ async function main() {
     SELECT column_name FROM information_schema.columns
     WHERE table_name = 'quotes' ORDER BY ordinal_position
   `;
-  console.log(cols.map((c: any) => c.column_name).join(', '));
+  console.log(cols.map((c: { column_name: string }) => c.column_name).join(', '));
 }
 
 main().catch((e) => { console.error(e); process.exit(1); });
