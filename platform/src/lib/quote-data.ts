@@ -24,6 +24,10 @@ export type QuoteDish = {
   precio: number;
   desc?: string;
   tag?: string;
+  // When true, `precio` is per-person and the effective cost is
+  // precio × personas × qty. Used for items like Pastel Personalizado
+  // priced at $20/pp and shared across the group.
+  perPerson?: boolean;
 };
 
 export const CATEGORIAS: QuoteCategoria[] = [
@@ -150,7 +154,7 @@ export const MENU: QuoteDish[] = [
   { id: 'po4', categoria: 'Postres', nombre: 'Pastel de Kiwi y Plátano', precio: 160 },
   { id: 'po5', categoria: 'Postres', nombre: 'Alfajores Argentinos', precio: 120, desc: '3 piezas' },
   { id: 'po6', categoria: 'Postres', nombre: 'Crème Brulée', precio: 140 },
-  { id: 'po7', categoria: 'Postres', nombre: 'Pastel Personalizado', precio: 20, desc: 'Mensaje a elegir, ideal para brindis · $20 por persona' },
+  { id: 'po7', categoria: 'Postres', nombre: 'Pastel Personalizado', precio: 20, desc: 'Mensaje a elegir, ideal para brindis · $20 por persona', perPerson: true },
 ];
 
 export type BeveragePackage = {
@@ -489,7 +493,8 @@ export function computePricing(config: QuoteConfig): PricingResult {
     for (const [id, qty] of Object.entries(asado.cantidades)) {
       const dish = dishById(id);
       if (!dish || qty <= 0) continue;
-      cost += dish.precio * qty;
+      const mult = dish.perPerson ? personas : 1;
+      cost += dish.precio * qty * mult;
     }
     costoTotal = cost + bebidaPP * 0.4 * personas;
     subtotalVenta = cost * (1 + (asado.markup || 0) / 100) + bebidaPP * personas;
@@ -501,7 +506,8 @@ export function computePricing(config: QuoteConfig): PricingResult {
     for (const [id, qty] of Object.entries(carta.cantidades)) {
       const dish = dishById(id);
       if (!dish || qty <= 0) continue;
-      cost += dish.precio * qty;
+      const mult = dish.perPerson ? personas : 1;
+      cost += dish.precio * qty * mult;
     }
     costoTotal = cost + bebidaPP * 0.4 * personas;
     subtotalVenta = cost * (1 + (carta.markup || 0) / 100) + bebidaPP * personas;

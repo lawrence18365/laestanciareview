@@ -256,7 +256,13 @@ export default function QuoteBuilderV2({
   waTextRef.current = whatsappText;
 
   const whatsappLink = useMemo(() => {
-    const phone = (config.evento.telefono || '').replace(/\D/g, '');
+    // WhatsApp requires full international format. The hostess almost always
+    // types a local MX number like "33 1234 5678" → normalize to 52XXXXXXXXXX.
+    const raw = (config.evento.telefono || '').replace(/\D/g, '');
+    let phone = raw;
+    if (raw.length === 10) phone = '52' + raw;              // local 10-digit MX
+    else if (raw.length === 11 && raw.startsWith('1')) phone = '52' + raw.slice(1); // old "1 + 10" habit
+    // 12-digit starting with 52 or any other already-prefixed number: leave alone
     const encoded = encodeURIComponent(whatsappText);
     return phone ? `https://wa.me/${phone}?text=${encoded}` : `https://wa.me/?text=${encoded}`;
   }, [config.evento.telefono, whatsappText]);

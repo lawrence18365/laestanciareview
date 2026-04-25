@@ -216,6 +216,35 @@ console.log('\n══════ 12. Very large group ══════');
   log(Number.isFinite(p.precioTotalFinal), 'no overflow');
 }
 
+console.log('\n══════ 12b. Pastel Personalizado per-person pricing ══════');
+{
+  const c = emptyConfig('carta');
+  c.evento.personas = 30;
+  c.carta.cantidades = { 'po7': 1 };  // 1 pastel for 30 pax
+  c.carta.markup = 0;                 // strip markup for easy math
+  c.carta.bebidas = 'a-la-carta';     // $0
+  c.carta.incluyeIVA = true;
+  const p = computePricing(c);
+  console.log(`  1 pastel × 30 pax @ $20/pp → cost should be $600 (not $20)`);
+  console.log(`    cost=${fmtMXN(p.costoTotal)}  subtotal=${fmtMXN(p.subtotalVenta)}`);
+  log(p.subtotalVenta === 600, 'pastel scales by personas', p.subtotalVenta);
+}
+
+console.log('\n══════ 12c. WhatsApp phone normalization (MX) ══════');
+{
+  const norm = (raw: string): string => {
+    const digits = raw.replace(/\D/g, '');
+    if (digits.length === 10) return '52' + digits;
+    if (digits.length === 11 && digits.startsWith('1')) return '52' + digits.slice(1);
+    return digits;
+  };
+  log(norm('33 1234 5678') === '523312345678', 'local 10-digit → 52 prefix');
+  log(norm('+52 33 1234 5678') === '523312345678', 'already-prefixed left alone');
+  log(norm('52 33 1234 5678') === '523312345678', 'no-plus already-prefixed left alone');
+  log(norm('1 33 1234 5678') === '523312345678', '11-digit "1+10" habit corrected');
+  log(norm('') === '', 'empty stays empty');
+}
+
 console.log('\n══════ 13. All 4 templates apply cleanly ══════');
 for (const t of TEMPLATES) {
   const c = emptyConfig(t.modo);
