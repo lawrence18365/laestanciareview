@@ -69,146 +69,87 @@ export default function QuoteList({
   }
 
   return (
-    <div style={{ maxWidth: 900, margin: '0 auto', padding: '2rem 1.25rem' }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
+    <div className="ql-root">
+      <style>{QL_CSS}</style>
+      <div className="ql-header">
         <div>
-          <h1 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+          <h1 className="ql-title">
             {t.quotes.title}
           </h1>
-          <p style={{ margin: '0.25rem 0 0', fontSize: '0.75rem', color: 'var(--text-dim)' }}>
+          <p className="ql-subtitle">
             {restaurantName}
           </p>
         </div>
         <button
           onClick={() => router.push('/quotes/new')}
-          style={{
-            padding: '0.5rem 1.25rem',
-            fontSize: '0.7rem',
-            fontWeight: 700,
-            letterSpacing: '0.06em',
-            textTransform: 'uppercase',
-            background: 'var(--text-main)',
-            color: 'var(--panel-bg)',
-            border: 'none',
-            cursor: 'pointer',
-          }}
+          className="ql-new-btn"
         >
           + {t.quotes.newQuote}
         </button>
       </div>
 
       {quotes.length === 0 ? (
-        <div style={{
-          padding: '3rem 2rem',
-          textAlign: 'center',
-          border: '1px dashed var(--border-dark)',
-          color: 'var(--text-dim)',
-        }}>
-          <p style={{ margin: 0, fontSize: '0.85rem' }}>{t.quotes.noQuotes}</p>
-          <p style={{ margin: '0.5rem 0 0', fontSize: '0.75rem' }}>{t.quotes.createFirst}</p>
+        <div className="ql-empty">
+          <p style={{ margin: 0, fontSize: '0.9rem' }}>{t.quotes.noQuotes}</p>
+          <p style={{ margin: '0.5rem 0 0', fontSize: '0.78rem' }}>{t.quotes.createFirst}</p>
         </div>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+        <div className="ql-list">
           {quotes.map((q) => (
-            <div
-              key={q.id}
-              style={{
-                background: 'var(--panel-bg)',
-                border: '1px solid var(--border-dark)',
-                padding: '1rem 1.25rem',
-                display: 'grid',
-                gridTemplateColumns: '1fr auto',
-                gap: '0.5rem',
-                alignItems: 'center',
-              }}
-            >
-              <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
-                  <span style={{ fontSize: '0.65rem', fontFamily: 'var(--font-mono)', color: 'var(--text-dim)' }}>
+            <div key={q.id} className="ql-card">
+              <div className="ql-card-info">
+                <div className="ql-card-meta">
+                  <span className="ql-folio">
                     {q.quoteNumber ?? `Q-${q.id}`}
                   </span>
-                  <span style={{
-                    fontSize: '0.6rem',
-                    fontWeight: 700,
-                    letterSpacing: '0.06em',
-                    textTransform: 'uppercase',
-                    color: STATUS_COLORS[q.status] ?? '#888',
-                    border: `1px solid ${STATUS_COLORS[q.status] ?? '#888'}`,
-                    padding: '1px 6px',
-                  }}>
+                  <span
+                    className="ql-status"
+                    style={{
+                      color: STATUS_COLORS[q.status] ?? '#888',
+                      borderColor: STATUS_COLORS[q.status] ?? '#888',
+                    }}
+                  >
                     {STATUS_LABELS[q.status] ?? q.status}
                   </span>
                 </div>
-                <p style={{ margin: '0.35rem 0 0', fontSize: '0.85rem', fontWeight: 600 }}>
+                <p className="ql-client">
                   {q.clientName}
                   {q.clientCompany && (
-                    <span style={{ fontWeight: 400, color: 'var(--text-dim)', marginLeft: '0.5rem' }}>
-                      · {q.clientCompany}
-                    </span>
+                    <span className="ql-company">· {q.clientCompany}</span>
                   )}
                 </p>
-                <div style={{ display: 'flex', gap: '1rem', marginTop: '0.25rem', flexWrap: 'wrap' }}>
+                <div className="ql-card-details">
                   {q.eventDate && (
-                    <span style={{ fontSize: '0.72rem', color: 'var(--text-dim)' }}>
+                    <span>
                       {new Date(q.eventDate + 'T12:00:00').toLocaleDateString('es-MX', { day: 'numeric', month: 'long', year: 'numeric' })}
                     </span>
                   )}
-                  <span style={{ fontSize: '0.72rem', color: 'var(--text-dim)' }}>
+                  <span>
                     {q.guestCount} {t.quotes.people}
                   </span>
-                  <span style={{ fontSize: '0.72rem', fontWeight: 600, color: 'var(--text-main)' }}>
+                  <span className="ql-total">
                     {formatMXN(quoteTotal(q))}
                   </span>
                 </div>
               </div>
-              <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+              <div className="ql-card-actions">
                 <button
                   onClick={() => router.push(`/quotes/${q.id}`)}
-                  style={{
-                    padding: '0.3rem 0.75rem',
-                    fontSize: '0.65rem',
-                    fontWeight: 600,
-                    letterSpacing: '0.05em',
-                    textTransform: 'uppercase',
-                    background: 'transparent',
-                    color: 'var(--text-main)',
-                    border: '1px solid var(--border-dark)',
-                    cursor: 'pointer',
-                  }}
+                  className="ql-action"
                 >
                   Editar
                 </button>
                 <button
                   onClick={() => window.open(`/quotes/${q.id}/print`, '_blank')}
-                  style={{
-                    padding: '0.3rem 0.75rem',
-                    fontSize: '0.65rem',
-                    fontWeight: 600,
-                    letterSpacing: '0.05em',
-                    textTransform: 'uppercase',
-                    background: 'transparent',
-                    color: 'var(--text-main)',
-                    border: '1px solid var(--border-dark)',
-                    cursor: 'pointer',
-                  }}
+                  className="ql-action"
                 >
                   PDF
                 </button>
                 <button
                   onClick={() => handleDelete(q.id)}
                   disabled={deleting === q.id}
-                  style={{
-                    padding: '0.3rem 0.75rem',
-                    fontSize: '0.65rem',
-                    fontWeight: 600,
-                    letterSpacing: '0.05em',
-                    textTransform: 'uppercase',
-                    background: 'transparent',
-                    color: 'var(--red)',
-                    border: '1px solid var(--red)',
-                    cursor: 'pointer',
-                    opacity: deleting === q.id ? 0.5 : 1,
-                  }}
+                  className="ql-action ql-action-danger"
+                  style={{ opacity: deleting === q.id ? 0.5 : 1 }}
                 >
                   {deleting === q.id ? '...' : 'Eliminar'}
                 </button>
@@ -220,3 +161,111 @@ export default function QuoteList({
     </div>
   );
 }
+
+const QL_CSS = `
+.ql-root { max-width: 900px; margin: 0 auto; padding: 2rem 1.25rem; }
+.ql-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+.ql-title {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.ql-subtitle { margin: 0.25rem 0 0; font-size: 0.75rem; color: var(--text-dim); }
+.ql-new-btn {
+  padding: 0.6rem 1.25rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  background: var(--text-main);
+  color: var(--panel-bg);
+  border: none;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.ql-empty {
+  padding: 3rem 1.5rem;
+  text-align: center;
+  border: 1px dashed var(--border-dark);
+  color: var(--text-dim);
+}
+.ql-list { display: flex; flex-direction: column; gap: 0.75rem; }
+.ql-card {
+  background: var(--panel-bg);
+  border: 1px solid var(--border-dark);
+  padding: 1rem 1.25rem;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.5rem 1rem;
+  align-items: center;
+}
+.ql-card-info { min-width: 0; }
+.ql-card-meta { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
+.ql-folio { font-size: 0.65rem; font-family: var(--font-mono); color: var(--text-dim); }
+.ql-status {
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  border: 1px solid;
+  padding: 1px 6px;
+}
+.ql-client { margin: 0.35rem 0 0; font-size: 0.9rem; font-weight: 600; }
+.ql-company { font-weight: 400; color: var(--text-dim); margin-left: 0.5rem; }
+.ql-card-details {
+  display: flex;
+  gap: 1rem;
+  margin-top: 0.35rem;
+  flex-wrap: wrap;
+  font-size: 0.74rem;
+  color: var(--text-dim);
+}
+.ql-total { font-weight: 600; color: var(--text-main); }
+.ql-card-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; justify-content: flex-end; }
+.ql-action {
+  padding: 0.4rem 0.85rem;
+  font-size: 0.66rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  background: transparent;
+  color: var(--text-main);
+  border: 1px solid var(--border-dark);
+  cursor: pointer;
+}
+.ql-action-danger { color: var(--red); border-color: var(--red); }
+
+/* iPad / tablet */
+@media (max-width: 1024px) {
+  .ql-root { padding: 1.5rem 1rem; }
+}
+
+/* Phone */
+@media (max-width: 640px) {
+  .ql-root { padding: 1rem 0.85rem; }
+  .ql-header { gap: 0.6rem; }
+  .ql-new-btn { width: 100%; padding: 0.85rem 1rem; font-size: 0.78rem; }
+  .ql-card {
+    grid-template-columns: 1fr;
+    padding: 0.95rem;
+    gap: 0.85rem;
+  }
+  .ql-client { font-size: 0.95rem; }
+  .ql-card-details { font-size: 0.78rem; gap: 0.6rem 1rem; }
+  .ql-card-actions { justify-content: stretch; }
+  .ql-action {
+    flex: 1 1 0;
+    padding: 0.65rem 0.5rem;
+    font-size: 0.7rem;
+  }
+}
+`;

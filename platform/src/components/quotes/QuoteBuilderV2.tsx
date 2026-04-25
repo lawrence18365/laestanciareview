@@ -1245,4 +1245,49 @@ const CSS = `
   .cotizador-root { background: #fff !important; }
   .cotizador-root .cb-main { padding: 0 !important; max-width: 100% !important; }
 }
+
+/* iPad / tablet */
+@media (max-width: 1024px) {
+  .cotizador-root .cb-header-inner { padding: 0 16px; }
+  .cotizador-root .cb-main { padding: 28px 16px; }
+  .cotizador-root .h-display { font-size: 26px; }
+  .cotizador-root .h-1 { font-size: 22px; }
+  .cotizador-root .cb-summary-sticky { position: static; top: auto; }
+  .cotizador-root .template-card { padding: 22px; }
+}
+
+/* Phone */
+@media (max-width: 640px) {
+  .cotizador-root { min-height: calc(100vh - 56px); }
+  .cotizador-root .cb-header { top: 56px; }
+  .cotizador-root .cb-header-inner { padding: 0 14px; }
+  .cotizador-root .cb-row { padding: 14px 0 !important; }
+  .cotizador-root .h-display { font-size: 22px; line-height: 1.2; }
+  .cotizador-root .h-1 { font-size: 19px; }
+  .cotizador-root .h-2 { font-size: 16px; }
+  .cotizador-root .cb-main { padding: 20px 14px; }
+
+  /* Prevent iOS auto-zoom on focus */
+  .cotizador-root input[type="text"],
+  .cotizador-root input[type="number"],
+  .cotizador-root input[type="date"],
+  .cotizador-root input[type="email"],
+  .cotizador-root input[type="tel"],
+  .cotizador-root select,
+  .cotizador-root textarea { font-size: 16px; padding: 11px 12px; }
+
+  .cotizador-root .tab { font-size: 11px; margin-right: 18px; padding: 14px 0; }
+  .cotizador-root .btn { padding: 11px 16px; font-size: 13px; }
+  .cotizador-root .btn-primary,
+  .cotizador-root .btn-secondary { width: auto; }
+
+  .cotizador-root .card { border-radius: 6px; }
+  .cotizador-root .template-card { padding: 18px; }
+  .cotizador-root .item-row { padding: 12px 12px; }
+  .cotizador-root .qty-btn { width: 34px; height: 34px; font-size: 15px; }
+  .cotizador-root .qty-input { width: 40px !important; font-size: 14px !important; }
+
+  /* Title + folio/save row stacks cleaner */
+  .cotizador-root .cb-row > div[style*="space-between"] { gap: 10px !important; }
+}
 `;

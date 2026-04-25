@@ -73,31 +73,25 @@ export default function GuestsTable({
   const captureUrl = `/g/${slug}`;
 
   return (
-    <div style={{ padding: '1.25rem', maxWidth: 1200, margin: '0 auto' }}>
-      <header style={{ marginBottom: '1.25rem' }}>
-        <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap' }}>
+    <div className="guests-root">
+      <style>{GUESTS_CSS}</style>
+      <header className="guests-header">
+        <div className="guests-header-inner">
           <div>
-            <h1 style={{ fontSize: '1.5rem', fontWeight: 800, color: '#1c1917', margin: 0, letterSpacing: '-0.02em' }}>
+            <h1 className="guests-title">
               Invitados
             </h1>
-            <p style={{ fontSize: '0.8rem', color: '#78716c', margin: '0.25rem 0 0' }}>
+            <p className="guests-subtitle">
               {restaurantName} · {guests.length} capturados · <a href={captureUrl} target="_blank" rel="noreferrer" style={{ color: '#1c1917' }}>Ver página pública →</a>
             </p>
           </div>
 
           {/* Disabled multi-brand selector — teases the enterprise tier. */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <div className="guests-actions">
             <select
               disabled
               title="Disponible en el plan Multi-marca (Enterprise)"
-              style={{
-                padding: '0.4rem 0.6rem',
-                border: '1.5px solid #d6d3d1',
-                background: '#f5f4f2',
-                color: '#a8a29e',
-                fontSize: '0.75rem',
-                cursor: 'not-allowed',
-              }}
+              className="guests-brand-select"
             >
               <option>{brand ? brand.toUpperCase() : 'Una marca'} — Próximamente multi-marca</option>
             </select>
@@ -105,17 +99,7 @@ export default function GuestsTable({
             {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
             <a
               href="/api/v1/guests/export"
-              style={{
-                padding: '0.5rem 0.85rem',
-                border: '1px solid #111',
-                background: '#fff',
-                color: '#111',
-                fontSize: '0.72rem',
-                fontWeight: 700,
-                textDecoration: 'none',
-                letterSpacing: '0.08em',
-                textTransform: 'uppercase',
-              }}
+              className="guests-export-btn"
             >
               Exportar CSV
             </a>
@@ -123,82 +107,111 @@ export default function GuestsTable({
         </div>
       </header>
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem', flexWrap: 'wrap' }}>
-        {(['all', 'birthdays', 'absent60', 'vip'] as Filter[]).map((f) => {
-          const active = filter === f;
-          return (
-            <button
-              key={f}
-              onClick={() => setFilter(f)}
-              style={{
-                padding: '0.45rem 0.85rem',
-                fontSize: '0.72rem',
-                fontWeight: 600,
-                border: `1.5px solid ${active ? '#111' : '#d6d3d1'}`,
-                background: active ? '#111' : '#fff',
-                color: active ? '#fff' : '#1c1917',
-                cursor: 'pointer',
-                letterSpacing: '0.06em',
-                textTransform: 'uppercase',
-              }}
-            >
-              {FILTER_LABELS[f]}
-            </button>
-          );
-        })}
+      <div className="guests-filterbar">
+        <div className="guests-filters">
+          {(['all', 'birthdays', 'absent60', 'vip'] as Filter[]).map((f) => {
+            const active = filter === f;
+            return (
+              <button
+                key={f}
+                onClick={() => setFilter(f)}
+                className={`guests-filter-btn${active ? ' active' : ''}`}
+              >
+                {FILTER_LABELS[f]}
+              </button>
+            );
+          })}
+        </div>
         <input
           type="search"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Buscar nombre o WhatsApp…"
-          style={{
-            marginLeft: 'auto',
-            padding: '0.45rem 0.65rem',
-            border: '1.5px solid #d6d3d1',
-            fontSize: '0.82rem',
-            width: 220,
-            background: '#fff',
-            outline: 'none',
-          }}
+          className="guests-search"
         />
       </div>
 
       {filtered.length === 0 ? (
         <EmptyState captureUrl={captureUrl} guestsTotal={guests.length} />
       ) : (
-        <div style={{ border: '1px solid #e7e5e4', background: '#fff', overflow: 'auto' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.82rem' }}>
-            <thead>
-              <tr style={{ background: '#faf8f6', borderBottom: '1px solid #e7e5e4' }}>
-                <Th>Nombre</Th>
-                <Th>WhatsApp</Th>
-                <Th>Cumple</Th>
-                <Th>Preferencias</Th>
-                <Th>Visitas</Th>
-                <Th>Última visita</Th>
-                <Th>Estado</Th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.map((g) => (
-                <tr
-                  key={g.id}
-                  onClick={() => setSelected(g)}
-                  style={{
-                    borderBottom: '1px solid #f5f4f2',
-                    cursor: 'pointer',
-                    background: '#fff',
-                  }}
-                  onMouseEnter={(e) => (e.currentTarget.style.background = '#faf8f6')}
-                  onMouseLeave={(e) => (e.currentTarget.style.background = '#fff')}
-                >
-                  <Td>
-                    <div style={{ fontWeight: 600, color: '#1c1917' }}>{g.name}</div>
+        <>
+          {/* Desktop / iPad: table */}
+          <div className="guests-table-wrap">
+            <table className="guests-table">
+              <thead>
+                <tr>
+                  <Th>Nombre</Th>
+                  <Th>WhatsApp</Th>
+                  <Th>Cumple</Th>
+                  <Th>Preferencias</Th>
+                  <Th>Visitas</Th>
+                  <Th>Última visita</Th>
+                  <Th>Estado</Th>
+                </tr>
+              </thead>
+              <tbody>
+                {filtered.map((g) => (
+                  <tr
+                    key={g.id}
+                    onClick={() => setSelected(g)}
+                    className="guests-row"
+                  >
+                    <Td>
+                      <div style={{ fontWeight: 600, color: '#1c1917' }}>{g.name}</div>
+                      {g.visitCount >= 5 && (
+                        <span
+                          style={{
+                            display: 'inline-block',
+                            marginTop: 2,
+                            fontSize: '0.58rem',
+                            fontWeight: 700,
+                            letterSpacing: '0.1em',
+                            textTransform: 'uppercase',
+                            background: '#fef3c7',
+                            color: '#92400e',
+                            padding: '1px 5px',
+                          }}
+                        >
+                          VIP
+                        </span>
+                      )}
+                    </Td>
+                    <Td style={{ fontFamily: 'ui-monospace, Menlo, monospace', fontSize: '0.78rem' }}>
+                      {formatPhone(g.whatsapp)}
+                    </Td>
+                    <Td>{g.birthdayMmdd ?? '—'}</Td>
+                    <Td>
+                      {g.preferences && g.preferences.length > 0 ? (
+                        <span style={{ color: '#57534e', fontSize: '0.75rem' }}>{g.preferences.join(', ')}</span>
+                      ) : (
+                        <span style={{ color: '#a8a29e' }}>—</span>
+                      )}
+                    </Td>
+                    <Td>{g.visitCount}</Td>
+                    <Td>{g.lastVisit ? formatRelative(g.lastVisit) : '—'}</Td>
+                    <Td>
+                      <StatusBadge status={g.status} />
+                    </Td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Mobile: card list */}
+          <ul className="guests-cards">
+            {filtered.map((g) => (
+              <li key={g.id} className="guests-card" onClick={() => setSelected(g)}>
+                <div className="guests-card-top">
+                  <div style={{ minWidth: 0, flex: 1 }}>
+                    <div className="guests-card-name">{g.name}</div>
+                    <div className="guests-card-phone">{formatPhone(g.whatsapp)}</div>
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4 }}>
+                    <StatusBadge status={g.status} />
                     {g.visitCount >= 5 && (
                       <span
                         style={{
-                          display: 'inline-block',
-                          marginTop: 2,
                           fontSize: '0.58rem',
                           fontWeight: 700,
                           letterSpacing: '0.1em',
@@ -211,28 +224,20 @@ export default function GuestsTable({
                         VIP
                       </span>
                     )}
-                  </Td>
-                  <Td style={{ fontFamily: 'ui-monospace, Menlo, monospace', fontSize: '0.78rem' }}>
-                    {formatPhone(g.whatsapp)}
-                  </Td>
-                  <Td>{g.birthdayMmdd ?? '—'}</Td>
-                  <Td>
-                    {g.preferences && g.preferences.length > 0 ? (
-                      <span style={{ color: '#57534e', fontSize: '0.75rem' }}>{g.preferences.join(', ')}</span>
-                    ) : (
-                      <span style={{ color: '#a8a29e' }}>—</span>
-                    )}
-                  </Td>
-                  <Td>{g.visitCount}</Td>
-                  <Td>{g.lastVisit ? formatRelative(g.lastVisit) : '—'}</Td>
-                  <Td>
-                    <StatusBadge status={g.status} />
-                  </Td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+                  </div>
+                </div>
+                <div className="guests-card-meta">
+                  <span><strong>{g.visitCount}</strong> visitas</span>
+                  {g.birthdayMmdd && <span>🎂 {g.birthdayMmdd}</span>}
+                  {g.lastVisit && <span>Última: {formatRelative(g.lastVisit)}</span>}
+                </div>
+                {g.preferences && g.preferences.length > 0 && (
+                  <div className="guests-card-prefs">{g.preferences.join(' · ')}</div>
+                )}
+              </li>
+            ))}
+          </ul>
+        </>
       )}
 
       {selected && (
@@ -414,15 +419,7 @@ function GuestDrawer({
     >
       <aside
         onClick={(e) => e.stopPropagation()}
-        style={{
-          width: '100%',
-          maxWidth: 420,
-          background: '#fff',
-          height: '100%',
-          overflowY: 'auto',
-          borderLeft: '1px solid #1c1917',
-          padding: '1.5rem',
-        }}
+        className="guests-drawer"
       >
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.25rem' }}>
           <div>
@@ -577,3 +574,174 @@ function formatRelative(iso: string): string {
   if (days < 30) return `hace ${days}d`;
   return d.toLocaleDateString('es-MX', { day: 'numeric', month: 'short' });
 }
+
+const GUESTS_CSS = `
+.guests-root { padding: 1.25rem; max-width: 1200px; margin: 0 auto; }
+.guests-header { margin-bottom: 1.25rem; }
+.guests-header-inner {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+.guests-title { font-size: 1.5rem; font-weight: 800; color: #1c1917; margin: 0; letter-spacing: -0.02em; }
+.guests-subtitle { font-size: 0.8rem; color: #78716c; margin: 0.25rem 0 0; }
+.guests-actions { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+.guests-brand-select {
+  padding: 0.4rem 0.6rem;
+  border: 1.5px solid #d6d3d1;
+  background: #f5f4f2;
+  color: #a8a29e;
+  font-size: 0.75rem;
+  cursor: not-allowed;
+  max-width: 100%;
+}
+.guests-export-btn {
+  padding: 0.5rem 0.85rem;
+  border: 1px solid #111;
+  background: #fff;
+  color: #111;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-decoration: none;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.guests-filterbar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+.guests-filters {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.guests-filter-btn {
+  padding: 0.45rem 0.85rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  border: 1.5px solid #d6d3d1;
+  background: #fff;
+  color: #1c1917;
+  cursor: pointer;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.guests-filter-btn.active { border-color: #111; background: #111; color: #fff; }
+.guests-search {
+  margin-left: auto;
+  padding: 0.5rem 0.7rem;
+  border: 1.5px solid #d6d3d1;
+  font-size: 0.85rem;
+  width: 220px;
+  background: #fff;
+  outline: none;
+}
+.guests-table-wrap { border: 1px solid #e7e5e4; background: #fff; overflow: auto; }
+.guests-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+.guests-table thead tr { background: #faf8f6; border-bottom: 1px solid #e7e5e4; }
+.guests-row {
+  border-bottom: 1px solid #f5f4f2;
+  cursor: pointer;
+  background: #fff;
+  transition: background 0.12s;
+}
+.guests-row:hover { background: #faf8f6; }
+.guests-cards { display: none; list-style: none; padding: 0; margin: 0; }
+.guests-drawer {
+  width: 100%;
+  max-width: 420px;
+  background: #fff;
+  height: 100%;
+  overflow-y: auto;
+  border-left: 1px solid #1c1917;
+  padding: 1.5rem;
+  box-sizing: border-box;
+}
+
+/* iPad / tablet (≤1024px) */
+@media (max-width: 1024px) {
+  .guests-root { padding: 1rem; }
+  .guests-title { font-size: 1.35rem; }
+  .guests-search { width: 200px; font-size: 16px; }
+  .guests-table { font-size: 0.78rem; }
+  .guests-table th, .guests-table td { padding: 0.55rem 0.6rem !important; }
+}
+
+/* Phone (≤640px) */
+@media (max-width: 640px) {
+  .guests-root { padding: 0.75rem; }
+  .guests-title { font-size: 1.25rem; }
+  .guests-subtitle { font-size: 0.78rem; }
+  .guests-header-inner { flex-direction: column; align-items: stretch; gap: 0.75rem; }
+  .guests-actions { justify-content: flex-start; }
+  .guests-brand-select { flex: 1 1 auto; min-width: 0; font-size: 0.7rem; }
+  .guests-export-btn { font-size: 0.68rem; padding: 0.55rem 0.7rem; }
+  .guests-filterbar { gap: 0.5rem; flex-direction: column; align-items: stretch; }
+  .guests-filters { width: 100%; }
+  .guests-filter-btn { flex: 1 1 calc(50% - 0.2rem); font-size: 0.66rem; padding: 0.55rem 0.5rem; }
+  .guests-search { margin-left: 0; width: 100%; font-size: 16px; padding: 0.65rem 0.7rem; }
+
+  /* Replace the table with mobile card list */
+  .guests-table-wrap { display: none; }
+  .guests-cards {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+  }
+  .guests-card {
+    background: #fff;
+    border: 1px solid #e7e5e4;
+    padding: 0.85rem 0.95rem;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+  }
+  .guests-card:active { background: #faf8f6; }
+  .guests-card-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.75rem;
+  }
+  .guests-card-name {
+    font-weight: 700;
+    color: #1c1917;
+    font-size: 0.95rem;
+    line-height: 1.25;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .guests-card-phone {
+    font-family: ui-monospace, Menlo, monospace;
+    font-size: 0.78rem;
+    color: #57534e;
+    margin-top: 2px;
+  }
+  .guests-card-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.65rem;
+    font-size: 0.74rem;
+    color: #57534e;
+  }
+  .guests-card-meta strong { color: #1c1917; }
+  .guests-card-prefs {
+    font-size: 0.72rem;
+    color: #78716c;
+    border-top: 1px dashed #e7e5e4;
+    padding-top: 0.4rem;
+  }
+
+  .guests-drawer { max-width: 100%; padding: 1.1rem; }
+}
+`;
