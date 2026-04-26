@@ -204,11 +204,11 @@ export type OpcionesState = {
 };
 
 export type AsadoState = {
+  // Asado al Centro is a shared parrillada — sides are bundled by the
+  // template (see QuoteTemplate.sharedSides) and live as line items in
+  // `cantidades` like any other bundled dish. No per-cut included-side
+  // picker; the included-side concept here is template-level, not per-row.
   cantidades: Record<string, number>;
-  // Maps a Parrilla dish id (e.g. 'pa20') to the included side dish id
-  // (e.g. 'g1'). Each Parrilla cut comes with one side at no charge — the
-  // included side is NOT mirrored into `cantidades` so it stays free.
-  parrillaSides: Record<string, string>;
   bebidas: string;
   markup: number;
   incluyeIVA: boolean;
@@ -217,6 +217,9 @@ export type AsadoState = {
 
 export type CartaState = {
   cantidades: Record<string, number>;
+  // A la Carta is per-cut: each Parrilla dish maps to one free included
+  // side (parrilla dish id → guarnición dish id). The included side is
+  // NOT mirrored into `cantidades`, so pricing leaves it free.
   parrillaSides: Record<string, string>;
   bebidas: string;
   markup: number;
@@ -244,6 +247,13 @@ export type QuoteTemplate = {
   descripcion: string;
   idealPara: string;
   modo: QuoteModo;
+  // When set, this template represents a "shared sides" product (e.g.
+  // parrillada al centro): guarniciones in `cantidades` are part of the
+  // bundle price and should render as "(incluida)" in Vista Cliente,
+  // not as separate paid line items. `sideRatioPerPerson` is the
+  // recommended sides-to-headcount ratio (0.5 = 1 side per 2 personas)
+  // — reserved for a future "Recomendado: X guarniciones" hint.
+  sharedSides?: { sideRatioPerPerson: number };
   config: {
     sopas?: string[];
     platos?: string[];
@@ -310,15 +320,17 @@ export const TEMPLATES: QuoteTemplate[] = [
     descripcion: 'Tablas de entradas, parrillada al centro (chorizo, arrachera, picaña, vacío), guarniciones surtidas y postre. Ideal para compartir.',
     idealPara: 'Grupos de 10–40 personas que quieren convivir con todo al centro.',
     modo: 'asado',
+    // Asado al Centro is a shared parrillada — guarniciones are bundled at
+    // ~1 per 2 personas. They live in cantidades (and bill into the bundle
+    // price), but render as "(incluida)" so the customer doesn't read them
+    // as separate paid extras. Premium sides (Espárragos, Tuétano) added
+    // here would still render as paid via the includedEligible:false flag.
+    sharedSides: { sideRatioPerPerson: 0.5 },
     config: {
-      // Guarniciones intentionally omitted — every Parrilla cut here gets
-      // its included side via `parrillaSides` (seeded on template apply).
-      // Add explicit guarniciones below ONLY when the customer wants extra
-      // sides beyond the per-cut included one (or premium sides like
-      // Espárragos/Tuétano which never qualify as "included").
       cantidades: {
         e6: 2, e7: 1, e10: 1,
         pa19: 2, pa20: 1, pa23: 1, pa21: 1, pa24: 1,
+        g1: 2, g2: 1, g7: 2, g9: 1,
       },
       bebidas: 'completo',
       markup: 40,
@@ -389,7 +401,6 @@ export const EMPTY_OPCIONES: OpcionesState = {
 
 export const EMPTY_ASADO: AsadoState = {
   cantidades: {},
-  parrillaSides: {},
   bebidas: 'completo',
   markup: 40,
   incluyeIVA: true,
@@ -418,12 +429,11 @@ export type QuoteConfig = {
 };
 
 // Backfills fields added in newer schemas onto a config loaded from the DB.
-// Quotes saved before parrillaSides existed have it undefined — coerce to an
-// empty map so downstream code can read it without nullchecks everywhere.
+// Quotes saved before carta.parrillaSides existed have it undefined — coerce
+// to an empty map so downstream code can read it without nullchecks.
 export function migrateConfig(c: QuoteConfig): QuoteConfig {
   return {
     ...c,
-    asado: { ...c.asado, parrillaSides: c.asado?.parrillaSides ?? {} },
     carta: { ...c.carta, parrillaSides: c.carta?.parrillaSides ?? {} },
   };
 }
@@ -439,7 +449,7 @@ export function emptyConfig(modo: QuoteModo = 'opciones'): QuoteConfig {
       postres: [],
       tiers: EMPTY_OPCIONES.tiers.map((t) => ({ ...t })),
     },
-    asado: { ...EMPTY_ASADO, cantidades: {}, parrillaSides: {} },
+    asado: { ...EMPTY_ASADO, cantidades: {} },
     carta: { ...EMPTY_CARTA, cantidades: {}, parrillaSides: {} },
     terms: DEFAULT_TERMS,
   };

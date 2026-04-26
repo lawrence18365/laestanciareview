@@ -1,5 +1,6 @@
 import {
   CATEGORIAS,
+  TEMPLATES,
   type QuoteConfig,
   type QuoteCategoria,
   computePricing,
@@ -55,18 +56,36 @@ export default function QuotePreview({
   const opcionesSopasDishes = modo === 'opciones' ? config.opciones.sopas.map(dishById).filter(Boolean) : [];
   const opcionesPostresDishes = modo === 'opciones' ? config.opciones.postres.map(dishById).filter(Boolean) : [];
 
-  type LineItem = { id: string; nombre: string; cantidad: number; includedSideName?: string };
+  // Template-level "shared sides" applies to bundle products like Asado al
+  // Centro: guarniciones in cantidades are part of the bundle price and
+  // should render as "(incluida)" instead of as separate paid line items.
+  // Premium guarniciones (includedEligible: false) keep paid styling even
+  // here — Espárragos and Tuétano always bill, by design.
+  const template = config.templateId
+    ? TEMPLATES.find((t) => t.id === config.templateId)
+    : undefined;
+  const sharedSides = template?.sharedSides;
+
+  type LineItem = {
+    id: string;
+    nombre: string;
+    cantidad: number;
+    includedSideName?: string; // carta per-cut nested side
+    sharedIncluded?: boolean;  // asado bundle "(incluida)" tag
+  };
 
   function asadoItemsPorCat(cat: QuoteCategoria): LineItem[] {
     if (modo !== 'asado') return [];
-    const sides = config.asado.parrillaSides ?? {};
     return Object.entries(config.asado.cantidades)
       .map(([id, cantidad]): LineItem | null => {
         const d = dishById(id);
         if (!d || d.categoria !== cat || cantidad <= 0) return null;
-        const sideId = sides[id];
-        const includedSideName = sideId ? dishById(sideId)?.nombre : undefined;
-        return { id, nombre: d.nombre, cantidad, includedSideName };
+        const sharedIncluded = !!(
+          sharedSides &&
+          d.categoria === 'Guarniciones' &&
+          d.includedEligible !== false
+        );
+        return { id, nombre: d.nombre, cantidad, sharedIncluded };
       })
       .filter((x): x is LineItem => x !== null);
   }
@@ -277,16 +296,12 @@ export default function QuotePreview({
                 <div key={cat} style={{ textAlign: 'center' }}>
                   <p className="doc-mini" style={{ marginBottom: 8 }}>{cat}</p>
                   {items.map((item) => (
-                    <div key={item.id} style={{ margin: '2px 0' }}>
-                      <p className="small" style={{ margin: 0 }}>
-                        <span className="num">{item.cantidad}</span> × {item.nombre}
-                      </p>
-                      {item.includedSideName && (
-                        <p className="small text-3" style={{ margin: '2px 0 0', fontStyle: 'italic' }}>
-                          ↳ Guarnición: {item.includedSideName} <span style={{ fontStyle: 'normal' }}>(incluida)</span>
-                        </p>
+                    <p key={item.id} className="small" style={{ margin: '2px 0' }}>
+                      <span className="num">{item.cantidad}</span> × {item.nombre}
+                      {item.sharedIncluded && (
+                        <span className="text-3" style={{ fontStyle: 'italic', marginLeft: 8 }}>(incluida)</span>
                       )}
-                    </div>
+                    </p>
                   ))}
                 </div>
               );

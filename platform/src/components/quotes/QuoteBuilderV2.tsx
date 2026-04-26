@@ -19,12 +19,12 @@ import {
 } from '@/lib/quote-data';
 
 // Default included side seeded when a Parrilla cut lands in the quote via
-// template apply (or as a safety net) — Papas a la Francesa, the most
-// commonly-paired side. Hostess can swap it from the row picker.
+// template apply (or as a safety net for the per-cut Carta picker) —
+// Papas a la Francesa, the most commonly-paired side. Hostess can swap
+// it from the row picker. Only used by Carta mode; Asado al Centro
+// bundles sides at the template level (see QuoteTemplate.sharedSides).
 const DEFAULT_INCLUDED_SIDE_ID = 'g1';
 
-// When applying a template, seed an included side for every Parrilla cut
-// in `cantidades` so the hostess sees a coherent quote on first load.
 function seedParrillaSides(cantidades: Record<string, number>): Record<string, string> {
   const sides: Record<string, string> = {};
   for (const id of Object.keys(cantidades)) {
@@ -60,7 +60,6 @@ export default function QuoteBuilderV2({
   const [error, setError] = useState('');
   const [copied, setCopied] = useState(false);
   const [sidePicker, setSidePicker] = useState<{
-    mode: 'asado' | 'carta';
     parrillaId: string;
   } | null>(null);
   const waTextRef = useRef<string>('');
@@ -155,11 +154,9 @@ export default function QuoteBuilderV2({
           incluyeServicio: t.config.incluyeServicio ?? c.opciones.incluyeServicio,
         };
       } else if (t.modo === 'asado') {
-        const cantidades = t.config.cantidades ?? {};
         next.asado = {
           ...c.asado,
-          cantidades,
-          parrillaSides: seedParrillaSides(cantidades),
+          cantidades: t.config.cantidades ?? {},
           bebidas: t.config.bebidas ?? c.asado.bebidas,
           markup: t.config.markup ?? c.asado.markup,
           incluyeIVA: t.config.incluyeIVA ?? c.asado.incluyeIVA,
@@ -184,32 +181,18 @@ export default function QuoteBuilderV2({
 
   function setAsadoCantidad(id: string, qty: number) {
     const safe = Math.max(0, qty);
-    const wasZero = (config.asado.cantidades[id] || 0) === 0;
     setConfig((c) => {
-      const nextCantidades = { ...c.asado.cantidades };
-      const nextSides = { ...c.asado.parrillaSides };
-      if (safe === 0) {
-        delete nextCantidades[id];
-        delete nextSides[id]; // included side travels with the cut
-      } else {
-        nextCantidades[id] = safe;
-        if (isParrilla(id) && !nextSides[id]) {
-          nextSides[id] = DEFAULT_INCLUDED_SIDE_ID; // seed; picker can reopen
-        }
-      }
-      return {
-        ...c,
-        asado: { ...c.asado, cantidades: nextCantidades, parrillaSides: nextSides },
-      };
+      const next = { ...c.asado.cantidades };
+      if (safe === 0) delete next[id]; else next[id] = safe;
+      return { ...c, asado: { ...c.asado, cantidades: next } };
     });
     setSaved(false);
-    // First time hostess adds a Parrilla cut, prompt for the included side
-    // so the choice is intentional rather than silently defaulted.
-    if (wasZero && safe > 0 && isParrilla(id)) {
-      setSidePicker({ mode: 'asado', parrillaId: id });
-    }
   }
 
+  // Carta is per-cut: each Parrilla cut comes with one free included side.
+  // First time a cut goes from 0→1, force the side picker open so the
+  // choice is intentional. Subsequent qty bumps don't re-prompt; included
+  // count tracks cut qty implicitly (no separate field).
   function setCartaCantidad(id: string, qty: number) {
     const safe = Math.max(0, qty);
     const wasZero = (config.carta.cantidades[id] || 0) === 0;
@@ -218,7 +201,7 @@ export default function QuoteBuilderV2({
       const nextSides = { ...c.carta.parrillaSides };
       if (safe === 0) {
         delete nextCantidades[id];
-        delete nextSides[id];
+        delete nextSides[id]; // included side travels with the cut
       } else {
         nextCantidades[id] = safe;
         if (isParrilla(id) && !nextSides[id]) {
@@ -232,37 +215,26 @@ export default function QuoteBuilderV2({
     });
     setSaved(false);
     if (wasZero && safe > 0 && isParrilla(id)) {
-      setSidePicker({ mode: 'carta', parrillaId: id });
+      setSidePicker({ parrillaId: id });
     }
   }
 
   function pickParrillaSide(sideId: string) {
     if (!sidePicker) return;
-    const { mode, parrillaId } = sidePicker;
-    setConfig((c) => {
-      if (mode === 'asado') {
-        return {
-          ...c,
-          asado: {
-            ...c.asado,
-            parrillaSides: { ...c.asado.parrillaSides, [parrillaId]: sideId },
-          },
-        };
-      }
-      return {
-        ...c,
-        carta: {
-          ...c.carta,
-          parrillaSides: { ...c.carta.parrillaSides, [parrillaId]: sideId },
-        },
-      };
-    });
+    const { parrillaId } = sidePicker;
+    setConfig((c) => ({
+      ...c,
+      carta: {
+        ...c.carta,
+        parrillaSides: { ...c.carta.parrillaSides, [parrillaId]: sideId },
+      },
+    }));
     setSaved(false);
     setSidePicker(null);
   }
 
-  function openSidePicker(mode: 'asado' | 'carta', parrillaId: string) {
-    setSidePicker({ mode, parrillaId });
+  function openSidePicker(parrillaId: string) {
+    setSidePicker({ parrillaId });
   }
 
   // ── Save ────────────────────────────────────────────────────────────────
@@ -580,7 +552,6 @@ export default function QuoteBuilderV2({
                   patchAsado={patchAsado}
                   menuPorCategoria={menuPorCategoria}
                   setAsadoCantidad={setAsadoCantidad}
-                  openSidePicker={(id) => openSidePicker('asado', id)}
                 />
               )}
               {config.modo === 'carta' && (
@@ -591,7 +562,7 @@ export default function QuoteBuilderV2({
                   categoriaActiva={categoriaActiva}
                   setCategoriaActiva={setCategoriaActiva}
                   setCartaCantidad={setCartaCantidad}
-                  openSidePicker={(id) => openSidePicker('carta', id)}
+                  openSidePicker={openSidePicker}
                 />
               )}
             </div>
@@ -703,11 +674,7 @@ export default function QuoteBuilderV2({
       {sidePicker && (
         <SidePickerModal
           parrillaName={dishById(sidePicker.parrillaId)?.nombre ?? ''}
-          currentSideId={
-            sidePicker.mode === 'asado'
-              ? config.asado.parrillaSides[sidePicker.parrillaId]
-              : config.carta.parrillaSides[sidePicker.parrillaId]
-          }
+          currentSideId={config.carta.parrillaSides[sidePicker.parrillaId]}
           onPick={pickParrillaSide}
           onClose={() => setSidePicker(null)}
         />
@@ -955,13 +922,12 @@ function OpcionesMode({
 }
 
 function AsadoMode({
-  config, patchAsado, menuPorCategoria, setAsadoCantidad, openSidePicker,
+  config, patchAsado, menuPorCategoria, setAsadoCantidad,
 }: {
   config: QuoteConfig;
   patchAsado: (p: Partial<QuoteConfig['asado']>) => void;
   menuPorCategoria: (cat: QuoteCategoria) => typeof MENU;
   setAsadoCantidad: (id: string, qty: number) => void;
-  openSidePicker: (parrillaId: string) => void;
 }) {
   const { asado } = config;
   return (
@@ -974,29 +940,13 @@ function AsadoMode({
           <div style={{ maxHeight: 288, overflowY: 'auto', paddingRight: 4 }} className="scroll-thin">
             {menuPorCategoria(cat).map((dish) => {
               const qty = asado.cantidades[dish.id] || 0;
-              const isParr = dish.categoria === 'Parrilla';
-              const sideId = isParr ? asado.parrillaSides[dish.id] : undefined;
-              const sideName = sideId ? dishById(sideId)?.nombre : undefined;
               return (
-                <div key={dish.id} className={`item-row ${qty > 0 ? 'selected' : ''}`} style={{ display: 'flex', flexDirection: 'column', alignItems: 'stretch', gap: 8 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <p className="small" style={{ margin: 0 }}>{dish.nombre}</p>
-                      <p className="text-3" style={{ fontSize: 12, marginTop: 2 }}>{(dish.peso ? dish.peso + ' · ' : '')}${dish.precio}</p>
-                    </div>
-                    <QtyControl qty={qty} onChange={(q) => setAsadoCantidad(dish.id, q)} />
+                <div key={dish.id} className={`item-row ${qty > 0 ? 'selected' : ''}`} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p className="small" style={{ margin: 0 }}>{dish.nombre}</p>
+                    <p className="text-3" style={{ fontSize: 12, marginTop: 2 }}>{(dish.peso ? dish.peso + ' · ' : '')}${dish.precio}</p>
                   </div>
-                  {qty > 0 && isParr && (
-                    <button
-                      type="button"
-                      onClick={() => openSidePicker(dish.id)}
-                      className="parrilla-side-link"
-                    >
-                      <span className="parrilla-side-arrow">↳</span>
-                      <span className="parrilla-side-text">Guarnición incluida: <strong>{sideName ?? 'Elegir'}</strong></span>
-                      <span className="parrilla-side-change">Cambiar</span>
-                    </button>
-                  )}
+                  <QtyControl qty={qty} onChange={(q) => setAsadoCantidad(dish.id, q)} />
                 </div>
               );
             })}
