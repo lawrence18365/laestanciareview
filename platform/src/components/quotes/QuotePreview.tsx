@@ -106,10 +106,12 @@ export default function QuotePreview({
     cantidad: number;
     includedSideName?: string; // carta per-cut nested side
     sharedIncluded?: boolean;  // asado bundle "(incluida)" tag
+    variants?: string[];       // selected fillings/sauces for this dish
   };
 
   function asadoItemsPorCat(cat: QuoteCategoria): LineItem[] {
     if (modo !== 'asado') return [];
+    const variantsMap = config.asado.dishVariants ?? {};
     return Object.entries(config.asado.cantidades)
       .map(([id, cantidad]): LineItem | null => {
         const d = dishById(id);
@@ -119,7 +121,9 @@ export default function QuotePreview({
           d.categoria === 'Guarniciones' &&
           d.includedEligible !== false
         );
-        return { id, nombre: d.nombre, cantidad, sharedIncluded };
+        const v = variantsMap[id];
+        const variants = v && v.length > 0 ? v : undefined;
+        return { id, nombre: d.nombre, cantidad, sharedIncluded, variants };
       })
       .filter((x): x is LineItem => x !== null);
   }
@@ -127,13 +131,16 @@ export default function QuotePreview({
   function cartaItemsPorCat(cat: QuoteCategoria): LineItem[] {
     if (modo !== 'carta') return [];
     const sides = config.carta.parrillaSides ?? {};
+    const variantsMap = config.carta.dishVariants ?? {};
     return Object.entries(config.carta.cantidades)
       .map(([id, cantidad]): LineItem | null => {
         const d = dishById(id);
         if (!d || d.categoria !== cat || cantidad <= 0) return null;
         const sideId = sides[id];
         const includedSideName = sideId ? dishById(sideId)?.nombre : undefined;
-        return { id, nombre: d.nombre, cantidad, includedSideName };
+        const v = variantsMap[id];
+        const variants = v && v.length > 0 ? v : undefined;
+        return { id, nombre: d.nombre, cantidad, includedSideName, variants };
       })
       .filter((x): x is LineItem => x !== null);
   }
@@ -326,15 +333,22 @@ export default function QuotePreview({
                     const showPerPersonTag =
                       !item.sharedIncluded && item.cantidad === evento.personas;
                     return (
-                      <p key={item.id} className="small" style={{ margin: '2px 0' }}>
-                        <span className="num">{item.cantidad}</span> × {item.nombre}
-                        {showPerPersonTag && (
-                          <span className="text-3" style={{ fontStyle: 'italic', marginLeft: 8 }}>(1 por persona)</span>
+                      <div key={item.id} style={{ margin: '2px 0' }}>
+                        <p className="small" style={{ margin: 0 }}>
+                          <span className="num">{item.cantidad}</span> × {item.nombre}
+                          {showPerPersonTag && (
+                            <span className="text-3" style={{ fontStyle: 'italic', marginLeft: 8 }}>(1 por persona)</span>
+                          )}
+                          {item.sharedIncluded && (
+                            <span className="text-3" style={{ fontStyle: 'italic', marginLeft: 8 }}>(incluida)</span>
+                          )}
+                        </p>
+                        {item.variants && (
+                          <p className="small text-3" style={{ margin: '2px 0 0', fontStyle: 'italic' }}>
+                            → Sabores: {item.variants.join(', ')}
+                          </p>
                         )}
-                        {item.sharedIncluded && (
-                          <span className="text-3" style={{ fontStyle: 'italic', marginLeft: 8 }}>(incluida)</span>
-                        )}
-                      </p>
+                      </div>
                     );
                   })}
                 </div>
@@ -362,6 +376,11 @@ export default function QuotePreview({
                             <span className="text-3" style={{ fontStyle: 'italic', marginLeft: 8 }}>(1 por persona)</span>
                           )}
                         </p>
+                        {item.variants && (
+                          <p className="small text-3" style={{ margin: '2px 0 0', fontStyle: 'italic' }}>
+                            → Sabores: {item.variants.join(', ')}
+                          </p>
+                        )}
                         {item.includedSideName && (
                           <p className="small text-3" style={{ margin: '2px 0 0', fontStyle: 'italic' }}>
                             → Guarnición: {item.includedSideName} <span style={{ fontStyle: 'normal' }}>(incluida)</span>

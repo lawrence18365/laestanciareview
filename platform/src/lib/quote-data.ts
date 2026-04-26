@@ -32,6 +32,11 @@ export type QuoteDish = {
   // cut's "included" side — Espárragos and Tuétano always bill separately.
   // Defaults to true via `?? true`; only premium sides set this to false.
   includedEligible?: boolean;
+  // Selectable variants/fillings (e.g. empanada flavors, pasta sauces).
+  // When set, the Constructor exposes a chip multi-selector under the dish
+  // row and Vista Cliente renders the picked subset as a sub-line. Leave
+  // unset for dishes without meaningful variant choices.
+  variants?: string[];
 };
 
 export const CATEGORIAS: QuoteCategoria[] = [
@@ -47,7 +52,7 @@ export const CATEGORIAS: QuoteCategoria[] = [
 
 export const MENU: QuoteDish[] = [
   // Entradas
-  { id: 'e1', categoria: 'Entradas', nombre: 'Empanadas', peso: '60g c/u', precio: 110, desc: 'Carne, queso, humita, salmón, siciliana, espinaca, queso azul o chistorra' },
+  { id: 'e1', categoria: 'Entradas', nombre: 'Empanadas', peso: '60g c/u', precio: 110, desc: 'Carne, queso, humita, salmón, siciliana, espinaca, queso azul o chistorra', variants: ['Carne', 'Queso', 'Humita', 'Salmón', 'Siciliana', 'Espinaca', 'Queso azul', 'Chistorra'] },
   { id: 'e2', categoria: 'Entradas', nombre: 'Queso Fundido', peso: '220g', precio: 150 },
   { id: 'e3', categoria: 'Entradas', nombre: 'Queso Fundido con Chistorra', peso: '100g', precio: 175 },
   { id: 'e4', categoria: 'Entradas', nombre: 'Queso Fundido con Chorizo Argentino', peso: '75g', precio: 175 },
@@ -87,7 +92,7 @@ export const MENU: QuoteDish[] = [
   { id: 'en9', categoria: 'Ensaladas', nombre: 'Nordika', precio: 275 },
 
   // Pastas
-  { id: 'p1', categoria: 'Pastas', nombre: 'Spaguetti', precio: 240, desc: 'Bolognesa, fileto, pesto, burro, tuco, alfredo, crema o pomodoro' },
+  { id: 'p1', categoria: 'Pastas', nombre: 'Spaguetti', precio: 240, desc: 'Bolognesa, fileto, pesto, burro, tuco, alfredo, crema o pomodoro', variants: ['Bolognesa', 'Fileto', 'Pesto', 'Burro', 'Tuco', 'Alfredo', 'Crema', 'Pomodoro'] },
   { id: 'p2', categoria: 'Pastas', nombre: 'Lasagna', peso: '350g', precio: 270 },
   { id: 'p3', categoria: 'Pastas', nombre: 'Tagliatelle al Salmone', precio: 270 },
   { id: 'p4', categoria: 'Pastas', nombre: 'Canelones de Picaña', peso: '200g', precio: 350 },
@@ -250,6 +255,10 @@ export type AsadoState = {
   // `cantidades` like any other bundled dish. No per-cut included-side
   // picker; the included-side concept here is template-level, not per-row.
   cantidades: Record<string, number>;
+  // Selected variants per dish (e.g. dishVariants.e1 = ['Carne','Queso']).
+  // Empty/missing = hostess hasn't locked it in; Vista Cliente skips the
+  // sub-line. Only dishes with QuoteDish.variants surface a chip picker.
+  dishVariants: Record<string, string[]>;
   bebidas: string;
   markup: number;
   incluyeIVA: boolean;
@@ -262,6 +271,7 @@ export type CartaState = {
   // side (parrilla dish id → guarnición dish id). The included side is
   // NOT mirrored into `cantidades`, so pricing leaves it free.
   parrillaSides: Record<string, string>;
+  dishVariants: Record<string, string[]>;
   bebidas: string;
   markup: number;
   incluyeIVA: boolean;
@@ -442,6 +452,7 @@ export const EMPTY_OPCIONES: OpcionesState = {
 
 export const EMPTY_ASADO: AsadoState = {
   cantidades: {},
+  dishVariants: {},
   bebidas: 'completo',
   markup: 40,
   incluyeIVA: true,
@@ -451,6 +462,7 @@ export const EMPTY_ASADO: AsadoState = {
 export const EMPTY_CARTA: CartaState = {
   cantidades: {},
   parrillaSides: {},
+  dishVariants: {},
   bebidas: 'a-la-carta',
   markup: 40,
   incluyeIVA: true,
@@ -470,12 +482,20 @@ export type QuoteConfig = {
 };
 
 // Backfills fields added in newer schemas onto a config loaded from the DB.
-// Quotes saved before carta.parrillaSides existed have it undefined — coerce
-// to an empty map so downstream code can read it without nullchecks.
+// Quotes saved before these maps existed have them undefined — coerce to
+// empty maps so downstream code can read them without nullchecks.
 export function migrateConfig(c: QuoteConfig): QuoteConfig {
   return {
     ...c,
-    carta: { ...c.carta, parrillaSides: c.carta?.parrillaSides ?? {} },
+    asado: {
+      ...c.asado,
+      dishVariants: c.asado?.dishVariants ?? {},
+    },
+    carta: {
+      ...c.carta,
+      parrillaSides: c.carta?.parrillaSides ?? {},
+      dishVariants: c.carta?.dishVariants ?? {},
+    },
   };
 }
 
@@ -490,8 +510,8 @@ export function emptyConfig(modo: QuoteModo = 'opciones'): QuoteConfig {
       postres: [],
       tiers: EMPTY_OPCIONES.tiers.map((t) => ({ ...t })),
     },
-    asado: { ...EMPTY_ASADO, cantidades: {} },
-    carta: { ...EMPTY_CARTA, cantidades: {}, parrillaSides: {} },
+    asado: { ...EMPTY_ASADO, cantidades: {}, dishVariants: {} },
+    carta: { ...EMPTY_CARTA, cantidades: {}, parrillaSides: {}, dishVariants: {} },
     terms: DEFAULT_TERMS,
   };
 }

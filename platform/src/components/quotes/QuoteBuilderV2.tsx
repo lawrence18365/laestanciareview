@@ -183,8 +183,14 @@ export default function QuoteBuilderV2({
     const safe = Math.max(0, qty);
     setConfig((c) => {
       const next = { ...c.asado.cantidades };
-      if (safe === 0) delete next[id]; else next[id] = safe;
-      return { ...c, asado: { ...c.asado, cantidades: next } };
+      const nextVariants = { ...c.asado.dishVariants };
+      if (safe === 0) {
+        delete next[id];
+        delete nextVariants[id]; // variants travel with the dish
+      } else {
+        next[id] = safe;
+      }
+      return { ...c, asado: { ...c.asado, cantidades: next, dishVariants: nextVariants } };
     });
     setSaved(false);
   }
@@ -199,9 +205,11 @@ export default function QuoteBuilderV2({
     setConfig((c) => {
       const nextCantidades = { ...c.carta.cantidades };
       const nextSides = { ...c.carta.parrillaSides };
+      const nextVariants = { ...c.carta.dishVariants };
       if (safe === 0) {
         delete nextCantidades[id];
         delete nextSides[id]; // included side travels with the cut
+        delete nextVariants[id]; // variants travel with the dish
       } else {
         nextCantidades[id] = safe;
         if (isParrilla(id) && !nextSides[id]) {
@@ -210,7 +218,12 @@ export default function QuoteBuilderV2({
       }
       return {
         ...c,
-        carta: { ...c.carta, cantidades: nextCantidades, parrillaSides: nextSides },
+        carta: {
+          ...c.carta,
+          cantidades: nextCantidades,
+          parrillaSides: nextSides,
+          dishVariants: nextVariants,
+        },
       };
     });
     setSaved(false);
@@ -235,6 +248,26 @@ export default function QuoteBuilderV2({
 
   function openSidePicker(parrillaId: string) {
     setSidePicker({ parrillaId });
+  }
+
+  // Toggle a variant chip on/off for a dish. Same shape across asado and
+  // carta modes, so a single function with a `mode` param keeps the call
+  // sites compact. Empty array after removal stays in the map (cheap) and
+  // is treated as "no selection" downstream.
+  function toggleDishVariant(mode: 'asado' | 'carta', dishId: string, variant: string) {
+    setConfig((c) => {
+      const state = mode === 'asado' ? c.asado : c.carta;
+      const current = state.dishVariants[dishId] ?? [];
+      const next = current.includes(variant)
+        ? current.filter((v) => v !== variant)
+        : [...current, variant];
+      const nextVariants = { ...state.dishVariants, [dishId]: next };
+      if (mode === 'asado') {
+        return { ...c, asado: { ...c.asado, dishVariants: nextVariants } };
+      }
+      return { ...c, carta: { ...c.carta, dishVariants: nextVariants } };
+    });
+    setSaved(false);
   }
 
   // ── Save ────────────────────────────────────────────────────────────────
@@ -552,6 +585,7 @@ export default function QuoteBuilderV2({
                   patchAsado={patchAsado}
                   menuPorCategoria={menuPorCategoria}
                   setAsadoCantidad={setAsadoCantidad}
+                  toggleVariant={(dishId, variant) => toggleDishVariant('asado', dishId, variant)}
                 />
               )}
               {config.modo === 'carta' && (
@@ -563,6 +597,7 @@ export default function QuoteBuilderV2({
                   setCategoriaActiva={setCategoriaActiva}
                   setCartaCantidad={setCartaCantidad}
                   openSidePicker={openSidePicker}
+                  toggleVariant={(dishId, variant) => toggleDishVariant('carta', dishId, variant)}
                 />
               )}
             </div>
@@ -922,12 +957,13 @@ function OpcionesMode({
 }
 
 function AsadoMode({
-  config, patchAsado, menuPorCategoria, setAsadoCantidad,
+  config, patchAsado, menuPorCategoria, setAsadoCantidad, toggleVariant,
 }: {
   config: QuoteConfig;
   patchAsado: (p: Partial<QuoteConfig['asado']>) => void;
   menuPorCategoria: (cat: QuoteCategoria) => typeof MENU;
   setAsadoCantidad: (id: string, qty: number) => void;
+  toggleVariant: (dishId: string, variant: string) => void;
 }) {
   const { asado } = config;
   return (
@@ -940,13 +976,24 @@ function AsadoMode({
           <div style={{ maxHeight: 288, overflowY: 'auto', paddingRight: 4 }} className="scroll-thin">
             {menuPorCategoria(cat).map((dish) => {
               const qty = asado.cantidades[dish.id] || 0;
+              const selectedVariants = asado.dishVariants[dish.id] ?? [];
+              const showVariantPicker = qty > 0 && dish.variants && dish.variants.length > 0;
               return (
-                <div key={dish.id} className={`item-row ${qty > 0 ? 'selected' : ''}`} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <p className="small" style={{ margin: 0 }}>{dish.nombre}</p>
-                    <p className="text-3" style={{ fontSize: 12, marginTop: 2 }}>{(dish.peso ? dish.peso + ' · ' : '')}${dish.precio}</p>
+                <div key={dish.id} className={`item-row ${qty > 0 ? 'selected' : ''}`} style={{ display: 'flex', flexDirection: 'column', alignItems: 'stretch', gap: 8 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <p className="small" style={{ margin: 0 }}>{dish.nombre}</p>
+                      <p className="text-3" style={{ fontSize: 12, marginTop: 2 }}>{(dish.peso ? dish.peso + ' · ' : '')}${dish.precio}</p>
+                    </div>
+                    <QtyControl qty={qty} onChange={(q) => setAsadoCantidad(dish.id, q)} />
                   </div>
-                  <QtyControl qty={qty} onChange={(q) => setAsadoCantidad(dish.id, q)} />
+                  {showVariantPicker && (
+                    <VariantChips
+                      options={dish.variants!}
+                      selected={selectedVariants}
+                      onToggle={(v) => toggleVariant(dish.id, v)}
+                    />
+                  )}
                 </div>
               );
             })}
@@ -976,7 +1023,7 @@ function AsadoMode({
 }
 
 function CartaMode({
-  config, patchCarta, menuPorCategoria, categoriaActiva, setCategoriaActiva, setCartaCantidad, openSidePicker,
+  config, patchCarta, menuPorCategoria, categoriaActiva, setCategoriaActiva, setCartaCantidad, openSidePicker, toggleVariant,
 }: {
   config: QuoteConfig;
   patchCarta: (p: Partial<QuoteConfig['carta']>) => void;
@@ -985,6 +1032,7 @@ function CartaMode({
   setCategoriaActiva: (cat: QuoteCategoria) => void;
   setCartaCantidad: (id: string, qty: number) => void;
   openSidePicker: (parrillaId: string) => void;
+  toggleVariant: (dishId: string, variant: string) => void;
 }) {
   const { carta } = config;
   return (
@@ -1019,6 +1067,8 @@ function CartaMode({
           const isParr = dish.categoria === 'Parrilla';
           const sideId = isParr ? carta.parrillaSides[dish.id] : undefined;
           const sideName = sideId ? dishById(sideId)?.nombre : undefined;
+          const selectedVariants = carta.dishVariants[dish.id] ?? [];
+          const showVariantPicker = qty > 0 && dish.variants && dish.variants.length > 0;
           return (
             <div key={dish.id} className={`item-row ${qty > 0 ? 'selected' : ''}`} style={{ display: 'flex', flexDirection: 'column', alignItems: 'stretch', gap: 8 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
@@ -1041,10 +1091,17 @@ function CartaMode({
                   onClick={() => openSidePicker(dish.id)}
                   className="parrilla-side-link"
                 >
-                  <span className="parrilla-side-arrow">↳</span>
+                  <span className="parrilla-side-arrow">→</span>
                   <span className="parrilla-side-text">Guarnición incluida: <strong>{sideName ?? 'Elegir'}</strong></span>
                   <span className="parrilla-side-change">Cambiar</span>
                 </button>
+              )}
+              {showVariantPicker && (
+                <VariantChips
+                  options={dish.variants!}
+                  selected={selectedVariants}
+                  onToggle={(v) => toggleVariant(dish.id, v)}
+                />
               )}
             </div>
           );
@@ -1079,6 +1136,39 @@ function Section({ title, hint, children }: { title: string; hint?: string; chil
         {hint && <span className="mini">{hint}</span>}
       </div>
       {children}
+    </div>
+  );
+}
+
+// Multi-select chip picker for dishes that have variants/fillings
+// (e.g. empanada flavors, pasta sauces). Empty selection is valid —
+// Vista Cliente skips the sub-line until the hostess locks in choices.
+function VariantChips({
+  options, selected, onToggle,
+}: {
+  options: string[];
+  selected: string[];
+  onToggle: (variant: string) => void;
+}) {
+  return (
+    <div className="variant-chip-row">
+      <span className="variant-chip-label">Sabores:</span>
+      <div className="variant-chip-list">
+        {options.map((opt) => {
+          const isSelected = selected.includes(opt);
+          return (
+            <button
+              key={opt}
+              type="button"
+              onClick={() => onToggle(opt)}
+              className={`variant-chip ${isSelected ? 'selected' : ''}`}
+              aria-pressed={isSelected}
+            >
+              {opt}
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 }
@@ -1437,6 +1527,52 @@ const CSS = `
   text-transform: uppercase;
   color: var(--cb-text);
   white-space: nowrap;
+}
+
+/* Variant chip multi-selector under dishes with fillings/sauces */
+.cotizador-root .variant-chip-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 6px 10px;
+  border: 1px dashed var(--cb-border-strong);
+  border-radius: 5px;
+  background: #fff;
+  flex-wrap: wrap;
+}
+.cotizador-root .variant-chip-label {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--cb-text-3);
+  padding: 4px 0;
+  flex-shrink: 0;
+}
+.cotizador-root .variant-chip-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  flex: 1;
+  min-width: 0;
+}
+.cotizador-root .variant-chip {
+  padding: 4px 10px;
+  font-size: 12px;
+  font-family: inherit;
+  border-radius: 999px;
+  border: 1px solid var(--cb-border-strong);
+  background: #fff;
+  color: var(--cb-text-2);
+  cursor: pointer;
+  transition: background 0.12s, border-color 0.12s, color 0.12s;
+  white-space: nowrap;
+}
+.cotizador-root .variant-chip:hover { border-color: var(--cb-text); color: var(--cb-text); }
+.cotizador-root .variant-chip.selected {
+  background: var(--cb-text);
+  color: #fff;
+  border-color: var(--cb-text);
 }
 
 /* Side-picker modal — bottom sheet on phone, centered card otherwise */
