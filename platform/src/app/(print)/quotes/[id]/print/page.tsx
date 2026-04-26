@@ -5,7 +5,7 @@ import { quotes, quoteItems, restaurants } from '@/db/schema';
 import { verifySession } from '@/lib/session';
 import { getBrandForSlug } from '@/lib/brands';
 import { CATEGORY_LABELS, type MenuCategory } from '@/lib/quote-defaults';
-import type { QuoteConfig } from '@/lib/quote-data';
+import { migrateConfig, type QuoteConfig } from '@/lib/quote-data';
 import QuotePreview from '@/components/quotes/QuotePreview';
 import PrintButton from './PrintButton';
 
@@ -55,7 +55,7 @@ export default async function PrintQuotePage({ params }: { params: Promise<{ id:
 
   // V2 quotes: render from configJson
   if (quote.configJson && typeof quote.configJson === 'object') {
-    const config = quote.configJson as QuoteConfig;
+    const config = migrateConfig(quote.configJson as QuoteConfig);
     return (
       <>
         <style>{`

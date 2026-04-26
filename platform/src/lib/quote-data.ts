@@ -28,6 +28,10 @@ export type QuoteDish = {
   // precio × personas × qty. Used for items like Pastel Personalizado
   // priced at $20/pp and shared across the group.
   perPerson?: boolean;
+  // Guarniciones only. When false, the side cannot be chosen as a Parrilla
+  // cut's "included" side — Espárragos and Tuétano always bill separately.
+  // Defaults to true via `?? true`; only premium sides set this to false.
+  includedEligible?: boolean;
 };
 
 export const CATEGORIAS: QuoteCategoria[] = [
@@ -143,9 +147,9 @@ export const MENU: QuoteDish[] = [
   { id: 'g9', categoria: 'Guarniciones', nombre: 'Guacamole', precio: 75 },
   { id: 'g10', categoria: 'Guarniciones', nombre: 'Granos de Elote', precio: 60 },
   { id: 'g11', categoria: 'Guarniciones', nombre: 'Ensaladilla Rusa', precio: 60 },
-  { id: 'g12', categoria: 'Guarniciones', nombre: 'Espárragos a la Parrilla', precio: 90 },
+  { id: 'g12', categoria: 'Guarniciones', nombre: 'Espárragos a la Parrilla', precio: 90, includedEligible: false },
   { id: 'g13', categoria: 'Guarniciones', nombre: 'Betabel Rostizado', precio: 60 },
-  { id: 'g14', categoria: 'Guarniciones', nombre: 'Tuétano a la Parrilla', precio: 90 },
+  { id: 'g14', categoria: 'Guarniciones', nombre: 'Tuétano a la Parrilla', precio: 90, includedEligible: false },
 
   // Postres
   { id: 'po1', categoria: 'Postres', nombre: 'Cookie Skillet con Helado', precio: 140 },
@@ -201,6 +205,10 @@ export type OpcionesState = {
 
 export type AsadoState = {
   cantidades: Record<string, number>;
+  // Maps a Parrilla dish id (e.g. 'pa20') to the included side dish id
+  // (e.g. 'g1'). Each Parrilla cut comes with one side at no charge — the
+  // included side is NOT mirrored into `cantidades` so it stays free.
+  parrillaSides: Record<string, string>;
   bebidas: string;
   markup: number;
   incluyeIVA: boolean;
@@ -209,6 +217,7 @@ export type AsadoState = {
 
 export type CartaState = {
   cantidades: Record<string, number>;
+  parrillaSides: Record<string, string>;
   bebidas: string;
   markup: number;
   incluyeIVA: boolean;
@@ -302,10 +311,14 @@ export const TEMPLATES: QuoteTemplate[] = [
     idealPara: 'Grupos de 10–40 personas que quieren convivir con todo al centro.',
     modo: 'asado',
     config: {
+      // Guarniciones intentionally omitted — every Parrilla cut here gets
+      // its included side via `parrillaSides` (seeded on template apply).
+      // Add explicit guarniciones below ONLY when the customer wants extra
+      // sides beyond the per-cut included one (or premium sides like
+      // Espárragos/Tuétano which never qualify as "included").
       cantidades: {
         e6: 2, e7: 1, e10: 1,
         pa19: 2, pa20: 1, pa23: 1, pa21: 1, pa24: 1,
-        g1: 2, g2: 1, g7: 2, g9: 1,
       },
       bebidas: 'completo',
       markup: 40,
@@ -376,6 +389,7 @@ export const EMPTY_OPCIONES: OpcionesState = {
 
 export const EMPTY_ASADO: AsadoState = {
   cantidades: {},
+  parrillaSides: {},
   bebidas: 'completo',
   markup: 40,
   incluyeIVA: true,
@@ -384,6 +398,7 @@ export const EMPTY_ASADO: AsadoState = {
 
 export const EMPTY_CARTA: CartaState = {
   cantidades: {},
+  parrillaSides: {},
   bebidas: 'a-la-carta',
   markup: 40,
   incluyeIVA: true,
@@ -402,6 +417,17 @@ export type QuoteConfig = {
   terms?: string;
 };
 
+// Backfills fields added in newer schemas onto a config loaded from the DB.
+// Quotes saved before parrillaSides existed have it undefined — coerce to an
+// empty map so downstream code can read it without nullchecks everywhere.
+export function migrateConfig(c: QuoteConfig): QuoteConfig {
+  return {
+    ...c,
+    asado: { ...c.asado, parrillaSides: c.asado?.parrillaSides ?? {} },
+    carta: { ...c.carta, parrillaSides: c.carta?.parrillaSides ?? {} },
+  };
+}
+
 export function emptyConfig(modo: QuoteModo = 'opciones'): QuoteConfig {
   return {
     modo,
@@ -413,8 +439,8 @@ export function emptyConfig(modo: QuoteModo = 'opciones'): QuoteConfig {
       postres: [],
       tiers: EMPTY_OPCIONES.tiers.map((t) => ({ ...t })),
     },
-    asado: { ...EMPTY_ASADO, cantidades: {} },
-    carta: { ...EMPTY_CARTA, cantidades: {} },
+    asado: { ...EMPTY_ASADO, cantidades: {}, parrillaSides: {} },
+    carta: { ...EMPTY_CARTA, cantidades: {}, parrillaSides: {} },
     terms: DEFAULT_TERMS,
   };
 }
@@ -429,6 +455,17 @@ export function dishName(id: string): string {
 
 export function packageById(id: string): BeveragePackage | undefined {
   return PAQUETES_BEBIDAS.find((p) => p.id === id);
+}
+
+export function isParrilla(dishId: string): boolean {
+  return dishById(dishId)?.categoria === 'Parrilla';
+}
+
+// Sides eligible to be a Parrilla cut's free included side.
+// Premium guarniciones (Espárragos, Tuétano) are excluded — they always bill
+// through Guarniciones as paid add-ons.
+export function eligibleIncludedSides(): QuoteDish[] {
+  return MENU.filter((d) => d.categoria === 'Guarniciones' && d.includedEligible !== false);
 }
 
 // ── Pricing helpers ─────────────────────────────────────────────────────────

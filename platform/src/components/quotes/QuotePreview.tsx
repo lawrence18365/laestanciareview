@@ -55,26 +55,34 @@ export default function QuotePreview({
   const opcionesSopasDishes = modo === 'opciones' ? config.opciones.sopas.map(dishById).filter(Boolean) : [];
   const opcionesPostresDishes = modo === 'opciones' ? config.opciones.postres.map(dishById).filter(Boolean) : [];
 
-  function asadoItemsPorCat(cat: QuoteCategoria) {
+  type LineItem = { id: string; nombre: string; cantidad: number; includedSideName?: string };
+
+  function asadoItemsPorCat(cat: QuoteCategoria): LineItem[] {
     if (modo !== 'asado') return [];
+    const sides = config.asado.parrillaSides ?? {};
     return Object.entries(config.asado.cantidades)
-      .map(([id, cantidad]) => {
+      .map(([id, cantidad]): LineItem | null => {
         const d = dishById(id);
         if (!d || d.categoria !== cat || cantidad <= 0) return null;
-        return { id, nombre: d.nombre, cantidad };
+        const sideId = sides[id];
+        const includedSideName = sideId ? dishById(sideId)?.nombre : undefined;
+        return { id, nombre: d.nombre, cantidad, includedSideName };
       })
-      .filter((x): x is { id: string; nombre: string; cantidad: number } => x !== null);
+      .filter((x): x is LineItem => x !== null);
   }
 
-  function cartaItemsPorCat(cat: QuoteCategoria) {
+  function cartaItemsPorCat(cat: QuoteCategoria): LineItem[] {
     if (modo !== 'carta') return [];
+    const sides = config.carta.parrillaSides ?? {};
     return Object.entries(config.carta.cantidades)
-      .map(([id, cantidad]) => {
+      .map(([id, cantidad]): LineItem | null => {
         const d = dishById(id);
         if (!d || d.categoria !== cat || cantidad <= 0) return null;
-        return { id, nombre: d.nombre, cantidad };
+        const sideId = sides[id];
+        const includedSideName = sideId ? dishById(sideId)?.nombre : undefined;
+        return { id, nombre: d.nombre, cantidad, includedSideName };
       })
-      .filter((x): x is { id: string; nombre: string; cantidad: number } => x !== null);
+      .filter((x): x is LineItem => x !== null);
   }
 
   const tituloMenu =
@@ -269,9 +277,16 @@ export default function QuotePreview({
                 <div key={cat} style={{ textAlign: 'center' }}>
                   <p className="doc-mini" style={{ marginBottom: 8 }}>{cat}</p>
                   {items.map((item) => (
-                    <p key={item.id} className="small" style={{ margin: '2px 0' }}>
-                      <span className="num">{item.cantidad}</span> × {item.nombre}
-                    </p>
+                    <div key={item.id} style={{ margin: '2px 0' }}>
+                      <p className="small" style={{ margin: 0 }}>
+                        <span className="num">{item.cantidad}</span> × {item.nombre}
+                      </p>
+                      {item.includedSideName && (
+                        <p className="small text-3" style={{ margin: '2px 0 0', fontStyle: 'italic' }}>
+                          ↳ Guarnición: {item.includedSideName} <span style={{ fontStyle: 'normal' }}>(incluida)</span>
+                        </p>
+                      )}
+                    </div>
                   ))}
                 </div>
               );
@@ -295,10 +310,17 @@ export default function QuotePreview({
                 <div key={cat} style={{ textAlign: 'center' }}>
                   <p className="doc-mini" style={{ marginBottom: 8 }}>{cat}</p>
                   {items.map((item) => (
-                    <p key={item.id} className="small" style={{ margin: '2px 0' }}>
-                      {item.cantidad !== evento.personas && <><span className="num">{item.cantidad}</span> × </>}
-                      {item.nombre}
-                    </p>
+                    <div key={item.id} style={{ margin: '2px 0' }}>
+                      <p className="small" style={{ margin: 0 }}>
+                        {item.cantidad !== evento.personas && <><span className="num">{item.cantidad}</span> × </>}
+                        {item.nombre}
+                      </p>
+                      {item.includedSideName && (
+                        <p className="small text-3" style={{ margin: '2px 0 0', fontStyle: 'italic' }}>
+                          ↳ Guarnición: {item.includedSideName} <span style={{ fontStyle: 'normal' }}>(incluida)</span>
+                        </p>
+                      )}
+                    </div>
                   ))}
                 </div>
               );

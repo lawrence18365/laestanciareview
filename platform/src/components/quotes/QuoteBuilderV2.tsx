@@ -8,12 +8,30 @@ import {
   PAQUETES_BEBIDAS,
   TEMPLATES,
   computePricing,
+  dishById,
+  eligibleIncludedSides,
   emptyConfig,
   fmtMXN,
+  isParrilla,
   type QuoteCategoria,
   type QuoteConfig,
   type QuoteTemplate,
 } from '@/lib/quote-data';
+
+// Default included side seeded when a Parrilla cut lands in the quote via
+// template apply (or as a safety net) — Papas a la Francesa, the most
+// commonly-paired side. Hostess can swap it from the row picker.
+const DEFAULT_INCLUDED_SIDE_ID = 'g1';
+
+// When applying a template, seed an included side for every Parrilla cut
+// in `cantidades` so the hostess sees a coherent quote on first load.
+function seedParrillaSides(cantidades: Record<string, number>): Record<string, string> {
+  const sides: Record<string, string> = {};
+  for (const id of Object.keys(cantidades)) {
+    if (isParrilla(id)) sides[id] = DEFAULT_INCLUDED_SIDE_ID;
+  }
+  return sides;
+}
 import QuotePreview from './QuotePreview';
 
 type Tab = 'plantillas' | 'constructor' | 'carta' | 'preview';
@@ -41,6 +59,10 @@ export default function QuoteBuilderV2({
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState('');
   const [copied, setCopied] = useState(false);
+  const [sidePicker, setSidePicker] = useState<{
+    mode: 'asado' | 'carta';
+    parrillaId: string;
+  } | null>(null);
   const waTextRef = useRef<string>('');
 
   const folio = useMemo(() => {
@@ -133,18 +155,22 @@ export default function QuoteBuilderV2({
           incluyeServicio: t.config.incluyeServicio ?? c.opciones.incluyeServicio,
         };
       } else if (t.modo === 'asado') {
+        const cantidades = t.config.cantidades ?? {};
         next.asado = {
           ...c.asado,
-          cantidades: t.config.cantidades ?? {},
+          cantidades,
+          parrillaSides: seedParrillaSides(cantidades),
           bebidas: t.config.bebidas ?? c.asado.bebidas,
           markup: t.config.markup ?? c.asado.markup,
           incluyeIVA: t.config.incluyeIVA ?? c.asado.incluyeIVA,
           incluyeServicio: t.config.incluyeServicio ?? c.asado.incluyeServicio,
         };
       } else {
+        const cantidades = t.config.cantidades ?? {};
         next.carta = {
           ...c.carta,
-          cantidades: t.config.cantidades ?? {},
+          cantidades,
+          parrillaSides: seedParrillaSides(cantidades),
           bebidas: t.config.bebidas ?? c.carta.bebidas,
           markup: t.config.markup ?? c.carta.markup,
           incluyeIVA: t.config.incluyeIVA ?? c.carta.incluyeIVA,
@@ -158,22 +184,85 @@ export default function QuoteBuilderV2({
 
   function setAsadoCantidad(id: string, qty: number) {
     const safe = Math.max(0, qty);
+    const wasZero = (config.asado.cantidades[id] || 0) === 0;
     setConfig((c) => {
-      const next = { ...c.asado.cantidades };
-      if (safe === 0) delete next[id]; else next[id] = safe;
-      return { ...c, asado: { ...c.asado, cantidades: next } };
+      const nextCantidades = { ...c.asado.cantidades };
+      const nextSides = { ...c.asado.parrillaSides };
+      if (safe === 0) {
+        delete nextCantidades[id];
+        delete nextSides[id]; // included side travels with the cut
+      } else {
+        nextCantidades[id] = safe;
+        if (isParrilla(id) && !nextSides[id]) {
+          nextSides[id] = DEFAULT_INCLUDED_SIDE_ID; // seed; picker can reopen
+        }
+      }
+      return {
+        ...c,
+        asado: { ...c.asado, cantidades: nextCantidades, parrillaSides: nextSides },
+      };
     });
     setSaved(false);
+    // First time hostess adds a Parrilla cut, prompt for the included side
+    // so the choice is intentional rather than silently defaulted.
+    if (wasZero && safe > 0 && isParrilla(id)) {
+      setSidePicker({ mode: 'asado', parrillaId: id });
+    }
   }
 
   function setCartaCantidad(id: string, qty: number) {
     const safe = Math.max(0, qty);
+    const wasZero = (config.carta.cantidades[id] || 0) === 0;
     setConfig((c) => {
-      const next = { ...c.carta.cantidades };
-      if (safe === 0) delete next[id]; else next[id] = safe;
-      return { ...c, carta: { ...c.carta, cantidades: next } };
+      const nextCantidades = { ...c.carta.cantidades };
+      const nextSides = { ...c.carta.parrillaSides };
+      if (safe === 0) {
+        delete nextCantidades[id];
+        delete nextSides[id];
+      } else {
+        nextCantidades[id] = safe;
+        if (isParrilla(id) && !nextSides[id]) {
+          nextSides[id] = DEFAULT_INCLUDED_SIDE_ID;
+        }
+      }
+      return {
+        ...c,
+        carta: { ...c.carta, cantidades: nextCantidades, parrillaSides: nextSides },
+      };
     });
     setSaved(false);
+    if (wasZero && safe > 0 && isParrilla(id)) {
+      setSidePicker({ mode: 'carta', parrillaId: id });
+    }
+  }
+
+  function pickParrillaSide(sideId: string) {
+    if (!sidePicker) return;
+    const { mode, parrillaId } = sidePicker;
+    setConfig((c) => {
+      if (mode === 'asado') {
+        return {
+          ...c,
+          asado: {
+            ...c.asado,
+            parrillaSides: { ...c.asado.parrillaSides, [parrillaId]: sideId },
+          },
+        };
+      }
+      return {
+        ...c,
+        carta: {
+          ...c.carta,
+          parrillaSides: { ...c.carta.parrillaSides, [parrillaId]: sideId },
+        },
+      };
+    });
+    setSaved(false);
+    setSidePicker(null);
+  }
+
+  function openSidePicker(mode: 'asado' | 'carta', parrillaId: string) {
+    setSidePicker({ mode, parrillaId });
   }
 
   // ── Save ────────────────────────────────────────────────────────────────
@@ -491,6 +580,7 @@ export default function QuoteBuilderV2({
                   patchAsado={patchAsado}
                   menuPorCategoria={menuPorCategoria}
                   setAsadoCantidad={setAsadoCantidad}
+                  openSidePicker={(id) => openSidePicker('asado', id)}
                 />
               )}
               {config.modo === 'carta' && (
@@ -501,6 +591,7 @@ export default function QuoteBuilderV2({
                   categoriaActiva={categoriaActiva}
                   setCategoriaActiva={setCategoriaActiva}
                   setCartaCantidad={setCartaCantidad}
+                  openSidePicker={(id) => openSidePicker('carta', id)}
                 />
               )}
             </div>
@@ -607,6 +698,19 @@ export default function QuoteBuilderV2({
             logoSrc={logoSrc}
           />
         </main>
+      )}
+
+      {sidePicker && (
+        <SidePickerModal
+          parrillaName={dishById(sidePicker.parrillaId)?.nombre ?? ''}
+          currentSideId={
+            sidePicker.mode === 'asado'
+              ? config.asado.parrillaSides[sidePicker.parrillaId]
+              : config.carta.parrillaSides[sidePicker.parrillaId]
+          }
+          onPick={pickParrillaSide}
+          onClose={() => setSidePicker(null)}
+        />
       )}
     </div>
   );
@@ -851,12 +955,13 @@ function OpcionesMode({
 }
 
 function AsadoMode({
-  config, patchAsado, menuPorCategoria, setAsadoCantidad,
+  config, patchAsado, menuPorCategoria, setAsadoCantidad, openSidePicker,
 }: {
   config: QuoteConfig;
   patchAsado: (p: Partial<QuoteConfig['asado']>) => void;
   menuPorCategoria: (cat: QuoteCategoria) => typeof MENU;
   setAsadoCantidad: (id: string, qty: number) => void;
+  openSidePicker: (parrillaId: string) => void;
 }) {
   const { asado } = config;
   return (
@@ -869,13 +974,29 @@ function AsadoMode({
           <div style={{ maxHeight: 288, overflowY: 'auto', paddingRight: 4 }} className="scroll-thin">
             {menuPorCategoria(cat).map((dish) => {
               const qty = asado.cantidades[dish.id] || 0;
+              const isParr = dish.categoria === 'Parrilla';
+              const sideId = isParr ? asado.parrillaSides[dish.id] : undefined;
+              const sideName = sideId ? dishById(sideId)?.nombre : undefined;
               return (
-                <div key={dish.id} className={`item-row ${qty > 0 ? 'selected' : ''}`} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <p className="small" style={{ margin: 0 }}>{dish.nombre}</p>
-                    <p className="text-3" style={{ fontSize: 12, marginTop: 2 }}>{(dish.peso ? dish.peso + ' · ' : '')}${dish.precio}</p>
+                <div key={dish.id} className={`item-row ${qty > 0 ? 'selected' : ''}`} style={{ display: 'flex', flexDirection: 'column', alignItems: 'stretch', gap: 8 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <p className="small" style={{ margin: 0 }}>{dish.nombre}</p>
+                      <p className="text-3" style={{ fontSize: 12, marginTop: 2 }}>{(dish.peso ? dish.peso + ' · ' : '')}${dish.precio}</p>
+                    </div>
+                    <QtyControl qty={qty} onChange={(q) => setAsadoCantidad(dish.id, q)} />
                   </div>
-                  <QtyControl qty={qty} onChange={(q) => setAsadoCantidad(dish.id, q)} />
+                  {qty > 0 && isParr && (
+                    <button
+                      type="button"
+                      onClick={() => openSidePicker(dish.id)}
+                      className="parrilla-side-link"
+                    >
+                      <span className="parrilla-side-arrow">↳</span>
+                      <span className="parrilla-side-text">Guarnición incluida: <strong>{sideName ?? 'Elegir'}</strong></span>
+                      <span className="parrilla-side-change">Cambiar</span>
+                    </button>
+                  )}
                 </div>
               );
             })}
@@ -905,7 +1026,7 @@ function AsadoMode({
 }
 
 function CartaMode({
-  config, patchCarta, menuPorCategoria, categoriaActiva, setCategoriaActiva, setCartaCantidad,
+  config, patchCarta, menuPorCategoria, categoriaActiva, setCategoriaActiva, setCartaCantidad, openSidePicker,
 }: {
   config: QuoteConfig;
   patchCarta: (p: Partial<QuoteConfig['carta']>) => void;
@@ -913,6 +1034,7 @@ function CartaMode({
   categoriaActiva: QuoteCategoria;
   setCategoriaActiva: (cat: QuoteCategoria) => void;
   setCartaCantidad: (id: string, qty: number) => void;
+  openSidePicker: (parrillaId: string) => void;
 }) {
   const { carta } = config;
   return (
@@ -944,20 +1066,36 @@ function CartaMode({
       <div style={{ maxHeight: 500, overflowY: 'auto', paddingRight: 4 }} className="scroll-thin">
         {menuPorCategoria(categoriaActiva).map((dish) => {
           const qty = carta.cantidades[dish.id] || 0;
+          const isParr = dish.categoria === 'Parrilla';
+          const sideId = isParr ? carta.parrillaSides[dish.id] : undefined;
+          const sideName = sideId ? dishById(sideId)?.nombre : undefined;
           return (
-            <div key={dish.id} className={`item-row ${qty > 0 ? 'selected' : ''}`} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
-                  <span className="small" style={{ fontWeight: 500 }}>{dish.nombre}</span>
-                  {dish.peso && <span className="text-3" style={{ fontSize: 12 }}>{dish.peso}</span>}
-                  {dish.tag && <span className="text-3" style={{ fontSize: 12 }}>· {dish.tag}</span>}
+            <div key={dish.id} className={`item-row ${qty > 0 ? 'selected' : ''}`} style={{ display: 'flex', flexDirection: 'column', alignItems: 'stretch', gap: 8 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
+                    <span className="small" style={{ fontWeight: 500 }}>{dish.nombre}</span>
+                    {dish.peso && <span className="text-3" style={{ fontSize: 12 }}>{dish.peso}</span>}
+                    {dish.tag && <span className="text-3" style={{ fontSize: 12 }}>· {dish.tag}</span>}
+                  </div>
+                  {dish.desc && <p className="text-3" style={{ fontSize: 12, marginTop: 2 }}>{dish.desc}</p>}
                 </div>
-                {dish.desc && <p className="text-3" style={{ fontSize: 12, marginTop: 2 }}>{dish.desc}</p>}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span className="small text-3 num" style={{ whiteSpace: 'nowrap' }}>${dish.precio}</span>
+                  <QtyControl qty={qty} onChange={(q) => setCartaCantidad(dish.id, q)} />
+                </div>
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <span className="small text-3 num" style={{ whiteSpace: 'nowrap' }}>${dish.precio}</span>
-                <QtyControl qty={qty} onChange={(q) => setCartaCantidad(dish.id, q)} />
-              </div>
+              {qty > 0 && isParr && (
+                <button
+                  type="button"
+                  onClick={() => openSidePicker(dish.id)}
+                  className="parrilla-side-link"
+                >
+                  <span className="parrilla-side-arrow">↳</span>
+                  <span className="parrilla-side-text">Guarnición incluida: <strong>{sideName ?? 'Elegir'}</strong></span>
+                  <span className="parrilla-side-change">Cambiar</span>
+                </button>
+              )}
             </div>
           );
         })}
@@ -1007,6 +1145,50 @@ function QtyControl({ qty, onChange }: { qty: number; onChange: (q: number) => v
         className="qty-input num"
       />
       <button type="button" onClick={() => onChange(qty + 1)} className="qty-btn">+</button>
+    </div>
+  );
+}
+
+function SidePickerModal({
+  parrillaName, currentSideId, onPick, onClose,
+}: {
+  parrillaName: string;
+  currentSideId: string | undefined;
+  onPick: (sideId: string) => void;
+  onClose: () => void;
+}) {
+  const sides = eligibleIncludedSides();
+  return (
+    <div className="side-picker-backdrop" onClick={onClose} role="dialog" aria-modal="true">
+      <div className="side-picker-sheet" onClick={(e) => e.stopPropagation()}>
+        <div className="side-picker-header">
+          <div>
+            <p className="mini" style={{ marginBottom: 4 }}>Incluida sin costo</p>
+            <h3 className="h-2" style={{ margin: 0 }}>Elige la guarnición</h3>
+            {parrillaName && <p className="small text-2" style={{ margin: '4px 0 0' }}>Para {parrillaName}</p>}
+          </div>
+          <button type="button" onClick={onClose} className="side-picker-close" aria-label="Cerrar">×</button>
+        </div>
+        <div className="side-picker-list scroll-thin">
+          {sides.map((side) => {
+            const selected = side.id === currentSideId;
+            return (
+              <button
+                key={side.id}
+                type="button"
+                onClick={() => onPick(side.id)}
+                className={`side-picker-option ${selected ? 'selected' : ''}`}
+              >
+                <span className="small" style={{ fontWeight: 500 }}>{side.nombre}</span>
+                {selected && <span className="mini" style={{ color: 'var(--cb-text)' }}>✓ Elegida</span>}
+              </button>
+            );
+          })}
+        </div>
+        <p className="text-3" style={{ fontSize: 12, padding: '12px 20px 0', margin: 0, borderTop: '1px solid var(--cb-border)' }}>
+          Espárragos y Tuétano siempre se cobran aparte. Agrégalos en la sección Guarniciones si el cliente los quiere.
+        </p>
+      </div>
     </div>
   );
 }
@@ -1274,6 +1456,115 @@ const CSS = `
 .cotizador-root .scroll-thin::-webkit-scrollbar { width: 5px; height: 5px; }
 .cotizador-root .scroll-thin::-webkit-scrollbar-track { background: transparent; }
 .cotizador-root .scroll-thin::-webkit-scrollbar-thumb { background: var(--cb-border-strong); border-radius: 2px; }
+
+/* Included-side affordance under each Parrilla row */
+.cotizador-root .parrilla-side-link {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 6px;
+  width: 100%;
+  margin: 0;
+  padding: 6px 10px;
+  border: 1px dashed var(--cb-border-strong);
+  border-radius: 5px;
+  background: #fff;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 12px;
+  color: var(--cb-text-2);
+  text-align: left;
+  transition: border-color 0.15s, background 0.15s;
+}
+.cotizador-root .parrilla-side-link:hover { border-color: var(--cb-text); background: var(--cb-surface-2); }
+.cotizador-root .parrilla-side-arrow { color: var(--cb-text-3); }
+.cotizador-root .parrilla-side-text { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cotizador-root .parrilla-side-text strong { color: var(--cb-text); font-weight: 600; }
+.cotizador-root .parrilla-side-change {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--cb-text);
+  white-space: nowrap;
+}
+
+/* Side-picker modal — bottom sheet on phone, centered card otherwise */
+.cotizador-root .side-picker-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 10, 10, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  padding: 20px;
+}
+.cotizador-root .side-picker-sheet {
+  background: #fff;
+  border-radius: 12px;
+  border: 1px solid var(--cb-border);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.18);
+  width: 100%;
+  max-width: 440px;
+  max-height: min(80vh, 640px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.cotizador-root .side-picker-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 20px 20px 16px;
+  border-bottom: 1px solid var(--cb-border);
+}
+.cotizador-root .side-picker-close {
+  width: 32px; height: 32px;
+  border-radius: 6px;
+  border: 1px solid var(--cb-border);
+  background: #fff;
+  color: var(--cb-text-2);
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+  display: inline-flex; align-items: center; justify-content: center;
+}
+.cotizador-root .side-picker-close:hover { border-color: var(--cb-text); color: var(--cb-text); }
+.cotizador-root .side-picker-list {
+  display: flex;
+  flex-direction: column;
+  padding: 8px;
+  overflow-y: auto;
+  gap: 4px;
+}
+.cotizador-root .side-picker-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: #fff;
+  cursor: pointer;
+  font-family: inherit;
+  text-align: left;
+  color: var(--cb-text);
+  transition: background 0.12s, border-color 0.12s;
+}
+.cotizador-root .side-picker-option:hover { background: var(--cb-surface-2); }
+.cotizador-root .side-picker-option.selected { background: var(--cb-surface-2); border-color: var(--cb-border-strong); }
+
+@media (max-width: 640px) {
+  .cotizador-root .side-picker-backdrop { align-items: flex-end; padding: 0; }
+  .cotizador-root .side-picker-sheet {
+    border-radius: 16px 16px 0 0;
+    max-width: 100%;
+    max-height: 85vh;
+  }
+}
 
 @media print {
   .cotizador-root .cb-header,

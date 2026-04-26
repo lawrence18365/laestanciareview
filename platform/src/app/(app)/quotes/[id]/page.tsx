@@ -5,7 +5,7 @@ import { quotes, restaurants } from '@/db/schema';
 import { verifySession } from '@/lib/session';
 import { getBrandForSlug } from '@/lib/brands';
 import QuoteBuilderV2 from '@/components/quotes/QuoteBuilderV2';
-import { emptyConfig, type QuoteConfig } from '@/lib/quote-data';
+import { emptyConfig, migrateConfig, type QuoteConfig } from '@/lib/quote-data';
 
 export default async function EditQuotePage({ params }: { params: Promise<{ id: string }> }) {
   const session = await verifySession();
@@ -35,7 +35,7 @@ export default async function EditQuotePage({ params }: { params: Promise<{ id: 
   // blank config seeded with the top-level client/event data.
   let initialConfig: QuoteConfig;
   if (quote.configJson && typeof quote.configJson === 'object') {
-    initialConfig = quote.configJson as QuoteConfig;
+    initialConfig = migrateConfig(quote.configJson as QuoteConfig);
   } else {
     const c = emptyConfig();
     c.evento = {
