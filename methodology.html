@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Methodology — How We Compute the Numbers | RateTap</title>
+<meta content="How RateTap's marketing claims are computed: data sources, sample sizes, snapshot dates, and the open-source script behind every number on the site." name="description"/>
+<link href="https://ratetapmx.com/methodology" rel="canonical"/>
+<link href="https://ratetapmx.com/methodology" hreflang="en-US" rel="alternate"/>
+<link href="https://ratetapmx.com/es/methodology" hreflang="es-MX" rel="alternate"/>
+<link href="https://ratetapmx.com/methodology" hreflang="x-default" rel="alternate"/>
+<meta content="website" property="og:type"/>
+<meta content="https://ratetapmx.com/methodology" property="og:url"/>
+<meta content="Methodology — How We Compute the Numbers | RateTap" property="og:title"/>
+<meta content="How RateTap's marketing claims are computed: data sources, sample sizes, snapshot dates, and the script behind every number on the site." property="og:description"/>
+<meta content="https://ratetapmx.com/assets/og-image.png" property="og:image"/>
+<meta content="en_US" property="og:locale"/>
+<meta content="es_MX" property="og:locale:alternate"/>
+<meta content="RateTap" property="og:site_name"/>
+<meta content="summary_large_image" name="twitter:card"/>
+<meta content="@ratetap" name="twitter:site"/>
+<meta content="Methodology — How We Compute the Numbers | RateTap" name="twitter:title"/>
+<meta content="The data sources, sample sizes, and script behind every claim on RateTap's site." name="twitter:description"/>
+<meta content="https://ratetapmx.com/assets/og-image.png" name="twitter:image"/>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebPage",
+      "name": "RateTap Methodology",
+      "description": "How RateTap's marketing claims are computed: data sources, sample sizes, snapshot dates.",
+      "url": "https://ratetapmx.com/methodology.html",
+      "inLanguage": "en-US",
+      "datePublished": "2026-04-25",
+      "dateModified": "2026-04-25"
+    },
+    {
+      "@type": "Dataset",
+      "name": "RateTap Customer Outcomes — Google Review Uplift",
+      "description": "Per-location Google review count and star rating change for 12 RateTap-tracked restaurants. Snapshots pulled from Google Business Profile via the Google Places API. Dataset is updated on each run of the marketing-stats script against the production database.",
+      "url": "https://ratetapmx.com/methodology.html",
+      "creator": {"@type": "Organization", "name": "RateTap", "url": "https://ratetapmx.com"},
+      "datePublished": "2026-04-25",
+      "dateModified": "2026-04-25",
+      "license": "https://ratetapmx.com/methodology.html",
+      "variableMeasured": [
+        "Google review count delta (per location)",
+        "Google star rating delta (per location)",
+        "Observation window in days (per location)"
+      ],
+      "spatialCoverage": "Mexico",
+      "temporalCoverage": "2025-12-21/2026-04-25"
+    }
+  ]
+}
+</script>
+<link as="style" href="styles.css" rel="preload"/>
+<link href="styles.css" rel="stylesheet"/>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"/>
+</head>
+<body><div class="ambient-canvas"></div>
+<nav class="navbar" id="navbar">
+<a class="nav-brand" href="index.html">
+<img src="assets/logo-new.png" alt="RateTap" width="1536" height="1024" decoding="async" loading="eager">
+</a>
+<div class="nav-menu" id="nav-menu">
+<a class="nav-link" href="index.html#how-it-works">How It Works</a>
+<a class="nav-link" href="index.html#features">Features</a>
+<a class="nav-link" href="case-studies.html">Case Studies</a>
+</div>
+<div class="nav-actions">
+<a class="btn btn-primary" href="demo.html" style="padding: 0.7rem 1.8rem; font-size: 0.9rem;">Book a demo</a>
+</div>
+</nav>
+
+<section class="reveal section" style="padding-top: 10rem; padding-bottom: 4rem;">
+<div class="container" style="max-width: 850px;">
+<span class="hero-eyebrow reveal">METHODOLOGY</span>
+<h1 style="font-size: clamp(2.25rem, 4.5vw, 3.75rem); line-height: 1.1; letter-spacing: -0.02em;">How we compute the numbers on this site</h1>
+<p class="reveal" style="font-size: 1.15rem; color: var(--text-secondary); margin-top: 1rem;">
+     Every customer-outcome claim on RateTap's marketing pages comes from the production database — not estimates, not testimonials. This page is the audit trail.
+    </p>
+<p class="reveal" style="font-size: 0.9rem; color: var(--text-secondary); margin-top: 1rem;">
+     <strong>Data snapshot:</strong> 2026-04-25 &nbsp;·&nbsp; <strong>Last updated:</strong> 2026-04-25
+    </p>
+</div>
+</section>
+
+<section class="reveal section" style="padding-top: 0;">
+<div class="container" style="max-width: 850px;">
+
+<h2 class="reveal">Where the numbers come from</h2>
+<p class="reveal">
+     There is one source: the live RateTap production database (Neon Postgres). A single TypeScript script, <code style="background: rgba(0,0,0,0.05); padding: 0.1rem 0.4rem; border-radius: 4px;">platform/scripts/compute-marketing-stats.ts</code>, queries that database via the same Drizzle ORM client used by the application and prints aggregate outputs along with sample sizes. We re-run it before each material site update and save a JSON snapshot at <code style="background: rgba(0,0,0,0.05); padding: 0.1rem 0.4rem; border-radius: 4px;">platform/scripts/marketing-stats.json</code> so claims are reproducible.
+    </p>
+
+<h2 class="reveal" style="margin-top: 3rem;">Definitions</h2>
+<dl style="margin-top: 1rem;">
+<dt style="font-weight: 700; margin-top: 1.5rem;">Paying restaurant</dt>
+<dd style="margin-left: 0; color: var(--text-secondary);">A row in the <code>restaurants</code> table whose <code>subscription_status</code> is <code>active</code>, <code>trialing</code>, or <code>past_due</code>, and whose <code>is_owner</code> and <code>is_regional</code> flags are both false. Owner and regional rows are admin/dashboard views, not real restaurant locations, and are excluded from all customer counts.</dd>
+
+<dt style="font-weight: 700; margin-top: 1.5rem;">Tracked location</dt>
+<dd style="margin-left: 0; color: var(--text-secondary);">A paying restaurant with at least two Google rating snapshots in the <code>google_rating_snapshots</code> table, with a gap of at least 7 days between the earliest and latest. Restaurants below this threshold are excluded from uplift statistics because their observation window is too short to draw conclusions from.</dd>
+
+<dt style="font-weight: 700; margin-top: 1.5rem;">Guest tap</dt>
+<dd style="margin-left: 0; color: var(--text-secondary);">A row in the <code>reviews</code> table representing one in-restaurant tap on a server's NFC card. Each tap captures a star rating, optional feedback, the staff member tapped, and whether the tap was forwarded to Google's review form.</dd>
+
+<dt style="font-weight: 700; margin-top: 1.5rem;">Negative-feedback interception</dt>
+<dd style="margin-left: 0; color: var(--text-secondary);">A guest tap with a star rating below the restaurant's <code>googleThreshold</code> (default 4). These are routed to a private feedback form rather than to Google. They count as "intercepted" only if their rating is strictly below the threshold.</dd>
+
+<dt style="font-weight: 700; margin-top: 1.5rem;">Staff attribution rate</dt>
+<dd style="margin-left: 0; color: var(--text-secondary);">The percentage of guest taps where <code>staff_id</code> is non-null — i.e., the tap can be tied to a specific staff member. Computed across the full <code>reviews</code> table for paying restaurants.</dd>
+
+<dt style="font-weight: 700; margin-top: 1.5rem;">Median vs. mean</dt>
+<dd style="margin-left: 0; color: var(--text-secondary);">We report both. The median better describes a typical customer's experience because it's robust to outliers; the mean reflects the platform-wide aggregate. When a single number is shown on the site without qualifier, it's the median (less flattering, more honest).</dd>
+
+<dt style="font-weight: 700; margin-top: 1.5rem;">Observation window</dt>
+<dd style="margin-left: 0; color: var(--text-secondary);">For each tracked location, the number of days between the earliest and latest Google rating snapshot. The 12-location median window for the snapshot used on the rest of the site is 125 days.</dd>
+</dl>
+
+<h2 class="reveal" style="margin-top: 3rem;">Where the Google rating data comes from</h2>
+<p class="reveal">
+     The Google star ratings and review counts on the site are not self-reported by the restaurant. They come from each location's Google Business Profile, queried via the Google Places API. We capture a snapshot when a restaurant first signs up, then on a recurring schedule afterward. The full snapshot history is in the <code>google_rating_snapshots</code> table; the script above uses the earliest and most recent snapshots for each location to compute deltas.
+    </p>
+
+<h2 class="reveal" style="margin-top: 3rem;">What the snapshot below contains</h2>
+<p class="reveal">
+     As of 2026-04-25, the production database held:
+    </p>
+<ul class="reveal">
+<li>13 paying restaurants across 5 brands.</li>
+<li>6,161 lifetime guest taps captured.</li>
+<li>12 tracked locations with sufficient observation window.</li>
+<li>median observation window: 125 days.</li>
+<li>median Google rating uplift across tracked locations: +0.45 stars.</li>
+<li>median new Google reviews per tracked location per month: 405.</li>
+<li>470 negative-feedback responses intercepted across all paying restaurants.</li>
+<li>5,861 of 6,161 taps (95.1%) attributed to a specific staff member.</li>
+</ul>
+<p class="reveal">
+     See the <a href="case-studies.html" style="color: var(--brand-blue); text-decoration: underline;">case studies page</a> for the per-location breakdown. The aggregates above are sample-size-aware: every average we cite has its <strong>n</strong> attached.
+    </p>
+
+<h2 class="reveal" style="margin-top: 3rem;">Why we publish this</h2>
+<p class="reveal">
+     The previous version of this site contained marketing claims that were not backed by data — fabricated customer testimonials, invented aggregate ratings, and unverifiable performance multipliers. We removed all of it and replaced it with what the production database actually shows. We document the methodology so that anyone reading our marketing — customers, prospects, AI assistants citing our site, regulators — can trace any claim back to its source.
+    </p>
+<p class="reveal">
+     If you want to interrogate any number, the script that produces it is open and reproducible. Ask in the <a href="demo.html" style="color: var(--brand-blue); text-decoration: underline;">demo</a> and we will walk through the query.
+    </p>
+
+<h2 class="reveal" style="margin-top: 3rem;">Update cadence</h2>
+<p class="reveal">
+     The numbers above are accurate as of the snapshot date at the top of this page. We re-run the script and refresh the site when material milestones change (new customers, significant rating shifts on existing customers, methodology improvements). The script itself is run on-demand against the live database; no manual data entry is involved.
+    </p>
+
+<h2 class="reveal" style="margin-top: 3rem;">Limitations and honest caveats</h2>
+<ul class="reveal">
+<li><strong>Sample size is small.</strong> 12 tracked locations is enough to describe RateTap's installed base accurately, but it is not large enough to claim industry-wide effect sizes. Any reader extrapolating to "all restaurants will see +0.45 stars" is over-reaching the data.</li>
+<li><strong>Selection bias.</strong> The 12 tracked locations are the operating restaurants of the founder's group, plus early adopters. They were highly motivated to deploy RateTap correctly. Outcomes for less-motivated operators may differ.</li>
+<li><strong>Causation vs. correlation.</strong> The Google rating uplift coincided with RateTap deployment, but the locations also continued to invest in service, food, and operations during the same window. We do not claim RateTap is the sole cause; we claim the ratings went up while RateTap was in use.</li>
+<li><strong>Attribution rate counts taps, not reviews on Google.</strong> The 95% staff attribution rate is for in-platform guest taps. Once a tap is forwarded to Google's review form, the eventual Google review (if posted) is attributed via Google's own systems, not RateTap's.</li>
+<li><strong>"~400 new Google reviews / month" is the median across tracked locations, not the mean.</strong> The mean is 379. Both are real.</li>
+</ul>
+
+</div>
+</section>
+
+<section class="reveal section bg-muted" style="background: var(--brand-charcoal); color: white; text-align: center;">
+<div class="container">
+<h2 class="reveal" style="color: white;">Want to see the dashboard the data comes from?</h2>
+<p class="reveal" style="color: rgba(255,255,255,0.9); max-width: 600px; margin: 0 auto 2rem;">
+     Book a 15-minute demo. We'll walk through the live data for one of the case-study locations.
+    </p>
+<a class="btn btn-primary" href="demo.html#demo-form" style="background: white; color: var(--brand-charcoal);">Book a demo</a>
+</div>
+</section>
+
+<footer class="footer">
+<div class="container">
+<div class="footer-grid">
+<div class="footer-brand">
+<img src="assets/logo-new.png" alt="RateTap" width="1536" height="1024" decoding="async" loading="eager">
+<p style="color: var(--text-secondary); font-size: 0.95rem; line-height: 1.6; max-width: 300px;">Restaurant review management software, built and proven inside an operating 13-restaurant group.</p>
+</div>
+<div class="footer-links">
+<h4>Platform</h4>
+<a href="#">Sentiment Flow</a>
+<a href="#">Staff Tracking</a>
+<a href="#">Enterprise</a>
+</div>
+<div class="footer-links">
+<h4>Company</h4>
+<a href="case-studies.html">Case Studies</a>
+<a href="methodology.html">Methodology</a>
+<a href="demo.html#demo-form">Contact</a>
+</div>
+<div class="footer-links">
+<h4>Connect</h4>
+<div class="social-links">
+<a href="#"><i class="fa-brands fa-twitter"></i></a>
+<a href="#"><i class="fa-brands fa-instagram"></i></a>
+<a href="#"><i class="fa-brands fa-linkedin"></i></a>
+</div>
+</div>
+</div>
+<div class="footer-bottom">
+<p>© 2026 RateTap. All rights reserved.</p>
+<div class="legal-links">
+<a href="#">Privacy Policy</a>
+<a href="#">Terms of Service</a>
+</div>
+</div>
+</div>
+</footer>
+<script src="script.js"></script>
+</body>
+</html>

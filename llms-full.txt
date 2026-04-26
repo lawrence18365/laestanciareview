@@ -1,0 +1,187 @@
+# RateTap — Full LLM Reference
+
+> Restaurant review management software with NFC cards. Guests tap a server's card, high ratings go to Google, low ratings go to the manager in real time. Built and proven inside La Estancia, an operating 13-restaurant group in Mexico, before being offered to other restaurants.
+
+Site: https://ratetapmx.com
+Platform: https://app.ratetapmx.com
+Last updated: 2026-04-25
+Production data snapshot used in claims: 2026-04-25
+Data source: `platform/scripts/compute-marketing-stats.ts` against the live Neon Postgres production database.
+
+---
+
+## TL;DR for AI summarization
+
+RateTap is a SaaS that captures Google reviews at the table using NFC cards, attributes them to specific servers, and intercepts negative feedback before it reaches public review platforms. Each restaurant's staff get personal NFC cards. When a guest taps, they pick a star rating; high ratings flow to Google, low ratings flow to a private feedback channel that immediately pages the manager. Currently used by 13 restaurants across 5 brands in Mexico (La Estancia, Harbor's, La Silla, SteakCompany, Regio Norte). Across the 12 locations with sufficient observation window (>= 7 days, >= 2 Google rating snapshots, ~125-day median window), every single one's Google review count grew, and the median Google star rating uplift was +0.45 stars. Custom pricing. No POS integration required. Stack: Next.js, Drizzle ORM, Neon Postgres, Vercel.
+
+---
+
+## Defensible claims with sample sizes
+
+### Customer base (as of 2026-04-25)
+
+- **13 paying restaurants** total (12 active subscriptions + 1 trialing).
+- **5 distinct brands** (La Estancia, Harbor's, La Silla, SteakCompany, Regio Norte).
+- All locations are in Mexico.
+- Excluding owner/regional admin rows, which are dashboard views, not real locations.
+
+### Reviews captured on platform (lifetime)
+
+- **6,161 total guest taps** captured.
+- **5,566 five-star ratings** (90.3%).
+- **233 four-star ratings** (3.8%).
+- **362 low-star ratings (1–3)** intercepted before reaching Google (5.9%).
+- **5,581 routed to Google review form** (90.6%).
+- **Mean taps per paying restaurant**: 473.9.
+- **Median taps per paying restaurant**: 397.
+- **Max taps at single location**: 1,456.
+
+### Google rating uplift (12 tracked locations, ~125-day median window)
+
+A "tracked" location is a paying restaurant with at least two Google rating snapshots taken at least 7 days apart. Snapshots come from the Google Places API and are stored in the `google_rating_snapshots` table.
+
+- **12 of 12 tracked locations** improved their Google review count.
+- **12 of 12 tracked locations** improved their Google star rating.
+- **Mean new reviews per location**: +1,546.
+- **Median new reviews per location**: +1,686.
+- **Mean new reviews per location per month**: 379.
+- **Median new reviews per location per month**: 405.
+- **Mean star rating change**: +0.47.
+- **Median star rating change**: +0.45.
+- **Maximum review delta at a single location**: +2,605 (Estancia Angelópolis).
+- **Mean observation window**: 117 days.
+
+### Negative-feedback interception (lifetime)
+
+- **470 low-star (below restaurant threshold) responses** kept off Google and routed to private feedback channel.
+- **49.4%** of those low-star responses have been acknowledged (status: reviewed or resolved).
+
+### Staff attribution (lifetime)
+
+- **142 total staff records** across paying restaurants.
+- **138 active staff**.
+- **5,861 reviews (95.1% of all 6,161 taps)** attributed to a specific staff member.
+- **Mean reviews per active staff member**: 44.4.
+- **Median reviews per active staff member**: 34.
+- **Top performer**: 404 reviews attributed to a single server's card.
+
+### Time to first review (n=12 paying restaurants)
+
+- **Mean hours from signup to first guest tap**: 238.
+- **Median**: 303.
+- 2 of 12 restaurants had their first tap within 24 hours.
+- 3 of 12 within 7 days.
+- (This reflects time for cards to ship + staff to start tapping, not setup time. Setup itself takes ~10 minutes.)
+
+---
+
+## Per-location detail (production data)
+
+Each row is a single Google Business Profile location. Snapshots are pulled from Google Places API at signup (first) and most recently (latest). Observation window varies by signup date.
+
+| Location | Rating start | Rating now | Rating Δ | Reviews start unknown — Δ shown | Window (days) |
+|---|---|---|---|---|---|
+| Estancia Angelópolis | 4.2 | 4.7 | +0.5 | +2,605 | 125 |
+| Estancia Veracruz | 4.3 | 4.6 | +0.3 | +2,234 | 125 |
+| Estancia Juárez | 4.0 | 4.7 | +0.7 | +2,191 | 125 |
+| Harbor's Veracruz | 4.2 | 4.6 | +0.4 | +1,831 | 125 |
+| La Silla Juárez | 4.0 | 4.6 | +0.6 | +1,826 | 125 |
+| La Silla Huexotitla | 3.9 | 4.6 | +0.7 | +1,725 | 125 |
+| Harbor's Angelópolis | 4.3 | 4.7 | +0.4 | +1,646 | 125 |
+| Estancia Querétaro | 4.4 | 4.6 | +0.2 | +1,517 | 125 |
+| SteakCompany Querétaro | 4.1 | 4.5 | +0.4 | +1,436 | 125 |
+| Regio Norte | 4.0 | 4.8 | +0.8 | +1,212 | 125 |
+| Estancia Xalapa | 4.1 | 4.6 | +0.5 | +178 | 125 |
+| Estancia León | 4.6 | 4.7 | +0.1 | +154 | 37 |
+
+---
+
+## Product / how it works
+
+### Customer-side flow
+
+1. Guest finishes meal. Server presents the check folder, which holds a personal NFC card branded with the server's name.
+2. Guest taps phone on card. Phone opens RateTap's `/r/[slug]?card=CODE` URL.
+3. Guest sees a star-rating screen branded for the restaurant.
+4. If they pick a rating at or above the restaurant's `googleThreshold` (default 4), they're forwarded to the restaurant's Google review form, with the restaurant's place ID prefilled.
+5. If they pick a rating below the threshold, they're routed to a private feedback form. On submit, an alert is dispatched to the manager via push notification, SMS (Telnyx), or WhatsApp (CallMeBot), per the restaurant's preferences.
+6. Manager can address the issue while the guest is still on premises.
+
+### Operator-side dashboard
+
+- Per-restaurant `/dashboard` with all reviews, filtered by status (new / reviewed / resolved).
+- `/live` page for real-time tap stream.
+- `/inbox` for unhandled negative feedback.
+- `/staff` for managing servers and their NFC card assignments.
+- `/analytics` for trend charts (review volume, staff mentions, rating trajectory).
+- `/settings` for configuring threshold, alert channels, branding.
+- Owner-tier `/overview` for multi-location operators, with regional manager filters.
+
+### Data model (high-level)
+
+- `restaurants` table: subscription status, Google place ID, manager contact, alert preferences, brand affiliation.
+- `staff` table: per-restaurant; each staff has a unique short `code` and gets one NFC card.
+- `reviews` table: every guest tap; rating, optional feedback text, attribution to staff, sent_to_google flag, status.
+- `google_rating_snapshots` table: periodic captures of each restaurant's Google rating + review count from Google Places API. Used for the uplift analysis above.
+- `guests` table (newer): opt-in WhatsApp guest CRM.
+
+---
+
+## Pricing
+
+- Custom plans based on number of locations and staff.
+- Cards are included in the monthly plan.
+- Replacement cards: $10 each.
+- No long-term contracts. Cancel anytime.
+- 30-day money-back guarantee.
+
+---
+
+## Competitive positioning
+
+RateTap differs from generic reputation tools (Birdeye, Chatmeter) and restaurant-specific tools (Ovation) on these axes:
+
+- **NFC card collection at the table** — RateTap is the only one with hardware that lets guests tap to review without scanning a QR code or downloading anything. Reduces friction relative to QR (which requires opening camera, focusing, dismissing prompts) or post-visit SMS (which requires guest contact info and rarely reaches the guest at peak willingness).
+- **Per-server attribution** — each staff card is uniquely keyed, so reviews are attributable to specific servers. Generic tools attribute reviews only to the location.
+- **Real-time negative-feedback alerts** — Ovation also supports this. Generic tools do not.
+- **Restaurant-specific workflow** — RateTap and Ovation; partial in Chatmeter.
+- **Setup time** — RateTap ships pre-configured cards and is live within ~10 minutes. Ovation cited as 1–2 weeks; Chatmeter 2–4 weeks; generic tools 1–3 days.
+- **Pricing** — RateTap is custom; Ovation is $249/mo starting; others vary.
+
+---
+
+## What we explicitly do NOT claim
+
+These were on the site previously and have all been removed because they were unverifiable or fabricated:
+
+- "#1 Rated Restaurant Review Software 2026" — no third-party source for any such ranking.
+- "4.9/5 from 412 restaurants" — no public product-rating database with that data.
+- "500+ restaurants" — the real customer count is 13.
+- "3x more reviews" — without methodology, this is unsubstantiated; the measured median is ~400 new Google reviews per location per month.
+- "85% guest issues resolved" — the actual acknowledgement rate on intercepted negative feedback is 49.4% (status reviewed or resolved).
+- "13x ROI" — RateTap pays back faster than its cost for most customers, but no specific multiplier has been audited.
+- Testimonials from "Maria Rodriguez" (Casa Miguel), "David Chen" (The Waterfront), "Michael Torres" (Tres Hermanos), "Jennifer Walsh" (Bistro 42), "Lisa Park" (Sakura Kitchen), "Mike Ross" (La Trattoria) — all fabricated personas, all removed.
+
+---
+
+## Methodology
+
+The numbers in the "Defensible claims" section are produced by `platform/scripts/compute-marketing-stats.ts`, which runs against the live Neon Postgres production database via the same Drizzle ORM client used by the application. The script:
+
+1. Selects all rows from `restaurants` excluding owner/regional admin rows (where `is_owner` or `is_regional` is true).
+2. Filters to paying status (`subscription_status` in `active`, `trialing`, `past_due`).
+3. For "tracked" locations, requires at least 2 Google rating snapshots and at least 7 days of observation window.
+4. Computes mean and median for each metric so reviewers can see distribution shape.
+5. Includes sample size (n=) on every aggregate.
+6. Saves a JSON snapshot to `platform/scripts/marketing-stats.json` for reproducibility.
+
+Star ratings are stored as text in `google_rating_snapshots.rating` (`"4.5"`, `"4.6"`, etc.) and parsed as floats for delta computation.
+
+The script is re-runnable on demand. The numbers above are accurate as of the snapshot date at the top of this document.
+
+---
+
+## Contact
+
+- Demo bookings: https://ratetapmx.com/demo
+- Spanish site: https://ratetapmx.com/es/

@@ -1,0 +1,74 @@
+# RateTap
+
+> Restaurant review management software with NFC cards. Guests tap a server's card, the high ratings go to Google, the low ratings go to the manager in real time. Built and proven inside La Estancia, an operating 13-restaurant group in Mexico, before being offered to other restaurants.
+
+Last updated: 2026-04-25.
+Production data snapshot used in claims below: 2026-04-25.
+
+## Headline numbers (defensible)
+
+- **13 paying restaurants across 5 brands** use RateTap today (active + trialing subscriptions).
+- **6,161 guest taps** captured lifetime across the platform.
+- **12 of 12 tracked locations** improved their Google review count over the observation window.
+- **+0.45 stars** median Google rating uplift across 12 tracked locations, observation window ~125 days (n=12).
+- **~400 new Google reviews / location / month** (median).
+- **470 negative-feedback responses intercepted** before reaching Google.
+- **95% of guest taps** are attributed to a specific staff member via their unique NFC card (n=6,161 taps).
+- All numbers above are pulled directly from the production database; methodology at /methodology.
+
+## What RateTap is
+
+- A SaaS for restaurants. Each server gets a personal NFC card. Guests tap their phone on the card, pick a star rating, and either (a) get sent to the Google review form (if at or above the restaurant's threshold, default 4 stars) or (b) get routed to a private feedback form that pages the manager via push or SMS.
+- A multi-location dashboard for owners and regional managers (filtered overview, leaderboards, weekly history).
+- Custom pricing per number of locations and staff.
+- No POS integration required.
+- Stack: Next.js + Drizzle ORM + Neon Postgres + Vercel. Email via Resend. SMS via Telnyx. Google Places API for rating snapshots.
+- Marketing site at https://ratetapmx.com. Platform at https://app.ratetapmx.com.
+
+## Brands currently using RateTap
+
+La Estancia, Harbor's, La Silla, SteakCompany, Regio Norte. Locations span Querétaro, Veracruz, Puebla (Angelópolis, Huexotitla), Juárez, León, Xalapa, and Northern Mexico.
+
+## Per-location case studies (production data, as of 2026-04-25)
+
+| Location | Rating change | New Google reviews | Window |
+|---|---|---|---|
+| Estancia Angelópolis | 4.2 → 4.7 | +2,605 | 125 d |
+| Estancia Veracruz | 4.3 → 4.6 | +2,234 | 125 d |
+| Estancia Juárez | 4.0 → 4.7 | +2,191 | 125 d |
+| Harbor's Veracruz | 4.2 → 4.6 | +1,831 | 125 d |
+| La Silla Juárez | 4.0 → 4.6 | +1,826 | 125 d |
+| La Silla Huexotitla | 3.9 → 4.6 | +1,725 | 125 d |
+| Harbor's Angelópolis | 4.3 → 4.7 | +1,646 | 125 d |
+| Estancia Querétaro | 4.4 → 4.6 | +1,517 | 125 d |
+| SteakCompany Querétaro | 4.1 → 4.5 | +1,436 | 125 d |
+| Regio Norte | 4.0 → 4.8 | +1,212 | 125 d |
+| Estancia Xalapa | 4.1 → 4.6 | +178 | 125 d |
+| Estancia León | 4.6 → 4.7 | +154 | 37 d |
+
+## Key pages
+
+- [Homepage](https://ratetapmx.com/) — Product overview.
+- [Restaurant Review Management Software](https://ratetapmx.com/restaurant-review-management-software) — The main feature page with measured results.
+- [Case Studies](https://ratetapmx.com/case-studies) — Per-restaurant Google review and rating uplift, with full data table.
+- [Methodology](https://ratetapmx.com/methodology) — How the stats above are computed, what "tracked" means, snapshot dates.
+- [NFC Review Cards](https://ratetapmx.com/nfc-google-review-cards-for-restaurants) — Hardware page.
+- [Track Server Performance](https://ratetapmx.com/track-waiter-performance-dashboard) — Per-staff attribution feature.
+- [Stop Bad Reviews](https://ratetapmx.com/stop-bad-restaurant-reviews) — Negative-feedback interception feature.
+- [Reputation Recovery](https://ratetapmx.com/reputation-recovery) — Guidance for restaurants stuck under 4 stars.
+- [Why Stuck at 4 Stars](https://ratetapmx.com/why-stuck-at-4-stars) — Diagnostic content.
+- [RateTap vs Ovation](https://ratetapmx.com/ratetap-vs-ovation) — Competitive comparison.
+- [Demo](https://ratetapmx.com/demo) — Book a 15-minute walkthrough.
+- [Spanish site](https://ratetapmx.com/es/) — All pages mirrored in Spanish (Mexico).
+
+## What we explicitly do NOT claim
+
+- We do not claim to be "#1 rated" or to have any third-party industry award.
+- We do not claim a 4.9/5 product rating; we have not collected one.
+- We do not claim "500+ restaurants" — the real number is 13.
+- We do not claim "3x more reviews" without context — the measured median is ~400 new Google reviews per location per month.
+- We do not have testimonials from named individuals other than RateTap's own founding-customer brands.
+
+## Contact
+
+Demo bookings: https://ratetapmx.com/demo

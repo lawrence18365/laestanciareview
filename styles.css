@@ -258,6 +258,329 @@ h3 {
     background: #000;
 }
 
+/* =========================================
+   BLOG SYSTEM
+   ========================================= */
+.blog-shell {
+    max-width: 1180px;
+}
+
+.blog-hero-copy {
+    font-size: 1.2rem;
+    color: var(--text-secondary);
+    max-width: 820px;
+    margin-top: 1.5rem;
+}
+
+.blog-kicker {
+    margin-bottom: 1.35rem;
+    display: inline-flex;
+}
+
+.blog-meta,
+.blog-card-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.9rem;
+    align-items: center;
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+    margin-top: 1.5rem;
+}
+
+.blog-chip-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-top: 1.5rem;
+}
+
+.blog-chip,
+.blog-card-tag,
+.blog-related-label {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    padding: 0.5rem 0.9rem;
+    background: rgba(255, 255, 255, 0.82);
+    border: 1px solid rgba(45, 156, 219, 0.18);
+    color: var(--brand-charcoal);
+    font-size: 0.85rem;
+    font-weight: 700;
+}
+
+.blog-card-grid,
+.blog-related-grid,
+.blog-faq-grid,
+.blog-cluster-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1.35rem;
+}
+
+.blog-featured-card,
+.blog-card,
+.blog-cluster-card,
+.blog-related-card,
+.blog-faq-card,
+.blog-summary-card,
+.blog-rail-card,
+.blog-cta-card {
+    background: rgba(255, 255, 255, 0.78);
+    border: 1px solid rgba(255, 255, 255, 0.8);
+    box-shadow: var(--shadow-glass);
+    border-radius: 28px;
+}
+
+.blog-featured-card {
+    padding: 2rem;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 2rem;
+    align-items: end;
+}
+
+.blog-featured-card h2 {
+    font-size: clamp(2.3rem, 4vw, 3.35rem);
+    margin-top: 1rem;
+}
+
+.blog-featured-card p {
+    margin-top: 1rem;
+    color: var(--text-secondary);
+    max-width: 720px;
+}
+
+.blog-featured-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.9rem;
+    justify-content: flex-end;
+}
+
+.blog-card,
+.blog-related-card {
+    padding: 1.6rem;
+    text-decoration: none;
+    color: inherit;
+    transition: transform 0.35s ease, box-shadow 0.35s ease, border-color 0.35s ease;
+}
+
+.blog-card:hover,
+.blog-related-card:hover {
+    transform: translateY(-4px);
+    border-color: rgba(45, 156, 219, 0.32);
+    box-shadow: 0 22px 40px -28px rgba(15, 23, 42, 0.42);
+}
+
+.blog-card h3,
+.blog-related-card h3,
+.blog-cluster-card h3,
+.blog-faq-card h3 {
+    margin-top: 1rem;
+    font-size: 2rem;
+}
+
+.blog-card p,
+.blog-related-card p,
+.blog-cluster-card p,
+.blog-faq-card p {
+    color: var(--text-secondary);
+    margin-top: 0.9rem;
+}
+
+.blog-related-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55rem;
+    margin-top: 1.25rem;
+    font-weight: 700;
+    color: var(--brand-charcoal);
+}
+
+.blog-article-grid {
+    display: grid;
+    grid-template-columns: 290px minmax(0, 1fr);
+    gap: 2rem;
+    align-items: start;
+}
+
+.blog-rail {
+    position: sticky;
+    top: 8.5rem;
+    display: grid;
+    gap: 1rem;
+}
+
+.blog-rail-card {
+    padding: 1.25rem;
+}
+
+.blog-rail-card a {
+    display: block;
+    color: var(--text-secondary);
+    text-decoration: none;
+    margin-top: 0.65rem;
+    transition: color 0.2s ease;
+}
+
+.blog-rail-card a:hover {
+    color: var(--brand-charcoal);
+}
+
+.blog-rail-label {
+    display: inline-flex;
+    margin-bottom: 0.85rem;
+    font-size: 0.78rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+    font-weight: 800;
+}
+
+.blog-rail-list,
+.blog-list {
+    padding-left: 1.2rem;
+    color: var(--text-secondary);
+}
+
+.blog-rail-list li,
+.blog-list li {
+    margin-bottom: 0.7rem;
+}
+
+.blog-rail-cta {
+    width: 100%;
+}
+
+.blog-rail-secondary {
+    text-align: center;
+    text-decoration: none;
+    color: var(--brand-charcoal);
+    font-weight: 700;
+}
+
+.blog-article {
+    display: grid;
+    gap: 1.6rem;
+}
+
+.blog-summary-card,
+.blog-section {
+    padding: 1.8rem;
+}
+
+.blog-section h2 {
+    font-size: clamp(2rem, 3.3vw, 2.8rem);
+    margin-bottom: 1rem;
+}
+
+.blog-section p,
+.blog-summary-card p,
+.blog-rail-card p,
+.blog-cta-card p {
+    color: var(--text-secondary);
+}
+
+.blog-section p + p,
+.blog-summary-card p + p {
+    margin-top: 1rem;
+}
+
+.blog-callout {
+    margin-top: 1.25rem;
+    padding: 1.2rem;
+    border-radius: 22px;
+    background: linear-gradient(135deg, rgba(45, 156, 219, 0.12), rgba(242, 201, 76, 0.1));
+    border: 1px solid rgba(45, 156, 219, 0.14);
+}
+
+.blog-callout strong {
+    display: block;
+    margin-bottom: 0.55rem;
+    color: var(--brand-charcoal);
+}
+
+.blog-cta-card {
+    padding: 2rem;
+}
+
+.blog-cta-card h2 {
+    font-size: clamp(2.4rem, 4vw, 3.4rem);
+    margin: 0.9rem 0 1rem;
+}
+
+.blog-cta-actions {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-top: 1.5rem;
+}
+
+.blog-cluster-card,
+.blog-faq-card {
+    padding: 1.5rem;
+}
+
+@media (max-width: 1100px) {
+    .blog-card-grid,
+    .blog-related-grid,
+    .blog-faq-grid,
+    .blog-cluster-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .blog-article-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .blog-rail {
+        position: static;
+        order: 2;
+    }
+}
+
+@media (max-width: 768px) {
+    .blog-featured-card {
+        grid-template-columns: 1fr;
+        padding: 1.5rem;
+    }
+
+    .blog-featured-actions {
+        justify-content: flex-start;
+    }
+
+    .blog-card-grid,
+    .blog-related-grid,
+    .blog-faq-grid,
+    .blog-cluster-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .blog-section,
+    .blog-summary-card,
+    .blog-cta-card,
+    .blog-card,
+    .blog-related-card,
+    .blog-cluster-card,
+    .blog-faq-card,
+    .blog-rail-card {
+        padding: 1.3rem;
+        border-radius: 22px;
+    }
+
+    .blog-hero-copy {
+        font-size: 1.05rem;
+    }
+
+    .blog-meta,
+    .blog-card-meta {
+        gap: 0.55rem;
+        font-size: 0.88rem;
+    }
+}
+
 .btn-secondary {
     background: rgba(255, 255, 255, 0.8);
     color: var(--brand-charcoal);
@@ -578,6 +901,8 @@ h3 {
 /* Sections */
 .section {
     padding: 8rem 0;
+    position: relative;
+    overflow: hidden;
 }
 
 .bg-muted {
@@ -1567,4 +1892,26 @@ h3 {
 .reveal.revealed {
     opacity: 1;
     transform: translateY(0);
+}
+
+/* Decorative background shapes — must be absolutely positioned so they
+   don't take up space in the normal flow. Inline styles on instances
+   provide top/right/width/height; this rule supplies the positioning. */
+.shape {
+    position: absolute;
+    pointer-events: none;
+    z-index: 0;
+    border-radius: 50%;
+    background: radial-gradient(circle at 30% 30%, currentColor 0%, transparent 70%);
+    filter: blur(40px);
+}
+
+.shape-circle {
+    border-radius: 50%;
+}
+
+/* Make sure section content sits above decorative shapes */
+.section > .container {
+    position: relative;
+    z-index: 1;
 }

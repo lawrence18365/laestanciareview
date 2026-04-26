@@ -8,9 +8,19 @@
     <xhtml:link rel="alternate" hreflang="en-US" href="https://ratetapmx.com/"/>
     <xhtml:link rel="alternate" hreflang="es-MX" href="https://ratetapmx.com/es/"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://ratetapmx.com/"/>
-    <lastmod>2026-01-14</lastmod>
+    <lastmod>2026-04-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
+  </url>
+
+  <!-- Methodology — data audit trail for AI/LLM citations -->
+  <url>
+    <loc>https://ratetapmx.com/methodology</loc>
+    <xhtml:link rel="alternate" hreflang="en-US" href="https://ratetapmx.com/methodology"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://ratetapmx.com/methodology"/>
+    <lastmod>2026-04-25</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
   </url>
   <url>
     <loc>https://ratetapmx.com/es/</loc>
@@ -65,20 +75,11 @@
   <url>
     <loc>https://ratetapmx.com/nfc-google-review-cards-for-restaurants</loc>
     <xhtml:link rel="alternate" hreflang="en-US" href="https://ratetapmx.com/nfc-google-review-cards-for-restaurants"/>
-    <xhtml:link rel="alternate" hreflang="es-MX" href="https://ratetapmx.com/es/nfc-google-review-cards-for-restaurants"/>
+    <xhtml:link rel="alternate" hreflang="es-MX" href="https://ratetapmx.com/es/tarjetas-nfc-restaurantes-mexico"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://ratetapmx.com/nfc-google-review-cards-for-restaurants"/>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
-  <url>
-    <loc>https://ratetapmx.com/es/nfc-google-review-cards-for-restaurants</loc>
-    <xhtml:link rel="alternate" hreflang="en-US" href="https://ratetapmx.com/nfc-google-review-cards-for-restaurants"/>
-    <xhtml:link rel="alternate" hreflang="es-MX" href="https://ratetapmx.com/es/nfc-google-review-cards-for-restaurants"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://ratetapmx.com/nfc-google-review-cards-for-restaurants"/>
-    <changefreq>weekly</changefreq>
-    <priority>0.9</priority>
-  </url>
-
   <!-- Get More Google Reviews -->
   <url>
     <loc>https://ratetapmx.com/get-more-google-reviews-restaurants</loc>
@@ -101,38 +102,20 @@
   <url>
     <loc>https://ratetapmx.com/track-waiter-performance-dashboard</loc>
     <xhtml:link rel="alternate" hreflang="en-US" href="https://ratetapmx.com/track-waiter-performance-dashboard"/>
-    <xhtml:link rel="alternate" hreflang="es-MX" href="https://ratetapmx.com/es/track-waiter-performance-dashboard"/>
+    <xhtml:link rel="alternate" hreflang="es-MX" href="https://ratetapmx.com/es/medir-desempeno-meseros"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://ratetapmx.com/track-waiter-performance-dashboard"/>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
-  <url>
-    <loc>https://ratetapmx.com/es/track-waiter-performance-dashboard</loc>
-    <xhtml:link rel="alternate" hreflang="en-US" href="https://ratetapmx.com/track-waiter-performance-dashboard"/>
-    <xhtml:link rel="alternate" hreflang="es-MX" href="https://ratetapmx.com/es/track-waiter-performance-dashboard"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://ratetapmx.com/track-waiter-performance-dashboard"/>
-    <changefreq>weekly</changefreq>
-    <priority>0.9</priority>
-  </url>
-
   <!-- Stop Bad Restaurant Reviews -->
   <url>
     <loc>https://ratetapmx.com/stop-bad-restaurant-reviews</loc>
     <xhtml:link rel="alternate" hreflang="en-US" href="https://ratetapmx.com/stop-bad-restaurant-reviews"/>
-    <xhtml:link rel="alternate" hreflang="es-MX" href="https://ratetapmx.com/es/stop-bad-restaurant-reviews"/>
+    <xhtml:link rel="alternate" hreflang="es-MX" href="https://ratetapmx.com/es/evitar-malas-resenas-restaurante"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://ratetapmx.com/stop-bad-restaurant-reviews"/>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
-  <url>
-    <loc>https://ratetapmx.com/es/stop-bad-restaurant-reviews</loc>
-    <xhtml:link rel="alternate" hreflang="en-US" href="https://ratetapmx.com/stop-bad-restaurant-reviews"/>
-    <xhtml:link rel="alternate" hreflang="es-MX" href="https://ratetapmx.com/es/stop-bad-restaurant-reviews"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://ratetapmx.com/stop-bad-restaurant-reviews"/>
-    <changefreq>weekly</changefreq>
-    <priority>0.9</priority>
-  </url>
-
   <!-- Demo -->
   <url>
     <loc>https://ratetapmx.com/demo</loc>
@@ -419,4 +402,78 @@
     <priority>0.9</priority>
   </url>
 
+  <!-- Generated blog pages start -->
+  <url>
+    <loc>https://ratetapmx.com/blog/</loc>
+    <xhtml:link rel="alternate" hreflang="en-US" href="https://ratetapmx.com/blog/"/>
+    <xhtml:link rel="alternate" hreflang="es-MX" href="https://ratetapmx.com/es/blog/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://ratetapmx.com/blog/"/>
+    <lastmod>2026-04-25</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://ratetapmx.com/es/blog/</loc>
+    <xhtml:link rel="alternate" hreflang="en-US" href="https://ratetapmx.com/blog/"/>
+    <xhtml:link rel="alternate" hreflang="es-MX" href="https://ratetapmx.com/es/blog/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://ratetapmx.com/blog/"/>
+    <lastmod>2026-04-25</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://ratetapmx.com/blog/restaurant-google-rating-dropped</loc>
+    <xhtml:link rel="alternate" hreflang="en-US" href="https://ratetapmx.com/blog/restaurant-google-rating-dropped"/>
+    <xhtml:link rel="alternate" hreflang="es-MX" href="https://ratetapmx.com/es/blog/restaurante-bajo-calificacion-google"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://ratetapmx.com/blog/restaurant-google-rating-dropped"/>
+    <lastmod>2026-04-25</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://ratetapmx.com/es/blog/restaurante-bajo-calificacion-google</loc>
+    <xhtml:link rel="alternate" hreflang="en-US" href="https://ratetapmx.com/blog/restaurant-google-rating-dropped"/>
+    <xhtml:link rel="alternate" hreflang="es-MX" href="https://ratetapmx.com/es/blog/restaurante-bajo-calificacion-google"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://ratetapmx.com/blog/restaurant-google-rating-dropped"/>
+    <lastmod>2026-04-25</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://ratetapmx.com/blog/restaurant-not-getting-google-reviews</loc>
+    <xhtml:link rel="alternate" hreflang="en-US" href="https://ratetapmx.com/blog/restaurant-not-getting-google-reviews"/>
+    <xhtml:link rel="alternate" hreflang="es-MX" href="https://ratetapmx.com/es/blog/restaurante-no-recibe-resenas-google"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://ratetapmx.com/blog/restaurant-not-getting-google-reviews"/>
+    <lastmod>2026-04-25</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://ratetapmx.com/es/blog/restaurante-no-recibe-resenas-google</loc>
+    <xhtml:link rel="alternate" hreflang="en-US" href="https://ratetapmx.com/blog/restaurant-not-getting-google-reviews"/>
+    <xhtml:link rel="alternate" hreflang="es-MX" href="https://ratetapmx.com/es/blog/restaurante-no-recibe-resenas-google"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://ratetapmx.com/blog/restaurant-not-getting-google-reviews"/>
+    <lastmod>2026-04-25</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://ratetapmx.com/blog/track-server-review-performance</loc>
+    <xhtml:link rel="alternate" hreflang="en-US" href="https://ratetapmx.com/blog/track-server-review-performance"/>
+    <xhtml:link rel="alternate" hreflang="es-MX" href="https://ratetapmx.com/es/blog/medir-desempeno-meseros-resenas"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://ratetapmx.com/blog/track-server-review-performance"/>
+    <lastmod>2026-04-25</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://ratetapmx.com/es/blog/medir-desempeno-meseros-resenas</loc>
+    <xhtml:link rel="alternate" hreflang="en-US" href="https://ratetapmx.com/blog/track-server-review-performance"/>
+    <xhtml:link rel="alternate" hreflang="es-MX" href="https://ratetapmx.com/es/blog/medir-desempeno-meseros-resenas"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://ratetapmx.com/blog/track-server-review-performance"/>
+    <lastmod>2026-04-25</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <!-- Generated blog pages end -->
 </urlset>
