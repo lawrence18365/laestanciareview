@@ -33,7 +33,47 @@ function isSpanishPage() {
     return path === '/es' || path === '/es/' || path.startsWith('/es/') || path.includes('/es/');
 }
 
+const FUNNEL_PAGE_CONFIG = {
+    '/es/mejorar-calificacion-google-restaurante': {
+        primaryCtaLabel: 'Activar piloto gratis'
+    },
+    '/es/blog/restaurante-bajo-calificacion-google': {
+        primaryCtaLabel: 'Activar piloto gratis',
+        navHref: '/es/mejorar-calificacion-google-restaurante?offer=rating-recovery-pilot&source_page=blog-restaurante-bajo-calificacion-google&source_cluster=rating-recovery#contact',
+        navOffer: 'rating-recovery-pilot',
+        navSourcePage: 'blog-restaurante-bajo-calificacion-google',
+        navSourceCluster: 'rating-recovery'
+    }
+};
+
+function getCurrentPath() {
+    const path = window.location.pathname || '/';
+
+    if (window.location.protocol === 'file:') {
+        const normalized = path.replace(/\\/g, '/');
+        const knownPaths = [...Object.keys(FUNNEL_PAGE_CONFIG), '/es/demo', '/demo', '/es/blog', '/blog'];
+        const matched = knownPaths.find(candidate => {
+            return normalized.endsWith(`${candidate}.html`) || normalized.endsWith(`${candidate}/index.html`);
+        });
+        if (matched) return matched;
+        if (normalized.endsWith('/index.html')) return '/';
+    }
+
+    const withoutIndex = path.replace(/index\.html$/, '');
+    const withoutHtml = withoutIndex.replace(/\.html$/, '');
+    return withoutHtml.replace(/\/+$/, '') || '/';
+}
+
+function getActiveFunnelConfig() {
+    return FUNNEL_PAGE_CONFIG[getCurrentPath()] || null;
+}
+
 function getPrimaryCtaLabel() {
+    const funnelConfig = getActiveFunnelConfig();
+    if (funnelConfig?.primaryCtaLabel) {
+        return funnelConfig.primaryCtaLabel;
+    }
+
     return isSpanishPage() ? 'Agendar demo' : 'Book a demo';
 }
 
@@ -67,6 +107,315 @@ function normalizeHref(href) {
     } catch (error) {
         return href;
     }
+}
+
+function getPageIdentifier() {
+    const currentPath = getCurrentPath();
+    if (currentPath === '/') return 'home';
+
+    const segments = currentPath.split('/').filter(Boolean);
+    return segments[segments.length - 1] || 'home';
+}
+
+function getFunnelContext(link) {
+    if (!link) return 'inline';
+    if (link.dataset.funnelContext) return link.dataset.funnelContext;
+    if (link.closest('.nav-actions')) return 'nav';
+    if (link.closest('.hero-cta')) return 'hero';
+    if (link.closest('.pilot-inline-cta')) return 'mid_page';
+    if (link.closest('.blog-rail')) return 'blog_rail';
+    if (link.closest('.blog-cta-card')) return 'blog_body';
+    if (link.closest('.cta-content')) return 'signup_section';
+    if (link.closest('.mobile-sticky-cta')) return 'mobile_sticky';
+    if (link.closest('footer')) return 'footer';
+    return 'inline';
+}
+
+// Map dataLayer event names to Meta Pixel event names. Events not in this map
+// are pushed to dataLayer (for GTM/GA4) but not forwarded to Meta.
+// whatsapp_click is intentionally NOT mapped — Meta ad sets must never optimize
+// for "Contact" on this account.
+const META_EVENT_MAP = {
+    cta_click: 'SeoTrialCtaClick',
+    signup_form_submit: 'TrialSignupSubmit',
+    signup_completed: 'CompleteRegistration',
+    seo_trial_cta_click: 'SeoTrialCtaClick',
+    trial_signup_submit: 'TrialSignupSubmit'
+};
+
+function trackLeadEvent(eventName, payload = {}) {
+    const eventPayload = {
+        page_path: getCurrentPath(),
+        page_title: document.title,
+        page_language: isSpanishPage() ? 'es' : 'en',
+        ...payload
+    };
+
+    if (Array.isArray(window.dataLayer)) {
+        window.dataLayer.push({ event: eventName, ...eventPayload });
+    }
+
+    const metaEvent = META_EVENT_MAP[eventName];
+    if (metaEvent && typeof window.fbq === 'function') {
+        window.fbq('trackCustom', metaEvent, eventPayload);
+    }
+}
+
+function persistFunnelTouch(payload) {
+    try {
+        sessionStorage.setItem('ratetap-last-funnel-touch', JSON.stringify({
+            ...payload,
+            captured_at: Date.now()
+        }));
+    } catch (error) {
+        console.log('Unable to persist funnel touch', error);
+    }
+}
+
+function readPersistedFunnelTouch() {
+    try {
+        const raw = sessionStorage.getItem('ratetap-last-funnel-touch');
+        return raw ? JSON.parse(raw) : null;
+    } catch (error) {
+        return null;
+    }
+}
+
+function preserveCampaignParams(url) {
+    const currentParams = new URLSearchParams(window.location.search || '');
+    ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content'].forEach(param => {
+        const value = currentParams.get(param);
+        if (value && !url.searchParams.get(param)) {
+            url.searchParams.set(param, value);
+        }
+    });
+}
+
+function buildFunnelUrl(link) {
+    const rawHref = link.getAttribute('href') || '';
+    if (!rawHref || rawHref.startsWith('#')) return null;
+
+    let url;
+    try {
+        url = new URL(rawHref, window.location.href);
+    } catch (error) {
+        return null;
+    }
+
+    const offer = link.dataset.funnelOffer || url.searchParams.get('offer');
+    if (!offer) return url;
+
+    const sourcePage = link.dataset.sourcePage || url.searchParams.get('source_page') || getPageIdentifier();
+    const sourceCluster = link.dataset.sourceCluster || url.searchParams.get('source_cluster') || '';
+    const language = link.dataset.language || url.searchParams.get('language') || (isSpanishPage() ? 'es' : 'en');
+    const ctaContext = getFunnelContext(link);
+
+    url.searchParams.set('offer', offer);
+    url.searchParams.set('source_page', sourcePage);
+    if (sourceCluster) {
+        url.searchParams.set('source_cluster', sourceCluster);
+    }
+    url.searchParams.set('language', language);
+    url.searchParams.set('cta_context', ctaContext);
+    preserveCampaignParams(url);
+
+    return url;
+}
+
+function getFunnelPayload(link) {
+    const url = buildFunnelUrl(link);
+    const searchParams = url ? url.searchParams : new URLSearchParams();
+
+    return {
+        offer: link.dataset.funnelOffer || searchParams.get('offer') || '',
+        source_page: link.dataset.sourcePage || searchParams.get('source_page') || getPageIdentifier(),
+        source_cluster: link.dataset.sourceCluster || searchParams.get('source_cluster') || '',
+        cta_context: getFunnelContext(link),
+        destination: url ? normalizeHref(url.toString()) : `${getCurrentPath()}${link.getAttribute('href') || ''}`,
+        link_label: (link.textContent || '').trim()
+    };
+}
+
+function configureOfferFunnels() {
+    const funnelConfig = getActiveFunnelConfig();
+    if (!funnelConfig?.navHref) return;
+
+    const navCta = document.querySelector('.nav-actions a.btn.btn-primary[href]');
+    if (!navCta) return;
+
+    navCta.setAttribute('href', funnelConfig.navHref);
+    navCta.dataset.funnelOffer = funnelConfig.navOffer || '';
+    navCta.dataset.sourcePage = funnelConfig.navSourcePage || getPageIdentifier();
+    navCta.dataset.sourceCluster = funnelConfig.navSourceCluster || '';
+    navCta.dataset.funnelContext = 'nav';
+    if (funnelConfig.primaryCtaLabel) {
+        navCta.textContent = funnelConfig.primaryCtaLabel;
+        navCta.setAttribute('aria-label', funnelConfig.primaryCtaLabel);
+    }
+}
+
+function wireFunnelLinks() {
+    const funnelLinks = document.querySelectorAll('a[data-funnel-offer], a[href*="offer="]');
+
+    funnelLinks.forEach(link => {
+        const trackedUrl = buildFunnelUrl(link);
+        if (trackedUrl && !link.getAttribute('href').startsWith('#')) {
+            link.setAttribute('href', normalizeHref(trackedUrl.toString()));
+        }
+
+        if (link.dataset.funnelBound === 'true') return;
+
+        link.addEventListener('click', () => {
+            const payload = getFunnelPayload(link);
+            persistFunnelTouch(payload);
+            trackLeadEvent('cta_click', {
+                ...payload,
+                cta_label: (link.textContent || '').trim().slice(0, 80),
+                cta_destination: link.getAttribute('href') || '',
+                cta_section: getFunnelContext(link)
+            });
+        });
+
+        link.dataset.funnelBound = 'true';
+    });
+}
+
+// Delegated handler: fires cta_click for any .btn link or [data-cta] element
+// not already bound by wireFunnelLinks, and whatsapp_click for wa.me links.
+function wireGenericCtas() {
+    if (document.body.dataset.ctaDelegationBound === 'true') return;
+    document.body.dataset.ctaDelegationBound = 'true';
+
+    document.addEventListener('click', (event) => {
+        const link = event.target.closest('a');
+        if (!link) return;
+
+        const href = link.getAttribute('href') || '';
+        if (!href || href.startsWith('#') || href.startsWith('javascript:')) return;
+
+        const ctaLabel = (link.textContent || '').trim().slice(0, 80);
+        const ctaSection = getFunnelContext(link);
+
+        if (/^https?:\/\/(wa\.me|api\.whatsapp\.com)/i.test(href)) {
+            trackLeadEvent('whatsapp_click', {
+                whatsapp_destination: href,
+                cta_label: ctaLabel,
+                cta_section: ctaSection
+            });
+            return;
+        }
+
+        if (link.dataset.funnelBound === 'true') return;
+
+        if (link.matches('a.btn') || link.matches('[data-cta]')) {
+            trackLeadEvent('cta_click', {
+                cta_label: ctaLabel,
+                cta_destination: href,
+                cta_section: ctaSection
+            });
+        }
+    }, true);
+}
+
+// Fires once when a visitor lands on the self-serve signup page.
+function fireSignupStarted() {
+    const path = getCurrentPath();
+    if (!/\/get-started(\.html)?$/.test(path)) return;
+    if (sessionStorage.getItem('ratetap-signup-started-fired') === '1') return;
+
+    const persistedTouch = readPersistedFunnelTouch() || {};
+    const params = new URLSearchParams(window.location.search || '');
+    trackLeadEvent('signup_started', {
+        source_page: params.get('source_page') || persistedTouch.source_page || 'direct',
+        offer: params.get('offer') || persistedTouch.offer || '',
+        cta_section: persistedTouch.cta_context || ''
+    });
+    try { sessionStorage.setItem('ratetap-signup-started-fired', '1'); } catch (e) {}
+}
+
+function ensureHiddenInput(form, name, value) {
+    let field = form.querySelector(`input[name="${name}"]`);
+    if (!field) {
+        field = document.createElement('input');
+        field.type = 'hidden';
+        field.name = name;
+        form.appendChild(field);
+    }
+    field.value = value;
+    return field;
+}
+
+function applyLeadAttribution(form) {
+    const params = new URLSearchParams(window.location.search || '');
+    const persistedTouch = readPersistedFunnelTouch() || {};
+    const originCtaContext = params.get('cta_context') || '';
+    const lastCtaContext = persistedTouch.cta_context || originCtaContext || form.dataset.defaultContext || 'organic';
+
+    const payload = {
+        offer: params.get('offer') || persistedTouch.offer || form.dataset.defaultOffer || '',
+        source_page: params.get('source_page') || persistedTouch.source_page || form.dataset.sourcePage || getPageIdentifier(),
+        source_cluster: params.get('source_cluster') || persistedTouch.source_cluster || form.dataset.sourceCluster || '',
+        cta_context: lastCtaContext,
+        origin_cta_context: originCtaContext,
+        language: params.get('language') || (isSpanishPage() ? 'es' : 'en'),
+        landing_path: getCurrentPath(),
+        landing_url: window.location.href,
+        referrer: document.referrer || '',
+        utm_source: params.get('utm_source') || persistedTouch.utm_source || '',
+        utm_medium: params.get('utm_medium') || persistedTouch.utm_medium || '',
+        utm_campaign: params.get('utm_campaign') || persistedTouch.utm_campaign || '',
+        utm_term: params.get('utm_term') || persistedTouch.utm_term || '',
+        utm_content: params.get('utm_content') || persistedTouch.utm_content || ''
+    };
+
+    Object.entries(payload).forEach(([name, value]) => {
+        ensureHiddenInput(form, name, value);
+    });
+
+    return payload;
+}
+
+function wireLeadForms() {
+    const leadForms = document.querySelectorAll('form[data-lead-form], #contact-form, #demo-form');
+
+    leadForms.forEach(form => {
+        applyLeadAttribution(form);
+
+        if (form.dataset.leadTrackingBound === 'true') return;
+
+        form.addEventListener('submit', () => {
+            const payload = applyLeadAttribution(form);
+            trackLeadEvent('signup_form_submit', {
+                ...payload,
+                form_id: form.id || 'lead-form'
+            });
+        });
+
+        form.dataset.leadTrackingBound = 'true';
+    });
+}
+
+function renderFormThanksState() {
+    const params = new URLSearchParams(window.location.search || '');
+    if (params.get('thanks') !== '1') return;
+
+    const form = document.querySelector('#contact-form, #demo-form, form[data-lead-form]');
+    if (!form || form.dataset.thanksRendered === 'true') return;
+
+    const card = document.createElement('div');
+    card.className = 'card reveal';
+    card.style.padding = '1.5rem';
+    card.style.background = 'rgba(77, 166, 255, 0.08)';
+    card.style.border = '1px solid rgba(77, 166, 255, 0.2)';
+    card.style.marginBottom = '1.25rem';
+    card.innerHTML = `
+        <strong style="display:block; margin-bottom:0.5rem;">${isSpanishPage() ? 'Recibimos tu solicitud.' : 'We received your request.'}</strong>
+        <p style="margin:0; color: var(--text-secondary);">${isSpanishPage() ? 'Te contactaremos pronto para activar el siguiente paso del piloto.' : 'We will reach out shortly with the next step for your pilot.'}</p>
+    `;
+
+    form.parentNode.insertBefore(card, form);
+    form.style.display = 'none';
+    form.dataset.thanksRendered = 'true';
 }
 
 function showLanguageSuggestion() {
@@ -211,6 +560,8 @@ function standardizePrimaryCtas() {
     const primaryLinkSelector = 'a.btn.btn-primary[href]';
 
     document.querySelectorAll(primaryLinkSelector).forEach(link => {
+        if (link.dataset.preserveLabel === 'true') return;
+
         const href = normalizeHref(link.getAttribute('href')).toLowerCase();
         const isDemoOrContactCta = href.includes('demo') || href === '#contact' || href === '/#contact';
         const isProminentPlacement = Boolean(link.closest('.nav-actions, .hero, .hero-cta'));
@@ -391,6 +742,21 @@ function injectMobileStickyCta() {
 
     document.body.appendChild(ctaBar);
     document.body.classList.add('has-mobile-sticky-cta');
+
+    const stickyLink = ctaBar.querySelector('a');
+    const sourceLink = document.querySelector('.nav-actions a.btn.btn-primary[href]')
+        || document.querySelector('.hero a.btn.btn-primary[href]')
+        || document.querySelector('a.btn.btn-primary[href]');
+    if (stickyLink && sourceLink) {
+        ['funnelOffer', 'sourcePage', 'sourceCluster', 'language'].forEach(key => {
+            if (sourceLink.dataset[key]) {
+                stickyLink.dataset[key] = sourceLink.dataset[key];
+            }
+        });
+        if (sourceLink.dataset.preserveLabel === 'true') {
+            stickyLink.dataset.preserveLabel = 'true';
+        }
+    }
 }
 
 // Form handling
@@ -562,10 +928,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Quick-win UX enhancements
     applyImagePerformanceTweaks();
+    configureOfferFunnels();
     standardizePrimaryCtas();
     insertTrustStrip();
     removeFooterPlaceholderLinks();
     repairBrokenContactAnchors();
+    renderFormThanksState();
 
     // Form submission - handled by Formsubmit.co (no JS override)
     const contactForms = document.querySelectorAll('#contact-form');
@@ -576,6 +944,10 @@ document.addEventListener('DOMContentLoaded', () => {
     // Mobile menu toggle
     ensureMobileMenuToggle();
     injectMobileStickyCta();
+    wireFunnelLinks();
+    wireLeadForms();
+    wireGenericCtas();
+    fireSignupStarted();
 
     // FAQ Accordion
     const faqItems = document.querySelectorAll('.faq-item');

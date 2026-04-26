@@ -50,6 +50,15 @@ function BienvenidaInner() {
     } catch { /* sessionStorage blocked — fall through */ }
     const fbq = (window as unknown as { fbq?: (...args: unknown[]) => void }).fbq;
     if (fbq) fbq('track', 'CompleteRegistration', { value: 0, currency: 'MXN' }, { eventID: sessionId });
+    const dl = (window as unknown as { dataLayer?: Array<Record<string, unknown>> }).dataLayer;
+    if (Array.isArray(dl)) {
+      dl.push({
+        event: 'signup_completed',
+        event_id: sessionId,
+        plan_type: 'trial',
+        signup_method: 'stripe_checkout',
+      });
+    }
     pixelFiredRef.current = true;
   }, [status?.ready, sessionId]);
 
