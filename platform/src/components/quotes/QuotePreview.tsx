@@ -20,6 +20,40 @@ type Props = {
   firmaTelefono?: string;
 };
 
+// Reusable beverage block for Vista Cliente — name in bold, then a bulleted
+// list of what's actually included. Replaces the previous one-line desc
+// paragraph; customers were sending follow-up "¿qué incluye?" questions
+// because "Paquete Básico" alone meant nothing to them.
+function BebidasBlock({
+  pkg,
+  label = 'Bebidas',
+}: {
+  pkg: { nombre: string; bullets: string[]; desc: string };
+  label?: string;
+}) {
+  return (
+    <div style={{ textAlign: 'center' }}>
+      <p className="doc-mini" style={{ marginBottom: 8 }}>{label}</p>
+      <p className="small" style={{ fontWeight: 600, margin: 0 }}>{pkg.nombre}</p>
+      {pkg.bullets && pkg.bullets.length > 0 ? (
+        <ul style={{ listStyle: 'none', padding: 0, margin: '6px 0 0' }}>
+          {pkg.bullets.map((b, i) => (
+            <li
+              key={i}
+              className="small text-3"
+              style={{ margin: '2px 0', fontStyle: 'italic' }}
+            >
+              • {b}
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="small text-2" style={{ margin: '4px 0 0' }}>{pkg.desc}</p>
+      )}
+    </div>
+  );
+}
+
 function formatFecha(fecha: string): string {
   if (!fecha) return '—';
   try {
@@ -231,13 +265,7 @@ export default function QuotePreview({
                 ))}
               </div>
             )}
-            {bebidaPkg && (
-              <div style={{ textAlign: 'center' }}>
-                <p className="doc-mini" style={{ marginBottom: 8 }}>Bebidas</p>
-                <p className="small" style={{ fontWeight: 600, margin: 0 }}>{bebidaPkg.nombre}</p>
-                <p className="small text-2" style={{ margin: '4px 0 0' }}>{bebidaPkg.desc}</p>
-              </div>
-            )}
+            {bebidaPkg && <BebidasBlock pkg={bebidaPkg} />}
           </div>
         )}
 
@@ -277,13 +305,7 @@ export default function QuotePreview({
                 ))}
               </div>
             )}
-            {bebidaPkg && (
-              <div style={{ textAlign: 'center' }}>
-                <p className="doc-mini" style={{ marginBottom: 8 }}>Bebidas (incluidas)</p>
-                <p className="small" style={{ fontWeight: 600, margin: 0 }}>{bebidaPkg.nombre}</p>
-                <p className="small text-2" style={{ margin: '4px 0 0' }}>{bebidaPkg.desc}</p>
-              </div>
-            )}
+            {bebidaPkg && <BebidasBlock pkg={bebidaPkg} label="Bebidas (incluidas)" />}
           </div>
         )}
 
@@ -295,24 +317,30 @@ export default function QuotePreview({
               return (
                 <div key={cat} style={{ textAlign: 'center' }}>
                   <p className="doc-mini" style={{ marginBottom: 8 }}>{cat}</p>
-                  {items.map((item) => (
-                    <p key={item.id} className="small" style={{ margin: '2px 0' }}>
-                      <span className="num">{item.cantidad}</span> × {item.nombre}
-                      {item.sharedIncluded && (
-                        <span className="text-3" style={{ fontStyle: 'italic', marginLeft: 8 }}>(incluida)</span>
-                      )}
-                    </p>
-                  ))}
+                  {items.map((item) => {
+                    // When qty matches headcount, the customer naturally
+                    // reads it as "1 per guest" — surface that explicitly
+                    // so they don't have to do mental math. Skip the tag
+                    // when the line is already labeled "(incluida)" to
+                    // avoid double-tagging.
+                    const showPerPersonTag =
+                      !item.sharedIncluded && item.cantidad === evento.personas;
+                    return (
+                      <p key={item.id} className="small" style={{ margin: '2px 0' }}>
+                        <span className="num">{item.cantidad}</span> × {item.nombre}
+                        {showPerPersonTag && (
+                          <span className="text-3" style={{ fontStyle: 'italic', marginLeft: 8 }}>(1 por persona)</span>
+                        )}
+                        {item.sharedIncluded && (
+                          <span className="text-3" style={{ fontStyle: 'italic', marginLeft: 8 }}>(incluida)</span>
+                        )}
+                      </p>
+                    );
+                  })}
                 </div>
               );
             })}
-            {bebidaPkg && (
-              <div style={{ textAlign: 'center' }}>
-                <p className="doc-mini" style={{ marginBottom: 8 }}>Bebidas</p>
-                <p className="small" style={{ fontWeight: 600, margin: 0 }}>{bebidaPkg.nombre}</p>
-                <p className="small text-2" style={{ margin: '4px 0 0' }}>{bebidaPkg.desc}</p>
-              </div>
-            )}
+            {bebidaPkg && <BebidasBlock pkg={bebidaPkg} />}
           </div>
         )}
 
@@ -324,28 +352,28 @@ export default function QuotePreview({
               return (
                 <div key={cat} style={{ textAlign: 'center' }}>
                   <p className="doc-mini" style={{ marginBottom: 8 }}>{cat}</p>
-                  {items.map((item) => (
-                    <div key={item.id} style={{ margin: '2px 0' }}>
-                      <p className="small" style={{ margin: 0 }}>
-                        {item.cantidad !== evento.personas && <><span className="num">{item.cantidad}</span> × </>}
-                        {item.nombre}
-                      </p>
-                      {item.includedSideName && (
-                        <p className="small text-3" style={{ margin: '2px 0 0', fontStyle: 'italic' }}>
-                          ↳ Guarnición: {item.includedSideName} <span style={{ fontStyle: 'normal' }}>(incluida)</span>
+                  {items.map((item) => {
+                    const isPerPerson = item.cantidad === evento.personas;
+                    return (
+                      <div key={item.id} style={{ margin: '2px 0' }}>
+                        <p className="small" style={{ margin: 0 }}>
+                          <span className="num">{item.cantidad}</span> × {item.nombre}
+                          {isPerPerson && (
+                            <span className="text-3" style={{ fontStyle: 'italic', marginLeft: 8 }}>(1 por persona)</span>
+                          )}
                         </p>
-                      )}
-                    </div>
-                  ))}
+                        {item.includedSideName && (
+                          <p className="small text-3" style={{ margin: '2px 0 0', fontStyle: 'italic' }}>
+                            → Guarnición: {item.includedSideName} <span style={{ fontStyle: 'normal' }}>(incluida)</span>
+                          </p>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
               );
             })}
-            {bebidaPkg && (
-              <div style={{ textAlign: 'center' }}>
-                <p className="doc-mini" style={{ marginBottom: 8 }}>Bebidas</p>
-                <p className="small" style={{ fontWeight: 600, margin: 0 }}>{bebidaPkg.nombre}</p>
-              </div>
-            )}
+            {bebidaPkg && <BebidasBlock pkg={bebidaPkg} />}
           </div>
         )}
       </div>

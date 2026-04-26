@@ -164,15 +164,56 @@ export const MENU: QuoteDish[] = [
 export type BeveragePackage = {
   id: string;
   nombre: string;
+  // One-line summary used in the Constructor radio picker (kept short).
   desc: string;
+  // Detailed bullet list shown on Vista Cliente / PDF so the customer
+  // knows exactly what's in the package — fixes a real-world issue where
+  // hostesses were getting follow-up "¿qué incluye el básico?" questions
+  // after sending quotes. Edit these to change what the customer sees;
+  // ideal future state is a DB-backed table so non-engineers can edit.
+  bullets: string[];
   precio: number;
 };
 
 export const PAQUETES_BEBIDAS: BeveragePackage[] = [
-  { id: 'completo', nombre: 'Paquete Básico', desc: '3 bebidas por persona: refresco, naranjada, limonada, agua mineral, vino tinto de la casa o cerveza nacional', precio: 200 },
-  { id: 'premium', nombre: 'Paquete Premium', desc: '2 copas de vino de la casa + 2 bebidas extra (refresco, naranjada, limonada, agua o café)', precio: 300 },
-  { id: 'sin-alcohol', nombre: 'Paquete Sin Alcohol', desc: '3 bebidas sin alcohol por persona (refresco, naranjada, limonada, agua o café)', precio: 159 },
-  { id: 'a-la-carta', nombre: 'Bebidas a la Carta', desc: 'Las bebidas se cobran por separado al consumo', precio: 0 },
+  {
+    id: 'completo',
+    nombre: 'Paquete Básico',
+    desc: '3 bebidas por persona: refresco, naranjada, limonada, agua mineral, vino tinto de la casa o cerveza nacional',
+    bullets: [
+      '3 bebidas por persona',
+      'Refresco, naranjada, limonada, agua mineral',
+      'Vino tinto de la casa o cerveza nacional',
+    ],
+    precio: 200,
+  },
+  {
+    id: 'premium',
+    nombre: 'Paquete Premium',
+    desc: '2 copas de vino de la casa + 2 bebidas extra (refresco, naranjada, limonada, agua o café)',
+    bullets: [
+      '2 copas de vino de la casa',
+      '2 bebidas extra: refresco, naranjada, limonada, agua o café',
+    ],
+    precio: 300,
+  },
+  {
+    id: 'sin-alcohol',
+    nombre: 'Paquete Sin Alcohol',
+    desc: '3 bebidas sin alcohol por persona (refresco, naranjada, limonada, agua o café)',
+    bullets: [
+      '3 bebidas sin alcohol por persona',
+      'Refresco, naranjada, limonada, agua o café',
+    ],
+    precio: 159,
+  },
+  {
+    id: 'a-la-carta',
+    nombre: 'Bebidas a la Carta',
+    desc: 'Las bebidas se cobran por separado al consumo',
+    bullets: ['Se cobran por separado al consumo'],
+    precio: 0,
+  },
 ];
 
 export type QuoteModo = 'individual' | 'opciones' | 'asado' | 'carta';
