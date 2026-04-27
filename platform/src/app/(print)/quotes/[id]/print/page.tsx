@@ -62,7 +62,8 @@ export default async function PrintQuotePage({ params }: { params: Promise<{ id:
           @media print {
             body, html { background: white !important; margin: 0 !important; }
             .q-no-print { display: none !important; }
-            @page { margin: 1.5cm; }
+            .q-print-wrap { background: white !important; padding: 0 !important; min-height: 0 !important; }
+            @page { margin: 1.2cm; }
           }
         `}</style>
 
@@ -89,7 +90,7 @@ export default async function PrintQuotePage({ params }: { params: Promise<{ id:
           <PrintButton />
         </div>
 
-        <div style={{ background: '#F5F2EC', minHeight: '100vh', padding: '2rem 1rem' }}>
+        <div className="q-print-wrap" style={{ background: '#F5F2EC', minHeight: '100vh', padding: '2rem 1rem' }}>
           <div style={{ maxWidth: 780, margin: '0 auto' }}>
             <QuotePreview
               config={config}

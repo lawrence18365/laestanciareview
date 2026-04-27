@@ -201,12 +201,38 @@ export default function QuotePreview({
           .quote-doc .price-big { font-size: 36px; }
         }
         @media print {
-          .quote-doc { border: none; padding: 0; }
+          /* Tighten everything so a typical event cotización fits on a
+             single A4/Letter sheet — Leslie's PDFs were spilling onto a
+             second page that was 70% empty. */
+          .quote-doc { border: none; padding: 0; font-size: 12px; line-height: 1.4; }
+          .quote-doc .doc-divider { margin: 12px 0; }
+          .quote-doc .doc-mini { font-size: 9px; }
+          .quote-doc .h-1 { font-size: 18px; line-height: 1.15; }
+          .quote-doc .h-3 { font-size: 12px; }
+          .quote-doc .small { font-size: 11px; }
+          .quote-doc .price-big { font-size: 32px; }
+          .quote-doc .qp-header { margin-bottom: 14px !important; }
+          .quote-doc .qp-header img { height: 44px !important; margin-bottom: 4px !important; }
+          .quote-doc .qp-datos { gap: 12px !important; margin-bottom: 14px !important; font-size: 12px !important; }
+          .quote-doc .qp-menu { margin-bottom: 14px !important; }
+          .quote-doc .qp-menu .qp-menu-title { margin: 0 0 12px !important; }
+          .quote-doc .qp-menu-stack { gap: 12px !important; }
+          .quote-doc .qp-precio { padding: 6px 0 !important; }
+          .quote-doc .qp-precio .qp-precio-pp { margin-bottom: 4px !important; }
+          .quote-doc .qp-precio .qp-precio-total { margin-top: 8px !important; }
+          .quote-doc .qp-precio .qp-precio-tax { margin-top: 6px !important; }
+          .quote-doc .qp-terms ol { line-height: 1.45 !important; padding-left: 14px !important; }
+          .quote-doc .qp-terms ol li { margin-bottom: 2px !important; }
+          .quote-doc .qp-firma .h-3 { margin-bottom: 2px !important; }
+          /* Avoid awkward page splits inside core blocks */
+          .quote-doc .qp-precio,
+          .quote-doc .qp-firma,
+          .quote-doc .qp-terms { break-inside: avoid; page-break-inside: avoid; }
         }
       `}</style>
 
       {/* Header */}
-      <div style={{ textAlign: 'center', marginBottom: 32 }}>
+      <div className="qp-header" style={{ textAlign: 'center', marginBottom: 32 }}>
         <img src={logoSrc} alt={restaurantName} style={{ height: 64, width: 'auto', margin: '0 auto 12px', display: 'inline-block' }} />
         <p className="doc-mini">{city} · Eventos privados</p>
       </div>
@@ -214,7 +240,7 @@ export default function QuotePreview({
       <div className="doc-divider" />
 
       {/* Datos */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24, marginBottom: 32, fontSize: 14 }}>
+      <div className="qp-datos" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24, marginBottom: 32, fontSize: 14 }}>
         <div>
           <p className="doc-mini" style={{ marginBottom: 6 }}>Cliente</p>
           <p style={{ fontWeight: 600, margin: 0 }}>{evento.cliente || '—'}</p>
@@ -243,11 +269,11 @@ export default function QuotePreview({
       <div className="doc-divider" />
 
       {/* Menú */}
-      <div style={{ marginBottom: 32 }}>
-        <h3 className="h-1" style={{ textAlign: 'center', margin: '0 0 24px' }}>{tituloMenu}</h3>
+      <div className="qp-menu" style={{ marginBottom: 32 }}>
+        <h3 className="h-1 qp-menu-title" style={{ textAlign: 'center', margin: '0 0 24px' }}>{tituloMenu}</h3>
 
         {modo === 'individual' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+          <div className="qp-menu-stack" style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
             {indivSopasDishes.length > 0 && (
               <div style={{ textAlign: 'center' }}>
                 <p className="doc-mini" style={{ marginBottom: 8 }}>1° Tiempo · A elegir 1</p>
@@ -277,7 +303,7 @@ export default function QuotePreview({
         )}
 
         {modo === 'opciones' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+          <div className="qp-menu-stack" style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
             {opcionesSopasDishes.length > 0 && (
               <div style={{ textAlign: 'center' }}>
                 <p className="doc-mini" style={{ marginBottom: 8 }}>1° Tiempo · A elegir 1</p>
@@ -317,7 +343,7 @@ export default function QuotePreview({
         )}
 
         {modo === 'asado' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+          <div className="qp-menu-stack" style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
             {(['Entradas', 'Parrilla', 'Guarniciones'] as QuoteCategoria[]).map((cat) => {
               const items = asadoItemsPorCat(cat);
               if (!items.length) return null;
@@ -359,7 +385,7 @@ export default function QuotePreview({
         )}
 
         {modo === 'carta' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+          <div className="qp-menu-stack" style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
             {CATEGORIAS.map((cat) => {
               const items = cartaItemsPorCat(cat);
               if (!items.length) return null;
@@ -400,14 +426,14 @@ export default function QuotePreview({
       <div className="doc-divider" />
 
       {/* Precio */}
-      <div style={{ textAlign: 'center', padding: '16px 0' }}>
-        <p className="doc-mini" style={{ marginBottom: 8 }}>Inversión</p>
+      <div className="qp-precio" style={{ textAlign: 'center', padding: '16px 0' }}>
+        <p className="doc-mini qp-precio-pp" style={{ marginBottom: 8 }}>Inversión</p>
         <p className="price-big num" style={{ margin: 0 }}>{fmtMXN(pricing.precioFinalPP)}</p>
         <p className="small text-2" style={{ margin: '4px 0 0' }}>por persona</p>
-        <p className="h-3 num" style={{ marginTop: 16 }}>
+        <p className="h-3 num qp-precio-total" style={{ marginTop: 16 }}>
           Total {evento.personas} personas · {fmtMXN(pricing.precioTotalFinal)}
         </p>
-        <p className="text-3" style={{ fontSize: 12, marginTop: 12 }}>
+        <p className="text-3 qp-precio-tax" style={{ fontSize: 12, marginTop: 12 }}>
           {pricing.ivaIncluido && !pricing.servicioActivo && 'Precio incluye IVA 16%'}
           {!pricing.ivaIncluido && pricing.servicioActivo && 'Más 15% servicio + IVA 16%'}
           {!pricing.ivaIncluido && !pricing.servicioActivo && 'Más IVA 16%'}
@@ -418,7 +444,7 @@ export default function QuotePreview({
       <div className="doc-divider" />
 
       {/* Términos */}
-      <div>
+      <div className="qp-terms">
         <p className="doc-mini" style={{ marginBottom: 12 }}>Términos y condiciones</p>
         <ol className="small text-2" style={{ paddingLeft: 16, margin: 0, lineHeight: 1.7 }}>
           {(config.terms ?? '')
@@ -434,7 +460,7 @@ export default function QuotePreview({
       <div className="doc-divider" />
 
       {/* Firma */}
-      <div style={{ textAlign: 'center' }}>
+      <div className="qp-firma" style={{ textAlign: 'center' }}>
         <p className="h-3" style={{ marginBottom: 4 }}>{firmaNombre}</p>
         <p className="small text-2" style={{ margin: 0 }}>{firmaCargo}</p>
         <p className="small text-2 num" style={{ margin: 0 }}>{firmaTelefono}</p>

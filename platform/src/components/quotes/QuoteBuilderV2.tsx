@@ -331,6 +331,10 @@ export default function QuoteBuilderV2({
 
   // ── WhatsApp + copy ─────────────────────────────────────────────────────
 
+  // Long-form summary, kept for the "Copiar texto" fallback button. Not sent
+  // automatically anymore — Leslie's clients want the actual PDF, not a wall
+  // of text. The PDF goes via the print page on click; WhatsApp gets a short
+  // intro line so the hostess can attach the just-saved PDF herself.
   const whatsappText = useMemo(() => {
     const { evento } = config;
     const lines: string[] = [];
@@ -354,17 +358,42 @@ export default function QuoteBuilderV2({
 
   waTextRef.current = whatsappText;
 
-  const whatsappLink = useMemo(() => {
-    // WhatsApp requires full international format. The hostess almost always
-    // types a local MX number like "33 1234 5678" → normalize to 52XXXXXXXXXX.
+  // wa.me has no file-attach hook by spec — so the "send PDF" flow is:
+  // click → open print page in new tab (autoprint=1 fires Save-as-PDF) →
+  // open WhatsApp Web with a short intro → hostess attaches the saved PDF.
+  const whatsappPhone = useMemo(() => {
     const raw = (config.evento.telefono || '').replace(/\D/g, '');
-    let phone = raw;
-    if (raw.length === 10) phone = '52' + raw;              // local 10-digit MX
-    else if (raw.length === 11 && raw.startsWith('1')) phone = '52' + raw.slice(1); // old "1 + 10" habit
-    // 12-digit starting with 52 or any other already-prefixed number: leave alone
-    const encoded = encodeURIComponent(whatsappText);
-    return phone ? `https://wa.me/${phone}?text=${encoded}` : `https://wa.me/?text=${encoded}`;
-  }, [config.evento.telefono, whatsappText]);
+    if (raw.length === 10) return '52' + raw;                                    // local 10-digit MX
+    if (raw.length === 11 && raw.startsWith('1')) return '52' + raw.slice(1);    // old "1 + 10" habit
+    return raw; // already prefixed (52…) or empty
+  }, [config.evento.telefono]);
+
+  const whatsappShortText = useMemo(() => {
+    const nombre = config.evento.cliente?.trim();
+    const saludo = nombre ? `Hola ${nombre} 👋` : 'Hola 👋';
+    return `${saludo}\n\nTe comparto la cotización para tu ${config.evento.tipo.toLowerCase()} en La Estancia Argentina. Te adjunto el PDF aquí mismo 📎\n\nCotización ${folio}`;
+  }, [config.evento.cliente, config.evento.tipo, folio]);
+
+  const whatsappShortLink = useMemo(() => {
+    const encoded = encodeURIComponent(whatsappShortText);
+    return whatsappPhone ? `https://wa.me/${whatsappPhone}?text=${encoded}` : `https://wa.me/?text=${encoded}`;
+  }, [whatsappPhone, whatsappShortText]);
+
+  function enviarPorWhatsApp() {
+    if (!quoteId) {
+      alert('Guarda la cotización primero para generar el PDF.');
+      return;
+    }
+    // Open the print page first so it inherits the user gesture (some browsers
+    // block window.open on followup async work). The print page reads
+    // autoprint=1 and auto-fires Save-as-PDF once fonts are ready.
+    const printWin = window.open(`/quotes/${quoteId}/print?autoprint=1`, '_blank', 'noopener,noreferrer');
+    // Then open WhatsApp Web/app with the short intro message. If popups got
+    // blocked, fall back to navigating the current tab so the hostess still
+    // ends up in WhatsApp.
+    const waWin = window.open(whatsappShortLink, '_blank', 'noopener,noreferrer');
+    if (!printWin && !waWin) window.location.href = whatsappShortLink;
+  }
 
   async function copiarTextoWA() {
     try {
@@ -507,7 +536,7 @@ export default function QuoteBuilderV2({
           {/* Plantillas */}
           <div style={{ marginBottom: 24 }}>
             <p className="mini" style={{ marginBottom: 6 }}>Paso 02 · Plantilla</p>
-            <h2 className="h-1" style={{ marginBottom: 8 }}>Elige un formato de cotización</h2>
+            <h2 className="h-1" style={{ marginBottom: 12 }}>Elige un formato de cotización</h2>
             <p className="body text-2" style={{ maxWidth: 560 }}>Basadas en los menús que ya tienes armados. Después puedes ajustar todo.</p>
           </div>
 
@@ -518,7 +547,7 @@ export default function QuoteBuilderV2({
                   <span className="num text-2" style={{ fontSize: 12, fontWeight: 600 }}>{String(idx + 1).padStart(2, '0')}</span>
                   <p className="mini">{t.precioLabel}</p>
                 </div>
-                <h3 className="h-2" style={{ marginBottom: 4 }}>{t.nombre}</h3>
+                <h3 className="h-2" style={{ marginBottom: 8 }}>{t.nombre}</h3>
                 <p className="small text-2" style={{ marginBottom: 16 }}>{t.subtitulo}</p>
                 <p className="small text-2" style={{ marginBottom: 20, flex: 1, lineHeight: 1.6 }}>{t.descripcion}</p>
                 <div style={{ paddingTop: 16, borderTop: '1px solid var(--cb-border)' }}>
@@ -535,7 +564,7 @@ export default function QuoteBuilderV2({
                 <span className="num text-2" style={{ fontSize: 12, fontWeight: 600 }}>05</span>
                 <p className="mini">A calcular</p>
               </div>
-              <h3 className="h-2" style={{ marginBottom: 4 }}>Construir desde cero</h3>
+              <h3 className="h-2" style={{ marginBottom: 8 }}>Construir desde cero</h3>
               <p className="small text-2" style={{ marginBottom: 16 }}>A la carta</p>
               <p className="small text-2" style={{ marginBottom: 20, flex: 1, lineHeight: 1.6 }}>Arma el menú platillo por platillo desde toda la carta. Ideal cuando el cliente sabe exactamente qué quiere o tiene restricciones específicas.</p>
               <div style={{ paddingTop: 16, borderTop: '1px solid var(--cb-border)' }}>
@@ -688,12 +717,12 @@ export default function QuoteBuilderV2({
                 Imprimir / PDF
               </button>
               <button onClick={copiarTextoWA} className="btn btn-secondary">{copied ? '✓ Copiado' : 'Copiar texto'}</button>
-              <a href={whatsappLink} target="_blank" rel="noopener noreferrer" className="btn btn-wa">
+              <button onClick={enviarPorWhatsApp} className="btn btn-wa" type="button">
                 <svg width={16} height={16} fill="currentColor" viewBox="0 0 24 24" aria-hidden>
                   <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893A11.821 11.821 0 0 0 20.464 3.488" />
                 </svg>
-                WhatsApp
-              </a>
+                Enviar por WhatsApp
+              </button>
             </div>
           </div>
 
@@ -1675,9 +1704,12 @@ const CSS = `
   .cotizador-root .cb-header { top: 56px; }
   .cotizador-root .cb-header-inner { padding: 0 14px; }
   .cotizador-root .cb-row { padding: 14px 0 !important; }
-  .cotizador-root .h-display { font-size: 22px; line-height: 1.2; }
-  .cotizador-root .h-1 { font-size: 19px; }
-  .cotizador-root .h-2 { font-size: 16px; }
+  /* Playfair ascenders/descenders extend past the line-box; pin a roomier
+     line-height + bottom padding on phones so the next paragraph (subtitle,
+     card subtitle) doesn't visually crash into the heading glyphs. */
+  .cotizador-root .h-display { font-size: 22px; line-height: 1.25; padding-bottom: 2px; }
+  .cotizador-root .h-1 { font-size: 19px; line-height: 1.3; padding-bottom: 2px; }
+  .cotizador-root .h-2 { font-size: 16px; line-height: 1.4; padding-bottom: 2px; }
   .cotizador-root .cb-main { padding: 20px 14px; }
 
   /* Prevent iOS auto-zoom on focus */
