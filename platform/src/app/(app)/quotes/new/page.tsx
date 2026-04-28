@@ -4,6 +4,7 @@ import { db } from '@/db';
 import { restaurants } from '@/db/schema';
 import { verifySession } from '@/lib/session';
 import { getBrandForSlug } from '@/lib/brands';
+import { isAdminEmail } from '@/lib/admin';
 import QuoteBuilderV2 from '@/components/quotes/QuoteBuilderV2';
 
 export default async function NewQuotePage() {
@@ -12,7 +13,7 @@ export default async function NewQuotePage() {
   if (session.role !== 'gm') redirect('/overview');
 
   const [restaurant] = await db
-    .select({ name: restaurants.name })
+    .select({ name: restaurants.name, managerEmail: restaurants.managerEmail })
     .from(restaurants)
     .where(eq(restaurants.slug, session.slug))
     .limit(1);
@@ -22,6 +23,7 @@ export default async function NewQuotePage() {
     <QuoteBuilderV2
       restaurantName={restaurant?.name ?? 'La Estancia'}
       logoSrc={brand.logo}
+      isAdmin={isAdminEmail(restaurant?.managerEmail)}
     />
   );
 }

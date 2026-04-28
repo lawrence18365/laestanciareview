@@ -4,6 +4,7 @@ import { db } from '@/db';
 import { quotes, restaurants } from '@/db/schema';
 import { verifySession } from '@/lib/session';
 import { getBrandForSlug } from '@/lib/brands';
+import { isAdminEmail } from '@/lib/admin';
 import QuoteBuilderV2 from '@/components/quotes/QuoteBuilderV2';
 import { emptyConfig, migrateConfig, type QuoteConfig } from '@/lib/quote-data';
 
@@ -17,7 +18,7 @@ export default async function EditQuotePage({ params }: { params: Promise<{ id: 
   if (isNaN(quoteId)) notFound();
 
   const [restaurant] = await db
-    .select({ id: restaurants.id, name: restaurants.name })
+    .select({ id: restaurants.id, name: restaurants.name, managerEmail: restaurants.managerEmail })
     .from(restaurants)
     .where(eq(restaurants.slug, session.slug))
     .limit(1);
@@ -59,6 +60,7 @@ export default async function EditQuotePage({ params }: { params: Promise<{ id: 
       quoteNumber={quoteNumber}
       restaurantName={restaurant.name}
       logoSrc={brand.logo}
+      isAdmin={isAdminEmail(restaurant.managerEmail)}
     />
   );
 }

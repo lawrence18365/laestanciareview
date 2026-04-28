@@ -754,6 +754,46 @@ export function computePricing(config: QuoteConfig): PricingResult {
   };
 }
 
+// Per-tier pricing for opciones mode.
+//
+// computePricing() returns one averaged precioFinalPP across tiers (correct
+// for internal margin math). The customer must never see that average
+// because they haven't picked A/B/C yet — they should see one final price
+// per option. This helper applies the same servicio + IVA pipeline as
+// computePricing, but to a single tier's base + bebidas + extras.
+//
+// Returns { pricePP, total }. Math:
+//   base = (tier.precio + extraSectionsPP + bebidaPP) × personas
+//   conServicio = base × (servicioActivo ? 1.15 : 1)
+//   final = conServicio × (ivaIncluido ? 1 : 1.16)
+//   pricePP = final / personas
+export type TierPricing = { letra: string; pricePP: number; total: number };
+
+export function computeTierPricing(config: QuoteConfig): TierPricing[] {
+  if (config.modo !== 'opciones') return [];
+  const personas = Math.max(1, config.evento.personas || 1);
+  const pkg = packageById(config.opciones.bebidas);
+  const bebidaPP = pkg?.precio ?? 0;
+  const extraVentaPP = (config.extraSections ?? []).reduce(
+    (sum, s) => sum + (s.precioPP || 0),
+    0,
+  );
+  const { incluyeIVA, incluyeServicio } = config.opciones;
+
+  return config.opciones.tiers
+    .filter((t) => (t.precio || 0) > 0)
+    .map((t) => {
+      const base = ((t.precio || 0) + extraVentaPP + bebidaPP) * personas;
+      const conServicio = incluyeServicio ? base * (1 + servicePct()) : base;
+      const final = incluyeIVA ? conServicio : conServicio * (1 + ivaPct());
+      return {
+        letra: t.letra,
+        pricePP: final / personas,
+        total: final,
+      };
+    });
+}
+
 // Format MXN currency without decimals, e.g. $1,200
 export function fmtMXN(n: number): string {
   return '$' + Math.round(n || 0).toLocaleString('es-MX');

@@ -8,6 +8,7 @@ import {
   PAQUETES_BEBIDAS,
   TEMPLATES,
   computePricing,
+  computeTierPricing,
   dishById,
   eligibleIncludedSides,
   emptyConfig,
@@ -45,6 +46,11 @@ type Props = {
   quoteNumber?: string;
   restaurantName?: string;
   logoSrc?: string;
+  // Admin sees margen/costo/markup/ganancia for validating quotes before
+  // sending. Hostess sees only Personas / Precio / Total. Defaults to false
+  // — server pages must explicitly opt-in via isAdminEmail(managerEmail).
+  // Becomes a real role check when the multi-user CRM ships.
+  isAdmin?: boolean;
 };
 
 export default function QuoteBuilderV2({
@@ -53,6 +59,7 @@ export default function QuoteBuilderV2({
   quoteNumber,
   restaurantName = 'La Estancia',
   logoSrc,
+  isAdmin = false,
 }: Props) {
   const router = useRouter();
   const [config, setConfig] = useState<QuoteConfig>(() => initialConfig ?? emptyConfig());
@@ -380,11 +387,28 @@ export default function QuoteBuilderV2({
       for (const s of namedSections) lines.push(`• ${s.nombre.trim()}`);
     }
     lines.push('');
-    lines.push(`💰 *${fmtMXN(pricing.precioFinalPP)} por persona*`);
-    lines.push(`Total: ${fmtMXN(pricing.precioTotalFinal)}`);
     const taxNote = pricing.ivaIncluido
       ? (pricing.servicioActivo ? 'Incluye IVA 16% y 15% de servicio' : 'Incluye IVA 16%')
       : (pricing.servicioActivo ? 'Más 15% servicio + IVA 16%' : 'Más IVA 16%');
+    // Opciones mode: list all tiers with their per-pp + total. Customer
+    // hasn't picked yet, so a single averaged price is wrong (mismatches
+    // PDF and Vista Cliente, both of which now show three prices).
+    if (config.modo === 'opciones') {
+      const tiers = computeTierPricing(config);
+      if (tiers.length > 0) {
+        lines.push('💰 *Inversión por persona*');
+        for (const t of tiers) lines.push(`Opción ${t.letra} · ${fmtMXN(t.pricePP)}`);
+        lines.push('');
+        lines.push(`*Total estimado · ${evento.personas} personas*`);
+        for (const t of tiers) lines.push(`Opción ${t.letra} · ${fmtMXN(t.total)}`);
+      } else {
+        lines.push('💰 *Inversión por persona*');
+        lines.push('Define el precio de cada opción para verlo aquí');
+      }
+    } else {
+      lines.push(`💰 *${fmtMXN(pricing.precioFinalPP)} por persona*`);
+      lines.push(`Total: ${fmtMXN(pricing.precioTotalFinal)}`);
+    }
     lines.push(taxNote);
     lines.push('');
     lines.push(`Cotización ${folio}`);
@@ -638,6 +662,7 @@ export default function QuoteBuilderV2({
                   onAddSection={addExtraSection}
                   onUpdateSection={updateExtraSection}
                   onRemoveSection={removeExtraSection}
+                  isAdmin={isAdmin}
                 />
               )}
               {config.modo === 'opciones' && (
@@ -650,6 +675,7 @@ export default function QuoteBuilderV2({
                   onAddSection={addExtraSection}
                   onUpdateSection={updateExtraSection}
                   onRemoveSection={removeExtraSection}
+                  isAdmin={isAdmin}
                 />
               )}
               {config.modo === 'asado' && (
@@ -663,6 +689,7 @@ export default function QuoteBuilderV2({
                   onAddSection={addExtraSection}
                   onUpdateSection={updateExtraSection}
                   onRemoveSection={removeExtraSection}
+                  isAdmin={isAdmin}
                 />
               )}
               {config.modo === 'carta' && (
@@ -679,6 +706,7 @@ export default function QuoteBuilderV2({
                   onAddSection={addExtraSection}
                   onUpdateSection={updateExtraSection}
                   onRemoveSection={removeExtraSection}
+                  isAdmin={isAdmin}
                 />
               )}
             </div>
@@ -687,13 +715,13 @@ export default function QuoteBuilderV2({
             <div className="col-summary">
               <div className="cb-summary-sticky">
                 <div className="card" style={{ padding: 20 }}>
-                  <p className="mini" style={{ marginBottom: 12 }}>Resumen interno</p>
+                  <p className="mini" style={{ marginBottom: 12 }}>{isAdmin ? 'Resumen interno' : 'Resumen'}</p>
                   <div>
                     <SummaryRow label="Personas" value={String(config.evento.personas)} />
-                    <SummaryRow label="Costo total estimado" value={fmtMXN(pricing.costoTotal)} />
-                    <SummaryRow label="Subtotal venta" value={fmtMXN(pricing.subtotalVenta)} />
-                    {pricing.servicioActivo && <SummaryRow label="+ Servicio 15%" value={fmtMXN(pricing.servicioAmt)} />}
-                    {!pricing.ivaIncluido && <SummaryRow label="+ IVA 16%" value={fmtMXN(pricing.ivaAmt)} />}
+                    {isAdmin && <SummaryRow label="Costo total estimado" value={fmtMXN(pricing.costoTotal)} />}
+                    {isAdmin && <SummaryRow label="Subtotal venta" value={fmtMXN(pricing.subtotalVenta)} />}
+                    {isAdmin && pricing.servicioActivo && <SummaryRow label="+ Servicio 15%" value={fmtMXN(pricing.servicioAmt)} />}
+                    {isAdmin && !pricing.ivaIncluido && <SummaryRow label="+ IVA 16%" value={fmtMXN(pricing.ivaAmt)} />}
                   </div>
                   <div style={{ paddingTop: 16, marginTop: 12, borderTop: '1px solid var(--cb-border)', display: 'flex', flexDirection: 'column', gap: 12 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
@@ -705,11 +733,13 @@ export default function QuoteBuilderV2({
                       <span className="h-1 num">{fmtMXN(pricing.precioTotalFinal)}</span>
                     </div>
                   </div>
-                  <div style={{ marginTop: 16, padding: 16, borderRadius: 6, background: 'var(--cb-surface-2)' }}>
-                    <p className="mini" style={{ marginBottom: 8 }}>Ganancia interna</p>
-                    <SummaryRow label="Margen bruto" value={fmtMXN(pricing.gananciaBruta)} strong />
-                    <SummaryRow label="% Margen" value={`${pricing.margenPct}%`} strong />
-                  </div>
+                  {isAdmin && (
+                    <div style={{ marginTop: 16, padding: 16, borderRadius: 6, background: 'var(--cb-surface-2)' }}>
+                      <p className="mini" style={{ marginBottom: 8 }}>Ganancia interna</p>
+                      <SummaryRow label="Margen bruto" value={fmtMXN(pricing.gananciaBruta)} strong />
+                      <SummaryRow label="% Margen" value={`${pricing.margenPct}%`} strong />
+                    </div>
+                  )}
                   <button onClick={() => setTab('preview')} className="btn btn-primary" style={{ width: '100%', marginTop: 16 }}>
                     Ver cotización
                   </button>
@@ -908,7 +938,7 @@ function IvaServicioToggles({
 
 function IndividualMode({
   config, patchIndiv, menuPorCategoria, toggleArrayItem,
-  extraSections, onAddSection, onUpdateSection, onRemoveSection,
+  extraSections, onAddSection, onUpdateSection, onRemoveSection, isAdmin,
 }: {
   config: QuoteConfig;
   patchIndiv: (p: Partial<QuoteConfig['indiv']>) => void;
@@ -918,6 +948,7 @@ function IndividualMode({
   onAddSection: () => void;
   onUpdateSection: (id: string, patch: Partial<ExtraSection>) => void;
   onRemoveSection: (id: string) => void;
+  isAdmin: boolean;
 }) {
   const { indiv } = config;
   return (
@@ -967,6 +998,7 @@ function IndividualMode({
         onAdd={onAddSection}
         onUpdate={onUpdateSection}
         onRemove={onRemoveSection}
+        isAdmin={isAdmin}
       />
 
       <Section title="Bebidas">
@@ -974,16 +1006,18 @@ function IndividualMode({
       </Section>
 
       <div style={{ paddingTop: 24, borderTop: '1px solid var(--cb-border)' }}>
-        <h3 className="h-3" style={{ marginBottom: 16 }}>Precio y costos</h3>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+        <h3 className="h-3" style={{ marginBottom: 16 }}>{isAdmin ? 'Precio y costos' : 'Precio'}</h3>
+        <div style={{ display: 'grid', gridTemplateColumns: isAdmin ? '1fr 1fr' : '1fr', gap: 16 }}>
           <Field label="Precio por persona">
             <input type="number" value={indiv.precioPP || ''} onChange={(e) => patchIndiv({ precioPP: parseFloat(e.target.value) || 0 })} placeholder="1000" />
             <p className="text-3" style={{ fontSize: 12, marginTop: 6 }}>El que cobras al cliente</p>
           </Field>
-          <Field label={<CostoInternoLabel />}>
-            <input type="number" value={indiv.costoPP || ''} onChange={(e) => patchIndiv({ costoPP: parseFloat(e.target.value) || 0 })} placeholder="450" />
-            <p className="text-3" style={{ fontSize: 12, marginTop: 6 }}>{COSTO_INTERNO_HELPER}</p>
-          </Field>
+          {isAdmin && (
+            <Field label={<CostoInternoLabel />}>
+              <input type="number" value={indiv.costoPP || ''} onChange={(e) => patchIndiv({ costoPP: parseFloat(e.target.value) || 0 })} placeholder="450" />
+              <p className="text-3" style={{ fontSize: 12, marginTop: 6 }}>{COSTO_INTERNO_HELPER}</p>
+            </Field>
+          )}
         </div>
         <IvaServicioToggles
           incluyeIVA={indiv.incluyeIVA}
@@ -998,7 +1032,7 @@ function IndividualMode({
 
 function OpcionesMode({
   config, patchOpciones, menuPorCategoria, toggleArrayItem,
-  extraSections, onAddSection, onUpdateSection, onRemoveSection,
+  extraSections, onAddSection, onUpdateSection, onRemoveSection, isAdmin,
 }: {
   config: QuoteConfig;
   patchOpciones: (p: Partial<QuoteConfig['opciones']>) => void;
@@ -1008,6 +1042,7 @@ function OpcionesMode({
   onAddSection: () => void;
   onUpdateSection: (id: string, patch: Partial<ExtraSection>) => void;
   onRemoveSection: (id: string) => void;
+  isAdmin: boolean;
 }) {
   const { opciones } = config;
   return (
@@ -1058,21 +1093,23 @@ function OpcionesMode({
                       placeholder="1100"
                     />
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <label className="mini" title={COSTO_INTERNO_HELPER} style={{ cursor: 'help' }}>Costo/pp</label>
-                    <input
-                      type="number"
-                      value={tier.costoPP || ''}
-                      onChange={(e) => {
-                        const next = [...opciones.tiers];
-                        next[i] = { ...next[i], costoPP: parseFloat(e.target.value) || 0 };
-                        patchOpciones({ tiers: next });
-                      }}
-                      style={{ width: 88 }}
-                      placeholder="450"
-                    />
-                  </div>
-                  {precio > 0 && (
+                  {isAdmin && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <label className="mini" title={COSTO_INTERNO_HELPER} style={{ cursor: 'help' }}>Costo/pp</label>
+                      <input
+                        type="number"
+                        value={tier.costoPP || ''}
+                        onChange={(e) => {
+                          const next = [...opciones.tiers];
+                          next[i] = { ...next[i], costoPP: parseFloat(e.target.value) || 0 };
+                          patchOpciones({ tiers: next });
+                        }}
+                        style={{ width: 88 }}
+                        placeholder="450"
+                      />
+                    </div>
+                  )}
+                  {isAdmin && precio > 0 && (
                     <span className="mini" style={{ minWidth: 56, textAlign: 'right' }}>
                       Margen <span className="num" style={{ color: 'var(--cb-text)' }}>{margen}%</span>
                     </span>
@@ -1111,6 +1148,7 @@ function OpcionesMode({
         onAdd={onAddSection}
         onUpdate={onUpdateSection}
         onRemove={onRemoveSection}
+        isAdmin={isAdmin}
       />
 
       <Section title="Bebidas (incluidas en todas las opciones)">
@@ -1132,7 +1170,7 @@ function OpcionesMode({
 
 function AsadoMode({
   config, patchAsado, menuPorCategoria, setAsadoCantidad, toggleVariant,
-  extraSections, onAddSection, onUpdateSection, onRemoveSection,
+  extraSections, onAddSection, onUpdateSection, onRemoveSection, isAdmin,
 }: {
   config: QuoteConfig;
   patchAsado: (p: Partial<QuoteConfig['asado']>) => void;
@@ -1143,6 +1181,7 @@ function AsadoMode({
   onAddSection: () => void;
   onUpdateSection: (id: string, patch: Partial<ExtraSection>) => void;
   onRemoveSection: (id: string) => void;
+  isAdmin: boolean;
 }) {
   const { asado } = config;
   const personas = Math.max(1, config.evento.personas || 1);
@@ -1195,6 +1234,7 @@ function AsadoMode({
         onAdd={onAddSection}
         onUpdate={onUpdateSection}
         onRemove={onRemoveSection}
+        isAdmin={isAdmin}
       />
 
       <Section title="Bebidas">
@@ -1202,17 +1242,22 @@ function AsadoMode({
       </Section>
 
       <div style={{ paddingTop: 24, borderTop: '1px solid var(--cb-border)' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-          <label className="mini">Markup (% ganancia)</label>
-          <span className="h-3 num">{asado.markup}%</span>
-        </div>
-        <input type="range" min={0} max={200} step={5} value={asado.markup} onChange={(e) => patchAsado({ markup: parseInt(e.target.value) })} style={{ width: '100%' }} />
+        {isAdmin && (
+          <>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+              <label className="mini">Markup (% ganancia)</label>
+              <span className="h-3 num">{asado.markup}%</span>
+            </div>
+            <input type="range" min={0} max={200} step={5} value={asado.markup} onChange={(e) => patchAsado({ markup: parseInt(e.target.value) })} style={{ width: '100%' }} />
+          </>
+        )}
         <ManualPrecioCostoOverride
           autoCostoPP={autoCostoPP}
           autoVentaPP={autoVentaPP}
           precioPPManual={asado.precioPPManual ?? 0}
           costoPPManual={asado.costoPPManual ?? 0}
           onChange={(patch) => patchAsado(patch)}
+          isAdmin={isAdmin}
         />
         <IvaServicioToggles
           incluyeIVA={asado.incluyeIVA}
@@ -1227,7 +1272,7 @@ function AsadoMode({
 
 function CartaMode({
   config, patchCarta, menuPorCategoria, categoriaActiva, setCategoriaActiva, setCartaCantidad, openSidePicker, toggleVariant,
-  extraSections, onAddSection, onUpdateSection, onRemoveSection,
+  extraSections, onAddSection, onUpdateSection, onRemoveSection, isAdmin,
 }: {
   config: QuoteConfig;
   patchCarta: (p: Partial<QuoteConfig['carta']>) => void;
@@ -1241,6 +1286,7 @@ function CartaMode({
   onAddSection: () => void;
   onUpdateSection: (id: string, patch: Partial<ExtraSection>) => void;
   onRemoveSection: (id: string) => void;
+  isAdmin: boolean;
 }) {
   const { carta } = config;
   const personas = Math.max(1, config.evento.personas || 1);
@@ -1330,21 +1376,27 @@ function CartaMode({
           onAdd={onAddSection}
           onUpdate={onUpdateSection}
           onRemove={onRemoveSection}
+          isAdmin={isAdmin}
         />
         <Section title="Bebidas">
           <BebidasPicker value={carta.bebidas} onChange={(id) => patchCarta({ bebidas: id })} />
         </Section>
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-          <label className="mini">Markup (% ganancia)</label>
-          <span className="h-3 num">{carta.markup}%</span>
-        </div>
-        <input type="range" min={0} max={200} step={5} value={carta.markup} onChange={(e) => patchCarta({ markup: parseInt(e.target.value) })} style={{ width: '100%' }} />
+        {isAdmin && (
+          <>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+              <label className="mini">Markup (% ganancia)</label>
+              <span className="h-3 num">{carta.markup}%</span>
+            </div>
+            <input type="range" min={0} max={200} step={5} value={carta.markup} onChange={(e) => patchCarta({ markup: parseInt(e.target.value) })} style={{ width: '100%' }} />
+          </>
+        )}
         <ManualPrecioCostoOverride
           autoCostoPP={autoCostoPP}
           autoVentaPP={autoVentaPP}
           precioPPManual={carta.precioPPManual ?? 0}
           costoPPManual={carta.costoPPManual ?? 0}
           onChange={(patch) => patchCarta(patch)}
+          isAdmin={isAdmin}
         />
         <IvaServicioToggles
           incluyeIVA={carta.incluyeIVA}
@@ -1468,12 +1520,13 @@ function SidePickerModal({
 // header + body block on Vista Cliente. Multiple allowed; precio rolls
 // into per-pp total via computePricing.
 function ExtraSeccionesEditor({
-  sections, onAdd, onUpdate, onRemove,
+  sections, onAdd, onUpdate, onRemove, isAdmin,
 }: {
   sections: ExtraSection[];
   onAdd: () => void;
   onUpdate: (id: string, patch: Partial<ExtraSection>) => void;
   onRemove: (id: string) => void;
+  isAdmin: boolean;
 }) {
   return (
     <div style={{ marginBottom: 24 }}>
@@ -1517,7 +1570,7 @@ function ExtraSeccionesEditor({
                 className="small"
               />
             </Field>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: isAdmin ? '1fr 1fr' : '1fr', gap: 12 }}>
               <Field label="Precio/pp">
                 <input
                   type="number"
@@ -1527,15 +1580,17 @@ function ExtraSeccionesEditor({
                 />
                 <p className="text-3" style={{ fontSize: 12, marginTop: 6 }}>Suma al precio por persona del cliente</p>
               </Field>
-              <Field label={<CostoInternoLabel />}>
-                <input
-                  type="number"
-                  value={sec.costoPP || ''}
-                  onChange={(e) => onUpdate(sec.id, { costoPP: parseFloat(e.target.value) || 0 })}
-                  placeholder="280"
-                />
-                <p className="text-3" style={{ fontSize: 12, marginTop: 6 }}>Opcional. {COSTO_INTERNO_HELPER}</p>
-              </Field>
+              {isAdmin && (
+                <Field label={<CostoInternoLabel />}>
+                  <input
+                    type="number"
+                    value={sec.costoPP || ''}
+                    onChange={(e) => onUpdate(sec.id, { costoPP: parseFloat(e.target.value) || 0 })}
+                    placeholder="280"
+                  />
+                  <p className="text-3" style={{ fontSize: 12, marginTop: 6 }}>Opcional. {COSTO_INTERNO_HELPER}</p>
+                </Field>
+              )}
             </div>
           </div>
         </div>
@@ -1557,34 +1612,44 @@ function ExtraSeccionesEditor({
 // placeholders and can override either one independently. 0/empty
 // means "stick with auto." Used after the markup slider.
 function ManualPrecioCostoOverride({
-  autoCostoPP, autoVentaPP, precioPPManual, costoPPManual, onChange,
+  autoCostoPP, autoVentaPP, precioPPManual, costoPPManual, onChange, isAdmin,
 }: {
   autoCostoPP: number;
   autoVentaPP: number;
   precioPPManual: number;
   costoPPManual: number;
   onChange: (patch: { precioPPManual?: number; costoPPManual?: number }) => void;
+  isAdmin: boolean;
 }) {
+  // Hostess view: only the price-override field, with no "Auto: $..." hint
+  // (that hint exposes the auto-derived venta which leaks markup math).
+  // She uses this to lock in the agreed price; cost stays admin-only.
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginTop: 16 }}>
-      <Field label="Precio/pp manual">
+    <div style={{ display: 'grid', gridTemplateColumns: isAdmin ? '1fr 1fr' : '1fr', gap: 12, marginTop: 16 }}>
+      <Field label="Precio por persona">
         <input
           type="number"
           value={precioPPManual || ''}
           onChange={(e) => onChange({ precioPPManual: parseFloat(e.target.value) || 0 })}
-          placeholder={autoVentaPP > 0 ? `Auto: ${fmtMXN(autoVentaPP)}` : '0'}
+          placeholder={isAdmin && autoVentaPP > 0 ? `Auto: ${fmtMXN(autoVentaPP)}` : '0'}
         />
-        <p className="text-3" style={{ fontSize: 12, marginTop: 6 }}>Vacío = usa el cálculo automático con markup</p>
+        <p className="text-3" style={{ fontSize: 12, marginTop: 6 }}>
+          {isAdmin
+            ? 'Vacío = usa el cálculo automático con markup'
+            : 'El precio que cobras al cliente'}
+        </p>
       </Field>
-      <Field label={<CostoInternoLabel />}>
-        <input
-          type="number"
-          value={costoPPManual || ''}
-          onChange={(e) => onChange({ costoPPManual: parseFloat(e.target.value) || 0 })}
-          placeholder={autoCostoPP > 0 ? `Auto: ${fmtMXN(autoCostoPP)}` : '0'}
-        />
-        <p className="text-3" style={{ fontSize: 12, marginTop: 6 }}>Vacío = suma de los precios de la carta</p>
-      </Field>
+      {isAdmin && (
+        <Field label={<CostoInternoLabel />}>
+          <input
+            type="number"
+            value={costoPPManual || ''}
+            onChange={(e) => onChange({ costoPPManual: parseFloat(e.target.value) || 0 })}
+            placeholder={autoCostoPP > 0 ? `Auto: ${fmtMXN(autoCostoPP)}` : '0'}
+          />
+          <p className="text-3" style={{ fontSize: 12, marginTop: 6 }}>Vacío = suma de los precios de la carta</p>
+        </Field>
+      )}
     </div>
   );
 }

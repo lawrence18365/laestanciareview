@@ -4,6 +4,7 @@ import {
   type QuoteConfig,
   type QuoteCategoria,
   computePricing,
+  computeTierPricing,
   dishById,
   extraSectionsPP,
   fmtMXN,
@@ -451,20 +452,89 @@ export default function QuotePreview({
       <div className="doc-divider" />
 
       {/* Precio */}
-      <div className="qp-precio" style={{ textAlign: 'center', padding: '16px 0' }}>
-        <p className="doc-mini qp-precio-pp" style={{ marginBottom: 8 }}>Inversión</p>
-        <p className="price-big num" style={{ margin: 0 }}>{fmtMXN(pricing.precioFinalPP)}</p>
-        <p className="small text-2" style={{ margin: '4px 0 0' }}>por persona</p>
-        <p className="h-3 num qp-precio-total" style={{ marginTop: 16 }}>
-          Total {evento.personas} personas · {fmtMXN(pricing.precioTotalFinal)}
-        </p>
-        <p className="text-3 qp-precio-tax" style={{ fontSize: 12, marginTop: 12 }}>
-          {pricing.ivaIncluido && !pricing.servicioActivo && 'Precio incluye IVA 16%'}
-          {!pricing.ivaIncluido && pricing.servicioActivo && 'Más 15% servicio + IVA 16%'}
-          {!pricing.ivaIncluido && !pricing.servicioActivo && 'Más IVA 16%'}
-          {pricing.ivaIncluido && pricing.servicioActivo && 'Incluye IVA 16% y 15% de servicio'}
-        </p>
-      </div>
+      {(() => {
+        const taxNote =
+          pricing.ivaIncluido && !pricing.servicioActivo ? 'Precio incluye IVA 16%' :
+          !pricing.ivaIncluido && pricing.servicioActivo ? 'Más 15% servicio + IVA 16%' :
+          !pricing.ivaIncluido && !pricing.servicioActivo ? 'Más IVA 16%' :
+          'Incluye IVA 16% y 15% de servicio';
+
+        // Opciones mode shows one row per tier — A/B/C have different cuts
+        // and different prices, and the customer hasn't chosen yet, so the
+        // averaged single price was misleading ($1,450 for an A=$1,400 /
+        // B=$1,550 / C=$1,700 menu read as a flat price they were never
+        // actually offered). Fall back to the single-price block for
+        // individual / asado / carta where there's a real flat price.
+        if (modo === 'opciones') {
+          const tiers = computeTierPricing(config);
+          if (tiers.length === 0) {
+            // No tier has a price set yet — render a placeholder so the
+            // layout doesn't collapse mid-edit.
+            return (
+              <div className="qp-precio" style={{ textAlign: 'center', padding: '16px 0' }}>
+                <p className="doc-mini qp-precio-pp" style={{ marginBottom: 8 }}>Inversión por persona</p>
+                <p className="text-3 small" style={{ margin: 0 }}>Define el precio de cada opción para verlo aquí</p>
+              </div>
+            );
+          }
+          return (
+            <div className="qp-precio" style={{ padding: '16px 0' }}>
+              <p className="doc-mini qp-precio-pp" style={{ marginBottom: 12, textAlign: 'center' }}>Inversión por persona</p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 20 }}>
+                {tiers.map((t) => (
+                  <div
+                    key={t.letra}
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'baseline',
+                      padding: '6px 0',
+                      borderBottom: '1px solid #F3EFE6',
+                    }}
+                  >
+                    <span className="h-3" style={{ margin: 0 }}>Opción {t.letra}</span>
+                    <span className="h-3 num" style={{ margin: 0 }}>{fmtMXN(t.pricePP)}</span>
+                  </div>
+                ))}
+              </div>
+              <p className="doc-mini qp-precio-total" style={{ marginBottom: 12, textAlign: 'center' }}>
+                Total estimado · {evento.personas} personas
+              </p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                {tiers.map((t) => (
+                  <div
+                    key={t.letra}
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'baseline',
+                      padding: '6px 0',
+                      borderBottom: '1px solid #F3EFE6',
+                    }}
+                  >
+                    <span className="small text-2" style={{ margin: 0 }}>Opción {t.letra}</span>
+                    <span className="small num" style={{ margin: 0, fontWeight: 600 }}>{fmtMXN(t.total)}</span>
+                  </div>
+                ))}
+              </div>
+              <p className="text-3 qp-precio-tax" style={{ fontSize: 12, marginTop: 12, textAlign: 'center' }}>{taxNote}</p>
+            </div>
+          );
+        }
+
+        // Single-price flow (individual / asado / carta) — unchanged.
+        return (
+          <div className="qp-precio" style={{ textAlign: 'center', padding: '16px 0' }}>
+            <p className="doc-mini qp-precio-pp" style={{ marginBottom: 8 }}>Inversión</p>
+            <p className="price-big num" style={{ margin: 0 }}>{fmtMXN(pricing.precioFinalPP)}</p>
+            <p className="small text-2" style={{ margin: '4px 0 0' }}>por persona</p>
+            <p className="h-3 num qp-precio-total" style={{ marginTop: 16 }}>
+              Total {evento.personas} personas · {fmtMXN(pricing.precioTotalFinal)}
+            </p>
+            <p className="text-3 qp-precio-tax" style={{ fontSize: 12, marginTop: 12 }}>{taxNote}</p>
+          </div>
+        );
+      })()}
 
       <div className="doc-divider" />
 
