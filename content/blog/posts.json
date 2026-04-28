@@ -616,7 +616,7 @@
             "primaryLabel": "Book a demo",
             "primaryHref": "../demo",
             "secondaryLabel": "See the software",
-            "secondaryHref": "../medir-desempeno-meseros"
+            "secondaryHref": "../track-waiter-performance-dashboard"
           },
           "cardSummary": "A guest-friendly way to measure who is driving review growth, who needs coaching, and where managers should focus.",
           "datePublished": "2026-04-25",
@@ -714,7 +714,7 @@
             {
               "label": "Dashboard de desempeño de meseros",
               "description": "Ve la página de producto enfocada en visibilidad por persona y coaching operativo.",
-              "href": "../medir-desempeno-meseros"
+              "href": "../track-waiter-performance-dashboard"
             },
             {
               "label": "Tu restaurante no recibe reseñas en Google",
@@ -729,7 +729,7 @@
             "primaryLabel": "Agendar demo",
             "primaryHref": "../demo",
             "secondaryLabel": "Ver la plataforma",
-            "secondaryHref": "../medir-desempeno-meseros"
+            "secondaryHref": "../track-waiter-performance-dashboard"
           },
           "cardSummary": "Una forma amistosa para el huésped de medir quién está impulsando reseñas, quién necesita coaching y dónde debe enfocarse gerencia.",
           "datePublished": "2026-04-25",

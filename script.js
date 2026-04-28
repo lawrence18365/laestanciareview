@@ -23,7 +23,12 @@ const IMAGE_DIMENSIONS = {
     'assets/og-image.png': { width: 2848, height: 1504 },
     'graphic_sales.jpeg': { width: 1080, height: 1350 },
     'hero.png': { width: 1408, height: 768 },
-    'logo-new.png': { width: 1536, height: 1024 },
+    'assets/logo-new-small.webp': { width: 225, height: 150 },
+    'logo-new-small.webp': { width: 225, height: 150 },
+    'assets/grupo_estancia_group_logo-small.webp': { width: 160, height: 160 },
+    'grupo_estancia_group_logo-small.webp': { width: 160, height: 160 },
+    'assets/restaurant_atmosphere.webp': { width: 640, height: 640 },
+    'restaurant_atmosphere.webp': { width: 640, height: 640 },
     'og-image.png': { width: 2848, height: 1504 },
     'optimized-image-example-1.webp': { width: 2752, height: 1536 }
 };
@@ -34,6 +39,13 @@ function isSpanishPage() {
 }
 
 const FUNNEL_PAGE_CONFIG = {
+    '/es/software-gestion-resenas-restaurantes': {
+        primaryCtaLabel: 'Auditoría gratis',
+        navHref: '/contacto?offer=google-review-audit&source_page=software-gestion-resenas-restaurantes&source_cluster=spanish-bofu#contacto-form',
+        navOffer: 'google-review-audit',
+        navSourcePage: 'software-gestion-resenas-restaurantes',
+        navSourceCluster: 'spanish-bofu'
+    },
     '/es/mejorar-calificacion-google-restaurante': {
         primaryCtaLabel: 'Activar piloto gratis'
     },
@@ -82,7 +94,7 @@ function getDemoPageHref() {
         return 'demo.html';
     }
 
-    return isSpanishPage() ? '/es/demo.html' : '/demo.html';
+    return isSpanishPage() ? '/es/demo' : '/demo';
 }
 
 function getPrimaryCtaFallbackHref() {
@@ -376,7 +388,7 @@ function applyLeadAttribution(form) {
 }
 
 function wireLeadForms() {
-    const leadForms = document.querySelectorAll('form[data-lead-form], #contact-form, #demo-form');
+    const leadForms = document.querySelectorAll('form[data-lead-form], #contact-form, #demo-form, #lead-form');
 
     leadForms.forEach(form => {
         applyLeadAttribution(form);

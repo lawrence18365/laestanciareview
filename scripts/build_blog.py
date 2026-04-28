@@ -14,7 +14,7 @@ CONTENT_PATH = ROOT / "content" / "blog" / "posts.json"
 SITEMAP_PATH = ROOT / "sitemap.xml"
 
 SITE_DOMAIN = "https://ratetapmx.com"
-LOGO_URL = f"{SITE_DOMAIN}/assets/logo-new.png"
+LOGO_URL = f"{SITE_DOMAIN}/assets/logo-new-small.webp"
 OG_IMAGE_URL = f"{SITE_DOMAIN}/assets/og-image.png"
 
 GENERATED_SITEMAP_START = "  <!-- Generated blog pages start -->"
@@ -220,7 +220,7 @@ def render_nav(locale: str, lang_toggle_href: str) -> str:
     return f"""
     <nav class="navbar" id="navbar">
         <a class="nav-brand" href="{home}">
-            <img src="{assets}assets/logo-new.png" alt="RateTap" width="1536" height="1024" decoding="async" loading="eager">
+            <img src="{assets}assets/logo-new-small.webp" alt="RateTap" width="1536" height="1024" decoding="async" loading="eager">
         </a>
         <div class="nav-menu" id="nav-menu">
             <a class="nav-link" href="{home}#how-it-works">{escape(cfg['nav_how'])}</a>
@@ -259,7 +259,7 @@ def render_footer(locale: str) -> str:
         <div class="container">
             <div class="footer-grid">
                 <div class="footer-brand">
-                    <img src="{assets}assets/logo-new.png" alt="RateTap" width="1536" height="1024" decoding="async" loading="eager">
+                    <img src="{assets}assets/logo-new-small.webp" alt="RateTap" width="1536" height="1024" decoding="async" loading="eager">
                     <p style="color: var(--text-secondary); font-size: 0.95rem; line-height: 1.6; max-width: 320px;">{escape(cfg['footer_tagline'])}</p>
                 </div>
                 <div class="footer-links">
