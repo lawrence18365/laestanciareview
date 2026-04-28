@@ -408,7 +408,7 @@
     <xhtml:link rel="alternate" hreflang="en-US" href="https://ratetapmx.com/blog/"/>
     <xhtml:link rel="alternate" hreflang="es-MX" href="https://ratetapmx.com/es/blog/"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://ratetapmx.com/blog/"/>
-    <lastmod>2026-04-25</lastmod>
+    <lastmod>2026-04-28</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.85</priority>
   </url>
@@ -417,7 +417,7 @@
     <xhtml:link rel="alternate" hreflang="en-US" href="https://ratetapmx.com/blog/"/>
     <xhtml:link rel="alternate" hreflang="es-MX" href="https://ratetapmx.com/es/blog/"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://ratetapmx.com/blog/"/>
-    <lastmod>2026-04-25</lastmod>
+    <lastmod>2026-04-28</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.85</priority>
   </url>
@@ -472,6 +472,60 @@
     <xhtml:link rel="alternate" hreflang="es-MX" href="https://ratetapmx.com/es/blog/medir-desempeno-meseros-resenas"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://ratetapmx.com/blog/track-server-review-performance"/>
     <lastmod>2026-04-25</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://ratetapmx.com/blog/nfc-vs-qr-vs-comment-cards-restaurant-reviews</loc>
+    <xhtml:link rel="alternate" hreflang="en-US" href="https://ratetapmx.com/blog/nfc-vs-qr-vs-comment-cards-restaurant-reviews"/>
+    <xhtml:link rel="alternate" hreflang="es-MX" href="https://ratetapmx.com/es/blog/nfc-vs-qr-vs-tarjetas-comentario-resenas-restaurante"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://ratetapmx.com/blog/nfc-vs-qr-vs-comment-cards-restaurant-reviews"/>
+    <lastmod>2026-04-27</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://ratetapmx.com/es/blog/nfc-vs-qr-vs-tarjetas-comentario-resenas-restaurante</loc>
+    <xhtml:link rel="alternate" hreflang="en-US" href="https://ratetapmx.com/blog/nfc-vs-qr-vs-comment-cards-restaurant-reviews"/>
+    <xhtml:link rel="alternate" hreflang="es-MX" href="https://ratetapmx.com/es/blog/nfc-vs-qr-vs-tarjetas-comentario-resenas-restaurante"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://ratetapmx.com/blog/nfc-vs-qr-vs-comment-cards-restaurant-reviews"/>
+    <lastmod>2026-04-27</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://ratetapmx.com/blog/restaurant-table-google-review-qr-codes</loc>
+    <xhtml:link rel="alternate" hreflang="en-US" href="https://ratetapmx.com/blog/restaurant-table-google-review-qr-codes"/>
+    <xhtml:link rel="alternate" hreflang="es-MX" href="https://ratetapmx.com/es/blog/como-poner-qr-resenas-google-mesas-restaurante"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://ratetapmx.com/blog/restaurant-table-google-review-qr-codes"/>
+    <lastmod>2026-04-27</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://ratetapmx.com/es/blog/como-poner-qr-resenas-google-mesas-restaurante</loc>
+    <xhtml:link rel="alternate" hreflang="en-US" href="https://ratetapmx.com/blog/restaurant-table-google-review-qr-codes"/>
+    <xhtml:link rel="alternate" hreflang="es-MX" href="https://ratetapmx.com/es/blog/como-poner-qr-resenas-google-mesas-restaurante"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://ratetapmx.com/blog/restaurant-table-google-review-qr-codes"/>
+    <lastmod>2026-04-27</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://ratetapmx.com/blog/stop-bad-google-reviews-before-they-post</loc>
+    <xhtml:link rel="alternate" hreflang="en-US" href="https://ratetapmx.com/blog/stop-bad-google-reviews-before-they-post"/>
+    <xhtml:link rel="alternate" hreflang="es-MX" href="https://ratetapmx.com/es/blog/detener-malas-resenas-google-antes-publiquen"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://ratetapmx.com/blog/stop-bad-google-reviews-before-they-post"/>
+    <lastmod>2026-04-27</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://ratetapmx.com/es/blog/detener-malas-resenas-google-antes-publiquen</loc>
+    <xhtml:link rel="alternate" hreflang="en-US" href="https://ratetapmx.com/blog/stop-bad-google-reviews-before-they-post"/>
+    <xhtml:link rel="alternate" hreflang="es-MX" href="https://ratetapmx.com/es/blog/detener-malas-resenas-google-antes-publiquen"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://ratetapmx.com/blog/stop-bad-google-reviews-before-they-post"/>
+    <lastmod>2026-04-27</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.75</priority>
   </url>
