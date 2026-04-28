@@ -182,8 +182,8 @@ export type BeveragePackage = {
 
 export const PAQUETES_BEBIDAS: BeveragePackage[] = [
   {
-    id: 'completo',
-    nombre: 'Paquete Básico',
+    id: 'basico',
+    nombre: 'Básico',
     desc: '3 bebidas por persona: refresco, naranjada, limonada, agua mineral, vino tinto de la casa o cerveza nacional',
     bullets: [
       '3 bebidas por persona',
@@ -194,32 +194,58 @@ export const PAQUETES_BEBIDAS: BeveragePackage[] = [
   },
   {
     id: 'premium',
-    nombre: 'Paquete Premium',
-    desc: '2 copas de vino de la casa + 2 bebidas extra (refresco, naranjada, limonada, agua o café)',
+    nombre: 'Premium',
+    desc: '4 bebidas por persona: 2 con alcohol (vino casa o cerveza nacional) + 2 sin alcohol (refresco, naranjada, limonada, agua o café)',
     bullets: [
-      '2 copas de vino de la casa',
-      '2 bebidas extra: refresco, naranjada, limonada, agua o café',
+      '4 bebidas por persona',
+      '2 con alcohol: vino de la casa o cerveza nacional',
+      '2 sin alcohol: refresco, naranjada, limonada, agua o café',
     ],
     precio: 300,
   },
   {
-    id: 'sin-alcohol',
-    nombre: 'Paquete Sin Alcohol',
-    desc: '3 bebidas sin alcohol por persona (refresco, naranjada, limonada, agua o café)',
+    id: 'barra-libre-sin-alcohol',
+    nombre: 'Barra Libre Sin Alcohol',
+    desc: 'Ilimitado: refresco, naranjada, limonada, agua mineral, café',
     bullets: [
-      '3 bebidas sin alcohol por persona',
-      'Refresco, naranjada, limonada, agua o café',
+      'Bebidas sin alcohol ilimitadas',
+      'Refresco, naranjada, limonada, agua mineral, café',
     ],
-    precio: 159,
+    precio: 150,
+  },
+  {
+    id: 'mixto-ilimitado',
+    nombre: 'Mixto Ilimitado',
+    desc: '2 bebidas con alcohol (vino casa o cerveza nacional) + barra libre sin alcohol ilimitada',
+    bullets: [
+      '2 bebidas con alcohol: vino de la casa o cerveza nacional',
+      'Barra libre sin alcohol ilimitada',
+    ],
+    precio: 280,
   },
   {
     id: 'a-la-carta',
-    nombre: 'Bebidas a la Carta',
+    nombre: 'A la Carta',
     desc: 'Las bebidas se cobran por separado al consumo',
     bullets: ['Se cobran por separado al consumo'],
     precio: 0,
   },
 ];
+
+// Legacy bebida ids that lived in saved quotes before the 2026 rename. We
+// resolve them on read in `migrateConfig` so existing quotes don't break.
+// Mapping: 'completo' (old Básico) → 'basico', 'sin-alcohol' (old $159 3-bebida
+// sin-alcohol) → 'barra-libre-sin-alcohol' (new $150 ilimitado, the closest
+// match Leslie agreed to as a price-and-content swap).
+const LEGACY_BEBIDA_IDS: Record<string, string> = {
+  completo: 'basico',
+  'sin-alcohol': 'barra-libre-sin-alcohol',
+};
+
+function migrateBebidaId(id: string | undefined): string {
+  if (!id) return 'basico';
+  return LEGACY_BEBIDA_IDS[id] ?? id;
+}
 
 export type QuoteModo = 'individual' | 'opciones' | 'asado' | 'carta';
 
@@ -238,6 +264,23 @@ export type TierState = {
   letra: string;
   precio: number;
   platos: string;
+  // Per-tier cost so the internal margen for A/B/C is real instead of the
+  // legacy 0.42 × avgTier heuristic. Optional: when 0/undefined, pricing
+  // falls back to the heuristic so older quotes keep their numbers.
+  costoPP?: number;
+};
+
+// Free-form extra section (brindis, mesa de quesos, dessert station…). Lives
+// at the top of QuoteConfig, not per-mode, because hostess can attach them
+// to any quote regardless of which template/mode she started from. The
+// precio rolls into the per-pp total; the section renders as its own header
+// + descripcion block in Vista Cliente / PDF.
+export type ExtraSection = {
+  id: string;
+  nombre: string;
+  descripcion: string;
+  precioPP: number;
+  costoPP?: number;
 };
 
 export type OpcionesState = {
@@ -261,6 +304,13 @@ export type AsadoState = {
   dishVariants: Record<string, string[]>;
   bebidas: string;
   markup: number;
+  // Manual overrides — when > 0, take priority over the markup-derived
+  // precio/pp and the auto-summed costoPP. Hostess uses these when she
+  // negotiated a flat price that doesn't match cost × markup, or when her
+  // real costo differs from sum of menu prices (special supplier deal,
+  // pre-prep labor, etc.). Leave at 0 to keep the auto behavior.
+  precioPPManual?: number;
+  costoPPManual?: number;
   incluyeIVA: boolean;
   incluyeServicio: boolean;
 };
@@ -274,6 +324,9 @@ export type CartaState = {
   dishVariants: Record<string, string[]>;
   bebidas: string;
   markup: number;
+  // See AsadoState — same override semantics for Carta mode.
+  precioPPManual?: number;
+  costoPPManual?: number;
   incluyeIVA: boolean;
   incluyeServicio: boolean;
 };
@@ -338,7 +391,7 @@ export const TEMPLATES: QuoteTemplate[] = [
         { letra: 'C', precio: 1400, platos: 'Rib-Eye Añejo 300g / Papa al Horno\nTapa de Rib-Eye 300g / Espárragos al Grill\nChilean Sea Bass Estilo Porteño' },
       ],
       postres: ['po1', 'po2', 'po3', 'po4'],
-      bebidas: 'completo',
+      bebidas: 'basico',
       incluyeIVA: true,
       incluyeServicio: false,
     },
@@ -356,7 +409,7 @@ export const TEMPLATES: QuoteTemplate[] = [
       sopas: ['s6', 's7'],
       platos: ['pa19', 'm1'],
       postres: ['po2', 'po5'],
-      bebidas: 'sin-alcohol',
+      bebidas: 'barra-libre-sin-alcohol',
       precioPP: 1000,
       costoPP: 420,
       incluyeIVA: true,
@@ -383,7 +436,7 @@ export const TEMPLATES: QuoteTemplate[] = [
         pa19: 2, pa20: 1, pa23: 1, pa21: 1, pa24: 1,
         g1: 2, g2: 1, g7: 2, g9: 1,
       },
-      bebidas: 'completo',
+      bebidas: 'basico',
       markup: 40,
       incluyeIVA: true,
       incluyeServicio: true,
@@ -430,7 +483,7 @@ export const EMPTY_INDIV: IndivState = {
   sopas: [],
   platos: [],
   postres: [],
-  bebidas: 'completo',
+  bebidas: 'basico',
   precioPP: 0,
   costoPP: 0,
   incluyeIVA: true,
@@ -440,12 +493,12 @@ export const EMPTY_INDIV: IndivState = {
 export const EMPTY_OPCIONES: OpcionesState = {
   sopas: [],
   tiers: [
-    { letra: 'A', precio: 0, platos: '' },
-    { letra: 'B', precio: 0, platos: '' },
-    { letra: 'C', precio: 0, platos: '' },
+    { letra: 'A', precio: 0, platos: '', costoPP: 0 },
+    { letra: 'B', precio: 0, platos: '', costoPP: 0 },
+    { letra: 'C', precio: 0, platos: '', costoPP: 0 },
   ],
   postres: [],
-  bebidas: 'completo',
+  bebidas: 'basico',
   incluyeIVA: true,
   incluyeServicio: false,
 };
@@ -453,7 +506,7 @@ export const EMPTY_OPCIONES: OpcionesState = {
 export const EMPTY_ASADO: AsadoState = {
   cantidades: {},
   dishVariants: {},
-  bebidas: 'completo',
+  bebidas: 'basico',
   markup: 40,
   incluyeIVA: true,
   incluyeServicio: false,
@@ -476,6 +529,10 @@ export type QuoteConfig = {
   opciones: OpcionesState;
   asado: AsadoState;
   carta: CartaState;
+  // Optional free-form sections (brindis, mesa de quesos, dessert station…)
+  // appended to any quote regardless of mode. Renders at top of menu in
+  // Vista Cliente; precioPP rolls into per-pp total. Empty/missing = none.
+  extraSections?: ExtraSection[];
   templateId?: string;
   folio?: string;
   terms?: string;
@@ -483,19 +540,36 @@ export type QuoteConfig = {
 
 // Backfills fields added in newer schemas onto a config loaded from the DB.
 // Quotes saved before these maps existed have them undefined — coerce to
-// empty maps so downstream code can read them without nullchecks.
+// empty maps so downstream code can read them without nullchecks. Also
+// remaps legacy bebida ids ('completo', 'sin-alcohol') to their post-2026
+// successors so existing quotes don't render with undefined packages.
 export function migrateConfig(c: QuoteConfig): QuoteConfig {
   return {
     ...c,
+    indiv: {
+      ...c.indiv,
+      bebidas: migrateBebidaId(c.indiv?.bebidas),
+    },
+    opciones: {
+      ...c.opciones,
+      bebidas: migrateBebidaId(c.opciones?.bebidas),
+      tiers: (c.opciones?.tiers ?? []).map((t) => ({
+        ...t,
+        costoPP: t.costoPP ?? 0,
+      })),
+    },
     asado: {
       ...c.asado,
+      bebidas: migrateBebidaId(c.asado?.bebidas),
       dishVariants: c.asado?.dishVariants ?? {},
     },
     carta: {
       ...c.carta,
+      bebidas: migrateBebidaId(c.carta?.bebidas),
       parrillaSides: c.carta?.parrillaSides ?? {},
       dishVariants: c.carta?.dishVariants ?? {},
     },
+    extraSections: c.extraSections ?? [],
   };
 }
 
@@ -512,6 +586,7 @@ export function emptyConfig(modo: QuoteModo = 'opciones'): QuoteConfig {
     },
     asado: { ...EMPTY_ASADO, cantidades: {}, dishVariants: {} },
     carta: { ...EMPTY_CARTA, cantidades: {}, parrillaSides: {}, dishVariants: {} },
+    extraSections: [],
     terms: DEFAULT_TERMS,
   };
 }
@@ -526,6 +601,18 @@ export function dishName(id: string): string {
 
 export function packageById(id: string): BeveragePackage | undefined {
   return PAQUETES_BEBIDAS.find((p) => p.id === id);
+}
+
+// Sum of extra-section per-pp prices. Used in Vista Cliente / PDF to embed
+// the extras into the displayed per-tier price for opciones mode (so the
+// customer sees one final number per option, not "Opción A $1,050 +
+// Brindis $700"). Returns 0 when no sections — safe to add unconditionally.
+export function extraSectionsPP(config: QuoteConfig): number {
+  return (config.extraSections ?? []).reduce((sum, s) => sum + (s.precioPP || 0), 0);
+}
+
+export function newExtraSectionId(): string {
+  return 'sec-' + Math.random().toString(36).slice(2, 9);
 }
 
 export function isParrilla(dishId: string): boolean {
@@ -575,6 +662,12 @@ export function computePricing(config: QuoteConfig): PricingResult {
   );
   const bebidaPP = pkg?.precio ?? 0;
 
+  // Extra sections (brindis, mesa de quesos, …) add to per-pp total across
+  // every mode. costoPP is optional — skip if 0/undefined.
+  const sections = config.extraSections ?? [];
+  const extraVentaPP = sections.reduce((sum, s) => sum + (s.precioPP || 0), 0);
+  const extraCostoPP = sections.reduce((sum, s) => sum + (s.costoPP || 0), 0);
+
   let costoTotal = 0;
   let subtotalVenta = 0;
   let ivaIncluido = false;
@@ -582,17 +675,25 @@ export function computePricing(config: QuoteConfig): PricingResult {
 
   if (config.modo === 'individual') {
     const { indiv } = config;
-    costoTotal = (indiv.costoPP + bebidaPP * 0.4) * personas;
-    subtotalVenta = (indiv.precioPP + bebidaPP) * personas;
+    costoTotal = (indiv.costoPP + extraCostoPP + bebidaPP * 0.4) * personas;
+    subtotalVenta = (indiv.precioPP + extraVentaPP + bebidaPP) * personas;
     ivaIncluido = indiv.incluyeIVA;
     servicioActivo = indiv.incluyeServicio;
   } else if (config.modo === 'opciones') {
     const { opciones } = config;
-    // Use average of tier prices as reference
     const tierPrices = opciones.tiers.map((t) => t.precio || 0).filter((p) => p > 0);
     const avgTier = tierPrices.length ? tierPrices.reduce((a, b) => a + b, 0) / tierPrices.length : 0;
-    costoTotal = (avgTier * 0.42 + bebidaPP * 0.4) * personas;
-    subtotalVenta = (avgTier + bebidaPP) * personas;
+    // Prefer real per-tier costos when at least one is set; otherwise fall
+    // back to the legacy 0.42 × avgTier heuristic so old quotes keep their
+    // numbers exactly.
+    const tierCostos = opciones.tiers
+      .map((t) => (t.precio || 0) > 0 ? (t.costoPP ?? 0) : 0)
+      .filter((c) => c > 0);
+    const avgCosto = tierCostos.length
+      ? tierCostos.reduce((a, b) => a + b, 0) / tierCostos.length
+      : avgTier * 0.42;
+    costoTotal = (avgCosto + extraCostoPP + bebidaPP * 0.4) * personas;
+    subtotalVenta = (avgTier + extraVentaPP + bebidaPP) * personas;
     ivaIncluido = opciones.incluyeIVA;
     servicioActivo = opciones.incluyeServicio;
   } else if (config.modo === 'asado') {
@@ -604,8 +705,12 @@ export function computePricing(config: QuoteConfig): PricingResult {
       const mult = dish.perPerson ? personas : 1;
       cost += dish.precio * qty * mult;
     }
-    costoTotal = cost + bebidaPP * 0.4 * personas;
-    subtotalVenta = cost * (1 + (asado.markup || 0) / 100) + bebidaPP * personas;
+    const autoCostoPP = cost / personas;
+    const autoVentaPP = autoCostoPP * (1 + (asado.markup || 0) / 100);
+    const effCostoPP = (asado.costoPPManual ?? 0) > 0 ? asado.costoPPManual! : autoCostoPP;
+    const effVentaPP = (asado.precioPPManual ?? 0) > 0 ? asado.precioPPManual! : autoVentaPP;
+    costoTotal = (effCostoPP + extraCostoPP + bebidaPP * 0.4) * personas;
+    subtotalVenta = (effVentaPP + extraVentaPP + bebidaPP) * personas;
     ivaIncluido = asado.incluyeIVA;
     servicioActivo = asado.incluyeServicio;
   } else {
@@ -617,8 +722,12 @@ export function computePricing(config: QuoteConfig): PricingResult {
       const mult = dish.perPerson ? personas : 1;
       cost += dish.precio * qty * mult;
     }
-    costoTotal = cost + bebidaPP * 0.4 * personas;
-    subtotalVenta = cost * (1 + (carta.markup || 0) / 100) + bebidaPP * personas;
+    const autoCostoPP = cost / personas;
+    const autoVentaPP = autoCostoPP * (1 + (carta.markup || 0) / 100);
+    const effCostoPP = (carta.costoPPManual ?? 0) > 0 ? carta.costoPPManual! : autoCostoPP;
+    const effVentaPP = (carta.precioPPManual ?? 0) > 0 ? carta.precioPPManual! : autoVentaPP;
+    costoTotal = (effCostoPP + extraCostoPP + bebidaPP * 0.4) * personas;
+    subtotalVenta = (effVentaPP + extraVentaPP + bebidaPP) * personas;
     ivaIncluido = carta.incluyeIVA;
     servicioActivo = carta.incluyeServicio;
   }

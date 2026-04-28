@@ -11,8 +11,11 @@ import {
   dishById,
   eligibleIncludedSides,
   emptyConfig,
+  extraSectionsPP,
   fmtMXN,
   isParrilla,
+  newExtraSectionId,
+  type ExtraSection,
   type QuoteCategoria,
   type QuoteConfig,
   type QuoteTemplate,
@@ -105,6 +108,33 @@ export default function QuoteBuilderV2({
 
   const patchCarta = useCallback((patch: Partial<QuoteConfig['carta']>) => {
     setConfig((c) => ({ ...c, carta: { ...c.carta, ...patch } }));
+    setSaved(false);
+  }, []);
+
+  const addExtraSection = useCallback(() => {
+    setConfig((c) => ({
+      ...c,
+      extraSections: [
+        ...(c.extraSections ?? []),
+        { id: newExtraSectionId(), nombre: '', descripcion: '', precioPP: 0, costoPP: 0 },
+      ],
+    }));
+    setSaved(false);
+  }, []);
+
+  const updateExtraSection = useCallback((id: string, patch: Partial<ExtraSection>) => {
+    setConfig((c) => ({
+      ...c,
+      extraSections: (c.extraSections ?? []).map((s) => (s.id === id ? { ...s, ...patch } : s)),
+    }));
+    setSaved(false);
+  }, []);
+
+  const removeExtraSection = useCallback((id: string) => {
+    setConfig((c) => ({
+      ...c,
+      extraSections: (c.extraSections ?? []).filter((s) => s.id !== id),
+    }));
     setSaved(false);
   }, []);
 
@@ -343,6 +373,12 @@ export default function QuoteBuilderV2({
     lines.push(`Te comparto la cotización para tu ${evento.tipo.toLowerCase()}:`);
     if (evento.fecha) lines.push(`📅 Fecha: ${evento.fecha}${evento.hora ? ' · ' + evento.hora : ''}`);
     lines.push(`👥 Personas: ${evento.personas}`);
+    const namedSections = (config.extraSections ?? []).filter((s) => s.nombre.trim());
+    if (namedSections.length > 0) {
+      lines.push('');
+      lines.push('Incluye:');
+      for (const s of namedSections) lines.push(`• ${s.nombre.trim()}`);
+    }
     lines.push('');
     lines.push(`💰 *${fmtMXN(pricing.precioFinalPP)} por persona*`);
     lines.push(`Total: ${fmtMXN(pricing.precioTotalFinal)}`);
@@ -598,6 +634,10 @@ export default function QuoteBuilderV2({
                   patchIndiv={patchIndiv}
                   menuPorCategoria={menuPorCategoria}
                   toggleArrayItem={toggleArrayItem}
+                  extraSections={config.extraSections ?? []}
+                  onAddSection={addExtraSection}
+                  onUpdateSection={updateExtraSection}
+                  onRemoveSection={removeExtraSection}
                 />
               )}
               {config.modo === 'opciones' && (
@@ -606,6 +646,10 @@ export default function QuoteBuilderV2({
                   patchOpciones={patchOpciones}
                   menuPorCategoria={menuPorCategoria}
                   toggleArrayItem={toggleArrayItem}
+                  extraSections={config.extraSections ?? []}
+                  onAddSection={addExtraSection}
+                  onUpdateSection={updateExtraSection}
+                  onRemoveSection={removeExtraSection}
                 />
               )}
               {config.modo === 'asado' && (
@@ -615,6 +659,10 @@ export default function QuoteBuilderV2({
                   menuPorCategoria={menuPorCategoria}
                   setAsadoCantidad={setAsadoCantidad}
                   toggleVariant={(dishId, variant) => toggleDishVariant('asado', dishId, variant)}
+                  extraSections={config.extraSections ?? []}
+                  onAddSection={addExtraSection}
+                  onUpdateSection={updateExtraSection}
+                  onRemoveSection={removeExtraSection}
                 />
               )}
               {config.modo === 'carta' && (
@@ -627,6 +675,10 @@ export default function QuoteBuilderV2({
                   setCartaCantidad={setCartaCantidad}
                   openSidePicker={openSidePicker}
                   toggleVariant={(dishId, variant) => toggleDishVariant('carta', dishId, variant)}
+                  extraSections={config.extraSections ?? []}
+                  onAddSection={addExtraSection}
+                  onUpdateSection={updateExtraSection}
+                  onRemoveSection={removeExtraSection}
                 />
               )}
             </div>
@@ -749,12 +801,50 @@ export default function QuoteBuilderV2({
 
 // ── Sub-components ─────────────────────────────────────────────────────────
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
+function Field({ label, children }: { label: React.ReactNode; children: React.ReactNode }) {
   return (
     <div>
       <label className="mini" style={{ display: 'block', marginBottom: 8 }}>{label}</label>
       {children}
     </div>
+  );
+}
+
+// Shared label + helper for the internal-cost field across every mode.
+// Hostess feedback (Leslie): "Costo estimado/pp" wasn't readable as
+// production cost. The new wording spells out what counts (insumos +
+// labor) and reassures her the number doesn't leak to the client.
+const COSTO_INTERNO_HELPER =
+  '¿Cuánto te cuesta producir un plato? (insumos + labor). No se muestra al cliente, solo sirve para calcular tu margen.';
+
+function CostoInternoLabel() {
+  return (
+    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+      Costo interno/pp
+      <span
+        title={COSTO_INTERNO_HELPER}
+        aria-label={COSTO_INTERNO_HELPER}
+        style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          width: 14,
+          height: 14,
+          borderRadius: '50%',
+          border: '1px solid var(--cb-border-strong)',
+          color: 'var(--cb-text-2)',
+          fontSize: 9,
+          fontWeight: 700,
+          fontFamily: 'serif',
+          fontStyle: 'italic',
+          cursor: 'help',
+          textTransform: 'none',
+          letterSpacing: 0,
+        }}
+      >
+        i
+      </span>
+    </span>
   );
 }
 
@@ -818,11 +908,16 @@ function IvaServicioToggles({
 
 function IndividualMode({
   config, patchIndiv, menuPorCategoria, toggleArrayItem,
+  extraSections, onAddSection, onUpdateSection, onRemoveSection,
 }: {
   config: QuoteConfig;
   patchIndiv: (p: Partial<QuoteConfig['indiv']>) => void;
   menuPorCategoria: (cat: QuoteCategoria) => typeof MENU;
   toggleArrayItem: (arr: string[], id: string) => string[];
+  extraSections: ExtraSection[];
+  onAddSection: () => void;
+  onUpdateSection: (id: string, patch: Partial<ExtraSection>) => void;
+  onRemoveSection: (id: string) => void;
 }) {
   const { indiv } = config;
   return (
@@ -867,6 +962,13 @@ function IndividualMode({
         </div>
       </Section>
 
+      <ExtraSeccionesEditor
+        sections={extraSections}
+        onAdd={onAddSection}
+        onUpdate={onUpdateSection}
+        onRemove={onRemoveSection}
+      />
+
       <Section title="Bebidas">
         <BebidasPicker value={indiv.bebidas} onChange={(id) => patchIndiv({ bebidas: id })} />
       </Section>
@@ -878,9 +980,9 @@ function IndividualMode({
             <input type="number" value={indiv.precioPP || ''} onChange={(e) => patchIndiv({ precioPP: parseFloat(e.target.value) || 0 })} placeholder="1000" />
             <p className="text-3" style={{ fontSize: 12, marginTop: 6 }}>El que cobras al cliente</p>
           </Field>
-          <Field label="Costo estimado/pp">
+          <Field label={<CostoInternoLabel />}>
             <input type="number" value={indiv.costoPP || ''} onChange={(e) => patchIndiv({ costoPP: parseFloat(e.target.value) || 0 })} placeholder="450" />
-            <p className="text-3" style={{ fontSize: 12, marginTop: 6 }}>Tu costo aproximado</p>
+            <p className="text-3" style={{ fontSize: 12, marginTop: 6 }}>{COSTO_INTERNO_HELPER}</p>
           </Field>
         </div>
         <IvaServicioToggles
@@ -896,11 +998,16 @@ function IndividualMode({
 
 function OpcionesMode({
   config, patchOpciones, menuPorCategoria, toggleArrayItem,
+  extraSections, onAddSection, onUpdateSection, onRemoveSection,
 }: {
   config: QuoteConfig;
   patchOpciones: (p: Partial<QuoteConfig['opciones']>) => void;
   menuPorCategoria: (cat: QuoteCategoria) => typeof MENU;
   toggleArrayItem: (arr: string[], id: string) => string[];
+  extraSections: ExtraSection[];
+  onAddSection: () => void;
+  onUpdateSection: (id: string, patch: Partial<ExtraSection>) => void;
+  onRemoveSection: (id: string) => void;
 }) {
   const { opciones } = config;
   return (
@@ -920,41 +1027,72 @@ function OpcionesMode({
       </Section>
 
       <Section title="2° Tiempo · 3 Opciones de Plato Fuerte">
-        {opciones.tiers.map((tier, i) => (
-          <div key={tier.letra} className="tier-card">
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <span className="tier-letter">{tier.letra}</span>
-                <span className="h-3">Opción {tier.letra}</span>
+        {opciones.tiers.map((tier, i) => {
+          const precio = tier.precio || 0;
+          const costo = tier.costoPP ?? 0;
+          // Per-tier margen lets hostess sanity-check each option in
+          // isolation — A might be a loss-leader while C is the cushion.
+          // Heuristic fallback (precio × 0.42) only when costo is unset,
+          // so old quotes don't suddenly read 100% margin.
+          const effectiveCosto = costo > 0 ? costo : precio * 0.42;
+          const margen = precio > 0 ? Math.round(((precio - effectiveCosto) / precio) * 100) : 0;
+          return (
+            <div key={tier.letra} className="tier-card">
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, flexWrap: 'wrap', gap: 8 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <span className="tier-letter">{tier.letra}</span>
+                  <span className="h-3">Opción {tier.letra}</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <label className="mini">Precio/pp</label>
+                    <input
+                      type="number"
+                      value={tier.precio || ''}
+                      onChange={(e) => {
+                        const next = [...opciones.tiers];
+                        next[i] = { ...next[i], precio: parseFloat(e.target.value) || 0 };
+                        patchOpciones({ tiers: next });
+                      }}
+                      style={{ width: 88 }}
+                      placeholder="1100"
+                    />
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <label className="mini" title={COSTO_INTERNO_HELPER} style={{ cursor: 'help' }}>Costo/pp</label>
+                    <input
+                      type="number"
+                      value={tier.costoPP || ''}
+                      onChange={(e) => {
+                        const next = [...opciones.tiers];
+                        next[i] = { ...next[i], costoPP: parseFloat(e.target.value) || 0 };
+                        patchOpciones({ tiers: next });
+                      }}
+                      style={{ width: 88 }}
+                      placeholder="450"
+                    />
+                  </div>
+                  {precio > 0 && (
+                    <span className="mini" style={{ minWidth: 56, textAlign: 'right' }}>
+                      Margen <span className="num" style={{ color: 'var(--cb-text)' }}>{margen}%</span>
+                    </span>
+                  )}
+                </div>
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <label className="mini">Precio/pp</label>
-                <input
-                  type="number"
-                  value={tier.precio || ''}
-                  onChange={(e) => {
-                    const next = [...opciones.tiers];
-                    next[i] = { ...next[i], precio: parseFloat(e.target.value) || 0 };
-                    patchOpciones({ tiers: next });
-                  }}
-                  style={{ width: 96 }}
-                  placeholder="1100"
-                />
-              </div>
+              <textarea
+                value={tier.platos}
+                onChange={(e) => {
+                  const next = [...opciones.tiers];
+                  next[i] = { ...next[i], platos: e.target.value };
+                  patchOpciones({ tiers: next });
+                }}
+                rows={3}
+                placeholder="Una opción por línea, ej:&#10;Arrachera 250g / Puré de Papa&#10;Pechuga 300g / Papas Estilo Norteño"
+                className="small"
+              />
             </div>
-            <textarea
-              value={tier.platos}
-              onChange={(e) => {
-                const next = [...opciones.tiers];
-                next[i] = { ...next[i], platos: e.target.value };
-                patchOpciones({ tiers: next });
-              }}
-              rows={3}
-              placeholder="Una opción por línea, ej:&#10;Arrachera 250g / Puré de Papa&#10;Pechuga 300g / Papas Estilo Norteño"
-              className="small"
-            />
-          </div>
-        ))}
+          );
+        })}
       </Section>
 
       <Section title="3° Tiempo · Postre" hint="A elegir 1+">
@@ -967,6 +1105,13 @@ function OpcionesMode({
           ))}
         </div>
       </Section>
+
+      <ExtraSeccionesEditor
+        sections={extraSections}
+        onAdd={onAddSection}
+        onUpdate={onUpdateSection}
+        onRemove={onRemoveSection}
+      />
 
       <Section title="Bebidas (incluidas en todas las opciones)">
         <BebidasPicker value={opciones.bebidas} onChange={(id) => patchOpciones({ bebidas: id })} />
@@ -987,14 +1132,29 @@ function OpcionesMode({
 
 function AsadoMode({
   config, patchAsado, menuPorCategoria, setAsadoCantidad, toggleVariant,
+  extraSections, onAddSection, onUpdateSection, onRemoveSection,
 }: {
   config: QuoteConfig;
   patchAsado: (p: Partial<QuoteConfig['asado']>) => void;
   menuPorCategoria: (cat: QuoteCategoria) => typeof MENU;
   setAsadoCantidad: (id: string, qty: number) => void;
   toggleVariant: (dishId: string, variant: string) => void;
+  extraSections: ExtraSection[];
+  onAddSection: () => void;
+  onUpdateSection: (id: string, patch: Partial<ExtraSection>) => void;
+  onRemoveSection: (id: string) => void;
 }) {
   const { asado } = config;
+  const personas = Math.max(1, config.evento.personas || 1);
+  // Auto-derived numbers shown as placeholders so hostess can see what
+  // the markup-based math would produce before deciding to override.
+  const autoCostoPP = Object.entries(asado.cantidades).reduce((sum, [id, qty]) => {
+    const d = dishById(id);
+    if (!d || qty <= 0) return sum;
+    const mult = d.perPerson ? personas : 1;
+    return sum + (d.precio * qty * mult);
+  }, 0) / personas;
+  const autoVentaPP = autoCostoPP * (1 + (asado.markup || 0) / 100);
   return (
     <div className="card" style={{ padding: 24 }}>
       <h3 className="h-2" style={{ margin: 0 }}>Asado argentino al centro</h3>
@@ -1030,6 +1190,13 @@ function AsadoMode({
         </Section>
       ))}
 
+      <ExtraSeccionesEditor
+        sections={extraSections}
+        onAdd={onAddSection}
+        onUpdate={onUpdateSection}
+        onRemove={onRemoveSection}
+      />
+
       <Section title="Bebidas">
         <BebidasPicker value={asado.bebidas} onChange={(id) => patchAsado({ bebidas: id })} />
       </Section>
@@ -1040,6 +1207,13 @@ function AsadoMode({
           <span className="h-3 num">{asado.markup}%</span>
         </div>
         <input type="range" min={0} max={200} step={5} value={asado.markup} onChange={(e) => patchAsado({ markup: parseInt(e.target.value) })} style={{ width: '100%' }} />
+        <ManualPrecioCostoOverride
+          autoCostoPP={autoCostoPP}
+          autoVentaPP={autoVentaPP}
+          precioPPManual={asado.precioPPManual ?? 0}
+          costoPPManual={asado.costoPPManual ?? 0}
+          onChange={(patch) => patchAsado(patch)}
+        />
         <IvaServicioToggles
           incluyeIVA={asado.incluyeIVA}
           incluyeServicio={asado.incluyeServicio}
@@ -1053,6 +1227,7 @@ function AsadoMode({
 
 function CartaMode({
   config, patchCarta, menuPorCategoria, categoriaActiva, setCategoriaActiva, setCartaCantidad, openSidePicker, toggleVariant,
+  extraSections, onAddSection, onUpdateSection, onRemoveSection,
 }: {
   config: QuoteConfig;
   patchCarta: (p: Partial<QuoteConfig['carta']>) => void;
@@ -1062,8 +1237,20 @@ function CartaMode({
   setCartaCantidad: (id: string, qty: number) => void;
   openSidePicker: (parrillaId: string) => void;
   toggleVariant: (dishId: string, variant: string) => void;
+  extraSections: ExtraSection[];
+  onAddSection: () => void;
+  onUpdateSection: (id: string, patch: Partial<ExtraSection>) => void;
+  onRemoveSection: (id: string) => void;
 }) {
   const { carta } = config;
+  const personas = Math.max(1, config.evento.personas || 1);
+  const autoCostoPP = Object.entries(carta.cantidades).reduce((sum, [id, qty]) => {
+    const d = dishById(id);
+    if (!d || qty <= 0) return sum;
+    const mult = d.perPerson ? personas : 1;
+    return sum + (d.precio * qty * mult);
+  }, 0) / personas;
+  const autoVentaPP = autoCostoPP * (1 + (carta.markup || 0) / 100);
   return (
     <div className="card" style={{ padding: 24 }}>
       <h3 className="h-2" style={{ margin: 0 }}>Constructor a la carta</h3>
@@ -1138,6 +1325,12 @@ function CartaMode({
       </div>
 
       <div style={{ paddingTop: 24, borderTop: '1px solid var(--cb-border)', marginTop: 24 }}>
+        <ExtraSeccionesEditor
+          sections={extraSections}
+          onAdd={onAddSection}
+          onUpdate={onUpdateSection}
+          onRemove={onRemoveSection}
+        />
         <Section title="Bebidas">
           <BebidasPicker value={carta.bebidas} onChange={(id) => patchCarta({ bebidas: id })} />
         </Section>
@@ -1146,6 +1339,13 @@ function CartaMode({
           <span className="h-3 num">{carta.markup}%</span>
         </div>
         <input type="range" min={0} max={200} step={5} value={carta.markup} onChange={(e) => patchCarta({ markup: parseInt(e.target.value) })} style={{ width: '100%' }} />
+        <ManualPrecioCostoOverride
+          autoCostoPP={autoCostoPP}
+          autoVentaPP={autoVentaPP}
+          precioPPManual={carta.precioPPManual ?? 0}
+          costoPPManual={carta.costoPPManual ?? 0}
+          onChange={(patch) => patchCarta(patch)}
+        />
         <IvaServicioToggles
           incluyeIVA={carta.incluyeIVA}
           incluyeServicio={carta.incluyeServicio}
@@ -1258,6 +1458,133 @@ function SidePickerModal({
           Espárragos y Tuétano siempre se cobran aparte. Agrégalos en la sección Guarniciones si el cliente los quiere.
         </p>
       </div>
+    </div>
+  );
+}
+
+// Extra sections editor — visible in every mode above Bebidas. Lets the
+// hostess add cocktail hours, dessert stations, cheese tables, etc. Each
+// section is fully editable in place (no modal) and renders as its own
+// header + body block on Vista Cliente. Multiple allowed; precio rolls
+// into per-pp total via computePricing.
+function ExtraSeccionesEditor({
+  sections, onAdd, onUpdate, onRemove,
+}: {
+  sections: ExtraSection[];
+  onAdd: () => void;
+  onUpdate: (id: string, patch: Partial<ExtraSection>) => void;
+  onRemove: (id: string) => void;
+}) {
+  return (
+    <div style={{ marginBottom: 24 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+        <label className="h-3">Secciones extra</label>
+        <span className="mini">Brindis, mesa de quesos…</span>
+      </div>
+      {sections.length === 0 && (
+        <p className="small text-3" style={{ margin: '0 0 12px', fontStyle: 'italic' }}>
+          Agrega secciones libres como brindis de recepción, mesa de quesos, estación de postres. Aparecen en la cotización del cliente con el nombre y descripción que tú escribas.
+        </p>
+      )}
+      {sections.map((sec, idx) => (
+        <div key={sec.id} className="extra-sec-card">
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10, gap: 8 }}>
+            <span className="mini">Sección {String(idx + 1).padStart(2, '0')}</span>
+            <button
+              type="button"
+              onClick={() => onRemove(sec.id)}
+              className="extra-sec-remove"
+              aria-label="Eliminar sección"
+            >
+              Eliminar
+            </button>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <Field label="Nombre de la sección">
+              <input
+                type="text"
+                value={sec.nombre}
+                onChange={(e) => onUpdate(sec.id, { nombre: e.target.value })}
+                placeholder="Ej. Brindis de Recepción"
+              />
+            </Field>
+            <Field label="Descripción">
+              <textarea
+                value={sec.descripcion}
+                onChange={(e) => onUpdate(sec.id, { descripcion: e.target.value })}
+                rows={5}
+                placeholder={'Lo que quieras describir, ej:\n6 canapés a elegir:\n- Tapa de jamón serrano\n- Volován de mole\n+ 2 bebidas (cerveza nacional o vino casa)'}
+                className="small"
+              />
+            </Field>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+              <Field label="Precio/pp">
+                <input
+                  type="number"
+                  value={sec.precioPP || ''}
+                  onChange={(e) => onUpdate(sec.id, { precioPP: parseFloat(e.target.value) || 0 })}
+                  placeholder="700"
+                />
+                <p className="text-3" style={{ fontSize: 12, marginTop: 6 }}>Suma al precio por persona del cliente</p>
+              </Field>
+              <Field label={<CostoInternoLabel />}>
+                <input
+                  type="number"
+                  value={sec.costoPP || ''}
+                  onChange={(e) => onUpdate(sec.id, { costoPP: parseFloat(e.target.value) || 0 })}
+                  placeholder="280"
+                />
+                <p className="text-3" style={{ fontSize: 12, marginTop: 6 }}>Opcional. {COSTO_INTERNO_HELPER}</p>
+              </Field>
+            </div>
+          </div>
+        </div>
+      ))}
+      <button
+        type="button"
+        onClick={onAdd}
+        className="btn btn-secondary"
+        style={{ width: '100%', justifyContent: 'center', marginTop: sections.length > 0 ? 4 : 0 }}
+      >
+        + Agregar sección
+      </button>
+    </div>
+  );
+}
+
+// Manual override pair for asado/carta modes. Auto = derived from
+// dish-cantidades × markup; the hostess sees those numbers as
+// placeholders and can override either one independently. 0/empty
+// means "stick with auto." Used after the markup slider.
+function ManualPrecioCostoOverride({
+  autoCostoPP, autoVentaPP, precioPPManual, costoPPManual, onChange,
+}: {
+  autoCostoPP: number;
+  autoVentaPP: number;
+  precioPPManual: number;
+  costoPPManual: number;
+  onChange: (patch: { precioPPManual?: number; costoPPManual?: number }) => void;
+}) {
+  return (
+    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginTop: 16 }}>
+      <Field label="Precio/pp manual">
+        <input
+          type="number"
+          value={precioPPManual || ''}
+          onChange={(e) => onChange({ precioPPManual: parseFloat(e.target.value) || 0 })}
+          placeholder={autoVentaPP > 0 ? `Auto: ${fmtMXN(autoVentaPP)}` : '0'}
+        />
+        <p className="text-3" style={{ fontSize: 12, marginTop: 6 }}>Vacío = usa el cálculo automático con markup</p>
+      </Field>
+      <Field label={<CostoInternoLabel />}>
+        <input
+          type="number"
+          value={costoPPManual || ''}
+          onChange={(e) => onChange({ costoPPManual: parseFloat(e.target.value) || 0 })}
+          placeholder={autoCostoPP > 0 ? `Auto: ${fmtMXN(autoCostoPP)}` : '0'}
+        />
+        <p className="text-3" style={{ fontSize: 12, marginTop: 6 }}>Vacío = suma de los precios de la carta</p>
+      </Field>
     </div>
   );
 }
@@ -1482,6 +1809,31 @@ const CSS = `
   font-family: 'Playfair Display', serif;
   font-size: 14px;
   font-weight: 700;
+}
+
+.cotizador-root .extra-sec-card {
+  background: var(--cb-surface-2);
+  border: 1px solid var(--cb-border);
+  border-radius: 6px;
+  padding: 16px;
+  margin-bottom: 12px;
+}
+.cotizador-root .extra-sec-remove {
+  background: transparent;
+  border: 1px solid var(--cb-border);
+  color: var(--cb-text-2);
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.cotizador-root .extra-sec-remove:hover {
+  border-color: #DC2626;
+  color: #DC2626;
 }
 
 .cotizador-root .template-card {

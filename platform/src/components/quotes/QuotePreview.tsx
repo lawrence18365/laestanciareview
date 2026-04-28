@@ -5,6 +5,7 @@ import {
   type QuoteCategoria,
   computePricing,
   dishById,
+  extraSectionsPP,
   fmtMXN,
   packageById,
 } from '@/lib/quote-data';
@@ -151,6 +152,15 @@ export default function QuotePreview({
     : modo === 'carta' ? 'Selección a la Carta'
     : 'Menú Individual';
 
+  // Sections render at the top of the menu (brindis pattern). For opciones
+  // mode, the section's per-pp price is embedded into the per-tier figure
+  // shown to the customer — they should see one final number per option,
+  // not "Opción A $1,050 + Brindis $700".
+  const sections = (config.extraSections ?? []).filter(
+    (s) => s.nombre.trim() || s.descripcion.trim(),
+  );
+  const tierExtraEmbedded = modo === 'opciones' ? extraSectionsPP(config) : 0;
+
   return (
     <div className="quote-doc">
       <style>{`
@@ -272,6 +282,21 @@ export default function QuotePreview({
       <div className="qp-menu" style={{ marginBottom: 32 }}>
         <h3 className="h-1 qp-menu-title" style={{ textAlign: 'center', margin: '0 0 24px' }}>{tituloMenu}</h3>
 
+        {sections.length > 0 && (
+          <div className="qp-menu-stack" style={{ display: 'flex', flexDirection: 'column', gap: 24, marginBottom: 24 }}>
+            {sections.map((sec) => (
+              <div key={sec.id} style={{ textAlign: 'center' }}>
+                <p className="doc-mini" style={{ marginBottom: 8 }}>{sec.nombre.trim() || 'Sección'}</p>
+                {sec.descripcion.trim() && (
+                  <p className="small" style={{ margin: 0, whiteSpace: 'pre-line', lineHeight: 1.6 }}>
+                    {sec.descripcion.trim()}
+                  </p>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+
         {modo === 'individual' && (
           <div className="qp-menu-stack" style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
             {indivSopasDishes.length > 0 && (
@@ -319,7 +344,7 @@ export default function QuotePreview({
                   <div key={tier.letra} style={{ marginBottom: 16, paddingBottom: 16, borderBottom: '1px solid #E8E3D8' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 8 }}>
                       <p className="h-3" style={{ margin: 0 }}>Opción {tier.letra}</p>
-                      <p className="h-3 num" style={{ margin: 0 }}>{fmtMXN(tier.precio || 0)}</p>
+                      <p className="h-3 num" style={{ margin: 0 }}>{fmtMXN((tier.precio || 0) + tierExtraEmbedded)}</p>
                     </div>
                     <div style={{ textAlign: 'center' }}>
                       {tier.platos.split('\n').filter((l) => l.trim()).map((linea, i) => (
