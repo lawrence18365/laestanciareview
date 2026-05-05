@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 
 interface GuestRow {
@@ -21,6 +21,17 @@ interface GuestRow {
   lastVisit: string | null;
 }
 
+interface Metrics {
+  total: number;
+  validated: number;
+  activeStaff: number;
+  copaVino: number;
+  postre: number;
+  otro: number;
+  hoursInOperation: number;
+  leaderboard: { name: string; count: number }[];
+}
+
 type Filter = 'all' | 'birthdays' | 'absent60' | 'vip';
 
 const FILTER_LABELS: Record<Filter, string> = {
@@ -35,16 +46,52 @@ export default function GuestsTable({
   restaurantName,
   brand,
   slug,
+  metrics: initialMetrics,
 }: {
   guests: GuestRow[];
   restaurantName: string;
   brand: string;
   slug: string;
+  metrics: Metrics;
 }) {
   const router = useRouter();
   const [filter, setFilter] = useState<Filter>('all');
   const [search, setSearch] = useState('');
   const [selected, setSelected] = useState<GuestRow | null>(null);
+  const [liveMetrics, setLiveMetrics] = useState<Metrics>(initialMetrics);
+  const [justUpdated, setJustUpdated] = useState(false);
+  const prevTotalRef = useRef<number>(initialMetrics.total);
+
+  // Poll the lightweight stats endpoint every 15 s.
+  // When the total ticks up the hero number briefly turns green — the "magic
+  // moment" of the pitch when Don Carlos sees a live validation happen.
+  useEffect(() => {
+    const id = setInterval(async () => {
+      try {
+        const res = await fetch('/api/v1/guests/stats', { cache: 'no-store' });
+        if (!res.ok) return;
+        const data: Omit<Metrics, 'leaderboard'> = await res.json();
+        setLiveMetrics((prev) => ({
+          ...prev,
+          total: data.total,
+          validated: data.validated,
+          activeStaff: data.activeStaff,
+          copaVino: data.copaVino,
+          postre: data.postre,
+          otro: data.otro,
+          hoursInOperation: data.hoursInOperation,
+        }));
+        if (data.total !== prevTotalRef.current) {
+          prevTotalRef.current = data.total;
+          setJustUpdated(true);
+          setTimeout(() => setJustUpdated(false), 2500);
+        }
+      } catch {
+        // silent — no toast during a live demo
+      }
+    }, 15_000);
+    return () => clearInterval(id);
+  }, []);
 
   const filtered = useMemo(() => {
     const now = new Date();
@@ -75,18 +122,33 @@ export default function GuestsTable({
   return (
     <div className="guests-root">
       <style>{GUESTS_CSS}</style>
+
+      {/* ── Hero metrics banner ─────────────────────────────────────── */}
+      <HeroMetrics metrics={liveMetrics} justUpdated={justUpdated} />
+
+      {/* ── Top meseros leaderboard ─────────────────────────────────── */}
+      {liveMetrics.leaderboard.length > 0 && (
+        <Leaderboard entries={liveMetrics.leaderboard} />
+      )}
+
+      {/* ── Header: title + actions ─────────────────────────────────── */}
       <header className="guests-header">
         <div className="guests-header-inner">
           <div>
-            <h1 className="guests-title">
-              Invitados
-            </h1>
+            <h1 className="guests-title">Club VIP</h1>
             <p className="guests-subtitle">
-              {restaurantName} · {guests.length} capturados · <a href={captureUrl} target="_blank" rel="noreferrer" style={{ color: '#1c1917' }}>Ver página pública →</a>
+              {restaurantName} ·{' '}
+              <a
+                href={captureUrl}
+                target="_blank"
+                rel="noreferrer"
+                style={{ color: '#1c1917' }}
+              >
+                Ver página de captura →
+              </a>
             </p>
           </div>
 
-          {/* Disabled multi-brand selector — teases the enterprise tier. */}
           <div className="guests-actions">
             <select
               disabled
@@ -95,18 +157,15 @@ export default function GuestsTable({
             >
               <option>{brand ? brand.toUpperCase() : 'Una marca'} — Próximamente multi-marca</option>
             </select>
-            {/* File download — plain <a> triggers the browser's download flow. */}
             {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
-            <a
-              href="/api/v1/guests/export"
-              className="guests-export-btn"
-            >
+            <a href="/api/v1/guests/export" className="guests-export-btn">
               Exportar CSV
             </a>
           </div>
         </div>
       </header>
 
+      {/* ── Filter bar + search ─────────────────────────────────────── */}
       <div className="guests-filterbar">
         <div className="guests-filters">
           {(['all', 'birthdays', 'absent60', 'vip'] as Filter[]).map((f) => {
@@ -151,11 +210,7 @@ export default function GuestsTable({
               </thead>
               <tbody>
                 {filtered.map((g) => (
-                  <tr
-                    key={g.id}
-                    onClick={() => setSelected(g)}
-                    className="guests-row"
-                  >
+                  <tr key={g.id} onClick={() => setSelected(g)} className="guests-row">
                     <Td>
                       <div style={{ fontWeight: 600, color: '#1c1917' }}>{g.name}</div>
                       {g.visitCount >= 5 && (
@@ -176,13 +231,20 @@ export default function GuestsTable({
                         </span>
                       )}
                     </Td>
-                    <Td style={{ fontFamily: 'ui-monospace, Menlo, monospace', fontSize: '0.78rem' }}>
+                    <Td
+                      style={{
+                        fontFamily: 'ui-monospace, Menlo, monospace',
+                        fontSize: '0.78rem',
+                      }}
+                    >
                       {formatPhone(g.whatsapp)}
                     </Td>
                     <Td>{g.birthdayMmdd ?? '—'}</Td>
                     <Td>
                       {g.preferences && g.preferences.length > 0 ? (
-                        <span style={{ color: '#57534e', fontSize: '0.75rem' }}>{g.preferences.join(', ')}</span>
+                        <span style={{ color: '#57534e', fontSize: '0.75rem' }}>
+                          {g.preferences.join(', ')}
+                        </span>
                       ) : (
                         <span style={{ color: '#a8a29e' }}>—</span>
                       )}
@@ -207,7 +269,14 @@ export default function GuestsTable({
                     <div className="guests-card-name">{g.name}</div>
                     <div className="guests-card-phone">{formatPhone(g.whatsapp)}</div>
                   </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4 }}>
+                  <div
+                    style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'flex-end',
+                      gap: 4,
+                    }}
+                  >
                     <StatusBadge status={g.status} />
                     {g.visitCount >= 5 && (
                       <span
@@ -227,7 +296,9 @@ export default function GuestsTable({
                   </div>
                 </div>
                 <div className="guests-card-meta">
-                  <span><strong>{g.visitCount}</strong> visitas</span>
+                  <span>
+                    <strong>{g.visitCount}</strong> visitas
+                  </span>
                   {g.birthdayMmdd && <span>🎂 {g.birthdayMmdd}</span>}
                   {g.lastVisit && <span>Última: {formatRelative(g.lastVisit)}</span>}
                 </div>
@@ -254,6 +325,101 @@ export default function GuestsTable({
   );
 }
 
+// ── Hero metrics banner ──────────────────────────────────────────────────────
+
+function HeroMetrics({
+  metrics,
+  justUpdated,
+}: {
+  metrics: Metrics;
+  justUpdated: boolean;
+}) {
+  const hoursLabel =
+    metrics.hoursInOperation < 72
+      ? `${metrics.hoursInOperation}h`
+      : `${Math.round(metrics.hoursInOperation / 24)}d`;
+
+  return (
+    <div className="hero-banner">
+      <div className="hero-live">
+        <span className="hero-live-dot" />
+        <span>En vivo</span>
+      </div>
+
+      <div className="hero-stats">
+        <HeroStat value={metrics.total} label="Invitados" highlight={justUpdated} />
+        <HeroStat value={metrics.activeStaff} label="Meseros" />
+        <HeroStat value={hoursLabel} label="En operación" />
+        <HeroStat value={metrics.validated} label="Cortesías" />
+      </div>
+
+      {metrics.validated > 0 && (
+        <div className="hero-split">
+          <span>{metrics.validated} cortesías entregadas</span>
+          {metrics.copaVino > 0 && (
+            <>
+              <span className="hero-dot">·</span>
+              <span>{metrics.copaVino} copa de vino</span>
+            </>
+          )}
+          {metrics.postre > 0 && (
+            <>
+              <span className="hero-dot">·</span>
+              <span>{metrics.postre} postre</span>
+            </>
+          )}
+          {metrics.otro > 0 && (
+            <>
+              <span className="hero-dot">·</span>
+              <span>{metrics.otro} otro</span>
+            </>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function HeroStat({
+  value,
+  label,
+  highlight,
+}: {
+  value: string | number;
+  label: string;
+  highlight?: boolean;
+}) {
+  return (
+    <div className="hero-stat">
+      <span className={`hero-stat-value${highlight ? ' hero-stat-highlight' : ''}`}>
+        {value}
+      </span>
+      <span className="hero-stat-label">{label}</span>
+    </div>
+  );
+}
+
+// ── Top meseros leaderboard ──────────────────────────────────────────────────
+
+function Leaderboard({ entries }: { entries: { name: string; count: number }[] }) {
+  return (
+    <div className="leaderboard-bar">
+      <span className="leaderboard-heading">Top Meseros</span>
+      <div className="leaderboard-entries">
+        {entries.map((e, i) => (
+          <div key={i} className="leaderboard-entry">
+            <span className="leaderboard-rank">{i + 1}</span>
+            <span className="leaderboard-name">{e.name}</span>
+            <span className="leaderboard-count">{e.count}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ── Shared sub-components ────────────────────────────────────────────────────
+
 function Th({ children }: { children: React.ReactNode }) {
   return (
     <th
@@ -272,11 +438,15 @@ function Th({ children }: { children: React.ReactNode }) {
   );
 }
 
-function Td({ children, style }: { children: React.ReactNode; style?: React.CSSProperties }) {
+function Td({
+  children,
+  style,
+}: {
+  children: React.ReactNode;
+  style?: React.CSSProperties;
+}) {
   return (
-    <td style={{ padding: '0.7rem 0.85rem', color: '#1c1917', ...style }}>
-      {children}
-    </td>
+    <td style={{ padding: '0.7rem 0.85rem', color: '#1c1917', ...style }}>{children}</td>
   );
 }
 
@@ -308,7 +478,13 @@ function StatusBadge({ status }: { status: GuestRow['status'] }) {
   );
 }
 
-function EmptyState({ captureUrl, guestsTotal }: { captureUrl: string; guestsTotal: number }) {
+function EmptyState({
+  captureUrl,
+  guestsTotal,
+}: {
+  captureUrl: string;
+  guestsTotal: number;
+}) {
   return (
     <div
       style={{
@@ -349,6 +525,8 @@ function EmptyState({ captureUrl, guestsTotal }: { captureUrl: string; guestsTot
   );
 }
 
+// ── Guest detail drawer ──────────────────────────────────────────────────────
+
 function GuestDrawer({
   guest,
   onClose,
@@ -375,7 +553,8 @@ function GuestDrawer({
       const payload: Record<string, unknown> = { notes };
       if (editing) {
         if (name.trim() && name.trim() !== guest.name) payload.name = name.trim();
-        if (whatsapp.trim() && whatsapp.trim() !== guest.whatsapp) payload.whatsapp = whatsapp.trim();
+        if (whatsapp.trim() && whatsapp.trim() !== guest.whatsapp)
+          payload.whatsapp = whatsapp.trim();
         if (birthdayMmdd.trim() !== (guest.birthdayMmdd ?? '')) {
           payload.birthdayMmdd = birthdayMmdd.trim();
         }
@@ -453,11 +632,15 @@ function GuestDrawer({
         zIndex: 100,
       }}
     >
-      <aside
-        onClick={(e) => e.stopPropagation()}
-        className="guests-drawer"
-      >
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.25rem' }}>
+      <aside onClick={(e) => e.stopPropagation()} className="guests-drawer">
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'flex-start',
+            marginBottom: '1.25rem',
+          }}
+        >
           <div style={{ flex: 1, minWidth: 0 }}>
             {editing ? (
               <input
@@ -475,7 +658,15 @@ function GuestDrawer({
                 }}
               />
             ) : (
-              <h2 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 800, color: '#1c1917', letterSpacing: '-0.02em' }}>
+              <h2
+                style={{
+                  margin: 0,
+                  fontSize: '1.2rem',
+                  fontWeight: 800,
+                  color: '#1c1917',
+                  letterSpacing: '-0.02em',
+                }}
+              >
                 {guest.name}
               </h2>
             )}
@@ -495,7 +686,14 @@ function GuestDrawer({
                 }}
               />
             ) : (
-              <p style={{ margin: '0.25rem 0 0', fontSize: '0.78rem', color: '#78716c', fontFamily: 'ui-monospace, Menlo, monospace' }}>
+              <p
+                style={{
+                  margin: '0.25rem 0 0',
+                  fontSize: '0.78rem',
+                  color: '#78716c',
+                  fontFamily: 'ui-monospace, Menlo, monospace',
+                }}
+              >
                 {formatPhone(guest.whatsapp)}
               </p>
             )}
@@ -544,17 +742,47 @@ function GuestDrawer({
           <DlRow label="Preferencias" value={guest.preferences?.join(', ') || '—'} />
           <DlRow label="Visitas" value={String(guest.visitCount)} />
           <DlRow label="Primera captura" value={formatDate(guest.capturedAt)} />
-          <DlRow label="Última visita" value={guest.lastVisit ? formatDate(guest.lastVisit) : '—'} />
+          <DlRow
+            label="Última visita"
+            value={guest.lastVisit ? formatDate(guest.lastVisit) : '—'}
+          />
           <DlRow label="Estado" value={<StatusBadge status={guest.status} />} />
           {guest.status === 'pending_validation' && guest.validationCode && (
-            <DlRow label="Código" value={<code style={{ fontFamily: 'ui-monospace, Menlo, monospace', fontSize: '0.95rem', fontWeight: 700 }}>{guest.validationCode}</code>} />
+            <DlRow
+              label="Código"
+              value={
+                <code
+                  style={{
+                    fontFamily: 'ui-monospace, Menlo, monospace',
+                    fontSize: '0.95rem',
+                    fontWeight: 700,
+                  }}
+                >
+                  {guest.validationCode}
+                </code>
+              }
+            />
           )}
-          {guest.redemptionType && <DlRow label="Entrega" value={guest.redemptionType.replace('_', ' ')} />}
-          {guest.marketingConsent && <DlRow label="Consentimiento WhatsApp" value="Sí" />}
+          {guest.redemptionType && (
+            <DlRow label="Entrega" value={guest.redemptionType.replace('_', ' ')} />
+          )}
+          {guest.marketingConsent && (
+            <DlRow label="Consentimiento WhatsApp" value="Sí" />
+          )}
         </dl>
 
         <div style={{ marginBottom: '1.25rem' }}>
-          <label style={{ fontSize: '0.68rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#57534e', display: 'block', marginBottom: '0.35rem' }}>
+          <label
+            style={{
+              fontSize: '0.68rem',
+              fontWeight: 700,
+              letterSpacing: '0.08em',
+              textTransform: 'uppercase',
+              color: '#57534e',
+              display: 'block',
+              marginBottom: '0.35rem',
+            }}
+          >
             Notas internas
           </label>
           <textarea
@@ -631,7 +859,6 @@ function GuestDrawer({
           <button
             onClick={() => {
               if (editing) {
-                // Cancel: reset draft fields to current values.
                 setName(guest.name);
                 setWhatsapp(guest.whatsapp);
                 setBirthdayMmdd(guest.birthdayMmdd ?? '');
@@ -681,14 +908,32 @@ function GuestDrawer({
 
 function DlRow({ label, value }: { label: string; value: React.ReactNode }) {
   return (
-    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', padding: '0.35rem 0', borderBottom: '1px solid #f5f4f2' }}>
-      <dt style={{ fontSize: '0.66rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#78716c' }}>
+    <div
+      style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'baseline',
+        padding: '0.35rem 0',
+        borderBottom: '1px solid #f5f4f2',
+      }}
+    >
+      <dt
+        style={{
+          fontSize: '0.66rem',
+          fontWeight: 700,
+          letterSpacing: '0.08em',
+          textTransform: 'uppercase',
+          color: '#78716c',
+        }}
+      >
         {label}
       </dt>
       <dd style={{ margin: 0, textAlign: 'right', maxWidth: '60%' }}>{value}</dd>
     </div>
   );
 }
+
+// ── Formatters ───────────────────────────────────────────────────────────────
 
 function formatPhone(raw: string): string {
   const digits = raw.replace(/\D/g, '');
@@ -700,7 +945,11 @@ function formatPhone(raw: string): string {
 
 function formatDate(iso: string): string {
   const d = new Date(iso);
-  return d.toLocaleDateString('es-MX', { day: 'numeric', month: 'short', year: 'numeric' });
+  return d.toLocaleDateString('es-MX', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  });
 }
 
 function formatRelative(iso: string): string {
@@ -713,9 +962,150 @@ function formatRelative(iso: string): string {
   return d.toLocaleDateString('es-MX', { day: 'numeric', month: 'short' });
 }
 
+// ── Styles ───────────────────────────────────────────────────────────────────
+
 const GUESTS_CSS = `
-.guests-root { padding: 1.25rem; max-width: 1200px; margin: 0 auto; }
-.guests-header { margin-bottom: 1.25rem; }
+/* ── Hero metrics banner ──────────────────────────────────────── */
+.hero-banner {
+  background: #1c1917;
+  padding: 2.75rem 2.5rem 2.25rem;
+  margin-bottom: 0;
+  position: relative;
+  overflow: hidden;
+}
+.hero-live {
+  position: absolute;
+  top: 1rem;
+  right: 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #57534e;
+}
+.hero-live-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #22c55e;
+  animation: hero-pulse 2.2s ease-in-out infinite;
+  flex-shrink: 0;
+}
+@keyframes hero-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.5; transform: scale(0.75); }
+}
+.hero-stats {
+  display: flex;
+  justify-content: space-around;
+  align-items: flex-end;
+  gap: 1rem;
+  text-align: center;
+}
+.hero-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1 1 0;
+  min-width: 0;
+}
+.hero-stat-value {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 5.5rem;
+  font-weight: 800;
+  color: #faf8f6;
+  line-height: 1;
+  letter-spacing: -0.03em;
+  transition: color 0.4s ease;
+  display: block;
+}
+.hero-stat-highlight {
+  color: #86efac !important;
+  animation: stat-flash 2.5s ease-out forwards;
+}
+@keyframes stat-flash {
+  0%   { color: #86efac; }
+  60%  { color: #86efac; }
+  100% { color: #faf8f6; }
+}
+.hero-stat-label {
+  margin-top: 0.6rem;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #57534e;
+}
+.hero-split {
+  margin-top: 1.75rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid #292524;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  font-size: 0.78rem;
+  color: #78716c;
+  letter-spacing: 0.02em;
+}
+.hero-dot { color: #44403c; }
+
+/* ── Leaderboard strip ─────────────────────────────────────────── */
+.leaderboard-bar {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  background: #292524;
+  padding: 0.8rem 2.5rem;
+  margin-bottom: 1.25rem;
+  flex-wrap: wrap;
+}
+.leaderboard-heading {
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #57534e;
+  white-space: nowrap;
+}
+.leaderboard-entries {
+  display: flex;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+.leaderboard-entry {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.82rem;
+}
+.leaderboard-rank {
+  font-size: 0.6rem;
+  font-weight: 700;
+  color: #57534e;
+  width: 1rem;
+  text-align: center;
+}
+.leaderboard-name {
+  font-weight: 600;
+  color: #d6d3d1;
+}
+.leaderboard-count {
+  font-size: 0.66rem;
+  color: #78716c;
+  background: #1c1917;
+  padding: 1px 6px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+/* ── Page shell ────────────────────────────────────────────────── */
+.guests-root { padding: 0; max-width: 1200px; margin: 0 auto; }
+.guests-header { padding: 1rem 1.25rem 0; margin-bottom: 1rem; }
 .guests-header-inner {
   display: flex;
   align-items: baseline;
@@ -723,8 +1113,8 @@ const GUESTS_CSS = `
   gap: 1rem;
   flex-wrap: wrap;
 }
-.guests-title { font-size: 1.5rem; font-weight: 800; color: #1c1917; margin: 0; letter-spacing: -0.02em; }
-.guests-subtitle { font-size: 0.8rem; color: #78716c; margin: 0.25rem 0 0; }
+.guests-title { font-size: 1.25rem; font-weight: 800; color: #1c1917; margin: 0; letter-spacing: -0.02em; }
+.guests-subtitle { font-size: 0.78rem; color: #78716c; margin: 0.2rem 0 0; }
 .guests-actions { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
 .guests-brand-select {
   padding: 0.4rem 0.6rem;
@@ -751,6 +1141,7 @@ const GUESTS_CSS = `
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  padding: 0 1.25rem;
   margin-bottom: 1rem;
   flex-wrap: wrap;
 }
@@ -782,7 +1173,7 @@ const GUESTS_CSS = `
   background: #fff;
   outline: none;
 }
-.guests-table-wrap { border: 1px solid #e7e5e4; background: #fff; overflow: auto; }
+.guests-table-wrap { border: 1px solid #e7e5e4; background: #fff; overflow: auto; margin: 0 1.25rem; }
 .guests-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
 .guests-table thead tr { background: #faf8f6; border-bottom: 1px solid #e7e5e4; }
 .guests-row {
@@ -804,35 +1195,60 @@ const GUESTS_CSS = `
   box-sizing: border-box;
 }
 
-/* iPad / tablet (≤1024px) */
-@media (max-width: 1024px) {
-  .guests-root { padding: 1rem; }
-  .guests-title { font-size: 1.35rem; }
-  .guests-search { width: 200px; font-size: 16px; }
-  .guests-table { font-size: 0.78rem; }
-  .guests-table th, .guests-table td { padding: 0.55rem 0.6rem !important; }
+/* ── Large desktop / TV projection ────────────────────────────── */
+@media (min-width: 1440px) {
+  .hero-stat-value  { font-size: 7rem; }
+  .hero-stat-label  { font-size: 0.72rem; letter-spacing: 0.22em; }
+  .hero-split       { font-size: 0.9rem; margin-top: 2rem; padding-top: 1.5rem; }
+  .hero-banner      { padding: 3.5rem 3rem 2.75rem; }
+  .leaderboard-bar  { padding: 0.9rem 3rem; }
+  .leaderboard-name { font-size: 0.95rem; }
 }
 
-/* Phone (≤640px) */
+/* ── iPad / tablet (≤1024px) ───────────────────────────────────── */
+@media (max-width: 1024px) {
+  .hero-stat-value { font-size: 3.75rem; }
+  .hero-banner { padding: 2rem 1.5rem 1.75rem; }
+  .leaderboard-bar { padding: 0.7rem 1.5rem; }
+  .guests-table { font-size: 0.78rem; }
+  .guests-table th, .guests-table td { padding: 0.55rem 0.6rem !important; }
+  .guests-search { width: 200px; font-size: 16px; }
+  .guests-table-wrap { margin: 0 1rem; }
+  .guests-filterbar { padding: 0 1rem; }
+  .guests-header { padding: 1rem 1rem 0; }
+}
+
+/* ── Phone (≤640px) ────────────────────────────────────────────── */
 @media (max-width: 640px) {
-  .guests-root { padding: 0.75rem; }
-  .guests-title { font-size: 1.25rem; }
-  .guests-subtitle { font-size: 0.78rem; }
-  .guests-header-inner { flex-direction: column; align-items: stretch; gap: 0.75rem; }
+  .hero-banner { padding: 1.75rem 1rem 1.5rem; }
+  .hero-stats  { gap: 0.25rem; }
+  .hero-stat   { flex: 1 1 calc(50% - 0.25rem); }
+  .hero-stat-value { font-size: 2.75rem; }
+  .hero-stat-label { font-size: 0.58rem; letter-spacing: 0.14em; }
+  .hero-split  { font-size: 0.7rem; gap: 0.5rem; margin-top: 1.25rem; }
+  .hero-live   { font-size: 0.55rem; }
+  .leaderboard-bar { padding: 0.65rem 1rem; gap: 0.75rem; }
+  .leaderboard-entries { gap: 0.75rem; }
+  .leaderboard-name { font-size: 0.78rem; }
+
+  .guests-header { padding: 0.75rem 0.75rem 0; }
+  .guests-title { font-size: 1.1rem; }
+  .guests-subtitle { font-size: 0.75rem; }
+  .guests-header-inner { flex-direction: column; align-items: stretch; gap: 0.6rem; }
   .guests-actions { justify-content: flex-start; }
   .guests-brand-select { flex: 1 1 auto; min-width: 0; font-size: 0.7rem; }
   .guests-export-btn { font-size: 0.68rem; padding: 0.55rem 0.7rem; }
-  .guests-filterbar { gap: 0.5rem; flex-direction: column; align-items: stretch; }
+  .guests-filterbar { padding: 0 0.75rem; gap: 0.5rem; flex-direction: column; align-items: stretch; }
   .guests-filters { width: 100%; }
   .guests-filter-btn { flex: 1 1 calc(50% - 0.2rem); font-size: 0.66rem; padding: 0.55rem 0.5rem; }
   .guests-search { margin-left: 0; width: 100%; font-size: 16px; padding: 0.65rem 0.7rem; }
 
-  /* Replace the table with mobile card list */
   .guests-table-wrap { display: none; }
   .guests-cards {
     display: flex;
     flex-direction: column;
     gap: 0.6rem;
+    padding: 0 0.75rem;
   }
   .guests-card {
     background: #fff;
