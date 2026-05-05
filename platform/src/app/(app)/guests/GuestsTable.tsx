@@ -138,12 +138,7 @@ export default function GuestsTable({
             <h1 className="guests-title">Club VIP</h1>
             <p className="guests-subtitle">
               {restaurantName} ·{' '}
-              <a
-                href={captureUrl}
-                target="_blank"
-                rel="noreferrer"
-                style={{ color: '#1c1917' }}
-              >
+              <a href={captureUrl} target="_blank" rel="noreferrer">
                 Ver página de captura →
               </a>
             </p>
@@ -166,8 +161,7 @@ export default function GuestsTable({
               href="/guests/print"
               target="_blank"
               rel="noreferrer"
-              className="guests-export-btn"
-              style={{ background: '#1c1917', color: '#faf8f6', borderColor: '#1c1917' }}
+              className="guests-export-btn guests-export-btn--solid"
             >
               Descargar PDF
             </a>
@@ -222,28 +216,13 @@ export default function GuestsTable({
                 {filtered.map((g) => (
                   <tr key={g.id} onClick={() => setSelected(g)} className="guests-row">
                     <Td>
-                      <div style={{ fontWeight: 600, color: '#1c1917' }}>{g.name}</div>
-                      {g.visitCount >= 5 && (
-                        <span
-                          style={{
-                            display: 'inline-block',
-                            marginTop: 2,
-                            fontSize: '0.58rem',
-                            fontWeight: 700,
-                            letterSpacing: '0.1em',
-                            textTransform: 'uppercase',
-                            background: '#fef3c7',
-                            color: '#92400e',
-                            padding: '1px 5px',
-                          }}
-                        >
-                          VIP
-                        </span>
-                      )}
+                      <div style={{ fontWeight: 600, color: 'var(--text-main)' }}>{g.name}</div>
+                      {g.visitCount >= 5 && <VipBadge />}
                     </Td>
                     <Td
                       style={{
-                        fontFamily: 'ui-monospace, Menlo, monospace',
+                        fontFamily: 'var(--font-mono)',
+                        fontVariantNumeric: 'tabular-nums',
                         fontSize: '0.78rem',
                       }}
                     >
@@ -252,15 +231,15 @@ export default function GuestsTable({
                     <Td>{g.birthdayMmdd ?? '—'}</Td>
                     <Td>
                       {g.preferences && g.preferences.length > 0 ? (
-                        <span style={{ color: '#57534e', fontSize: '0.75rem' }}>
+                        <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>
                           {g.preferences.join(', ')}
                         </span>
                       ) : (
-                        <span style={{ color: '#a8a29e' }}>—</span>
+                        <span style={{ color: 'var(--text-dim)' }}>—</span>
                       )}
                     </Td>
-                    <Td>{g.visitCount}</Td>
-                    <Td>{g.lastVisit ? formatRelative(g.lastVisit) : '—'}</Td>
+                    <Td style={{ fontFamily: 'var(--font-mono)', fontVariantNumeric: 'tabular-nums', fontWeight: 600 }}>{g.visitCount}</Td>
+                    <Td style={{ color: 'var(--text-muted)' }}>{g.lastVisit ? formatRelative(g.lastVisit) : '—'}</Td>
                     <Td>
                       <StatusBadge status={g.status} />
                     </Td>
@@ -288,21 +267,7 @@ export default function GuestsTable({
                     }}
                   >
                     <StatusBadge status={g.status} />
-                    {g.visitCount >= 5 && (
-                      <span
-                        style={{
-                          fontSize: '0.58rem',
-                          fontWeight: 700,
-                          letterSpacing: '0.1em',
-                          textTransform: 'uppercase',
-                          background: '#fef3c7',
-                          color: '#92400e',
-                          padding: '1px 5px',
-                        }}
-                      >
-                        VIP
-                      </span>
-                    )}
+                    {g.visitCount >= 5 && <VipBadge />}
                   </div>
                 </div>
                 <div className="guests-card-meta">
@@ -365,23 +330,23 @@ function HeroMetrics({
 
       {metrics.validated > 0 && (
         <div className="hero-split">
-          <span>{metrics.validated} cortesías entregadas</span>
+          <span><strong>{metrics.validated}</strong> cortesías entregadas</span>
           {metrics.copaVino > 0 && (
             <>
               <span className="hero-dot">·</span>
-              <span>{metrics.copaVino} copa de vino</span>
+              <span><strong>{metrics.copaVino}</strong> copa de vino</span>
             </>
           )}
           {metrics.postre > 0 && (
             <>
               <span className="hero-dot">·</span>
-              <span>{metrics.postre} postre</span>
+              <span><strong>{metrics.postre}</strong> postre</span>
             </>
           )}
           {metrics.otro > 0 && (
             <>
               <span className="hero-dot">·</span>
-              <span>{metrics.otro} otro</span>
+              <span><strong>{metrics.otro}</strong> otro</span>
             </>
           )}
         </div>
@@ -435,12 +400,12 @@ function Th({ children }: { children: React.ReactNode }) {
     <th
       style={{
         textAlign: 'left',
-        padding: '0.65rem 0.85rem',
-        fontSize: '0.62rem',
+        padding: '0.7rem 0.85rem',
+        fontSize: '0.65rem',
         fontWeight: 700,
         letterSpacing: '0.1em',
         textTransform: 'uppercase',
-        color: '#78716c',
+        color: 'var(--text-muted)',
       }}
     >
       {children}
@@ -456,15 +421,50 @@ function Td({
   style?: React.CSSProperties;
 }) {
   return (
-    <td style={{ padding: '0.7rem 0.85rem', color: '#1c1917', ...style }}>{children}</td>
+    <td style={{ padding: '0.75rem 0.85rem', color: 'var(--text-main)', ...style }}>
+      {children}
+    </td>
+  );
+}
+
+function VipBadge() {
+  return (
+    <span
+      style={{
+        display: 'inline-block',
+        marginTop: 2,
+        fontSize: '0.6rem',
+        fontWeight: 700,
+        letterSpacing: '0.1em',
+        textTransform: 'uppercase',
+        background: 'var(--gold-light)',
+        color: 'var(--gold)',
+        border: '1px solid var(--gold)',
+        padding: '1px 6px',
+      }}
+    >
+      VIP
+    </span>
   );
 }
 
 function StatusBadge({ status }: { status: GuestRow['status'] }) {
   const styles: Record<GuestRow['status'], React.CSSProperties> = {
-    pending_validation: { background: '#fef3c7', color: '#92400e' },
-    validated: { background: '#d1fae5', color: '#065f46' },
-    expired: { background: '#f5f4f2', color: '#78716c' },
+    pending_validation: {
+      background: 'var(--gold-light)',
+      color: 'var(--gold)',
+      border: '1px solid var(--gold)',
+    },
+    validated: {
+      background: 'var(--green-light)',
+      color: 'var(--green)',
+      border: '1px solid var(--green)',
+    },
+    expired: {
+      background: 'var(--bg-base)',
+      color: 'var(--text-muted)',
+      border: '1px solid var(--panel-border)',
+    },
   };
   const labels: Record<GuestRow['status'], string> = {
     pending_validation: 'Pendiente',
@@ -476,7 +476,7 @@ function StatusBadge({ status }: { status: GuestRow['status'] }) {
       style={{
         display: 'inline-block',
         padding: '2px 7px',
-        fontSize: '0.58rem',
+        fontSize: '0.6rem',
         fontWeight: 700,
         letterSpacing: '0.1em',
         textTransform: 'uppercase',
@@ -498,14 +498,23 @@ function EmptyState({
   return (
     <div
       style={{
-        border: '1px dashed #d6d3d1',
-        background: '#fff',
-        padding: '2.5rem 1.5rem',
+        border: '1px solid var(--text-main)',
+        background: 'var(--panel-bg)',
+        padding: '3rem 1.5rem',
         textAlign: 'center',
-        color: '#78716c',
+        color: 'var(--text-muted)',
+        margin: '0 2.5rem',
       }}
     >
-      <p style={{ margin: 0, fontSize: '0.9rem' }}>
+      <p
+        style={{
+          margin: 0,
+          fontSize: '0.95rem',
+          fontFamily: 'var(--font-serif)',
+          color: 'var(--text-main)',
+          letterSpacing: '-0.01em',
+        }}
+      >
         {guestsTotal === 0
           ? 'Aún no has capturado invitados.'
           : 'Ningún invitado coincide con este filtro.'}
@@ -517,14 +526,15 @@ function EmptyState({
           rel="noreferrer"
           style={{
             display: 'inline-block',
-            marginTop: '0.75rem',
-            padding: '0.55rem 1rem',
-            border: '1px solid #111',
-            color: '#111',
+            marginTop: '1rem',
+            padding: '0.6rem 1.1rem',
+            border: '1px solid var(--text-main)',
+            background: 'var(--text-main)',
+            color: 'var(--panel-bg)',
             textDecoration: 'none',
             fontSize: '0.72rem',
-            fontWeight: 700,
-            letterSpacing: '0.08em',
+            fontWeight: 600,
+            letterSpacing: '0.05em',
             textTransform: 'uppercase',
           }}
         >
@@ -636,7 +646,7 @@ function GuestDrawer({
       style={{
         position: 'fixed',
         inset: 0,
-        background: 'rgba(0,0,0,0.35)',
+        background: 'rgba(17,17,17,0.4)',
         display: 'flex',
         justifyContent: 'flex-end',
         zIndex: 100,
@@ -649,6 +659,8 @@ function GuestDrawer({
             justifyContent: 'space-between',
             alignItems: 'flex-start',
             marginBottom: '1.25rem',
+            paddingBottom: '1rem',
+            borderBottom: '1px solid var(--text-main)',
           }}
         >
           <div style={{ flex: 1, minWidth: 0 }}>
@@ -659,22 +671,26 @@ function GuestDrawer({
                 maxLength={255}
                 style={{
                   width: '100%',
-                  fontSize: '1.1rem',
-                  fontWeight: 800,
-                  color: '#1c1917',
-                  border: '1.5px solid #d6d3d1',
-                  padding: '0.4rem 0.5rem',
-                  fontFamily: 'inherit',
+                  fontSize: '1.25rem',
+                  fontWeight: 600,
+                  fontFamily: 'var(--font-serif)',
+                  color: 'var(--text-main)',
+                  border: '1px solid var(--text-main)',
+                  padding: '0.4rem 0.55rem',
+                  borderRadius: 0,
+                  outline: 'none',
                 }}
               />
             ) : (
               <h2
                 style={{
                   margin: 0,
-                  fontSize: '1.2rem',
-                  fontWeight: 800,
-                  color: '#1c1917',
+                  fontFamily: 'var(--font-serif)',
+                  fontSize: '1.4rem',
+                  fontWeight: 600,
+                  color: 'var(--text-main)',
                   letterSpacing: '-0.02em',
+                  lineHeight: 1.15,
                 }}
               >
                 {guest.name}
@@ -690,18 +706,22 @@ function GuestDrawer({
                   marginTop: 6,
                   width: '100%',
                   fontSize: '0.82rem',
-                  fontFamily: 'ui-monospace, Menlo, monospace',
-                  border: '1.5px solid #d6d3d1',
-                  padding: '0.35rem 0.5rem',
+                  fontFamily: 'var(--font-mono)',
+                  fontVariantNumeric: 'tabular-nums',
+                  border: '1px solid var(--text-main)',
+                  padding: '0.4rem 0.5rem',
+                  borderRadius: 0,
+                  outline: 'none',
                 }}
               />
             ) : (
               <p
                 style={{
-                  margin: '0.25rem 0 0',
+                  margin: '0.35rem 0 0',
                   fontSize: '0.78rem',
-                  color: '#78716c',
-                  fontFamily: 'ui-monospace, Menlo, monospace',
+                  color: 'var(--text-muted)',
+                  fontFamily: 'var(--font-mono)',
+                  fontVariantNumeric: 'tabular-nums',
                 }}
               >
                 {formatPhone(guest.whatsapp)}
@@ -713,11 +733,12 @@ function GuestDrawer({
             style={{
               background: 'none',
               border: 'none',
-              fontSize: '1.2rem',
+              fontSize: '1.1rem',
               cursor: 'pointer',
-              color: '#78716c',
-              padding: '0 0.25rem',
+              color: 'var(--text-muted)',
+              padding: '0 0.35rem',
               marginLeft: 8,
+              lineHeight: 1,
             }}
             aria-label="Cerrar"
           >
@@ -725,7 +746,7 @@ function GuestDrawer({
           </button>
         </div>
 
-        <dl style={{ margin: '0 0 1.25rem', fontSize: '0.82rem', color: '#1c1917' }}>
+        <dl style={{ margin: '0 0 1.25rem', fontSize: '0.82rem', color: 'var(--text-main)' }}>
           {editing ? (
             <DlRow
               label="Cumpleaños"
@@ -736,12 +757,14 @@ function GuestDrawer({
                   maxLength={5}
                   placeholder="DD/MM"
                   style={{
-                    width: 90,
+                    width: 92,
                     textAlign: 'right',
                     fontSize: '0.82rem',
-                    border: '1.5px solid #d6d3d1',
-                    padding: '0.2rem 0.4rem',
+                    border: '1px solid var(--text-main)',
+                    padding: '0.25rem 0.45rem',
                     fontFamily: 'inherit',
+                    borderRadius: 0,
+                    outline: 'none',
                   }}
                 />
               }
@@ -750,7 +773,20 @@ function GuestDrawer({
             <DlRow label="Cumpleaños" value={guest.birthdayMmdd ?? '—'} />
           )}
           <DlRow label="Preferencias" value={guest.preferences?.join(', ') || '—'} />
-          <DlRow label="Visitas" value={String(guest.visitCount)} />
+          <DlRow
+            label="Visitas"
+            value={
+              <span
+                style={{
+                  fontFamily: 'var(--font-mono)',
+                  fontVariantNumeric: 'tabular-nums',
+                  fontWeight: 600,
+                }}
+              >
+                {guest.visitCount}
+              </span>
+            }
+          />
           <DlRow label="Primera captura" value={formatDate(guest.capturedAt)} />
           <DlRow
             label="Última visita"
@@ -763,9 +799,14 @@ function GuestDrawer({
               value={
                 <code
                   style={{
-                    fontFamily: 'ui-monospace, Menlo, monospace',
+                    fontFamily: 'var(--font-mono)',
+                    fontVariantNumeric: 'tabular-nums',
                     fontSize: '0.95rem',
                     fontWeight: 700,
+                    background: 'var(--bg-base)',
+                    border: '1px solid var(--text-main)',
+                    padding: '2px 8px',
+                    letterSpacing: '0.05em',
                   }}
                 >
                   {guest.validationCode}
@@ -784,13 +825,13 @@ function GuestDrawer({
         <div style={{ marginBottom: '1.25rem' }}>
           <label
             style={{
-              fontSize: '0.68rem',
+              fontSize: '0.65rem',
               fontWeight: 700,
-              letterSpacing: '0.08em',
+              letterSpacing: '0.1em',
               textTransform: 'uppercase',
-              color: '#57534e',
+              color: 'var(--text-muted)',
               display: 'block',
-              marginBottom: '0.35rem',
+              marginBottom: '0.4rem',
             }}
           >
             Notas internas
@@ -803,13 +844,15 @@ function GuestDrawer({
             placeholder="Alergias, celebraciones, preferencias de mesa, etc."
             style={{
               width: '100%',
-              padding: '0.6rem',
-              border: '1.5px solid #d6d3d1',
-              fontSize: '0.82rem',
+              padding: '0.65rem 0.7rem',
+              border: '1px solid var(--text-main)',
+              fontSize: '0.85rem',
               fontFamily: 'inherit',
               resize: 'vertical',
               outline: 'none',
               boxSizing: 'border-box',
+              borderRadius: 0,
+              background: 'var(--panel-bg)',
             }}
           />
         </div>
@@ -817,12 +860,12 @@ function GuestDrawer({
         {error && (
           <div
             style={{
-              background: '#fef2f2',
-              border: '1px solid #fecaca',
-              color: '#991b1b',
-              padding: '0.5rem 0.7rem',
+              background: 'var(--red-light)',
+              border: '1px solid var(--red)',
+              color: 'var(--red)',
+              padding: '0.55rem 0.75rem',
               fontSize: '0.78rem',
-              marginBottom: '0.75rem',
+              marginBottom: '0.85rem',
             }}
           >
             {error}
@@ -836,14 +879,16 @@ function GuestDrawer({
             style={{
               flex: '1 1 45%',
               padding: '0.8rem',
-              background: saving ? '#78716c' : '#111',
-              color: '#fff',
-              border: 'none',
-              fontWeight: 700,
-              fontSize: '0.74rem',
-              letterSpacing: '0.08em',
+              background: saving ? 'var(--text-muted)' : 'var(--text-main)',
+              color: 'var(--panel-bg)',
+              border: '1px solid var(--text-main)',
+              fontWeight: 600,
+              fontSize: '0.72rem',
+              letterSpacing: '0.05em',
               textTransform: 'uppercase',
+              fontFamily: 'inherit',
               cursor: saving ? 'wait' : 'pointer',
+              borderRadius: 0,
             }}
           >
             {saving ? 'Guardando…' : editing ? 'Guardar cambios' : 'Guardar notas'}
@@ -854,14 +899,16 @@ function GuestDrawer({
             style={{
               flex: '1 1 45%',
               padding: '0.8rem',
-              background: '#fff',
-              color: '#111',
-              border: '1.5px solid #111',
-              fontWeight: 700,
-              fontSize: '0.74rem',
-              letterSpacing: '0.08em',
+              background: 'var(--panel-bg)',
+              color: 'var(--text-main)',
+              border: '1px solid var(--text-main)',
+              fontWeight: 600,
+              fontSize: '0.72rem',
+              letterSpacing: '0.05em',
               textTransform: 'uppercase',
+              fontFamily: 'inherit',
               cursor: visiting ? 'wait' : 'pointer',
+              borderRadius: 0,
             }}
           >
             {visiting ? 'Registrando…' : '+ Visita'}
@@ -880,14 +927,16 @@ function GuestDrawer({
             style={{
               flex: '1 1 45%',
               padding: '0.7rem',
-              background: editing ? '#f5f4f2' : '#fff',
-              color: '#1c1917',
-              border: '1px solid #d6d3d1',
+              background: editing ? 'var(--bg-base)' : 'var(--panel-bg)',
+              color: 'var(--text-main)',
+              border: '1px solid var(--panel-border)',
               fontWeight: 600,
               fontSize: '0.7rem',
-              letterSpacing: '0.06em',
+              letterSpacing: '0.05em',
               textTransform: 'uppercase',
+              fontFamily: 'inherit',
               cursor: 'pointer',
+              borderRadius: 0,
             }}
           >
             {editing ? 'Cancelar' : 'Editar datos'}
@@ -898,14 +947,16 @@ function GuestDrawer({
             style={{
               flex: '1 1 45%',
               padding: '0.7rem',
-              background: '#fff',
-              color: '#991b1b',
-              border: '1px solid #fecaca',
-              fontWeight: 700,
+              background: 'var(--panel-bg)',
+              color: 'var(--red)',
+              border: '1px solid var(--red)',
+              fontWeight: 600,
               fontSize: '0.7rem',
-              letterSpacing: '0.06em',
+              letterSpacing: '0.05em',
               textTransform: 'uppercase',
+              fontFamily: 'inherit',
               cursor: deleting ? 'wait' : 'pointer',
+              borderRadius: 0,
             }}
           >
             {deleting ? 'Eliminando…' : 'Eliminar'}
@@ -923,22 +974,24 @@ function DlRow({ label, value }: { label: string; value: React.ReactNode }) {
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'baseline',
-        padding: '0.35rem 0',
-        borderBottom: '1px solid #f5f4f2',
+        padding: '0.5rem 0',
+        borderBottom: '1px solid var(--panel-border)',
+        gap: '0.75rem',
       }}
     >
       <dt
         style={{
-          fontSize: '0.66rem',
+          fontSize: '0.65rem',
           fontWeight: 700,
-          letterSpacing: '0.08em',
+          letterSpacing: '0.1em',
           textTransform: 'uppercase',
-          color: '#78716c',
+          color: 'var(--text-muted)',
+          flexShrink: 0,
         }}
       >
         {label}
       </dt>
-      <dd style={{ margin: 0, textAlign: 'right', maxWidth: '60%' }}>{value}</dd>
+      <dd style={{ margin: 0, textAlign: 'right', maxWidth: '65%' }}>{value}</dd>
     </div>
   );
 }
@@ -975,13 +1028,20 @@ function formatRelative(iso: string): string {
 // ── Styles ───────────────────────────────────────────────────────────────────
 
 const GUESTS_CSS = `
-/* ── Hero metrics banner ──────────────────────────────────────── */
+/* ───────────────────────────────────────────────────────────────
+   Club VIP — Editorial Brutalist surface
+   Aligned with globals.css :root tokens and LiveView.tsx
+   ─────────────────────────────────────────────────────────────── */
+
+/* ── Hero metrics banner — mirrors .impact-wrapper pattern ────── */
 .hero-banner {
-  background: #1c1917;
+  background: var(--text-main);
+  color: #fff;
   padding: 2.75rem 2.5rem 2.25rem;
-  margin-bottom: 0;
   position: relative;
-  overflow: hidden;
+  border-bottom: 1px solid var(--text-main);
+  animation: fadeInUp 0.4s ease both;
+  animation-delay: 0.05s;
 }
 .hero-live {
   position: absolute;
@@ -990,132 +1050,150 @@ const GUESTS_CSS = `
   display: flex;
   align-items: center;
   gap: 0.4rem;
-  font-size: 0.6rem;
+  font-size: 0.65rem;
   font-weight: 700;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: #57534e;
+  color: rgba(255,255,255,0.55);
 }
 .hero-live-dot {
   width: 7px;
   height: 7px;
-  border-radius: 50%;
-  background: #22c55e;
+  background: var(--green);
   animation: hero-pulse 2.2s ease-in-out infinite;
   flex-shrink: 0;
 }
 @keyframes hero-pulse {
   0%, 100% { opacity: 1; transform: scale(1); }
-  50%       { opacity: 0.5; transform: scale(0.75); }
+  50%       { opacity: 0.45; transform: scale(0.7); }
 }
 .hero-stats {
-  display: flex;
-  justify-content: space-around;
-  align-items: flex-end;
-  gap: 1rem;
-  text-align: center;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  align-items: stretch;
 }
 .hero-stat {
   display: flex;
   flex-direction: column;
   align-items: center;
-  flex: 1 1 0;
-  min-width: 0;
+  justify-content: flex-end;
+  text-align: center;
+  padding: 0 1rem;
+  border-right: 1px solid rgba(255,255,255,0.1);
 }
+.hero-stat:last-child { border-right: none; }
 .hero-stat-value {
-  font-family: 'Playfair Display', Georgia, serif;
+  font-family: var(--font-serif);
   font-size: 5.5rem;
-  font-weight: 800;
-  color: #faf8f6;
+  font-weight: 600;
+  color: #fff;
   line-height: 1;
   letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
   transition: color 0.4s ease;
   display: block;
 }
 .hero-stat-highlight {
-  color: #86efac !important;
+  color: var(--green) !important;
   animation: stat-flash 2.5s ease-out forwards;
 }
 @keyframes stat-flash {
-  0%   { color: #86efac; }
-  60%  { color: #86efac; }
-  100% { color: #faf8f6; }
+  0%   { color: var(--green); }
+  60%  { color: var(--green); }
+  100% { color: #fff; }
 }
 .hero-stat-label {
-  margin-top: 0.6rem;
-  font-size: 0.62rem;
+  margin-top: 0.7rem;
+  font-size: 0.65rem;
   font-weight: 700;
-  letter-spacing: 0.2em;
+  letter-spacing: 0.18em;
   text-transform: uppercase;
-  color: #57534e;
+  color: rgba(255,255,255,0.55);
 }
 .hero-split {
   margin-top: 1.75rem;
   padding-top: 1.25rem;
-  border-top: 1px solid #292524;
+  border-top: 1px solid rgba(255,255,255,0.1);
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 0.75rem;
   flex-wrap: wrap;
   font-size: 0.78rem;
-  color: #78716c;
-  letter-spacing: 0.02em;
+  color: rgba(255,255,255,0.7);
+  font-variant-numeric: tabular-nums;
 }
-.hero-dot { color: #44403c; }
+.hero-split strong { color: #fff; font-weight: 600; }
+.hero-dot { color: rgba(255,255,255,0.25); }
 
-/* ── Leaderboard strip ─────────────────────────────────────────── */
+/* ── Leaderboard strip ─ flat-panel with ledger-row dividers ──── */
 .leaderboard-bar {
   display: flex;
   align-items: center;
   gap: 1.5rem;
-  background: #292524;
-  padding: 0.8rem 2.5rem;
-  margin-bottom: 1.25rem;
+  background: var(--panel-bg);
+  border-bottom: 1px solid var(--text-main);
+  padding: 0.85rem 2.5rem;
+  margin-bottom: 1.5rem;
   flex-wrap: wrap;
+  animation: fadeInUp 0.4s ease both;
+  animation-delay: 0.1s;
 }
 .leaderboard-heading {
-  font-size: 0.6rem;
+  font-size: 0.65rem;
   font-weight: 700;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: #57534e;
+  color: var(--gold);
   white-space: nowrap;
 }
 .leaderboard-entries {
   display: flex;
-  gap: 1.5rem;
+  gap: 0;
   flex-wrap: wrap;
+  flex: 1 1 auto;
 }
 .leaderboard-entry {
   display: flex;
   align-items: center;
-  gap: 0.45rem;
+  gap: 0.55rem;
   font-size: 0.82rem;
+  padding: 0 1.25rem;
+  border-right: 1px solid var(--panel-border);
 }
+.leaderboard-entry:last-child { border-right: none; }
+.leaderboard-entry:first-child { padding-left: 0; }
 .leaderboard-rank {
-  font-size: 0.6rem;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
   font-weight: 700;
-  color: #57534e;
-  width: 1rem;
+  color: var(--text-dim);
+  width: 0.9rem;
   text-align: center;
 }
 .leaderboard-name {
   font-weight: 600;
-  color: #d6d3d1;
+  color: var(--text-main);
 }
 .leaderboard-count {
-  font-size: 0.66rem;
-  color: #78716c;
-  background: #1c1917;
-  padding: 1px 6px;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 0.75rem;
+  color: var(--text-main);
+  background: var(--bg-base);
+  border: 1px solid var(--text-main);
+  padding: 1px 7px;
   font-weight: 700;
-  letter-spacing: 0.04em;
 }
 
 /* ── Page shell ────────────────────────────────────────────────── */
-.guests-root { padding: 0; max-width: 1200px; margin: 0 auto; }
-.guests-header { padding: 1rem 1.25rem 0; margin-bottom: 1rem; }
+.guests-root { padding: 0; }
+.guests-header {
+  padding: 0 2.5rem;
+  margin-bottom: 1.25rem;
+  animation: fadeInUp 0.4s ease both;
+  animation-delay: 0.15s;
+}
 .guests-header-inner {
   display: flex;
   align-items: baseline;
@@ -1123,153 +1201,226 @@ const GUESTS_CSS = `
   gap: 1rem;
   flex-wrap: wrap;
 }
-.guests-title { font-size: 1.25rem; font-weight: 800; color: #1c1917; margin: 0; letter-spacing: -0.02em; }
-.guests-subtitle { font-size: 0.78rem; color: #78716c; margin: 0.2rem 0 0; }
+.guests-title {
+  font-family: var(--font-serif);
+  font-size: 1.75rem;
+  font-weight: 600;
+  color: var(--text-main);
+  margin: 0;
+  letter-spacing: -0.02em;
+}
+.guests-subtitle {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  margin: 0.25rem 0 0;
+}
+.guests-subtitle a { color: var(--text-main); text-decoration: underline; text-decoration-color: var(--text-dim); text-underline-offset: 3px; }
+.guests-subtitle a:hover { text-decoration-color: var(--text-main); }
 .guests-actions { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
 .guests-brand-select {
-  padding: 0.4rem 0.6rem;
-  border: 1.5px solid #d6d3d1;
-  background: #f5f4f2;
-  color: #a8a29e;
-  font-size: 0.75rem;
+  padding: 0.5rem 0.65rem;
+  border: 1px solid var(--panel-border);
+  background: var(--bg-base);
+  color: var(--text-dim);
+  font-size: 0.72rem;
+  font-family: inherit;
   cursor: not-allowed;
   max-width: 100%;
+  border-radius: 0;
 }
 .guests-export-btn {
-  padding: 0.5rem 0.85rem;
-  border: 1px solid #111;
-  background: #fff;
-  color: #111;
+  display: inline-flex;
+  align-items: center;
+  padding: 0.55rem 0.95rem;
+  border: 1px solid var(--text-main);
+  background: var(--panel-bg);
+  color: var(--text-main);
   font-size: 0.72rem;
-  font-weight: 700;
+  font-weight: 600;
   text-decoration: none;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.05em;
   text-transform: uppercase;
   white-space: nowrap;
+  transition: all 0.15s ease;
 }
+.guests-export-btn:hover { background: var(--text-main); color: var(--panel-bg); }
+.guests-export-btn--solid {
+  background: var(--text-main);
+  color: var(--panel-bg);
+}
+.guests-export-btn--solid:hover { background: #333; color: var(--panel-bg); }
+
+/* ── Filter bar ────────────────────────────────────────────────── */
 .guests-filterbar {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0 1.25rem;
-  margin-bottom: 1rem;
+  padding: 0 2.5rem;
+  margin-bottom: 1.25rem;
   flex-wrap: wrap;
+  animation: fadeInUp 0.4s ease both;
+  animation-delay: 0.2s;
 }
 .guests-filters {
   display: flex;
-  gap: 0.4rem;
+  gap: 0;
   flex-wrap: wrap;
   flex: 1 1 auto;
   min-width: 0;
 }
 .guests-filter-btn {
-  padding: 0.45rem 0.85rem;
+  padding: 0.5rem 1rem;
   font-size: 0.72rem;
   font-weight: 600;
-  border: 1.5px solid #d6d3d1;
-  background: #fff;
-  color: #1c1917;
+  font-family: inherit;
+  border: 1px solid var(--text-main);
+  border-right-width: 0;
+  background: var(--panel-bg);
+  color: var(--text-main);
   cursor: pointer;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.05em;
   text-transform: uppercase;
+  transition: all 0.15s ease;
 }
-.guests-filter-btn.active { border-color: #111; background: #111; color: #fff; }
+.guests-filter-btn:last-child { border-right-width: 1px; }
+.guests-filter-btn:hover { background: var(--bg-base); }
+.guests-filter-btn.active {
+  background: var(--text-main);
+  color: var(--panel-bg);
+}
 .guests-search {
   margin-left: auto;
-  padding: 0.5rem 0.7rem;
-  border: 1.5px solid #d6d3d1;
+  padding: 0.55rem 0.75rem;
+  border: 1px solid var(--text-main);
   font-size: 0.85rem;
-  width: 220px;
-  background: #fff;
+  font-family: inherit;
+  width: 240px;
+  background: var(--panel-bg);
   outline: none;
+  border-radius: 0;
 }
-.guests-table-wrap { border: 1px solid #e7e5e4; background: #fff; overflow: auto; margin: 0 1.25rem; }
-.guests-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
-.guests-table thead tr { background: #faf8f6; border-bottom: 1px solid #e7e5e4; }
+.guests-search:focus { box-shadow: var(--shadow-md); }
+
+/* ── Table ─────────────────────────────────────────────────────── */
+.guests-table-wrap {
+  border: 1px solid var(--text-main);
+  background: var(--panel-bg);
+  overflow: auto;
+  margin: 0 2.5rem;
+  animation: fadeInUp 0.4s ease both;
+  animation-delay: 0.25s;
+}
+.guests-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+.guests-table thead tr {
+  background: var(--bg-base);
+  border-bottom: 1px solid var(--text-main);
+}
 .guests-row {
-  border-bottom: 1px solid #f5f4f2;
+  border-bottom: 1px solid var(--panel-border);
   cursor: pointer;
-  background: #fff;
+  background: var(--panel-bg);
   transition: background 0.12s;
 }
-.guests-row:hover { background: #faf8f6; }
+.guests-row:last-child { border-bottom: none; }
+.guests-row:hover { background: var(--bg-base); }
 .guests-cards { display: none; list-style: none; padding: 0; margin: 0; }
+
+/* ── Drawer ────────────────────────────────────────────────────── */
 .guests-drawer {
   width: 100%;
-  max-width: 420px;
-  background: #fff;
+  max-width: 440px;
+  background: var(--panel-bg);
   height: 100%;
   overflow-y: auto;
-  border-left: 1px solid #1c1917;
-  padding: 1.5rem;
+  border-left: 1px solid var(--text-main);
+  padding: 1.75rem 1.5rem;
   box-sizing: border-box;
+  animation: fadeIn 0.2s ease;
 }
 
-/* ── Large desktop / TV projection ────────────────────────────── */
+/* ── Large desktop / TV projection ─────────────────────────────── */
 @media (min-width: 1440px) {
   .hero-stat-value  { font-size: 7rem; }
   .hero-stat-label  { font-size: 0.72rem; letter-spacing: 0.22em; }
   .hero-split       { font-size: 0.9rem; margin-top: 2rem; padding-top: 1.5rem; }
   .hero-banner      { padding: 3.5rem 3rem 2.75rem; }
-  .leaderboard-bar  { padding: 0.9rem 3rem; }
+  .leaderboard-bar  { padding: 0.95rem 3rem; }
   .leaderboard-name { font-size: 0.95rem; }
+  .guests-header,
+  .guests-filterbar { padding-left: 3rem; padding-right: 3rem; }
+  .guests-table-wrap { margin: 0 3rem; }
 }
 
 /* ── iPad / tablet (≤1024px) ───────────────────────────────────── */
 @media (max-width: 1024px) {
   .hero-stat-value { font-size: 3.75rem; }
   .hero-banner { padding: 2rem 1.5rem 1.75rem; }
-  .leaderboard-bar { padding: 0.7rem 1.5rem; }
-  .guests-table { font-size: 0.78rem; }
-  .guests-table th, .guests-table td { padding: 0.55rem 0.6rem !important; }
+  .leaderboard-bar { padding: 0.75rem 1.5rem; }
+  .guests-table { font-size: 0.8rem; }
+  .guests-table th, .guests-table td { padding: 0.55rem 0.7rem !important; }
   .guests-search { width: 200px; font-size: 16px; }
-  .guests-table-wrap { margin: 0 1rem; }
-  .guests-filterbar { padding: 0 1rem; }
-  .guests-header { padding: 1rem 1rem 0; }
+  .guests-table-wrap { margin: 0 1.5rem; }
+  .guests-filterbar { padding: 0 1.5rem; }
+  .guests-header { padding: 0 1.5rem; }
+  .guests-title { font-size: 1.5rem; }
 }
 
 /* ── Phone (≤640px) ────────────────────────────────────────────── */
 @media (max-width: 640px) {
   .hero-banner { padding: 1.75rem 1rem 1.5rem; }
-  .hero-stats  { gap: 0.25rem; }
-  .hero-stat   { flex: 1 1 calc(50% - 0.25rem); }
+  .hero-stats { grid-template-columns: repeat(2, 1fr); }
+  .hero-stat {
+    padding: 0.85rem 0.5rem;
+    border-right: 1px solid rgba(255,255,255,0.1);
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+  }
+  .hero-stat:nth-child(2) { border-right: none; }
+  .hero-stat:nth-child(3),
+  .hero-stat:nth-child(4) { border-bottom: none; }
   .hero-stat-value { font-size: 2.75rem; }
-  .hero-stat-label { font-size: 0.58rem; letter-spacing: 0.14em; }
-  .hero-split  { font-size: 0.7rem; gap: 0.5rem; margin-top: 1.25rem; }
-  .hero-live   { font-size: 0.55rem; }
-  .leaderboard-bar { padding: 0.65rem 1rem; gap: 0.75rem; }
-  .leaderboard-entries { gap: 0.75rem; }
+  .hero-stat-label { font-size: 0.58rem; letter-spacing: 0.14em; margin-top: 0.45rem; }
+  .hero-split  { font-size: 0.72rem; gap: 0.5rem; margin-top: 1.25rem; padding-top: 1rem; }
+  .hero-live   { font-size: 0.55rem; top: 0.75rem; right: 1rem; }
+  .leaderboard-bar { padding: 0.65rem 1rem; gap: 0.85rem; }
+  .leaderboard-entries { gap: 0; }
+  .leaderboard-entry { padding: 0 0.85rem; }
   .leaderboard-name { font-size: 0.78rem; }
 
-  .guests-header { padding: 0.75rem 0.75rem 0; }
-  .guests-title { font-size: 1.1rem; }
+  .guests-header { padding: 0 1rem; }
+  .guests-title { font-size: 1.3rem; }
   .guests-subtitle { font-size: 0.75rem; }
-  .guests-header-inner { flex-direction: column; align-items: stretch; gap: 0.6rem; }
+  .guests-header-inner { flex-direction: column; align-items: stretch; gap: 0.7rem; }
   .guests-actions { justify-content: flex-start; }
   .guests-brand-select { flex: 1 1 auto; min-width: 0; font-size: 0.7rem; }
-  .guests-export-btn { font-size: 0.68rem; padding: 0.55rem 0.7rem; }
-  .guests-filterbar { padding: 0 0.75rem; gap: 0.5rem; flex-direction: column; align-items: stretch; }
+  .guests-export-btn { font-size: 0.68rem; padding: 0.55rem 0.75rem; }
+  .guests-filterbar { padding: 0 1rem; gap: 0.6rem; flex-direction: column; align-items: stretch; }
   .guests-filters { width: 100%; }
-  .guests-filter-btn { flex: 1 1 calc(50% - 0.2rem); font-size: 0.66rem; padding: 0.55rem 0.5rem; }
-  .guests-search { margin-left: 0; width: 100%; font-size: 16px; padding: 0.65rem 0.7rem; }
+  .guests-filter-btn { flex: 1 1 calc(50% - 0.2rem); font-size: 0.66rem; padding: 0.55rem 0.5rem; border-right-width: 1px; border-bottom-width: 0; }
+  .guests-filter-btn:nth-last-child(-n+2) { border-bottom-width: 1px; }
+  .guests-search { margin-left: 0; width: 100%; font-size: 16px; padding: 0.7rem 0.75rem; }
 
   .guests-table-wrap { display: none; }
   .guests-cards {
     display: flex;
     flex-direction: column;
-    gap: 0.6rem;
-    padding: 0 0.75rem;
+    gap: 0.7rem;
+    padding: 0 1rem;
   }
   .guests-card {
-    background: #fff;
-    border: 1px solid #e7e5e4;
-    padding: 0.85rem 0.95rem;
+    background: var(--panel-bg);
+    border: 1px solid var(--text-main);
+    padding: 0.95rem 1rem;
     cursor: pointer;
     display: flex;
     flex-direction: column;
-    gap: 0.4rem;
+    gap: 0.45rem;
+    transition: box-shadow 0.15s ease;
   }
-  .guests-card:active { background: #faf8f6; }
+  .guests-card:active { box-shadow: var(--shadow-md); transform: translateY(-1px); }
   .guests-card-top {
     display: flex;
     align-items: flex-start;
@@ -1277,8 +1428,8 @@ const GUESTS_CSS = `
     gap: 0.75rem;
   }
   .guests-card-name {
-    font-weight: 700;
-    color: #1c1917;
+    font-weight: 600;
+    color: var(--text-main);
     font-size: 0.95rem;
     line-height: 1.25;
     overflow: hidden;
@@ -1286,26 +1437,27 @@ const GUESTS_CSS = `
     white-space: nowrap;
   }
   .guests-card-phone {
-    font-family: ui-monospace, Menlo, monospace;
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
     font-size: 0.78rem;
-    color: #57534e;
+    color: var(--text-muted);
     margin-top: 2px;
   }
   .guests-card-meta {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.65rem;
+    gap: 0.7rem;
     font-size: 0.74rem;
-    color: #57534e;
+    color: var(--text-muted);
   }
-  .guests-card-meta strong { color: #1c1917; }
+  .guests-card-meta strong { color: var(--text-main); font-weight: 600; }
   .guests-card-prefs {
     font-size: 0.72rem;
-    color: #78716c;
-    border-top: 1px dashed #e7e5e4;
-    padding-top: 0.4rem;
+    color: var(--text-muted);
+    border-top: 1px solid var(--panel-border);
+    padding-top: 0.45rem;
   }
 
-  .guests-drawer { max-width: 100%; padding: 1.1rem; }
+  .guests-drawer { max-width: 100%; padding: 1.25rem; }
 }
 `;
