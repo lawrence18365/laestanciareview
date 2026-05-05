@@ -161,6 +161,16 @@ export default function GuestsTable({
             <a href="/api/v1/guests/export" className="guests-export-btn">
               Exportar CSV
             </a>
+            {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
+            <a
+              href="/guests/print"
+              target="_blank"
+              rel="noreferrer"
+              className="guests-export-btn"
+              style={{ background: '#1c1917', color: '#faf8f6', borderColor: '#1c1917' }}
+            >
+              Descargar PDF
+            </a>
           </div>
         </div>
       </header>
