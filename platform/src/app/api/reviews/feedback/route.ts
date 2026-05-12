@@ -9,6 +9,8 @@ import { sendWhatsAppAlert } from '@/lib/whatsapp';
 import { sendPushToRestaurant } from '@/lib/push';
 import { checkRateLimitAsync, getClientIP, rateLimitResponse } from '@/lib/rate-limit';
 import { requireSameOrigin } from '@/lib/origin';
+import { tokenHash } from '@/lib/tokens';
+import { trackCommercialEvent } from '@/lib/commercial-tracking';
 
 // 10 feedback submissions per minute per IP
 const FEEDBACK_LIMIT = 10;
@@ -37,10 +39,11 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const { reviewId, customerName, customerEmail, feedback } = parsed.data;
+  const { reviewId, feedbackToken, customerName, customerEmail, feedback } = parsed.data;
+  const feedbackTokenHash = await tokenHash(feedbackToken);
 
   // Only allow updating reviews that don't already have feedback
-  // This prevents overwriting another customer's feedback
+  // The opaque token binds this public form to the review created by the star tap.
   const [updated] = await db
     .update(reviews)
     .set({
@@ -51,6 +54,7 @@ export async function POST(req: NextRequest) {
     .where(
       and(
         eq(reviews.id, reviewId),
+        eq(reviews.feedbackTokenHash, feedbackTokenHash),
         isNull(reviews.feedback),
       ),
     )
@@ -148,6 +152,23 @@ export async function POST(req: NextRequest) {
         console.error(`[alert] Review #${updated.id} feedback alert errors: ${errors.join('; ')}`);
       }
     }
+  }
+
+  try {
+    await trackCommercialEvent({
+      eventName: 'feedback_submitted',
+      restaurantId: updated.restaurantId,
+      source: 'review_flow',
+      path: '/feedback',
+      metadata: {
+        review_id: updated.id,
+        rating: updated.rating,
+        staff_code: updated.staffCode ?? null,
+        has_customer_email: Boolean(updated.customerEmail),
+      },
+    });
+  } catch (err) {
+    console.error('[reviews/feedback] commercial event failed:', err);
   }
 
   return Response.json({ success: true, reviewId: updated.id });

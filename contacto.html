@@ -445,6 +445,10 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             Solicitar Auditoría Gratis
           </button>
 
+          <div id="form-error" role="alert" style="display:none; margin-top: 1rem; color: #b91c1c; font-weight: 700; font-size: 0.9rem;">
+            No pudimos enviar tu solicitud. Intenta de nuevo o escríbenos a hello@ratetapmx.com.
+          </div>
+
           <div class="form-trust">
             <i class="fa-solid fa-lock"></i>
             Sin compromiso · Sin tarjeta de crédito · Respuesta en 24h
@@ -528,8 +532,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <div class="footer-bottom">
       <p>&copy; 2026 RateTap. Todos los derechos reservados.</p>
       <div class="legal-links">
-        <a href="#">Política de Privacidad</a>
-        <a href="#">Términos de Servicio</a>
+        <a href="privacy.html">Política de Privacidad</a>
+        <a href="terms.html">Términos de Servicio</a>
+        <a href="cookies.html">Política de Cookies</a>
       </div>
     </div>
   </div>
@@ -542,6 +547,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   var btn = document.getElementById('submit-btn');
   var wrapper = document.querySelector('.form-wrapper');
   var success = document.getElementById('form-success');
+  var error = document.getElementById('form-error');
 
   form.addEventListener('submit', function(e) {
     e.preventDefault();
@@ -561,35 +567,62 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
     btn.disabled = true;
     btn.textContent = 'Enviando...';
+    error.style.display = 'none';
 
-    // Build form data for formsubmit.co
-    var data = new FormData();
-    data.append('name', name);
-    data.append('restaurant', restaurant);
-    data.append('city', city);
-    data.append('phone', phone);
-    data.append('email', email || '(no proporcionado)');
-    data.append('_subject', 'Nuevo Lead — ' + restaurant + ' — ' + city);
-    data.append('_template', 'table');
+    var fieldValue = function(fieldName) {
+      var field = form.querySelector('[name="' + fieldName + '"]');
+      return field && field.value ? field.value.trim() : '';
+    };
 
-    form.querySelectorAll('input[type="hidden"]').forEach(function(field) {
-      if (field.name && !data.has(field.name)) {
-        data.append(field.name, field.value);
+    var endpoint = typeof getLeadApiEndpoint === 'function'
+      ? getLeadApiEndpoint()
+      : 'https://app.ratetapmx.com/api/leads/create';
+
+    var payload = {
+      name: name,
+      businessName: restaurant,
+      city: city,
+      phone: phone,
+      email: email,
+      source: fieldValue('source_page') || 'contacto',
+      landingPath: fieldValue('landing_path') || window.location.pathname,
+      utmSource: fieldValue('utm_source'),
+      utmMedium: fieldValue('utm_medium'),
+      utmCampaign: fieldValue('utm_campaign'),
+      utmTerm: fieldValue('utm_term'),
+      utmContent: fieldValue('utm_content'),
+      offer: fieldValue('offer') || 'google-review-audit',
+      metadata: {
+        form_id: 'lead-form',
+        source_cluster: fieldValue('source_cluster'),
+        cta_context: fieldValue('cta_context'),
+        origin_cta_context: fieldValue('origin_cta_context'),
+        language: fieldValue('language') || 'es',
+        referrer: document.referrer || '',
+        landing_url: window.location.href
       }
-    });
+    };
 
-    fetch('https://formsubmit.co/ajax/hello@ratetapmx.com', {
+    fetch(endpoint, {
       method: 'POST',
-      body: data
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+      mode: 'cors'
     })
-    .then(function(res) { return res.json(); })
+    .then(function(res) {
+      return res.json().then(function(result) {
+        if (!res.ok || !result || result.ok !== true) throw new Error('lead_api_failed');
+        return result;
+      });
+    })
     .then(function(result) {
-      // Fire Meta Pixel Lead event
-      if (typeof fbq === 'function') {
+      // Fire Meta Pixel Lead event only after the backend confirms the lead row.
+      if (typeof fbq === 'function' && result.metaEventId) {
         fbq('track', 'Lead', {
           content_name: restaurant,
-          content_category: city
-        });
+          content_category: 'commercial_lead',
+          city: city
+        }, { eventID: result.metaEventId });
       }
 
       // Show success
@@ -600,18 +633,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       success.scrollIntoView({ behavior: 'smooth', block: 'center' });
     })
     .catch(function() {
-      // Even on error, fire the pixel (the lead intention was real)
-      if (typeof fbq === 'function') {
-        fbq('track', 'Lead', {
-          content_name: restaurant,
-          content_category: city
-        });
-      }
-
-      // Still show success (the email likely went through or will retry)
-      wrapper.classList.add('submitted');
-      success.classList.add('show');
-      success.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      btn.disabled = false;
+      btn.textContent = 'Solicitar Auditoría Gratis';
+      error.style.display = 'block';
     });
   });
 })();

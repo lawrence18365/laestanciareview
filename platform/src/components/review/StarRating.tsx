@@ -40,6 +40,7 @@ export default function StarRating({
   const [submitting, setSubmitting] = useState(false);
   const [popStar, setPopStar] = useState(0);
   const [error, setError] = useState(false);
+  const [redirecting, setRedirecting] = useState(false);
 
   const handleSubmit = useCallback(
     async (rating: number) => {
@@ -60,13 +61,25 @@ export default function StarRating({
         const data = await res.json();
 
         if (data.action === 'google' && data.googleReviewUrl) {
+          const dl = (window as unknown as { dataLayer?: Array<Record<string, unknown>> }).dataLayer;
+          if (Array.isArray(dl)) {
+            dl.push({
+              event: 'review_redirect_to_google',
+              review_id: data.reviewId,
+              rating,
+              restaurant_slug: restaurantSlug,
+              staff_code: staffCode || 'no-card',
+            });
+          }
+          setRedirecting(true);
           setTimeout(() => {
             window.location.href = data.googleReviewUrl;
-          }, 600);
+          }, 1000);
         } else {
+          if (!data.feedbackToken) throw new Error('Missing feedback token');
           setTimeout(() => {
             router.push(
-              `/r/${restaurantSlug}/feedback?reviewId=${data.reviewId}`,
+              `/r/${restaurantSlug}/feedback?reviewId=${data.reviewId}&feedbackToken=${encodeURIComponent(data.feedbackToken)}`,
             );
           }, 400);
         }
@@ -176,7 +189,7 @@ export default function StarRating({
         })}
       </div>
 
-      {/* Hint / Error */}
+      {/* Hint / Error / Redirecting */}
       {error ? (
         <div style={{ textAlign: 'center' }}>
           <p
@@ -216,6 +229,55 @@ export default function StarRating({
             {t.starRating.tryAgain}
           </button>
         </div>
+      ) : redirecting ? (
+        <div
+          style={{
+            textAlign: 'center',
+            animation: 'reviewFadeIn 0.3s ease-out both',
+          }}
+        >
+          <p
+            style={{
+              fontFamily: 'var(--font-serif)',
+              fontSize: '1.25rem',
+              fontWeight: 600,
+              color: '#111',
+              margin: '0 0 0.35rem',
+              letterSpacing: '-0.01em',
+            }}
+          >
+            ¡Gracias por tu reseña!
+          </p>
+          <p
+            style={{
+              fontSize: '0.85rem',
+              color: '#666',
+              margin: '0 0 0.9rem',
+              fontFamily: 'var(--font-sans)',
+            }}
+          >
+            Te llevamos a Google…
+          </p>
+          <div
+            style={{
+              width: 120,
+              height: 2,
+              background: '#EEE',
+              borderRadius: 2,
+              overflow: 'hidden',
+              margin: '0 auto',
+            }}
+          >
+            <div
+              style={{
+                height: '100%',
+                background: '#D97706',
+                animation: 'redirectProgress 1s linear forwards',
+                transformOrigin: 'left',
+              }}
+            />
+          </div>
+        </div>
       ) : (
         <p
           style={{
@@ -252,6 +314,10 @@ export default function StarRating({
         @keyframes pulseSoft {
           0%, 100% { opacity: 1; }
           50% { opacity: 0.4; }
+        }
+        @keyframes redirectProgress {
+          from { transform: scaleX(0); }
+          to { transform: scaleX(1); }
         }
       `}</style>
     </div>

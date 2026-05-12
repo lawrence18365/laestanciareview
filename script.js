@@ -387,6 +387,166 @@ function applyLeadAttribution(form) {
     return payload;
 }
 
+function getLeadApiEndpoint() {
+    const override = document.querySelector('meta[name="ratetap-leads-api"]');
+    if (override && override.getAttribute('content')) {
+        return override.getAttribute('content');
+    }
+
+    const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    if (isLocal) {
+        return 'http://localhost:3100/api/leads/create';
+    }
+
+    return 'https://app.ratetapmx.com/api/leads/create';
+}
+
+function getFormFieldValue(form, names) {
+    for (const name of names) {
+        const field = form.querySelector(`[name="${name}"]`);
+        if (field && typeof field.value === 'string' && field.value.trim()) {
+            return field.value.trim();
+        }
+    }
+    return '';
+}
+
+function shouldUseFirstPartyLeadApi(form) {
+    if (form.dataset.firstPartyLeadApi === 'false') return false;
+    if (form.dataset.firstPartyLeadApi === 'true') return true;
+
+    const action = form.getAttribute('action') || '';
+    return action.includes('formsubmit.co');
+}
+
+function getLeadFormStatus(form) {
+    let status = form.querySelector('[data-lead-api-status]');
+    if (status) return status;
+
+    status = document.createElement('p');
+    status.setAttribute('data-lead-api-status', 'true');
+    status.setAttribute('aria-live', 'polite');
+    status.style.margin = '0.25rem 0 0';
+    status.style.fontSize = '0.9rem';
+
+    const submitButton = form.querySelector('button[type="submit"], input[type="submit"]');
+    if (submitButton) {
+        submitButton.insertAdjacentElement('afterend', status);
+    } else {
+        form.appendChild(status);
+    }
+
+    return status;
+}
+
+function buildFirstPartyLeadPayload(form, attribution) {
+    const firstName = getFormFieldValue(form, ['first_name', 'firstName']);
+    const lastName = getFormFieldValue(form, ['last_name', 'lastName']);
+    const joinedName = [firstName, lastName].filter(Boolean).join(' ').trim();
+
+    return {
+        name: getFormFieldValue(form, ['name', 'contact_name', 'contactName', 'your-name']) || joinedName,
+        businessName: getFormFieldValue(form, [
+            'businessName',
+            'business_name',
+            'restaurant_name',
+            'restaurant-name',
+            'restaurant',
+            'company',
+            'company_name'
+        ]),
+        email: getFormFieldValue(form, ['email']),
+        phone: getFormFieldValue(form, ['phone', 'telefono', 'tel', 'whatsapp']),
+        city: getFormFieldValue(form, ['city', 'ciudad']),
+        source: attribution.source_page || form.dataset.sourcePage || getPageIdentifier(),
+        landingPath: attribution.landing_path || getCurrentPath(),
+        utmSource: attribution.utm_source || '',
+        utmMedium: attribution.utm_medium || '',
+        utmCampaign: attribution.utm_campaign || '',
+        utmTerm: attribution.utm_term || '',
+        utmContent: attribution.utm_content || '',
+        offer: attribution.offer || form.dataset.defaultOffer || 'demo',
+        metadata: {
+            form_id: form.id || 'lead-form',
+            source_cluster: attribution.source_cluster || '',
+            cta_context: attribution.cta_context || '',
+            origin_cta_context: attribution.origin_cta_context || '',
+            language: attribution.language || (isSpanishPage() ? 'es' : 'en'),
+            referrer: attribution.referrer || document.referrer || '',
+            landing_url: attribution.landing_url || window.location.href,
+            preferred_date: getFormFieldValue(form, ['preferred_date', 'preferredDate'])
+        }
+    };
+}
+
+async function submitFirstPartyLeadForm(event, form, attribution) {
+    event.preventDefault();
+
+    const status = getLeadFormStatus(form);
+    const submitButton = form.querySelector('button[type="submit"], input[type="submit"]');
+    const originalText = submitButton ? submitButton.textContent : '';
+
+    if (submitButton) {
+        submitButton.disabled = true;
+        submitButton.textContent = isSpanishPage() ? 'Enviando...' : 'Sending...';
+    }
+    status.style.color = 'var(--text-secondary)';
+    status.textContent = isSpanishPage() ? 'Guardando solicitud...' : 'Saving request...';
+
+    try {
+        const response = await fetch(getLeadApiEndpoint(), {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(buildFirstPartyLeadPayload(form, attribution)),
+            mode: 'cors'
+        });
+
+        let result = null;
+        try {
+            result = await response.json();
+        } catch {
+            result = null;
+        }
+
+        if (!response.ok || !result || result.ok !== true) {
+            throw new Error(result && result.error ? result.error : 'lead_api_failed');
+        }
+
+        if (typeof fbq === 'function' && result.metaEventId) {
+            fbq('track', 'Lead', {
+                content_name: 'commercial_lead',
+                content_category: 'commercial_lead',
+                currency: 'MXN',
+                value: 0
+            }, { eventID: result.metaEventId });
+        }
+
+        const nextUrl = getFormFieldValue(form, ['_next']);
+        if (nextUrl) {
+            window.location.href = nextUrl;
+            return;
+        }
+
+        status.style.color = 'var(--success)';
+        status.textContent = isSpanishPage()
+            ? 'Solicitud recibida. Te contactaremos pronto.'
+            : 'Request received. We will contact you shortly.';
+        form.reset();
+        applyLeadAttribution(form);
+    } catch (error) {
+        console.error('[lead-form] first-party submission failed:', error);
+        status.style.color = 'var(--danger, #b91c1c)';
+        status.textContent = isSpanishPage()
+            ? 'No pudimos guardar la solicitud. Intenta de nuevo o escríbenos por WhatsApp.'
+            : 'We could not save the request. Try again or contact us by WhatsApp.';
+    } finally {
+        if (submitButton) {
+            submitButton.disabled = false;
+            submitButton.textContent = originalText;
+        }
+    }
+}
+
 function wireLeadForms() {
     const leadForms = document.querySelectorAll('form[data-lead-form], #contact-form, #demo-form, #lead-form');
 
@@ -395,12 +555,16 @@ function wireLeadForms() {
 
         if (form.dataset.leadTrackingBound === 'true') return;
 
-        form.addEventListener('submit', () => {
+        form.addEventListener('submit', (event) => {
             const payload = applyLeadAttribution(form);
             trackLeadEvent('signup_form_submit', {
                 ...payload,
                 form_id: form.id || 'lead-form'
             });
+
+            if (shouldUseFirstPartyLeadApi(form)) {
+                submitFirstPartyLeadForm(event, form, payload);
+            }
         });
 
         form.dataset.leadTrackingBound = 'true';

@@ -73,9 +73,13 @@ const NURTURE: Record<string, { days: number; whatsapp: (name: string) => string
 };
 
 export async function GET(req: NextRequest) {
-  if (CRON_SECRET) {
-    const auth = req.headers.get('authorization')?.replace('Bearer ', '');
-    if (auth !== CRON_SECRET) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+  if (!CRON_SECRET) {
+    console.error('[cron] CRON_SECRET is not configured');
+    return Response.json({ error: 'Server misconfigured' }, { status: 500 });
+  }
+  const auth = req.headers.get('authorization')?.replace('Bearer ', '');
+  if (!auth || auth !== CRON_SECRET) {
+    return Response.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY.trim()) : null;

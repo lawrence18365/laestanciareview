@@ -112,9 +112,6 @@ export default function ContactoPage() {
     setError('');
     setLoading(true);
 
-    const fbq = (window as unknown as { fbq?: (...args: unknown[]) => void }).fbq;
-    if (fbq) fbq('track', 'Lead', { value: 0, currency: 'MXN' });
-
     try {
       const res = await fetch('/api/signup/create-checkout', {
         method: 'POST',
@@ -143,6 +140,8 @@ export default function ContactoPage() {
         setLoading(false);
         return;
       }
+      const fbq = (window as unknown as { fbq?: (...args: unknown[]) => void }).fbq;
+      if (fbq) fbq('trackCustom', 'CheckoutStarted', { value: 0, currency: 'MXN' });
       window.location.href = data.url;
     } catch {
       setError('Error de red. Intenta de nuevo.');
@@ -365,7 +364,10 @@ export default function ContactoPage() {
             </button>
 
             <p style={{ fontSize: '0.75rem', color: 'var(--text-dim, #a8a29e)', textAlign: 'center', marginTop: '1rem', lineHeight: 1.5 }}>
-              Pago seguro con Stripe. Después del día 15 se cobran $700 MXN/mes automáticamente. Cancela cuando quieras desde tu panel.
+              Pago seguro con Stripe. Después del día 15 se cobran $700 MXN/mes automáticamente. Cancela cuando quieras desde tu panel. Al continuar aceptas la{' '}
+              <a href="/privacy" style={{ color: '#1c1917', fontWeight: 700 }}>Política de Privacidad</a>, los{' '}
+              <a href="/terms" style={{ color: '#1c1917', fontWeight: 700 }}>Términos</a> y la{' '}
+              <a href="/cookies" style={{ color: '#1c1917', fontWeight: 700 }}>Política de Cookies</a>.
             </p>
           </form>
         </div>

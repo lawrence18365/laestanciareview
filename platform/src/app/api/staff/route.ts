@@ -36,6 +36,13 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   if (!requireAdminKey(req)) return unauthorizedResponse();
 
+  // Admin key alone is insufficient — also require a valid session and verify
+  // that the caller actually owns/manages the target restaurant. Without this
+  // check, anyone with the admin key could create staff (and therefore valid
+  // review-attribution codes) at any restaurant in the system.
+  const session = await verifySession();
+  if (!session) return unauthorizedResponse();
+
   const body = await req.json();
   const parsed = createStaffSchema.safeParse(body);
 
@@ -47,6 +54,10 @@ export async function POST(req: NextRequest) {
   }
 
   const { restaurantSlug, code, name } = parsed.data;
+
+  if (session.role !== 'owner' && session.slug !== restaurantSlug) {
+    return Response.json({ error: 'Forbidden' }, { status: 403 });
+  }
 
   const restaurant = await getRestaurantBySlug(restaurantSlug);
   if (!restaurant) {

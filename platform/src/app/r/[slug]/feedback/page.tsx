@@ -5,7 +5,7 @@ import FeedbackForm from '@/components/review/FeedbackForm';
 
 interface PageProps {
   params: Promise<{ slug: string }>;
-  searchParams: Promise<{ reviewId?: string }>;
+  searchParams: Promise<{ reviewId?: string; feedbackToken?: string }>;
 }
 
 export default async function FeedbackPage({
@@ -13,7 +13,7 @@ export default async function FeedbackPage({
   searchParams,
 }: PageProps) {
   const { slug } = await params;
-  const { reviewId } = await searchParams;
+  const { reviewId, feedbackToken } = await searchParams;
 
   const restaurant = await getRestaurantBySlug(slug);
   if (!restaurant) notFound();
@@ -85,6 +85,7 @@ export default async function FeedbackPage({
           restaurantName={restaurant.name}
           restaurantSlug={slug}
           reviewId={reviewId ?? null}
+          feedbackToken={feedbackToken ?? null}
         />
       </div>
 

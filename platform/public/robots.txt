@@ -1,0 +1,43 @@
+# RateTap platform (app.ratetapmx.com)
+# Marketing site (ratetap.com) has its own robots.txt at the repo root.
+#
+# What we ALLOW:
+#   /audit/         — public competitor scorecard pages (lead-gen surface)
+#   /bienvenida     — post-checkout landing
+#   /contacto       — public contact page
+#
+# What we BLOCK:
+#   App routes behind auth (login redirect wastes crawl budget anyway)
+#   /r/ and /v/     — per-table NFC review collectors, not landing pages
+#   /api/, /auth/   — never indexable
+#   /prospects*     — internal cold-outreach UI (also has noindex in code)
+
+User-agent: *
+Disallow: /api/
+Disallow: /auth/
+Disallow: /login
+Disallow: /forgot-password
+Disallow: /reset-password
+Disallow: /dashboard
+Disallow: /inbox
+Disallow: /staff
+Disallow: /settings
+Disallow: /live
+Disallow: /feedback
+Disallow: /guests
+Disallow: /overview
+Disallow: /analytics
+Disallow: /account
+Disallow: /onboarding
+Disallow: /admin
+Disallow: /quotes
+Disallow: /qr-codes
+Disallow: /intercepted
+Disallow: /r/
+Disallow: /v/
+Disallow: /prospects
+Disallow: /prospects-us
+
+Allow: /audit/
+Allow: /bienvenida
+Allow: /contacto

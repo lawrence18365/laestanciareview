@@ -1,4 +1,4 @@
-import { desc, eq } from 'drizzle-orm';
+import { and, desc, eq } from 'drizzle-orm';
 import { db } from '@/db';
 import { guests, guestVisits } from '@/db/schema';
 import { verifySession } from '@/lib/session';
@@ -20,6 +20,10 @@ export async function GET() {
   // dedup (same whatsapp + brand) means guests.restaurantId points only to the
   // most recent capture location — export-by-visits keeps this GM's audience
   // stable even after the guest visits another location in the same brand.
+  //
+  // Filter to guests with marketingConsent = true. Exporting non-consenting
+  // contacts to Meta CAPI / WhatsApp blast is the GM's brand risk and a
+  // direct LFPDPPP/GDPR violation; default to the safe set.
   const rows = await db
     .selectDistinct({
       name: guests.name,
@@ -28,7 +32,10 @@ export async function GET() {
     })
     .from(guests)
     .innerJoin(guestVisits, eq(guestVisits.guestId, guests.id))
-    .where(eq(guestVisits.restaurantId, restaurant.id))
+    .where(and(
+      eq(guestVisits.restaurantId, restaurant.id),
+      eq(guests.marketingConsent, true),
+    ))
     .orderBy(desc(guests.capturedAt));
 
   const csv = guestsToMetaCsv(rows);

@@ -17,10 +17,13 @@ export default async function AppLayout({
   const restaurant = await getRestaurantBySlug(session.slug);
   if (!restaurant) redirect('/login');
 
-  if (
-    restaurant.subscriptionStatus === 'canceled' ||
-    restaurant.subscriptionStatus === 'past_due'
-  ) {
+  // Subscription gate: allow-list, not deny-list. Anything other than `active`
+  // (paying / manual customer) or `trialing` (in-trial Stripe sub) hits the
+  // block screen — including paused, unpaid, incomplete, or any status Stripe
+  // adds in the future. Manual customers have status='active' with no Stripe
+  // subscription and pass through fine.
+  const allowedStatuses = new Set(['active', 'trialing']);
+  if (!allowedStatuses.has(restaurant.subscriptionStatus)) {
     return (
       <SubscriptionBlocked
         status={restaurant.subscriptionStatus}

@@ -1,9 +1,10 @@
 import { NextRequest } from 'next/server';
 import { db } from '@/db';
-import { prospectViews } from '@/db/schema';
+import { commercialLeads, prospectQueue, prospectViews } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 import { requireSameOrigin } from '@/lib/origin';
 import { checkRateLimitAsync, getClientIP, rateLimitResponse } from '@/lib/rate-limit';
+import { logProspectOutreachEvent } from '@/lib/outreach-tracking';
 
 export const dynamic = 'force-dynamic';
 
@@ -43,6 +44,49 @@ async function notifyOwner(restaurantName: string, placeId: string, rating: stri
   });
 }
 
+async function markProspectViewed(placeId: string, restaurantName: string) {
+  const [prospect] = await db
+    .select()
+    .from(prospectQueue)
+    .where(eq(prospectQueue.placeId, placeId))
+    .limit(1);
+  if (!prospect) return;
+
+  const now = new Date();
+  const preserve = new Set(['replied', 'demo_booked', 'won', 'lost']);
+  const nextStatus = preserve.has(prospect.status) ? prospect.status : 'viewed';
+
+  await db
+    .update(prospectQueue)
+    .set({
+      status: nextStatus,
+      viewedAt: now,
+      nextActionAt: now,
+      updatedAt: now,
+    })
+    .where(eq(prospectQueue.placeId, placeId));
+
+  if (prospect.commercialLeadId) {
+    await db
+      .update(commercialLeads)
+      .set({
+        nextAction: `Prospect viewed audit for ${restaurantName}. Contact now.`,
+        nextActionAt: now,
+        updatedAt: now,
+      })
+      .where(eq(commercialLeads.id, prospect.commercialLeadId));
+  }
+
+  await logProspectOutreachEvent({
+    placeId,
+    commercialLeadId: prospect.commercialLeadId,
+    eventName: 'outreach_viewed',
+    provider: 'audit_page',
+    status: nextStatus,
+    payload: { restaurant_name: restaurantName },
+  });
+}
+
 export async function POST(req: NextRequest) {
   const csrf = requireSameOrigin(req);
   if (csrf) return csrf;
@@ -77,6 +121,7 @@ export async function POST(req: NextRequest) {
         rating: rating ?? null,
         lastNotifiedAt: now,
       });
+      await markProspectViewed(placeId, restaurantName);
       notifyOwner(restaurantName, placeId, rating ?? null, 1, true).catch(() => {});
     } else {
       const e = existing[0];
@@ -96,6 +141,7 @@ export async function POST(req: NextRequest) {
       if (hoursSince > 6) {
         notifyOwner(restaurantName, placeId, rating ?? null, newCount, false).catch(() => {});
       }
+      await markProspectViewed(placeId, restaurantName);
     }
 
     return Response.json({ ok: true });

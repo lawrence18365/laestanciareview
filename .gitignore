@@ -5,3 +5,23 @@
 node_modules/
 .next/
 *.xlsx
+*.tsbuildinfo
+
+# Local agent/tool artifacts
+.claude/
+__pycache__/
+scripts/__pycache__/
+
+# Local scratch projects and business ops notes
+/app/
+/hiring/
+/email-preview.html
+
+# Raw unsized media drops kept locally
+ChatGPT Image*.png
+WhatsApp Image*.jpeg
+assets/WhatsApp Image*.jpeg
+assets/ac9a437c-35df-4b6e-9baa-8d08558366de.jpg
+
+# Generated operational snapshots
+platform/scripts/marketing-stats.json

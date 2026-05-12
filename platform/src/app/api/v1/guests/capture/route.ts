@@ -7,6 +7,7 @@ import { checkRateLimitAsync, getClientIP, rateLimitResponse } from '@/lib/rate-
 import { sendLeadEvent } from '@/lib/meta-conversions';
 import { normaliseMexicanPhone } from '@/lib/phone';
 import { requireSameOrigin } from '@/lib/origin';
+import { trackCommercialEvent } from '@/lib/commercial-tracking';
 
 export const runtime = 'nodejs';
 
@@ -143,6 +144,26 @@ export async function POST(req: NextRequest) {
     console.error('[guest-capture] Lead CAPI failed:', err);
   }
 
+  try {
+    await trackCommercialEvent({
+      eventName: 'guest_captured',
+      restaurantId: restaurant.id,
+      source: 'guest_capture',
+      path: `/r/${restaurant.slug}/guest`,
+      metadata: {
+        guest_id: guestId,
+        brand_slug: brand,
+        is_new: isNew,
+        promo_type: input.promoType ?? null,
+        utm_source: input.utmSource ?? null,
+        utm_medium: input.utmMedium ?? null,
+        utm_campaign: input.utmCampaign ?? null,
+      },
+    });
+  } catch (err) {
+    console.error('[guest-capture] commercial event failed:', err);
+  }
+
   return Response.json({
     ok: true,
     validationCode,
@@ -150,4 +171,3 @@ export async function POST(req: NextRequest) {
     isNew,
   });
 }
-

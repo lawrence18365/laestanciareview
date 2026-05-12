@@ -94,6 +94,108 @@ export const processedStripeEvents = pgTable('processed_stripe_events', {
     .defaultNow(),
 });
 
+export const commercialLeads = pgTable(
+  'commercial_leads',
+  {
+    id: serial('id').primaryKey(),
+    name: text('name'),
+    businessName: text('business_name').notNull(),
+    email: text('email'),
+    phone: text('phone'),
+    city: text('city'),
+    source: text('source').notNull().default('unknown'),
+    landingPath: text('landing_path'),
+    utmSource: text('utm_source'),
+    utmMedium: text('utm_medium'),
+    utmCampaign: text('utm_campaign'),
+    utmTerm: text('utm_term'),
+    utmContent: text('utm_content'),
+    offer: text('offer').notNull().default('unknown'),
+    status: text('status').notNull().default('new'),
+    nextAction: text('next_action'),
+    nextActionAt: timestamp('next_action_at', { withTimezone: true }),
+    contactedAt: timestamp('contacted_at', { withTimezone: true }),
+    notes: text('notes'),
+    lostReason: text('lost_reason'),
+    wonAt: timestamp('won_at', { withTimezone: true }),
+    lostAt: timestamp('lost_at', { withTimezone: true }),
+    emailNormalized: text('email_normalized'),
+    phoneNormalized: text('phone_normalized'),
+    businessNameNormalized: text('business_name_normalized').notNull(),
+    dedupeKey: text('dedupe_key').notNull().unique(),
+    metadata: jsonb('metadata'),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [
+    index('commercial_leads_status_idx').on(t.status),
+    index('commercial_leads_created_idx').on(t.createdAt),
+    index('commercial_leads_next_action_idx').on(t.nextActionAt),
+    index('commercial_leads_contacted_idx').on(t.contactedAt),
+    index('commercial_leads_email_idx').on(t.emailNormalized),
+    index('commercial_leads_phone_idx').on(t.phoneNormalized),
+  ],
+);
+
+export const commercialEvents = pgTable(
+  'commercial_events',
+  {
+    id: serial('id').primaryKey(),
+    leadId: integer('lead_id').references(() => commercialLeads.id, { onDelete: 'set null' }),
+    restaurantId: integer('restaurant_id').references(() => restaurants.id, { onDelete: 'set null' }),
+    eventName: text('event_name').notNull(),
+    source: text('source'),
+    path: text('path'),
+    metadata: jsonb('metadata'),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [
+    index('commercial_events_lead_idx').on(t.leadId),
+    index('commercial_events_restaurant_idx').on(t.restaurantId),
+    index('commercial_events_name_idx').on(t.eventName),
+    index('commercial_events_created_idx').on(t.createdAt),
+  ],
+);
+
+export const pendingSignups = pgTable(
+  'pending_signups',
+  {
+    id: text('id').primaryKey(),
+    statusTokenHash: text('status_token_hash').notNull(),
+    checkoutSessionId: text('checkout_session_id').unique(),
+    stripeSubscriptionId: text('stripe_subscription_id'),
+    stripeCustomerId: text('stripe_customer_id'),
+    leadId: integer('lead_id').references(() => commercialLeads.id, { onDelete: 'set null' }),
+    restaurantId: integer('restaurant_id').references(() => restaurants.id, { onDelete: 'set null' }),
+    status: text('status').notNull().default('checkout_started'),
+    businessName: text('business_name').notNull(),
+    contactName: text('contact_name'),
+    email: text('email').notNull(),
+    phone: text('phone'),
+    city: text('city'),
+    googlePlaceId: text('google_place_id'),
+    passwordHash: text('password_hash').notNull(),
+    shippingAddress: text('shipping_address'),
+    expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+    completedAt: timestamp('completed_at', { withTimezone: true }),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [
+    index('pending_signups_checkout_idx').on(t.checkoutSessionId),
+    index('pending_signups_expires_idx').on(t.expiresAt),
+    index('pending_signups_lead_idx').on(t.leadId),
+    index('pending_signups_restaurant_idx').on(t.restaurantId),
+  ],
+);
+
 export const staff = pgTable(
   'staff',
   {
@@ -127,6 +229,7 @@ export const reviews = pgTable(
     staffCode: text('staff_code'),
     staffName: text('staff_name'),
     rating: integer('rating').notNull(),
+    feedbackTokenHash: text('feedback_token_hash'),
     customerName: text('customer_name'),
     customerEmail: text('customer_email'),
     feedback: text('feedback'),
@@ -198,16 +301,58 @@ export const pushSubscriptions = pgTable(
 
 export const prospectQueue = pgTable('prospect_queue', {
   placeId: text('place_id').primaryKey(),
+  commercialLeadId: integer('commercial_lead_id').references(() => commercialLeads.id, { onDelete: 'set null' }),
   restaurantName: text('restaurant_name').notNull(),
   rating: text('rating'),
   reviewCount: integer('review_count'),
   phone: text('phone'),
   city: text('city'),
-  status: text('status').notNull().default('pending'),
+  status: text('status').notNull().default('identified'),
+  deliveryStatus: text('delivery_status'),
+  provider: text('provider'),
+  providerMessageId: text('provider_message_id'),
   contactedAt: timestamp('contacted_at', { withTimezone: true }),
   repliedAt: timestamp('replied_at', { withTimezone: true }),
+  viewedAt: timestamp('viewed_at', { withTimezone: true }),
+  lastOutreachAt: timestamp('last_outreach_at', { withTimezone: true }),
+  lastFollowUpAt: timestamp('last_follow_up_at', { withTimezone: true }),
+  nextActionAt: timestamp('next_action_at', { withTimezone: true }),
+  followUpCount: integer('follow_up_count').notNull().default(0),
+  replyText: text('reply_text'),
+  bookedAt: timestamp('booked_at', { withTimezone: true }),
+  wonAt: timestamp('won_at', { withTimezone: true }),
+  lostAt: timestamp('lost_at', { withTimezone: true }),
+  lastError: text('last_error'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-});
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [
+  index('prospect_queue_commercial_lead_idx').on(t.commercialLeadId),
+  index('prospect_queue_status_idx').on(t.status),
+  index('prospect_queue_next_action_idx').on(t.nextActionAt),
+  index('prospect_queue_provider_message_idx').on(t.providerMessageId),
+]);
+
+export const prospectOutreachEvents = pgTable(
+  'prospect_outreach_events',
+  {
+    id: serial('id').primaryKey(),
+    placeId: text('place_id').references(() => prospectQueue.placeId, { onDelete: 'set null' }),
+    commercialLeadId: integer('commercial_lead_id').references(() => commercialLeads.id, { onDelete: 'set null' }),
+    eventName: text('event_name').notNull(),
+    provider: text('provider'),
+    providerMessageId: text('provider_message_id'),
+    status: text('status'),
+    payload: jsonb('payload'),
+    error: text('error'),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    index('prospect_outreach_events_place_idx').on(t.placeId),
+    index('prospect_outreach_events_lead_idx').on(t.commercialLeadId),
+    index('prospect_outreach_events_name_idx').on(t.eventName),
+    index('prospect_outreach_events_created_idx').on(t.createdAt),
+  ],
+);
 
 export const nurtureEvents = pgTable('nurture_events', {
   id: serial('id').primaryKey(),
@@ -224,6 +369,7 @@ export const prospectViews = pgTable('prospect_views', {
   firstViewAt: timestamp('first_view_at', { withTimezone: true }).notNull().defaultNow(),
   lastViewAt: timestamp('last_view_at', { withTimezone: true }).notNull().defaultNow(),
   lastNotifiedAt: timestamp('last_notified_at', { withTimezone: true }),
+  lastFollowUpAt: timestamp('last_follow_up_at', { withTimezone: true }),
 });
 
 // Guest Capture CRM — phase 1 of the high-ticket tier. Dedup key: (whatsapp, brand).
@@ -412,5 +558,65 @@ export const quoteItemsRelations = relations(quoteItems, ({ one }) => ({
   quote: one(quotes, {
     fields: [quoteItems.quoteId],
     references: [quotes.id],
+  }),
+}));
+
+// ── Event Leads ────────────────────────────────────────────────────────────
+// Qualified leads from the Manychat WhatsApp bot, with forward-compat for
+// future sources (audit-page form, cotizador callback, manual). Body schema
+// here mirrors the Manychat webhook payload one-to-one, plus the operational
+// fields (restaurantId, status, claim).
+//
+// The dedup-key partial unique index `event_leads_dedup_uniq` on
+// (source, phone, external_created_at) WHERE external_created_at IS NOT NULL
+// is migration-managed — Drizzle's pgTable DSL doesn't express WHERE clauses
+// on indexes yet. See migrations/0006_event_leads.sql.
+export const eventLeads = pgTable(
+  'event_leads',
+  {
+    id: serial('id').primaryKey(),
+    restaurantId: integer('restaurant_id')
+      .notNull()
+      .references(() => restaurants.id, { onDelete: 'cascade' }),
+    source: text('source').notNull(), // whatsapp_bot | audit | cotizador | manual
+    phone: text('phone').notNull(),
+    name: text('name'),
+    tipoEvento: text('tipo_evento'),
+    pax: integer('pax'),
+    fechaTentativa: text('fecha_tentativa'), // raw user-typed per spec ("15 jun 2026" or "todavía no sé")
+    presupuestoPp: text('presupuesto_pp'),
+    prioridad: text('prioridad'),
+    notasExtra: text('notas_extra'),
+    urgente: boolean('urgente').notNull().default(false),
+    rawConversation: text('raw_conversation'),
+    status: text('status').notNull().default('new'), // new | claimed | quoted | won | lost
+    claimedBy: integer('claimed_by').references(() => staff.id, {
+      onDelete: 'set null',
+    }),
+    claimedAt: timestamp('claimed_at', { withTimezone: true }),
+    externalCreatedAt: timestamp('external_created_at', { withTimezone: true }),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [
+    index('event_leads_restaurant_idx').on(t.restaurantId),
+    index('event_leads_status_idx').on(t.status),
+    index('event_leads_restaurant_status_created_idx').on(
+      t.restaurantId,
+      t.status,
+      t.createdAt,
+    ),
+  ],
+);
+
+export const eventLeadsRelations = relations(eventLeads, ({ one }) => ({
+  restaurant: one(restaurants, {
+    fields: [eventLeads.restaurantId],
+    references: [restaurants.id],
+  }),
+  claimedByStaff: one(staff, {
+    fields: [eventLeads.claimedBy],
+    references: [staff.id],
   }),
 }));

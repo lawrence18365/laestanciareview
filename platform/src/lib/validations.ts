@@ -10,6 +10,7 @@ export const submitReviewSchema = z.object({
 // Feedback form — customer leaves name/email/comments after low rating
 export const submitFeedbackSchema = z.object({
   reviewId: z.number().int().positive(),
+  feedbackToken: z.string().min(32).max(256),
   customerName: z.string().max(200).optional(),
   customerEmail: z.string().email().max(254).optional(),
   feedback: z.string().min(1).max(5000),

@@ -7,6 +7,7 @@ interface FeedbackFormProps {
   restaurantName: string;
   restaurantSlug: string;
   reviewId: string | null;
+  feedbackToken: string | null;
 }
 
 function SuccessCheckmark() {
@@ -68,6 +69,7 @@ const inputStyle: React.CSSProperties = {
 export default function FeedbackForm({
   restaurantName,
   reviewId,
+  feedbackToken,
 }: FeedbackFormProps) {
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
@@ -88,8 +90,9 @@ export default function FeedbackForm({
   }, []);
 
   const isValidReviewId = reviewId !== null && reviewId !== '' && !isNaN(parseInt(reviewId, 10));
+  const hasFeedbackToken = typeof feedbackToken === 'string' && feedbackToken.length >= 32;
 
-  if (!isValidReviewId) {
+  if (!isValidReviewId || !hasFeedbackToken) {
     return (
       <div
         style={{
@@ -139,7 +142,7 @@ export default function FeedbackForm({
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    if (!reviewId) return;
+    if (!reviewId || !feedbackToken) return;
     if (reminderTimer.current) clearTimeout(reminderTimer.current);
     setShowReminder(false);
     setSubmitting(true);
@@ -153,6 +156,7 @@ export default function FeedbackForm({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           reviewId: parseInt(reviewId, 10),
+          feedbackToken,
           customerName: form.get('name') || undefined,
           customerEmail: form.get('email') || undefined,
           feedback: form.get('feedback'),

@@ -8,9 +8,7 @@
  */
 import { NextRequest } from 'next/server';
 import { getAnthropic, RATETAP_SYSTEM_PROMPT } from '@/lib/anthropic';
-import { db } from '@/db';
-import { prospectQueue } from '@/db/schema';
-import { eq } from 'drizzle-orm';
+import { markProspectReplied } from '@/lib/outreach-tracking';
 
 export const dynamic = 'force-dynamic';
 
@@ -29,12 +27,11 @@ export async function POST(req: NextRequest) {
 
   if (!text || !from) return twimlReply('Hola, ¿en qué puedo ayudarte?');
 
-  // Mark prospect as replied if in queue
-  const phone = from.replace('+', '');
-  db.update(prospectQueue)
-    .set({ status: 'replied', repliedAt: new Date() })
-    .where(eq(prospectQueue.phone, `+${phone.startsWith('521') ? '52' + phone.slice(3) : phone}`))
-    .catch(() => {});
+  await markProspectReplied({
+    phone: from,
+    text,
+    provider: 'whatsapp',
+  });
 
   // Build conversation history (last 6 messages for context)
   const history = conversations.get(from) ?? [];

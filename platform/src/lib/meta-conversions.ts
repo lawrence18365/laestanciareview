@@ -105,7 +105,8 @@ export async function sendCompleteRegistrationEvent(params: CompleteRegistration
 }
 
 interface LeadEventParams {
-  phone: string;
+  phone?: string;
+  email?: string;
   eventId: string;
   eventTimeUnix?: number;
   custom?: Record<string, string | number | null | undefined>;
@@ -120,10 +121,14 @@ export async function sendLeadEvent(params: LeadEventParams): Promise<void> {
     return;
   }
 
-  const digitsOnly = params.phone.replace(/\D/g, '');
-  const userData: Record<string, string> = {
-    ph: await sha256Hex(digitsOnly),
-  };
+  const digitsOnly = params.phone ? params.phone.replace(/\D/g, '') : '';
+  const userData: Record<string, string> = {};
+  if (digitsOnly) userData.ph = await sha256Hex(digitsOnly);
+  if (params.email) userData.em = await sha256Hex(params.email);
+  if (!userData.ph && !userData.em) {
+    console.warn('[meta-capi] Lead event skipped: missing phone/email');
+    return;
+  }
 
   const customData: Record<string, unknown> = {
     currency: 'MXN',

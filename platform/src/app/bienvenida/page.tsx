@@ -36,39 +36,41 @@ export default function BienvenidaPage() {
 
 function BienvenidaInner() {
   const params = useSearchParams();
-  const sessionId = params.get('session_id');
+  const signupId = params.get('signup_id');
+  const token = params.get('token');
   const [status, setStatus] = useState<StatusResponse | null>(null);
   const [timedOut, setTimedOut] = useState(false);
   const pixelFiredRef = useRef(false);
 
   useEffect(() => {
-    if (!status?.ready || pixelFiredRef.current || !sessionId) return;
-    const key = `rt_creg_fired:${sessionId}`;
+    if (!status?.ready || pixelFiredRef.current || !signupId) return;
+    const key = `rt_creg_fired:${signupId}`;
     try {
       if (sessionStorage.getItem(key)) { pixelFiredRef.current = true; return; }
       sessionStorage.setItem(key, '1');
     } catch { /* sessionStorage blocked — fall through */ }
     const fbq = (window as unknown as { fbq?: (...args: unknown[]) => void }).fbq;
-    if (fbq) fbq('track', 'CompleteRegistration', { value: 0, currency: 'MXN' }, { eventID: sessionId });
+    if (fbq) fbq('track', 'CompleteRegistration', { value: 0, currency: 'MXN' }, { eventID: signupId });
     const dl = (window as unknown as { dataLayer?: Array<Record<string, unknown>> }).dataLayer;
     if (Array.isArray(dl)) {
       dl.push({
         event: 'signup_completed',
-        event_id: sessionId,
+        event_id: signupId,
         plan_type: 'trial',
         signup_method: 'stripe_checkout',
       });
     }
     pixelFiredRef.current = true;
-  }, [status?.ready, sessionId]);
+  }, [status?.ready, signupId]);
 
   useEffect(() => {
-    if (!sessionId) return;
+    if (!signupId || !token) return;
     let cancelled = false;
 
     async function poll() {
       try {
-        const res = await fetch(`/api/signup/status?session_id=${encodeURIComponent(sessionId!)}`);
+        const qs = new URLSearchParams({ signup_id: signupId!, token: token! });
+        const res = await fetch(`/api/signup/status?${qs.toString()}`);
         const data = (await res.json()) as StatusResponse;
         if (cancelled) return;
         if (data.ready) {
@@ -92,9 +94,9 @@ function BienvenidaInner() {
       clearInterval(pollId);
       clearTimeout(timeoutId);
     };
-  }, [sessionId]);
+  }, [signupId, token]);
 
-  if (!sessionId) {
+  if (!signupId || !token) {
     return <Shell>
       <h1 style={h1Style}>Falta información</h1>
       <p>No encontramos tu sesión de pago. <a href="/contacto" style={{ color: '#1c1917', fontWeight: 600 }}>Intenta de nuevo</a>.</p>

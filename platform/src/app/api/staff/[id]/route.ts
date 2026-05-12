@@ -10,14 +10,21 @@ import { getRestaurantBySlug } from '@/lib/queries';
 type RouteContext = { params: Promise<{ id: string }> };
 
 /**
- * Resolve the restaurant ID from the session, ensuring
- * the request is authorized and scoped to the user's restaurant.
+ * Resolve the restaurant ID from the session, ensuring the request is
+ * authorized and scoped to the user's restaurant.
+ *
+ * Only GMs (single-restaurant role) may mutate staff via this endpoint.
+ * Owner/regional roles must use the owner-overview tooling so the target
+ * restaurant is explicit and auditable; denying them here closes a
+ * cross-tenant write path that depended on the owner's own slug never
+ * matching a real restaurant.
  */
 async function getAuthorizedRestaurantId(req: NextRequest): Promise<number | null> {
   if (!requireAdminKey(req)) return null;
 
   const session = await verifySession();
   if (!session) return null;
+  if (session.role !== 'gm') return null;
 
   const restaurant = await getRestaurantBySlug(session.slug);
   if (!restaurant) return null;
@@ -45,6 +52,9 @@ export async function PATCH(req: NextRequest, ctx: RouteContext) {
     );
   }
 
+  // Tenant gate: restaurantId comes from the session, not the request — so the
+  // AND on staff.restaurantId blocks any cross-tenant mutation. A GM at
+  // restaurant-A passing staffId belonging to restaurant-B returns 0 rows.
   const [updated] = await db
     .update(staff)
     .set(parsed.data)
@@ -68,6 +78,8 @@ export async function DELETE(req: NextRequest, ctx: RouteContext) {
     return Response.json({ error: 'Invalid staff ID' }, { status: 400 });
   }
 
+  // Tenant gate: same as PATCH — the AND on staff.restaurantId is the
+  // cross-tenant assertion.
   const [deleted] = await db
     .delete(staff)
     .where(and(eq(staff.id, staffId), eq(staff.restaurantId, restaurantId)))

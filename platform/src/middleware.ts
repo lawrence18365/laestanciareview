@@ -15,7 +15,19 @@ const securityHeaders = {
   // but 'unsafe-eval' is not — dropping it disables Function()/eval injection
   // sinks. Style still needs 'unsafe-inline' for inline <style> blocks until
   // we move every inline style to a stylesheet.
-  'Content-Security-Policy': "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self'; connect-src 'self' https:; frame-ancestors 'none';",
+  'Content-Security-Policy': [
+    "default-src 'self'",
+    "base-uri 'self'",
+    "object-src 'none'",
+    "frame-ancestors 'none'",
+    "script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://connect.facebook.net https://maps.googleapis.com https://js.stripe.com",
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+    "img-src 'self' data: https:",
+    "font-src 'self' https://fonts.gstatic.com",
+    "connect-src 'self' https:",
+    "frame-src https://www.googletagmanager.com https://js.stripe.com",
+    "form-action 'self' https://checkout.stripe.com",
+  ].join('; '),
 };
 
 export async function middleware(req: NextRequest) {
@@ -38,7 +50,10 @@ export async function middleware(req: NextRequest) {
     pathname.startsWith('/settings') ||
     pathname.startsWith('/feedback') ||
     pathname.startsWith('/live') ||
-    pathname.startsWith('/guests');
+    pathname.startsWith('/guests') ||
+    pathname.startsWith('/leads') ||
+    pathname.startsWith('/commercial-leads') ||
+    pathname.startsWith('/admin');
 
   if (isAppRoute) {
     const cookie = req.cookies.get(COOKIE_NAME)?.value;
@@ -60,19 +75,6 @@ export async function middleware(req: NextRequest) {
 
 export const config = {
   matcher: [
-    '/dashboard/:path*',
-    '/overview/:path*',
-    '/analytics/:path*',
-    '/inbox/:path*',
-    '/staff/:path*',
-    '/settings/:path*',
-    '/feedback/:path*',
-    '/live/:path*',
-    '/guests/:path*',
-    '/api/:path*',
-    '/login',
-    '/forgot-password',
-    '/reset-password',
-    '/r/:path*',
+    '/((?!_next/static|_next/image|favicon.ico|manifest.json|icons/|logos/|.*\\.(?:png|jpg|jpeg|gif|webp|svg|ico|css|js|map|txt|xml)$).*)',
   ],
 };

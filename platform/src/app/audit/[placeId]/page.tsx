@@ -324,10 +324,10 @@ export default async function AuditPage({
             ¿Por qué importa esto?
           </div>
           {[
-            { stat: '90%', desc: 'de las personas eligen restaurante por su calificación de Google' },
-            { stat: '+0.3★', desc: 'de mejora = hasta 15% más clientes nuevos' },
-            { stat: '60 días', desc: 'es lo que toman nuestros restaurantes en subir su calificación' },
-            { stat: '$0', desc: 'de inversión en publicidad — solo reseñas reales de tus clientes' },
+            { stat: 'Google', desc: 'tu calificación visible influye antes de que el cliente te escriba' },
+            { stat: 'NFC', desc: 'menos fricción para que el cliente correcto deje su opinión' },
+            { stat: 'Equipo', desc: 'cada tarjeta permite medir meseros, turnos y ubicaciones' },
+            { stat: 'Datos', desc: 'separas intención de reseña, feedback privado y desempeño real' },
           ].map((item) => (
             <div key={item.stat} style={{
               display: 'flex',
@@ -400,7 +400,9 @@ export default async function AuditPage({
 
         {/* ─── CTA ─── */}
         <a
-          href={`${BASE_URL}/contacto`}
+          href={whatsappUrl}
+          target="_blank"
+          rel="noopener noreferrer"
           style={{
             display: 'block',
             background: '#10B981',
@@ -415,12 +417,10 @@ export default async function AuditPage({
             boxShadow: '0 4px 24px rgba(16,185,129,0.3)',
           }}
         >
-          Empezar prueba gratis de 15 días →
+          Pedir auditoría gratis por WhatsApp →
         </a>
         <a
-          href={whatsappUrl}
-          target="_blank"
-          rel="noopener noreferrer"
+          href={`${BASE_URL}/contacto`}
           style={{
             display: 'block',
             background: 'transparent',
@@ -435,7 +435,7 @@ export default async function AuditPage({
             border: '1px solid rgba(37,211,102,0.4)',
           }}
         >
-          Prefiero hablar por WhatsApp →
+          Ya entiendo el producto, iniciar prueba →
         </a>
         <p style={{
           textAlign: 'center',
@@ -443,7 +443,7 @@ export default async function AuditPage({
           fontSize: '13px',
           margin: '0 0 40px',
         }}>
-          Sin tarjeta de crédito · Cancela cuando quieras
+          Auditoría sin tarjeta · La prueba requiere tarjeta y puedes cancelarla
         </p>
 
         {/* ─── Footer ─── */}
