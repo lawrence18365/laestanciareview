@@ -1,13 +1,18 @@
 import { NextRequest } from 'next/server';
+import { eq } from 'drizzle-orm';
 import { z } from 'zod';
 import { checkRateLimitAsync, getClientIP } from '@/lib/rate-limit';
 import { sendLeadEvent } from '@/lib/meta-conversions';
 import { trackCommercialEvent, upsertCommercialLead } from '@/lib/commercial-tracking';
+import { sendOwnerLeadNotification } from '@/lib/email';
+import { commercialLeads } from '@/db/schema';
+import { db } from '@/db';
 
 export const runtime = 'nodejs';
 
 const LEAD_LIMIT = 20;
 const LEAD_WINDOW = 10 * 60_000;
+const TERMINAL_LEAD_STATUSES = new Set(['won', 'lost', 'bad_fit', 'duplicate']);
 
 function emptyToUndefined(value: unknown) {
   if (typeof value !== 'string') return undefined;
@@ -210,9 +215,15 @@ export async function POST(req: NextRequest) {
 
   try {
     const { lead, deduped } = await upsertCommercialLead(parsed.data);
+    const nextAction = buildNextAction(parsed.data);
+    const shouldSetFollowUp = !TERMINAL_LEAD_STATUSES.has(lead.status);
+    const leadForResponse = shouldSetFollowUp
+      ? (await markLeadDueNow(lead.id, nextAction)) ?? lead
+      : lead;
+
     await trackCommercialEvent({
       eventName: 'demo_requested',
-      leadId: lead.id,
+      leadId: leadForResponse.id,
       source: parsed.data.source,
       path: parsed.data.landingPath,
       metadata: {
@@ -221,7 +232,7 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    const metaEventId = deduped ? null : `lead-${lead.id}-${Date.now()}`;
+    const metaEventId = deduped ? null : `lead-${leadForResponse.id}-${Date.now()}`;
     if (metaEventId) {
       try {
         await sendLeadEvent({
@@ -239,9 +250,24 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    await sendOwnerLeadNotification({
+      leadId: leadForResponse.id,
+      businessName: leadForResponse.businessName,
+      contactName: leadForResponse.name,
+      email: leadForResponse.email,
+      phone: leadForResponse.phone,
+      city: leadForResponse.city,
+      source: leadForResponse.source,
+      offer: leadForResponse.offer,
+      landingPath: leadForResponse.landingPath,
+      nextAction,
+    }).catch((err) => {
+      console.error('[leads/create] owner notification failed:', err);
+    });
+
     return json(req, {
       ok: true,
-      leadId: lead.id,
+      leadId: leadForResponse.id,
       deduped,
       metaEventId,
     });
@@ -249,4 +275,23 @@ export async function POST(req: NextRequest) {
     console.error('[leads/create] failed:', err);
     return json(req, { error: 'Could not save lead' }, { status: 500 });
   }
+}
+
+function buildNextAction(input: z.infer<typeof leadSchema>): string {
+  const contact = input.phone ? `WhatsApp/call ${input.phone}` : `Email ${input.email}`;
+  const offer = input.offer ? ` about ${input.offer}` : '';
+  return `${contact}${offer} for ${input.businessName}.`;
+}
+
+async function markLeadDueNow(leadId: number, nextAction: string) {
+  const [updated] = await db
+    .update(commercialLeads)
+    .set({
+      nextAction,
+      nextActionAt: new Date(),
+      updatedAt: new Date(),
+    })
+    .where(eq(commercialLeads.id, leadId))
+    .returning();
+  return updated;
 }

@@ -38,6 +38,30 @@ const EMPTY: Form = {
   notes: '',
 };
 
+function readMarketingPayload() {
+  if (typeof window === 'undefined') return {};
+  const params = new URLSearchParams(window.location.search);
+  const get = (name: string) => params.get(name)?.trim() || undefined;
+
+  return {
+    source: get('source_page') || get('source') || 'app_contacto',
+    landingPath: `${window.location.pathname}${window.location.search}`,
+    utmSource: get('utm_source'),
+    utmMedium: get('utm_medium'),
+    utmCampaign: get('utm_campaign'),
+    utmTerm: get('utm_term'),
+    utmContent: get('utm_content'),
+    offer: get('offer') || 'trial_checkout',
+    metadata: {
+      source_cluster: get('source_cluster') || null,
+      cta_context: get('cta_context') || null,
+      language: get('language') || 'es',
+      referrer: document.referrer || null,
+      landing_url: window.location.href,
+    },
+  };
+}
+
 export default function ContactoPage() {
   const [form, setForm] = useState<Form>(EMPTY);
   const [error, setError] = useState('');
@@ -124,6 +148,7 @@ export default function ContactoPage() {
           city: form.city,
           password: form.password,
           googlePlaceId: form.googlePlaceId || undefined,
+          ...readMarketingPayload(),
           shippingAddress: {
             line1: form.line1,
             line2: form.line2 || undefined,
@@ -194,7 +219,7 @@ export default function ContactoPage() {
               Empieza tu prueba gratis de 15 días
             </h1>
             <p style={{ color: 'var(--text-muted, #57534e)', fontSize: '0.95rem', margin: 0 }}>
-              Registra tu tarjeta. No te cobramos nada hasta el día 15. Cancela cuando quieras.
+              Requiere tarjeta para activar la prueba. No te cobramos hoy; cancela cuando quieras antes del día 15.
             </p>
           </div>
 

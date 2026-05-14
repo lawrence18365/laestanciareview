@@ -5,13 +5,15 @@ import { hashPassword } from '@/lib/auth';
 import { getStripe, STRIPE_PRICE_ID, TRIAL_DAYS } from '@/lib/stripe';
 import { requireSameOrigin } from '@/lib/origin';
 import { db } from '@/db';
-import { pendingSignups } from '@/db/schema';
+import { commercialLeads, pendingSignups } from '@/db/schema';
 import { randomToken, tokenHash } from '@/lib/tokens';
 import { trackCommercialEvent, upsertCommercialLead } from '@/lib/commercial-tracking';
+import { sendOwnerLeadNotification } from '@/lib/email';
 import { eq } from 'drizzle-orm';
 
 const SIGNUP_LIMIT = 5;
 const SIGNUP_WINDOW = 10 * 60_000; // 5 signups per 10 min per IP
+const TERMINAL_LEAD_STATUSES = new Set(['won', 'lost', 'bad_fit', 'duplicate']);
 
 export async function POST(req: NextRequest) {
   const csrf = requireSameOrigin(req);
@@ -42,16 +44,26 @@ export async function POST(req: NextRequest) {
     const statusTokenHash = await tokenHash(statusToken);
     const shippingAddress = JSON.stringify(input.shippingAddress);
     const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
+    const source = input.source || 'app_contacto';
+    const landingPath = input.landingPath || '/contacto';
+    const offer = input.offer || 'trial_checkout';
+
     const { lead } = await upsertCommercialLead({
       name: input.contactName,
       businessName: input.businessName,
       email: input.email,
       phone: input.phone,
       city: input.city,
-      source: 'app_contacto',
-      landingPath: '/contacto',
-      offer: 'trial_checkout',
+      source,
+      landingPath,
+      utmSource: input.utmSource,
+      utmMedium: input.utmMedium,
+      utmCampaign: input.utmCampaign,
+      utmTerm: input.utmTerm,
+      utmContent: input.utmContent,
+      offer,
       metadata: {
+        ...(input.metadata ?? {}),
         google_place_id: input.googlePlaceId ?? null,
       },
     });
@@ -104,13 +116,44 @@ export async function POST(req: NextRequest) {
     await trackCommercialEvent({
       eventName: 'checkout_started',
       leadId: lead.id,
-      source: 'app_contacto',
-      path: '/contacto',
+      source,
+      path: landingPath,
       metadata: {
         pending_signup_id: pendingSignupId,
         checkout_session_id: session.id,
+        offer,
       },
     });
+
+    const nextAction = `Check whether ${input.businessName} completed Stripe checkout; follow up if abandoned.`;
+    const shouldFollowUp = !TERMINAL_LEAD_STATUSES.has(lead.status);
+    if (shouldFollowUp) {
+      await db
+        .update(commercialLeads)
+        .set({
+          nextAction,
+          nextActionAt: new Date(Date.now() + 30 * 60_000),
+          updatedAt: new Date(),
+        })
+        .where(eq(commercialLeads.id, lead.id));
+    }
+
+    if (shouldFollowUp) {
+      await sendOwnerLeadNotification({
+        leadId: lead.id,
+        businessName: input.businessName,
+        contactName: input.contactName,
+        email: input.email,
+        phone: input.phone,
+        city: input.city,
+        source,
+        offer,
+        landingPath,
+        nextAction,
+      }).catch((err) => {
+        console.error('[signup/create-checkout] owner notification failed:', err);
+      });
+    }
 
     return Response.json({ url: session.url });
   } catch (err) {

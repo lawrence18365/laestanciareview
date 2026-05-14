@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server';
 import Stripe from 'stripe';
 import { db } from '@/db';
-import { restaurants, processedStripeEvents, pendingSignups } from '@/db/schema';
+import { commercialLeads, restaurants, processedStripeEvents, pendingSignups } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 import { getStripe, STRIPE_WEBHOOK_SECRET, TRIAL_DAYS } from '@/lib/stripe';
 import { generateUniqueSlug } from '@/lib/slug';
@@ -174,6 +174,30 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
         completedAt: new Date(),
       })
       .where(eq(pendingSignups.id, signup.pendingSignupId));
+  }
+
+  if (signup.leadId) {
+    await db
+      .update(commercialLeads)
+      .set({
+        status: 'won',
+        wonAt: new Date(),
+        nextAction: null,
+        nextActionAt: null,
+        updatedAt: new Date(),
+      })
+      .where(eq(commercialLeads.id, signup.leadId));
+
+    await trackCommercialEvent({
+      eventName: 'lead_won',
+      leadId: signup.leadId,
+      restaurantId: restaurant.id,
+      source: 'stripe',
+      metadata: {
+        pending_signup_id: signup.pendingSignupId ?? null,
+        checkout_session_id: session.id,
+      },
+    });
   }
 
   await trackCommercialEvent({

@@ -81,7 +81,7 @@ export async function GET(req: NextRequest) {
 
     if (!prospect?.phone) continue;
 
-    const msg = `Hola! Vi que revisaron el diagnóstico de ${view.restaurantName}. ¿Tienen alguna pregunta? La prueba gratis es por 15 días, sin tarjeta: ${BASE_URL}/contacto — RateTap`;
+    const msg = `Hola! Vi que revisaron el diagnóstico de ${view.restaurantName}. ¿Tienen alguna pregunta? La prueba gratis es por 15 días, sin cargo hoy y pueden cancelar antes del cobro: ${BASE_URL}/contacto — RateTap`;
 
     try {
       const lead = await ensureCommercialLeadForProspect(prospect, 'audit_followup');

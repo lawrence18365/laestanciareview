@@ -200,9 +200,19 @@ fbq('track', 'PageView');
     font-size: 0.8rem;
     color: var(--text-secondary);
   }
-  .form-trust i {
-    color: var(--brand-blue);
-  }
+	  .form-trust i {
+	    color: var(--brand-blue);
+	  }
+	  .trial-link {
+	    display: block;
+	    margin-top: 0.9rem;
+	    text-align: center;
+	    color: var(--brand-charcoal);
+	    font-weight: 800;
+	    font-size: 0.9rem;
+	    text-decoration: underline;
+	    text-underline-offset: 3px;
+	  }
 
   /* Success state */
   .form-success {
@@ -449,11 +459,14 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             No pudimos enviar tu solicitud. Intenta de nuevo o escríbenos a hello@ratetapmx.com.
           </div>
 
-          <div class="form-trust">
-            <i class="fa-solid fa-lock"></i>
-            Sin compromiso · Sin tarjeta de crédito · Respuesta en 24h
-          </div>
-        </form>
+	          <div class="form-trust">
+	            <i class="fa-solid fa-lock"></i>
+	            Sin compromiso · Sin tarjeta de crédito · Respuesta en 24h
+	          </div>
+	          <a class="trial-link" href="https://app.ratetapmx.com/contacto?offer=trial_checkout&amp;source_page=contacto&amp;cta_context=contact_form_secondary&amp;language=es">
+	            ¿Ya estás listo? Inicia la prueba de 15 días
+	          </a>
+	        </form>
 
         <div class="form-success" id="form-success">
           <div class="success-icon">

@@ -19,6 +19,8 @@ const SPANISH_SLUG_MAP = {
     'restaurant-review-management-software': 'software-gestion-resenas-restaurantes'
 };
 
+const TRIAL_SIGNUP_URL = 'https://app.ratetapmx.com/contacto';
+
 const IMAGE_DIMENSIONS = {
     'assets/og-image.png': { width: 2848, height: 1504 },
     'graphic_sales.jpeg': { width: 1080, height: 1350 },
@@ -99,6 +101,25 @@ function getDemoPageHref() {
 
 function getPrimaryCtaFallbackHref() {
     return getDemoPageHref();
+}
+
+function getTrialSignupUrl(link) {
+    const url = new URL(TRIAL_SIGNUP_URL);
+    const sourcePage = link?.dataset?.sourcePage || getPageIdentifier();
+    const sourceCluster = link?.dataset?.sourceCluster || '';
+    const language = link?.dataset?.language || (isSpanishPage() ? 'es' : 'en');
+    const offer = link?.dataset?.funnelOffer || 'trial_checkout';
+
+    url.searchParams.set('offer', offer);
+    url.searchParams.set('source_page', sourcePage);
+    if (sourceCluster) {
+        url.searchParams.set('source_cluster', sourceCluster);
+    }
+    url.searchParams.set('language', language);
+    url.searchParams.set('cta_context', getFunnelContext(link));
+    preserveCampaignParams(url);
+
+    return url;
 }
 
 function getNavbarElement() {
@@ -272,7 +293,10 @@ function wireFunnelLinks() {
     funnelLinks.forEach(link => {
         const trackedUrl = buildFunnelUrl(link);
         if (trackedUrl && !link.getAttribute('href').startsWith('#')) {
-            link.setAttribute('href', normalizeHref(trackedUrl.toString()));
+            const nextHref = trackedUrl.origin === window.location.origin
+                ? normalizeHref(trackedUrl.toString())
+                : trackedUrl.toString();
+            link.setAttribute('href', nextHref);
         }
 
         if (link.dataset.funnelBound === 'true') return;
@@ -474,7 +498,8 @@ function buildFirstPartyLeadPayload(form, attribution) {
             language: attribution.language || (isSpanishPage() ? 'es' : 'en'),
             referrer: attribution.referrer || document.referrer || '',
             landing_url: attribution.landing_url || window.location.href,
-            preferred_date: getFormFieldValue(form, ['preferred_date', 'preferredDate'])
+            preferred_date: getFormFieldValue(form, ['preferred_date', 'preferredDate']),
+            preferred_time: getFormFieldValue(form, ['preferred_time', 'preferredTime'])
         }
     };
 }
@@ -745,6 +770,42 @@ function standardizePrimaryCtas() {
 
         link.textContent = standardLabel;
         link.setAttribute('aria-label', standardLabel);
+    });
+}
+
+function isTrialSignupIntent(link) {
+    const href = normalizeHref(link.getAttribute('href')).toLowerCase();
+    if (href !== '/demo' && href !== '/es/demo' && href !== 'demo.html') return false;
+
+    const label = (link.textContent || '').trim().toLowerCase();
+    const strongTrialWords = [
+        'get started',
+        'start capturing',
+        'get my cards',
+        'start trial',
+        'iniciar prueba',
+        'activar piloto',
+        'pedir mis tarjetas',
+        'proteger mi restaurante'
+    ];
+
+    return strongTrialWords.some(word => label.includes(word));
+}
+
+function routeTrialSignupCtas() {
+    document.querySelectorAll('a.btn[href]').forEach(link => {
+        if (!isTrialSignupIntent(link)) return;
+
+        const signupUrl = getTrialSignupUrl(link);
+        link.setAttribute('href', signupUrl.toString());
+        link.dataset.funnelOffer = link.dataset.funnelOffer || 'trial_checkout';
+        link.dataset.sourcePage = link.dataset.sourcePage || getPageIdentifier();
+
+        const label = isSpanishPage() ? 'Iniciar prueba de 15 días' : 'Start 15-day trial';
+        if (link.dataset.preserveLabel !== 'true') {
+            link.textContent = label;
+            link.setAttribute('aria-label', label);
+        }
     });
 }
 
@@ -1105,6 +1166,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Quick-win UX enhancements
     applyImagePerformanceTweaks();
     configureOfferFunnels();
+    routeTrialSignupCtas();
     standardizePrimaryCtas();
     insertTrustStrip();
     removeFooterPlaceholderLinks();

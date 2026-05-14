@@ -922,6 +922,59 @@ interface OwnerSignupParams {
   googlePlaceId?: string;
 }
 
+interface OwnerLeadParams {
+  leadId: number;
+  businessName: string;
+  contactName?: string | null;
+  email?: string | null;
+  phone?: string | null;
+  city?: string | null;
+  source?: string | null;
+  offer?: string | null;
+  landingPath?: string | null;
+  nextAction?: string | null;
+}
+
+export async function sendOwnerLeadNotification(p: OwnerLeadParams) {
+  const resend = getResend();
+  if (!resend || !OWNER_NOTIFICATION_EMAIL) return;
+
+  const sourceLine = [p.source, p.offer].filter(Boolean).join(' / ') || 'unknown';
+  const contactLine = [
+    p.contactName ? escapeHtml(p.contactName) : 'Sin nombre',
+    p.phone ? `<a href="tel:${escapeHtml(p.phone)}">${escapeHtml(p.phone)}</a>` : 'Sin teléfono',
+    p.email ? `<a href="mailto:${escapeHtml(p.email)}">${escapeHtml(p.email)}</a>` : 'Sin email',
+  ].join('<br>');
+
+  const content = `
+    <div class="content-pad" style="padding: 28px 24px;">
+      <h1 style="margin: 0 0 12px; font-size: 20px; font-weight: 700; color: #1c1917;">Nuevo lead comercial</h1>
+      <p style="margin: 0 0 18px; color: #57534e; line-height: 1.5;">
+        ${p.nextAction ? escapeHtml(p.nextAction) : 'Contactar este lead hoy.'}
+      </p>
+      <table cellpadding="6" cellspacing="0" style="width: 100%; font-size: 14px; color: #1c1917;">
+        <tr><td style="color: #78716c;">Negocio</td><td><strong>${escapeHtml(p.businessName)}</strong></td></tr>
+        <tr><td style="color: #78716c;">Contacto</td><td>${contactLine}</td></tr>
+        <tr><td style="color: #78716c;">Ciudad</td><td>${escapeHtml(p.city ?? 'Sin ciudad')}</td></tr>
+        <tr><td style="color: #78716c;">Fuente</td><td>${escapeHtml(sourceLine)}</td></tr>
+        <tr><td style="color: #78716c;">Landing</td><td><code>${escapeHtml(p.landingPath ?? 'unknown')}</code></td></tr>
+        <tr><td style="color: #78716c;">Lead</td><td>#${p.leadId}</td></tr>
+      </table>
+      <p style="margin: 20px 0 0;">
+        <a href="${BASE_URL}/commercial-leads" style="display: inline-block; background: #1c1917; color: #ffffff; text-decoration: none; font-weight: 700; padding: 12px 16px; border-radius: 8px;">
+          Abrir pipeline comercial
+        </a>
+      </p>
+    </div>`;
+
+  await resend.emails.send({
+    from: FROM,
+    to: OWNER_NOTIFICATION_EMAIL,
+    subject: `Nuevo lead: ${p.businessName}`,
+    html: emailLayout(content),
+  });
+}
+
 export async function sendOwnerSignupNotification(p: OwnerSignupParams) {
   const resend = getResend();
   if (!resend || !OWNER_NOTIFICATION_EMAIL) return;

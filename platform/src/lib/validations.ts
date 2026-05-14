@@ -52,6 +52,15 @@ export const signupSchema = z.object({
   city: z.string().min(1).max(120),
   password: z.string().min(8).max(128),
   googlePlaceId: z.string().min(1).max(300).optional(),
+  source: z.string().trim().max(120).optional(),
+  landingPath: z.string().trim().max(600).optional(),
+  utmSource: z.string().trim().max(160).optional(),
+  utmMedium: z.string().trim().max(160).optional(),
+  utmCampaign: z.string().trim().max(200).optional(),
+  utmTerm: z.string().trim().max(200).optional(),
+  utmContent: z.string().trim().max(200).optional(),
+  offer: z.string().trim().max(120).optional(),
+  metadata: z.record(z.string(), z.unknown()).optional(),
   shippingAddress: z
     .object({
       line1: z.string().min(1).max(300),
