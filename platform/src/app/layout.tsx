@@ -4,6 +4,10 @@ import "./globals.css";
 import ServiceWorkerRegistrar from "@/components/ServiceWorkerRegistrar";
 
 const GTM_ID = "GTM-P4DTRR6W";
+// Kill switch: set NEXT_PUBLIC_DISABLE_GTM=1 in Vercel env to stop GTM from
+// loading. A misconfigured GTM tag was firing Meta CompleteRegistration on
+// review/redirect events, producing 762 fake conversions in May 2026.
+const GTM_DISABLED = process.env.NEXT_PUBLIC_DISABLE_GTM === '1';
 
 export const metadata: Metadata = {
   title: "RateTap",
@@ -18,13 +22,15 @@ export default function RootLayout({
   return (
     <html lang="es">
       <head>
-        <Script id="gtm-loader" strategy="afterInteractive">
-          {`(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+        {!GTM_DISABLED && (
+          <Script id="gtm-loader" strategy="afterInteractive">
+            {`(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
 new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
 j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
 })(window,document,'script','dataLayer','${GTM_ID}');`}
-        </Script>
+          </Script>
+        )}
         <link rel="manifest" href="/manifest.json" />
         <meta name="theme-color" content="#18181b" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -39,15 +45,17 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
         />
       </head>
       <body className="antialiased">
-        <noscript>
-          <iframe
-            src={`https://www.googletagmanager.com/ns.html?id=${GTM_ID}`}
-            height="0"
-            width="0"
-            style={{ display: "none", visibility: "hidden" }}
-            title="Google Tag Manager"
-          />
-        </noscript>
+        {!GTM_DISABLED && (
+          <noscript>
+            <iframe
+              src={`https://www.googletagmanager.com/ns.html?id=${GTM_ID}`}
+              height="0"
+              width="0"
+              style={{ display: "none", visibility: "hidden" }}
+              title="Google Tag Manager"
+            />
+          </noscript>
+        )}
         <ServiceWorkerRegistrar />
         {children}
       </body>
