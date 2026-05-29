@@ -1,16 +1,36 @@
 import { NextRequest } from 'next/server';
 import { markProspectDelivery, markProspectReplied } from '@/lib/outreach-tracking';
+import { verifyTelnyxSignature } from '@/lib/webhook-verify';
 
 /**
- * Telnyx inbound message webhook — stores messages for retrieval.
+ * Telnyx inbound message webhook.
  */
 
-// In-memory store (survives within a single invocation only, but
-// the GET endpoint below can read the latest message if hit fast enough)
-let lastMessage = { from: '', text: '', ts: '' };
-
 export async function POST(req: NextRequest) {
-  const body = await req.json();
+  // Verify Ed25519 signature over the raw body before processing. Fail closed.
+  const rawBody = await req.text();
+  const valid = await verifyTelnyxSignature(rawBody, req.headers);
+  if (!valid) {
+    return new Response('Forbidden', { status: 403 });
+  }
+
+  let body: {
+    data?: {
+      event_type?: string;
+      payload?: {
+        id?: string;
+        text?: string;
+        from?: { phone_number?: string };
+        errors?: unknown;
+      };
+    };
+  };
+  try {
+    body = JSON.parse(rawBody);
+  } catch {
+    return new Response('Bad Request', { status: 400 });
+  }
+
   const event = body?.data;
   const eventType = event?.event_type;
   const payload = event?.payload;
@@ -19,8 +39,6 @@ export async function POST(req: NextRequest) {
   if (eventType === 'message.received') {
     const text = payload?.text ?? '';
     const from = payload?.from?.phone_number ?? 'unknown';
-
-    lastMessage = { from, text, ts: new Date().toISOString() };
 
     await markProspectReplied({
       phone: from,
@@ -56,9 +74,4 @@ export async function POST(req: NextRequest) {
   }
 
   return Response.json({ ok: true });
-}
-
-/** GET endpoint to check last received message */
-export async function GET() {
-  return Response.json(lastMessage);
 }
