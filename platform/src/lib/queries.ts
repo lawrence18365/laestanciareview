@@ -71,6 +71,98 @@ export async function getAllTimeStaffRanking(restaurantId: number) {
     .orderBy(desc(count(reviews.id)), desc(avg(reviews.rating)));
 }
 
+/**
+ * Personal scoreboard for a single staff member — powers the public
+ * /m/[slug]/[code] "mi tablero" page. Today's count + 5★, this week's total,
+ * live team rank, and a 7-day trend. All derived from existing review rows
+ * (deterministic card attribution), so no Google API / no AI involved.
+ */
+export async function getStaffPersonalStats(restaurantId: number, staffId: number) {
+  const todayStart = startOfTodayMexico();
+  const weekStart = startOfWeekMexico();
+
+  // 7-day window, today inclusive → start six Mexico-days back.
+  const sparkStart = new Date(todayStart);
+  sparkStart.setUTCDate(sparkStart.getUTCDate() - 6);
+
+  const [todayRows, weekRanking, sparkRows] = await Promise.all([
+    db
+      .select({
+        total: count(reviews.id),
+        fiveStars: countSql`count(*) filter (where ${reviews.rating} = 5)`,
+      })
+      .from(reviews)
+      .where(
+        and(
+          eq(reviews.restaurantId, restaurantId),
+          eq(reviews.staffId, staffId),
+          gte(reviews.createdAt, todayStart),
+        ),
+      ),
+
+    // This week's per-staff totals, ranked. Card-less reviews (staffId null)
+    // are excluded so they don't form a phantom competitor.
+    db
+      .select({
+        staffId: reviews.staffId,
+        reviewCount: count(reviews.id),
+        avgRating: avg(reviews.rating).mapWith(Number),
+      })
+      .from(reviews)
+      .where(
+        and(
+          eq(reviews.restaurantId, restaurantId),
+          gte(reviews.createdAt, weekStart),
+          sql`${reviews.staffId} is not null`,
+        ),
+      )
+      .groupBy(reviews.staffId)
+      .orderBy(desc(count(reviews.id)), desc(avg(reviews.rating))),
+
+    // 7-day trend for this staff member, bucketed by Mexico calendar day.
+    db
+      .select({
+        date: sql<string>`(${reviews.createdAt} at time zone 'America/Mexico_City')::date::text`,
+        count: count(reviews.id),
+      })
+      .from(reviews)
+      .where(
+        and(
+          eq(reviews.restaurantId, restaurantId),
+          eq(reviews.staffId, staffId),
+          gte(reviews.createdAt, sparkStart),
+        ),
+      )
+      .groupBy(sql`(${reviews.createdAt} at time zone 'America/Mexico_City')::date`),
+  ]);
+
+  const today = todayRows[0] ?? { total: 0, fiveStars: 0 };
+  const idx = weekRanking.findIndex((r) => r.staffId === staffId);
+  const rank = idx >= 0 ? idx + 1 : null;
+  const teamSize = weekRanking.length;
+  const weekTotal = idx >= 0 ? weekRanking[idx].reviewCount : 0;
+
+  // Fill the 7-day series with zeros for days that had no reviews.
+  const byDate = new Map(sparkRows.map((r) => [r.date, r.count]));
+  const series: { date: string; count: number }[] = [];
+  const now = Date.now();
+  for (let i = 6; i >= 0; i--) {
+    const key = new Date(now - i * 86_400_000).toLocaleDateString('en-CA', {
+      timeZone: 'America/Mexico_City',
+    });
+    series.push({ date: key, count: byDate.get(key) ?? 0 });
+  }
+
+  return {
+    todayTotal: today.total,
+    todayFiveStars: today.fiveStars,
+    weekTotal,
+    rank,
+    teamSize,
+    series,
+  };
+}
+
 /** Weekly stats: total reviews, average rating, google sends this week. */
 export async function getWeeklyStats(restaurantId: number) {
   const monday = startOfWeekMexico();

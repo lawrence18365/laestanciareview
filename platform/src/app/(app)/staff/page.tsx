@@ -14,5 +14,5 @@ export default async function StaffPage() {
 
   const staffList = await getStaffList(restaurant.id);
 
-  return <StaffManager initialStaff={staffList} />;
+  return <StaffManager initialStaff={staffList} slug={restaurant.slug} />;
 }

@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import { t } from '@/lib/i18n';
+import MeseroQrModal from './MeseroQrModal';
 
 interface StaffMember {
   id: number;
@@ -12,6 +13,7 @@ interface StaffMember {
 
 interface Props {
   initialStaff: StaffMember[];
+  slug: string;
 }
 
 const card: React.CSSProperties = {
@@ -67,8 +69,9 @@ const btnSecondary: React.CSSProperties = {
   borderRadius: 0,
 };
 
-export default function StaffManager({ initialStaff }: Props) {
+export default function StaffManager({ initialStaff, slug }: Props) {
   const [staffList, setStaffList] = useState<StaffMember[]>(initialStaff);
+  const [qrFor, setQrFor] = useState<StaffMember | null>(null);
   const [newName, setNewName] = useState('');
   const [newCode, setNewCode] = useState('');
   const [editingId, setEditingId] = useState<number | null>(null);
@@ -314,6 +317,9 @@ export default function StaffManager({ initialStaff }: Props) {
                         </td>
                         <td style={{ padding: '0.6rem 0.75rem', textAlign: 'right' }}>
                           <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
+                            <button style={btnSecondary} onClick={() => setQrFor(s)}>
+                              Tablero
+                            </button>
                             <button style={btnSecondary} onClick={() => startEdit(s)}>
                               {t.staffManager.edit}
                             </button>
@@ -334,6 +340,10 @@ export default function StaffManager({ initialStaff }: Props) {
           </div>
         )}
       </section>
+
+      {qrFor && (
+        <MeseroQrModal slug={slug} member={qrFor} onClose={() => setQrFor(null)} />
+      )}
     </div>
   );
 }
