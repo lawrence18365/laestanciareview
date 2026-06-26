@@ -25,3 +25,9 @@ assets/ac9a437c-35df-4b6e-9baa-8d08558366de.jpg
 
 # Generated operational snapshots
 platform/scripts/marketing-stats.json
+
+# Analytics OAuth tokens and pulled data
+.gsc-token.json
+.ga4-token.json
+.ga4-property.json
+data/analytics/
