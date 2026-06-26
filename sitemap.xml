@@ -408,7 +408,7 @@
     <xhtml:link rel="alternate" hreflang="en-US" href="https://ratetapmx.com/blog/"/>
     <xhtml:link rel="alternate" hreflang="es-MX" href="https://ratetapmx.com/es/blog/"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://ratetapmx.com/blog/"/>
-    <lastmod>2026-04-28</lastmod>
+    <lastmod>2026-06-26</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.85</priority>
   </url>
@@ -417,7 +417,7 @@
     <xhtml:link rel="alternate" hreflang="en-US" href="https://ratetapmx.com/blog/"/>
     <xhtml:link rel="alternate" hreflang="es-MX" href="https://ratetapmx.com/es/blog/"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://ratetapmx.com/blog/"/>
-    <lastmod>2026-04-28</lastmod>
+    <lastmod>2026-06-26</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.85</priority>
   </url>
@@ -526,6 +526,78 @@
     <xhtml:link rel="alternate" hreflang="es-MX" href="https://ratetapmx.com/es/blog/detener-malas-resenas-google-antes-publiquen"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://ratetapmx.com/blog/stop-bad-google-reviews-before-they-post"/>
     <lastmod>2026-04-27</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://ratetapmx.com/blog/restaurant-reputation-metrics-kpis</loc>
+    <xhtml:link rel="alternate" hreflang="en-US" href="https://ratetapmx.com/blog/restaurant-reputation-metrics-kpis"/>
+    <xhtml:link rel="alternate" hreflang="es-MX" href="https://ratetapmx.com/es/blog/metricas-en-restauracion"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://ratetapmx.com/blog/restaurant-reputation-metrics-kpis"/>
+    <lastmod>2026-06-26</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://ratetapmx.com/es/blog/metricas-en-restauracion</loc>
+    <xhtml:link rel="alternate" hreflang="en-US" href="https://ratetapmx.com/blog/restaurant-reputation-metrics-kpis"/>
+    <xhtml:link rel="alternate" hreflang="es-MX" href="https://ratetapmx.com/es/blog/metricas-en-restauracion"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://ratetapmx.com/blog/restaurant-reputation-metrics-kpis"/>
+    <lastmod>2026-06-26</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://ratetapmx.com/blog/ovation-reviews-alternatives</loc>
+    <xhtml:link rel="alternate" hreflang="en-US" href="https://ratetapmx.com/blog/ovation-reviews-alternatives"/>
+    <xhtml:link rel="alternate" hreflang="es-MX" href="https://ratetapmx.com/es/blog/resenas-ovation-alternativas"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://ratetapmx.com/blog/ovation-reviews-alternatives"/>
+    <lastmod>2026-06-26</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://ratetapmx.com/es/blog/resenas-ovation-alternativas</loc>
+    <xhtml:link rel="alternate" hreflang="en-US" href="https://ratetapmx.com/blog/ovation-reviews-alternatives"/>
+    <xhtml:link rel="alternate" hreflang="es-MX" href="https://ratetapmx.com/es/blog/resenas-ovation-alternativas"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://ratetapmx.com/blog/ovation-reviews-alternatives"/>
+    <lastmod>2026-06-26</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://ratetapmx.com/blog/restaurant-reputation-playbook</loc>
+    <xhtml:link rel="alternate" hreflang="en-US" href="https://ratetapmx.com/blog/restaurant-reputation-playbook"/>
+    <xhtml:link rel="alternate" hreflang="es-MX" href="https://ratetapmx.com/es/blog/playbook-reputacion-restaurante"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://ratetapmx.com/blog/restaurant-reputation-playbook"/>
+    <lastmod>2026-06-26</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://ratetapmx.com/es/blog/playbook-reputacion-restaurante</loc>
+    <xhtml:link rel="alternate" hreflang="en-US" href="https://ratetapmx.com/blog/restaurant-reputation-playbook"/>
+    <xhtml:link rel="alternate" hreflang="es-MX" href="https://ratetapmx.com/es/blog/playbook-reputacion-restaurante"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://ratetapmx.com/blog/restaurant-reputation-playbook"/>
+    <lastmod>2026-06-26</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://ratetapmx.com/blog/roi-of-google-reviews-calculator</loc>
+    <xhtml:link rel="alternate" hreflang="en-US" href="https://ratetapmx.com/blog/roi-of-google-reviews-calculator"/>
+    <xhtml:link rel="alternate" hreflang="es-MX" href="https://ratetapmx.com/es/blog/calculadora-roi-resenas-google"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://ratetapmx.com/blog/roi-of-google-reviews-calculator"/>
+    <lastmod>2026-06-26</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://ratetapmx.com/es/blog/calculadora-roi-resenas-google</loc>
+    <xhtml:link rel="alternate" hreflang="en-US" href="https://ratetapmx.com/blog/roi-of-google-reviews-calculator"/>
+    <xhtml:link rel="alternate" hreflang="es-MX" href="https://ratetapmx.com/es/blog/calculadora-roi-resenas-google"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://ratetapmx.com/blog/roi-of-google-reviews-calculator"/>
+    <lastmod>2026-06-26</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.75</priority>
   </url>
