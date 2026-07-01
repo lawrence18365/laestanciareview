@@ -119,8 +119,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <dt style="font-weight: 700; margin-top: 1.5rem;">Guest tap</dt>
 <dd style="margin-left: 0; color: var(--text-secondary);">A row in the <code>reviews</code> table representing one in-restaurant tap on a server's NFC card. Each tap captures a star rating, optional feedback, the staff member tapped, and whether the tap was forwarded to Google's review form.</dd>
 
-<dt style="font-weight: 700; margin-top: 1.5rem;">Negative-feedback interception</dt>
-<dd style="margin-left: 0; color: var(--text-secondary);">A guest tap with a star rating below the restaurant's <code>googleThreshold</code> (default 4). These are routed to a private feedback form rather than to Google. They count as "intercepted" only if their rating is strictly below the threshold.</dd>
+<dt style="font-weight: 700; margin-top: 1.5rem;">Guest issue detection</dt>
+<dd style="margin-left: 0; color: var(--text-secondary);">A guest tap with a star rating below the restaurant's <code>googleThreshold</code> (default 4). These low-score responses are routed to a private feedback form that triggers a real-time manager alert for service recovery. They count as a "guest issue captured" only if their rating is strictly below the threshold.</dd>
 
 <dt style="font-weight: 700; margin-top: 1.5rem;">Staff attribution rate</dt>
 <dd style="margin-left: 0; color: var(--text-secondary);">The percentage of guest taps where <code>staff_id</code> is non-null — i.e., the tap can be tied to a specific staff member. Computed across the full <code>reviews</code> table for paying restaurants.</dd>
@@ -146,7 +146,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <li>10,000+ guest reviews captured (10,863 as of the latest pull).</li>
 <li>all 12 locations currently between 4.5 and 4.8 stars on Google (average 4.65), pulled from each location's Google Business Profile.</li>
 <li>~1,000 reviews captured per week across the group.</li>
-<li>9,900+ reviews routed to Google; 580+ negative reviews (1-3 stars) intercepted to private feedback and never published.</li>
+<li>9,900+ happy guests invited to leave a Google review; 580+ low-score responses (1-3 stars) routed to private feedback for real-time manager alerts.</li>
 <li>every review carries the staff code that was tapped; 92% map to a specific named staff member.</li>
 </ul>
 <p class="reveal">

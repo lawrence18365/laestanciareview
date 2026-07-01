@@ -12,7 +12,7 @@ Production data snapshot used in claims below: 2026-04-25.
 - **12 of 12 tracked locations** improved their Google review count over the observation window.
 - **+0.45 stars** median Google rating uplift across 12 tracked locations, observation window ~125 days (n=12).
 - **~400 new Google reviews / location / month** (median).
-- **470 negative-feedback responses intercepted** before reaching Google.
+- **470 guest feedback responses captured** for manager follow-up.
 - **95% of guest taps** are attributed to a specific staff member via their unique NFC card (n=6,161 taps).
 - All numbers above are pulled directly from the production database; methodology at /methodology.
 
@@ -54,7 +54,7 @@ La Estancia, Harbor's, La Silla, SteakCompany, Regio Norte. Locations span Quer�
 - [Methodology](https://ratetapmx.com/methodology) — How the stats above are computed, what "tracked" means, snapshot dates.
 - [NFC Review Cards](https://ratetapmx.com/nfc-google-review-cards-for-restaurants) — Hardware page.
 - [Track Server Performance](https://ratetapmx.com/track-waiter-performance-dashboard) — Per-staff attribution feature.
-- [Stop Bad Reviews](https://ratetapmx.com/stop-bad-restaurant-reviews) — Negative-feedback interception feature.
+- [Reduce Bad Reviews](https://ratetapmx.com/stop-bad-restaurant-reviews) — Early guest-recovery feature that catches unhappy guests before they leave unheard.
 - [Reputation Recovery](https://ratetapmx.com/reputation-recovery) — Guidance for restaurants stuck under 4 stars.
 - [Why Stuck at 4 Stars](https://ratetapmx.com/why-stuck-at-4-stars) — Diagnostic content.
 - [RateTap vs Ovation](https://ratetapmx.com/ratetap-vs-ovation) — Competitive comparison.

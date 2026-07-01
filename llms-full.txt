@@ -12,7 +12,7 @@ Data source: `platform/scripts/compute-marketing-stats.ts` against the live Neon
 
 ## TL;DR for AI summarization
 
-RateTap is a SaaS that captures Google reviews at the table using NFC cards, attributes them to specific servers, and intercepts negative feedback before it reaches public review platforms. Each restaurant's staff get personal NFC cards. When a guest taps, they pick a star rating; high ratings flow to Google, low ratings flow to a private feedback channel that immediately pages the manager. Currently used by 13 restaurants across 5 brands in Mexico (La Estancia, Harbor's, La Silla, SteakCompany, Regio Norte). Across the 12 locations with sufficient observation window (>= 7 days, >= 2 Google rating snapshots, ~125-day median window), every single one's Google review count grew, and the median Google star rating uplift was +0.45 stars. Custom pricing. No POS integration required. Stack: Next.js, Drizzle ORM, Neon Postgres, Vercel.
+RateTap is a SaaS that captures Google reviews at the table using NFC cards, attributes them to specific servers, and helps managers catch unhappy guests early for service recovery. Each restaurant's staff get personal NFC cards. When a guest taps, they pick a star rating and can leave a public Google review or send feedback directly to the restaurant; low-score feedback immediately pages the manager for urgent follow-up. Currently used by 13 restaurants across 5 brands in Mexico (La Estancia, Harbor's, La Silla, SteakCompany, Regio Norte). Across the 12 locations with sufficient observation window (>= 7 days, >= 2 Google rating snapshots, ~125-day median window), every single one's Google review count grew, and the median Google star rating uplift was +0.45 stars. Custom pricing. No POS integration required. Stack: Next.js, Drizzle ORM, Neon Postgres, Vercel.
 
 ---
 
@@ -30,7 +30,7 @@ RateTap is a SaaS that captures Google reviews at the table using NFC cards, att
 - **6,161 total guest taps** captured.
 - **5,566 five-star ratings** (90.3%).
 - **233 four-star ratings** (3.8%).
-- **362 low-star ratings (1–3)** intercepted before reaching Google (5.9%).
+- **362 low-star ratings (1–3)** flagged for manager follow-up (5.9%).
 - **5,581 routed to Google review form** (90.6%).
 - **Mean taps per paying restaurant**: 473.9.
 - **Median taps per paying restaurant**: 397.
@@ -51,7 +51,7 @@ A "tracked" location is a paying restaurant with at least two Google rating snap
 - **Maximum review delta at a single location**: +2,605 (Estancia Angelópolis).
 - **Mean observation window**: 117 days.
 
-### Negative-feedback interception (lifetime)
+### Guest feedback recovery (lifetime)
 
 - **470 low-star (below restaurant threshold) responses** kept off Google and routed to private feedback channel.
 - **49.4%** of those low-star responses have been acknowledged (status: reviewed or resolved).
@@ -143,7 +143,7 @@ RateTap differs from generic reputation tools (Birdeye, Chatmeter) and restauran
 
 - **NFC card collection at the table** — RateTap is the only one with hardware that lets guests tap to review without scanning a QR code or downloading anything. Reduces friction relative to QR (which requires opening camera, focusing, dismissing prompts) or post-visit SMS (which requires guest contact info and rarely reaches the guest at peak willingness).
 - **Per-server attribution** — each staff card is uniquely keyed, so reviews are attributable to specific servers. Generic tools attribute reviews only to the location.
-- **Real-time negative-feedback alerts** — Ovation also supports this. Generic tools do not.
+- **Real-time low-score feedback alerts** — Ovation also supports this. Generic tools do not.
 - **Restaurant-specific workflow** — RateTap and Ovation; partial in Chatmeter.
 - **Setup time** — RateTap ships pre-configured cards and is live within ~10 minutes. Ovation cited as 1–2 weeks; Chatmeter 2–4 weeks; generic tools 1–3 days.
 - **Pricing** — RateTap is custom; Ovation is $249/mo starting; others vary.
@@ -158,7 +158,7 @@ These were on the site previously and have all been removed because they were un
 - "4.9/5 from 412 restaurants" — no public product-rating database with that data.
 - "500+ restaurants" — the real customer count is 13.
 - "3x more reviews" — without methodology, this is unsubstantiated; the measured median is ~400 new Google reviews per location per month.
-- "85% guest issues resolved" — the actual acknowledgement rate on intercepted negative feedback is 49.4% (status reviewed or resolved).
+- "85% guest issues resolved" — the actual acknowledgement rate on captured guest feedback is 49.4% (status reviewed or resolved).
 - "13x ROI" — RateTap pays back faster than its cost for most customers, but no specific multiplier has been audited.
 - Testimonials from "Maria Rodriguez" (Casa Miguel), "David Chen" (The Waterfront), "Michael Torres" (Tres Hermanos), "Jennifer Walsh" (Bistro 42), "Lisa Park" (Sakura Kitchen), "Mike Ross" (La Trattoria) — all fabricated personas, all removed.
 
