@@ -44,7 +44,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   "applicationCategory": "BusinessApplication",
   "operatingSystem": "Web",
   "description": "Sistema para mejorar la calificación de Google de restaurantes con tarjetas NFC y enrutamiento inteligente de reseñas.",
-  "featureList": "Tarjetas NFC, Filtro Inteligente de Reseñas, Dashboard en Tiempo Real, Alertas Instantáneas"
+  "featureList": "Tarjetas NFC, Enrutamiento de Feedback por Prioridad, Dashboard en Tiempo Real, Alertas Instantáneas"
 }
 </script>
 <!-- Structured Data: FAQPage -->
@@ -63,10 +63,10 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     },
     {
       "@type": "Question",
-      "name": "¿Es legal filtrar reseñas negativas antes de Google?",
+      "name": "¿Cómo ayuda RateTap a reducir las malas reseñas?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "Sí. RateTap no elimina ni bloquea reseñas existentes. Lo que hace es ofrecer al cliente un canal privado para expresar quejas antes de publicarlas. El cliente siempre tiene la opción de ir a Google directamente."
+        "text": "RateTap pide feedback honesto a cada cliente por igual. A los satisfechos los invita a dejar su reseña en Google y, cuando alguien queda insatisfecho, alerta al gerente para recuperar el problema de servicio a tiempo. Ningún cliente queda bloqueado de dejar su reseña pública."
       }
     },
     {
@@ -266,12 +266,12 @@ Al momento de la cuenta, el mesero presenta su tarjeta NFC personalizada. El cli
 <div class="step">
 <div class="step-number">2</div>
 <div class="step-content">
-<h3 class="reveal">El Filtro Inteligente Actúa</h3>
+<h3 class="reveal">El Feedback se Enruta por Prioridad</h3>
 <p class="reveal">
-Si el cliente da <strong>4 o 5 estrellas</strong>, lo redirigimos a Google Maps para que publique su reseña. Si da <strong>3 o menos</strong>, su queja llega en privado a tu celular.
+Si el cliente da <strong>4 o 5 estrellas</strong>, lo invitamos a Google Maps para que publique su reseña. Si da <strong>3 o menos</strong>, su comentario activa una alerta a tu celular para dar seguimiento a tiempo.
 </p>
 <div class="step-detail">
-<strong>Resultado:</strong> Solo lo mejor llega a Google
+<strong>Resultado:</strong> Detectas a los clientes insatisfechos a tiempo
 </div>
 </div>
 <div class="step-visual">
@@ -295,7 +295,7 @@ Si el cliente da <strong>4 o 5 estrellas</strong>, lo redirigimos a Google Maps 
 <div class="step-content">
 <h3 class="reveal">Tu Calificación Sube Automáticamente</h3>
 <p class="reveal">
-Con cientos de reseñas positivas adicionales llegando a Google cada mes (mediana ~400 por ubicación) y las quejas capturadas en privado, tu calificación empieza a subir desde las primeras semanas.
+Con cientos de reseñas positivas adicionales llegando a Google cada mes (mediana ~400 por ubicación) y los clientes insatisfechos recuperados a tiempo, tu calificación empieza a subir desde las primeras semanas.
 </p>
 <div class="step-detail">
 <strong>Promedio:</strong> +0.3 estrellas en 30 días, +0.8 en 90 días
@@ -340,9 +340,9 @@ Con cientos de reseñas positivas adicionales llegando a Google cada mes (median
 </div>
 <div class="card">
 <div class="benefit-icon">🛡️</div>
-<h3 class="reveal">470 Quejas Interceptadas en Privado</h3>
-<p class="reveal">Respuestas de retroalimentación negativa que llegaron al canal privado del gerente — antes de aterrizar en Google — en la base instalada de RateTap.</p>
-<div class="benefit-stat"><strong>Resultado:</strong> Menos reseñas negativas públicas</div>
+<h3 class="reveal">470 Comentarios de Clientes Captados</h3>
+<p class="reveal">Comentarios de baja puntuación que activaron una alerta al gerente para dar seguimiento y recuperar el problema — en la base instalada de RateTap.</p>
+<div class="benefit-stat"><strong>Resultado:</strong> Problemas de clientes identificados y atendidos a tiempo</div>
 </div>
 <div class="card">
 <div class="benefit-icon">📈</div>
@@ -377,7 +377,7 @@ Con cientos de reseñas positivas adicionales llegando a Google cada mes (median
 <div class="card pilot-inline-cta" style="padding: 2.5rem; background: linear-gradient(135deg, rgba(77, 166, 255, 0.12), rgba(12, 25, 43, 0.04)); border: 1px solid rgba(77, 166, 255, 0.22);">
 <div class="section-tag">PILOTO GRATIS</div>
 <h2 class="section-title reveal" style="margin-bottom: 0.75rem;">Valida el sistema en 1 sucursal antes de expandirlo.</h2>
-<p class="reveal section-subtitle" style="max-width: 48rem; margin-bottom: 1.5rem;">Activa un piloto enfocado en recuperar tu calificación: ruta privada para mesas inconformes, captura de reseñas positivas en mesa y visibilidad básica para tu gerencia desde la primera semana.</p>
+<p class="reveal section-subtitle" style="max-width: 48rem; margin-bottom: 1.5rem;">Activa un piloto enfocado en recuperar tu calificación: alertas internas para mesas inconformes, captura de reseñas positivas en mesa y visibilidad básica para tu gerencia desde la primera semana.</p>
 <div style="display: flex; flex-wrap: wrap; gap: 0.75rem; margin-bottom: 1.5rem;">
 <div class="cta-feature"><div class="feature-check">✓</div><span>1 sucursal para empezar</span></div>
 <div class="cta-feature"><div class="feature-check">✓</div><span>Setup guiado con tu equipo</span></div>
@@ -410,11 +410,11 @@ Con cientos de reseñas positivas adicionales llegando a Google cada mes (median
 </div>
 <div class="faq-item">
 <div class="faq-question">
-<h3 class="reveal">¿Es legal filtrar reseñas negativas antes de Google?</h3>
+<h3 class="reveal">¿Cómo ayuda RateTap a reducir las malas reseñas?</h3>
 <div class="faq-toggle">+</div>
 </div>
 <div class="faq-answer">
-<p class="reveal">Sí. RateTap no elimina ni bloquea reseñas existentes. Lo que hace es ofrecer al cliente un canal privado para expresar quejas antes de publicarlas. El cliente siempre tiene la opción de ir a Google directamente.</p>
+<p class="reveal">RateTap pide feedback honesto a cada cliente por igual. A los satisfechos los invita a dejar su reseña en Google y, cuando alguien queda insatisfecho, alerta al gerente para recuperar el problema de servicio a tiempo. Ningún cliente queda bloqueado de dejar su reseña pública.</p>
 </div>
 </div>
 <div class="faq-item">
@@ -465,8 +465,8 @@ Con cientos de reseñas positivas adicionales llegando a Google cada mes (median
 </div>
 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1.5rem; max-width: 960px; margin: 0 auto;">
 <a href="/es/evitar-malas-resenas-restaurante" class="card" style="text-decoration: none; padding: 1.5rem; display: block;">
-<h4 style="font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 700; margin-bottom: 0.5rem;">Cómo Evitar Malas Reseñas en Google</h4>
-<p class="reveal" style="color: var(--text-secondary); font-size: 0.9rem; margin: 0;">Captura quejas en privado y protege tu calificación.</p>
+<h4 style="font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 700; margin-bottom: 0.5rem;">Cómo Reducir Malas Reseñas en Google</h4>
+<p class="reveal" style="color: var(--text-secondary); font-size: 0.9rem; margin: 0;">Recupera a los clientes insatisfechos a tiempo y protege tu calificación.</p>
 </a>
 <a href="/es/tarjetas-nfc-restaurantes-mexico" class="card" style="text-decoration: none; padding: 1.5rem; display: block;">
 <h4 style="font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 700; margin-bottom: 0.5rem;">Tarjetas NFC para Restaurantes en México</h4>
@@ -485,7 +485,7 @@ Con cientos de reseñas positivas adicionales llegando a Google cada mes (median
 <div class="container">
 <div class="cta-content">
 <h2 class="cta-title reveal">Activa un piloto gratis para recuperar tu calificación.</h2>
-<p class="reveal cta-subtitle">Empieza con 1 sucursal. Te ayudamos a configurar la ruta privada, el flujo hacia Google y las primeras métricas para validar si el sistema mueve tu calificación.</p>
+<p class="reveal cta-subtitle">Empieza con 1 sucursal. Te ayudamos a configurar las alertas internas, el flujo hacia Google y las primeras métricas para validar si el sistema mueve tu calificación.</p>
 <div class="cta-features">
 <div class="cta-feature"><div class="feature-check">✓</div><span>Piloto para 1 sucursal</span></div>
 <div class="cta-feature"><div class="feature-check">✓</div><span>Configuración guiada incluida</span></div>
