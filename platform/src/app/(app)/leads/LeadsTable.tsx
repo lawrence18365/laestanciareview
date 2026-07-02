@@ -115,6 +115,28 @@ export default function LeadsTable({
     router.push(`/quotes/new?leadId=${id}`);
   }
 
+  // Advance a lead's pipeline status (won/lost/etc.). Server enforces legal
+  // transitions and, on "won", accepts the linked quote.
+  async function setStatus(id: number, status: string) {
+    setBusyId(id);
+    try {
+      const res = await fetch(`/api/leads/${id}/status`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status }),
+      });
+      if (!res.ok) {
+        router.refresh();
+        return;
+      }
+      const data = (await res.json()) as { lead: LeadRow };
+      setRows((cur) => cur.map((r) => (r.id === id ? { ...r, ...data.lead } : r)));
+      setSelected((cur) => (cur && cur.id === id ? { ...cur, ...data.lead } : cur));
+    } finally {
+      setBusyId(null);
+    }
+  }
+
   return (
     <div className="leads-root">
       <style>{LEADS_CSS}</style>
@@ -344,6 +366,7 @@ export default function LeadsTable({
           onClose={() => setSelected(null)}
           onClaim={() => claim(selected.id)}
           onQuote={() => goQuote(selected.id)}
+          onStatus={(s) => setStatus(selected.id, s)}
           claiming={busyId === selected.id}
         />
       )}
@@ -521,12 +544,14 @@ function LeadDrawer({
   onClose,
   onClaim,
   onQuote,
+  onStatus,
   claiming,
 }: {
   lead: LeadRow;
   onClose: () => void;
   onClaim: () => void;
   onQuote: () => void;
+  onStatus: (status: string) => void;
   claiming: boolean;
 }) {
   const claimed = lead.claimedAt !== null;
@@ -625,6 +650,25 @@ function LeadDrawer({
             Abrir WhatsApp ↗
           </a>
         </div>
+
+        {lead.status !== 'won' && lead.status !== 'lost' && (
+          <div className="leads-drawer-actions" style={{ marginTop: '0.5rem' }}>
+            <button
+              onClick={() => onStatus('won')}
+              disabled={claiming}
+              className="leads-drawer-action leads-drawer-action--win"
+            >
+              Marcar ganado ✓
+            </button>
+            <button
+              onClick={() => onStatus('lost')}
+              disabled={claiming}
+              className="leads-drawer-action leads-drawer-action--lose"
+            >
+              Marcar perdido
+            </button>
+          </div>
+        )}
       </aside>
     </div>
   );
@@ -1187,6 +1231,18 @@ const LEADS_CSS = `
   background: var(--text-main);
   color: var(--panel-bg);
 }
+.leads-drawer-action--win {
+  background: var(--green);
+  color: #fff;
+  border-color: var(--green);
+}
+.leads-drawer-action--win:hover { filter: brightness(0.95); }
+.leads-drawer-action--lose {
+  background: var(--panel-bg);
+  color: var(--red);
+  border-color: var(--red);
+}
+.leads-drawer-action--lose:hover { background: var(--red); color: #fff; }
 .leads-drawer-action:disabled {
   background: var(--text-muted);
   border-color: var(--text-muted);
