@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server';
-import { desc, eq } from 'drizzle-orm';
+import { and, desc, eq, inArray } from 'drizzle-orm';
 import { db } from '@/db';
-import { quotes, quoteItems, restaurants } from '@/db/schema';
+import { quotes, quoteItems, restaurants, eventLeads } from '@/db/schema';
 import { verifySession } from '@/lib/session';
 import { DEFAULT_TERMS } from '@/lib/quote-defaults';
 import { quoteCreateSchema } from '@/lib/validations';
@@ -63,10 +63,28 @@ export async function POST(req: NextRequest) {
   }
   const data = parsed.data;
 
+  // If the quote originates from a lead, verify the lead belongs to this
+  // tenant before linking — never trust a client-supplied lead id.
+  let linkedLeadId: number | null = null;
+  if (data.leadId != null) {
+    const [lead] = await db
+      .select({ id: eventLeads.id })
+      .from(eventLeads)
+      .where(
+        and(
+          eq(eventLeads.id, data.leadId),
+          eq(eventLeads.restaurantId, restaurant[0].id),
+        ),
+      )
+      .limit(1);
+    if (lead) linkedLeadId = lead.id;
+  }
+
   const [inserted] = await db
     .insert(quotes)
     .values({
       restaurantId: restaurant[0].id,
+      leadId: linkedLeadId,
       status: 'draft',
       clientName: data.clientName,
       clientPhone: data.clientPhone ?? null,
@@ -89,6 +107,20 @@ export async function POST(req: NextRequest) {
   // Auto-generate quote number after insert
   const quoteNumber = `Q-${String(inserted.id).padStart(4, '0')}`;
   await db.update(quotes).set({ quoteNumber }).where(eq(quotes.id, inserted.id));
+
+  // Advance the originating lead into the pipeline. Only from new/claimed so a
+  // won/lost lead isn't dragged back to quoted.
+  if (linkedLeadId != null) {
+    await db
+      .update(eventLeads)
+      .set({ status: 'quoted' })
+      .where(
+        and(
+          eq(eventLeads.id, linkedLeadId),
+          inArray(eventLeads.status, ['new', 'claimed']),
+        ),
+      );
+  }
 
   // Insert quote items if provided
   if (data.items) {

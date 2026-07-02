@@ -109,6 +109,12 @@ export default function LeadsTable({
     }
   }
 
+  // Jump into the quote builder pre-filled from this lead. Linking + the
+  // lead→"quoted" transition happen server-side when the quote is saved.
+  function goQuote(id: number) {
+    router.push(`/quotes/new?leadId=${id}`);
+  }
+
   return (
     <div className="leads-root">
       <style>{LEADS_CSS}</style>
@@ -237,7 +243,7 @@ export default function LeadsTable({
                         {relTime(r.createdAt)}
                       </Td>
                       <Td>
-                        <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                        <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 6 }}>
                           {!claimed ? (
                             <button
                               onClick={(e) => {
@@ -254,6 +260,15 @@ export default function LeadsTable({
                               Tomado{r.claimedAt ? ` · ${relTime(r.claimedAt)}` : ''}
                             </span>
                           )}
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              goQuote(r.id);
+                            }}
+                            className="leads-quote-btn"
+                          >
+                            Cotizar
+                          </button>
                         </div>
                       </Td>
                     </tr>
@@ -288,22 +303,33 @@ export default function LeadsTable({
                   </div>
                   <div className="leads-card-bottom">
                     <span className="leads-card-time">{relTime(r.createdAt)}</span>
-                    {!claimed ? (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      {!claimed ? (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            claim(r.id);
+                          }}
+                          disabled={busyId === r.id}
+                          className="leads-take-btn leads-take-btn--card"
+                        >
+                          {busyId === r.id ? 'Tomando…' : 'Tomar'}
+                        </button>
+                      ) : (
+                        <span className="leads-card-claimed">
+                          Tomado{r.claimedAt ? ` · ${relTime(r.claimedAt)}` : ''}
+                        </span>
+                      )}
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          claim(r.id);
+                          goQuote(r.id);
                         }}
-                        disabled={busyId === r.id}
-                        className="leads-take-btn leads-take-btn--card"
+                        className="leads-quote-btn leads-quote-btn--card"
                       >
-                        {busyId === r.id ? 'Tomando…' : 'Tomar'}
+                        Cotizar
                       </button>
-                    ) : (
-                      <span className="leads-card-claimed">
-                        Tomado{r.claimedAt ? ` · ${relTime(r.claimedAt)}` : ''}
-                      </span>
-                    )}
+                    </div>
                   </div>
                 </li>
               );
@@ -317,6 +343,7 @@ export default function LeadsTable({
           lead={selected}
           onClose={() => setSelected(null)}
           onClaim={() => claim(selected.id)}
+          onQuote={() => goQuote(selected.id)}
           claiming={busyId === selected.id}
         />
       )}
@@ -493,11 +520,13 @@ function LeadDrawer({
   lead,
   onClose,
   onClaim,
+  onQuote,
   claiming,
 }: {
   lead: LeadRow;
   onClose: () => void;
   onClaim: () => void;
+  onQuote: () => void;
   claiming: boolean;
 }) {
   const claimed = lead.claimedAt !== null;
@@ -581,11 +610,17 @@ function LeadDrawer({
               {claiming ? 'Tomando…' : 'Tomar lead'}
             </button>
           )}
+          <button
+            onClick={onQuote}
+            className="leads-drawer-action leads-drawer-action--primary"
+          >
+            Crear cotización
+          </button>
           <a
             href={waLink}
             target="_blank"
             rel="noreferrer"
-            className={`leads-drawer-action ${claimed ? 'leads-drawer-action--primary' : 'leads-drawer-action--outline'}`}
+            className="leads-drawer-action leads-drawer-action--outline"
           >
             Abrir WhatsApp ↗
           </a>
@@ -942,6 +977,28 @@ const LEADS_CSS = `
   text-transform: uppercase;
   font-weight: 600;
 }
+
+.leads-quote-btn {
+  padding: 0.5rem 1rem;
+  background: var(--panel-bg);
+  color: var(--text-main);
+  border: 1px solid var(--text-main);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.12s ease;
+  border-radius: 0;
+  white-space: nowrap;
+}
+.leads-quote-btn:hover {
+  background: var(--gold);
+  border-color: var(--gold);
+  color: var(--text-main);
+}
+.leads-quote-btn--card { padding: 0.4rem 0.85rem; font-size: 0.66rem; }
 
 /* ── Mobile cards ────────────────────────────────────────────── */
 .leads-cards { display: none; list-style: none; padding: 0; margin: 0; }
