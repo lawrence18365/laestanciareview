@@ -56,6 +56,7 @@ export default function QuoteList({
   const router = useRouter();
   const [quotes, setQuotes] = useState(initialQuotes);
   const [deleting, setDeleting] = useState<number | null>(null);
+  const [sending, setSending] = useState<number | null>(null);
 
   async function handleDelete(id: number) {
     if (!confirm(t.quotes.confirmDelete)) return;
@@ -65,6 +66,26 @@ export default function QuoteList({
       setQuotes((prev) => prev.filter((q) => q.id !== id));
     } finally {
       setDeleting(null);
+    }
+  }
+
+  // Mint (or reuse) the public share link and open WhatsApp prefilled to the
+  // client. First send flips the quote to "sent".
+  async function handleSend(id: number) {
+    setSending(id);
+    try {
+      const res = await fetch(`/api/quotes/${id}/send`, { method: 'POST' });
+      if (!res.ok) {
+        alert('No se pudo generar el enlace para compartir.');
+        return;
+      }
+      const data = (await res.json()) as { waLink: string; status: string };
+      setQuotes((prev) =>
+        prev.map((q) => (q.id === id ? { ...q, status: data.status } : q)),
+      );
+      window.open(data.waLink, '_blank', 'noopener,noreferrer');
+    } finally {
+      setSending(null);
     }
   }
 
@@ -133,6 +154,14 @@ export default function QuoteList({
                 </div>
               </div>
               <div className="ql-card-actions">
+                <button
+                  onClick={() => handleSend(q.id)}
+                  disabled={sending === q.id}
+                  className="ql-action ql-action-primary"
+                  style={{ opacity: sending === q.id ? 0.5 : 1 }}
+                >
+                  {sending === q.id ? '...' : 'Enviar'}
+                </button>
                 <button
                   onClick={() => router.push(`/quotes/${q.id}`)}
                   className="ql-action"
@@ -243,6 +272,7 @@ const QL_CSS = `
   cursor: pointer;
 }
 .ql-action-danger { color: var(--red); border-color: var(--red); }
+.ql-action-primary { background: var(--text-main); color: var(--panel-bg); border-color: var(--text-main); }
 
 /* iPad / tablet */
 @media (max-width: 1024px) {

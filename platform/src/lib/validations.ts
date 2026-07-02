@@ -199,6 +199,9 @@ export const quoteCreateSchema = z.object({
   terms: z.string().max(20000).optional().nullable(),
   configJson: z.unknown().optional(),
   items: quoteItemsMap,
+  // Set when the quote originates from an event lead. Tenant ownership of the
+  // lead is re-verified server-side before it is linked (see api/quotes).
+  leadId: z.coerce.number().int().positive().optional().nullable(),
 });
 
 export const quoteUpdateSchema = quoteCreateSchema.extend({

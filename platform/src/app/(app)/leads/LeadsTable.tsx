@@ -109,6 +109,34 @@ export default function LeadsTable({
     }
   }
 
+  // Jump into the quote builder pre-filled from this lead. Linking + the
+  // lead→"quoted" transition happen server-side when the quote is saved.
+  function goQuote(id: number) {
+    router.push(`/quotes/new?leadId=${id}`);
+  }
+
+  // Advance a lead's pipeline status (won/lost/etc.). Server enforces legal
+  // transitions and, on "won", accepts the linked quote.
+  async function setStatus(id: number, status: string) {
+    setBusyId(id);
+    try {
+      const res = await fetch(`/api/leads/${id}/status`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status }),
+      });
+      if (!res.ok) {
+        router.refresh();
+        return;
+      }
+      const data = (await res.json()) as { lead: LeadRow };
+      setRows((cur) => cur.map((r) => (r.id === id ? { ...r, ...data.lead } : r)));
+      setSelected((cur) => (cur && cur.id === id ? { ...cur, ...data.lead } : cur));
+    } finally {
+      setBusyId(null);
+    }
+  }
+
   return (
     <div className="leads-root">
       <style>{LEADS_CSS}</style>
@@ -237,7 +265,7 @@ export default function LeadsTable({
                         {relTime(r.createdAt)}
                       </Td>
                       <Td>
-                        <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                        <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 6 }}>
                           {!claimed ? (
                             <button
                               onClick={(e) => {
@@ -254,6 +282,15 @@ export default function LeadsTable({
                               Tomado{r.claimedAt ? ` · ${relTime(r.claimedAt)}` : ''}
                             </span>
                           )}
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              goQuote(r.id);
+                            }}
+                            className="leads-quote-btn"
+                          >
+                            Cotizar
+                          </button>
                         </div>
                       </Td>
                     </tr>
@@ -288,22 +325,33 @@ export default function LeadsTable({
                   </div>
                   <div className="leads-card-bottom">
                     <span className="leads-card-time">{relTime(r.createdAt)}</span>
-                    {!claimed ? (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      {!claimed ? (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            claim(r.id);
+                          }}
+                          disabled={busyId === r.id}
+                          className="leads-take-btn leads-take-btn--card"
+                        >
+                          {busyId === r.id ? 'Tomando…' : 'Tomar'}
+                        </button>
+                      ) : (
+                        <span className="leads-card-claimed">
+                          Tomado{r.claimedAt ? ` · ${relTime(r.claimedAt)}` : ''}
+                        </span>
+                      )}
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          claim(r.id);
+                          goQuote(r.id);
                         }}
-                        disabled={busyId === r.id}
-                        className="leads-take-btn leads-take-btn--card"
+                        className="leads-quote-btn leads-quote-btn--card"
                       >
-                        {busyId === r.id ? 'Tomando…' : 'Tomar'}
+                        Cotizar
                       </button>
-                    ) : (
-                      <span className="leads-card-claimed">
-                        Tomado{r.claimedAt ? ` · ${relTime(r.claimedAt)}` : ''}
-                      </span>
-                    )}
+                    </div>
                   </div>
                 </li>
               );
@@ -317,6 +365,8 @@ export default function LeadsTable({
           lead={selected}
           onClose={() => setSelected(null)}
           onClaim={() => claim(selected.id)}
+          onQuote={() => goQuote(selected.id)}
+          onStatus={(s) => setStatus(selected.id, s)}
           claiming={busyId === selected.id}
         />
       )}
@@ -493,11 +543,15 @@ function LeadDrawer({
   lead,
   onClose,
   onClaim,
+  onQuote,
+  onStatus,
   claiming,
 }: {
   lead: LeadRow;
   onClose: () => void;
   onClaim: () => void;
+  onQuote: () => void;
+  onStatus: (status: string) => void;
   claiming: boolean;
 }) {
   const claimed = lead.claimedAt !== null;
@@ -581,15 +635,40 @@ function LeadDrawer({
               {claiming ? 'Tomando…' : 'Tomar lead'}
             </button>
           )}
+          <button
+            onClick={onQuote}
+            className="leads-drawer-action leads-drawer-action--primary"
+          >
+            Crear cotización
+          </button>
           <a
             href={waLink}
             target="_blank"
             rel="noreferrer"
-            className={`leads-drawer-action ${claimed ? 'leads-drawer-action--primary' : 'leads-drawer-action--outline'}`}
+            className="leads-drawer-action leads-drawer-action--outline"
           >
             Abrir WhatsApp ↗
           </a>
         </div>
+
+        {lead.status !== 'won' && lead.status !== 'lost' && (
+          <div className="leads-drawer-actions" style={{ marginTop: '0.5rem' }}>
+            <button
+              onClick={() => onStatus('won')}
+              disabled={claiming}
+              className="leads-drawer-action leads-drawer-action--win"
+            >
+              Marcar ganado ✓
+            </button>
+            <button
+              onClick={() => onStatus('lost')}
+              disabled={claiming}
+              className="leads-drawer-action leads-drawer-action--lose"
+            >
+              Marcar perdido
+            </button>
+          </div>
+        )}
       </aside>
     </div>
   );
@@ -943,6 +1022,28 @@ const LEADS_CSS = `
   font-weight: 600;
 }
 
+.leads-quote-btn {
+  padding: 0.5rem 1rem;
+  background: var(--panel-bg);
+  color: var(--text-main);
+  border: 1px solid var(--text-main);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.12s ease;
+  border-radius: 0;
+  white-space: nowrap;
+}
+.leads-quote-btn:hover {
+  background: var(--gold);
+  border-color: var(--gold);
+  color: var(--text-main);
+}
+.leads-quote-btn--card { padding: 0.4rem 0.85rem; font-size: 0.66rem; }
+
 /* ── Mobile cards ────────────────────────────────────────────── */
 .leads-cards { display: none; list-style: none; padding: 0; margin: 0; }
 
@@ -1130,6 +1231,18 @@ const LEADS_CSS = `
   background: var(--text-main);
   color: var(--panel-bg);
 }
+.leads-drawer-action--win {
+  background: var(--green);
+  color: #fff;
+  border-color: var(--green);
+}
+.leads-drawer-action--win:hover { filter: brightness(0.95); }
+.leads-drawer-action--lose {
+  background: var(--panel-bg);
+  color: var(--red);
+  border-color: var(--red);
+}
+.leads-drawer-action--lose:hover { background: var(--red); color: #fff; }
 .leads-drawer-action:disabled {
   background: var(--text-muted);
   border-color: var(--text-muted);

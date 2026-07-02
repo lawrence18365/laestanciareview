@@ -7,6 +7,7 @@ import {
   timestamp,
   pgEnum,
   index,
+  uniqueIndex,
   unique,
   jsonb,
 } from 'drizzle-orm/pg-core';
@@ -521,6 +522,17 @@ export const quotes = pgTable(
     // Full builder state (modo + evento + per-mode state). Nullable for
     // legacy rows created before the V2 builder shipped.
     configJson: jsonb('config_json'),
+    // Set when this quote was created from an event lead (/quotes/new?leadId).
+    // Nullable: direct/manual quotes have no originating lead. SET NULL on lead
+    // delete so the quote survives. See migrations/0011_quote_lead_link.sql.
+    leadId: integer('lead_id').references(() => eventLeads.id, {
+      onDelete: 'set null',
+    }),
+    // Client-facing delivery. publicToken is an unguessable share slug for the
+    // read-only /q/[token] page; sentAt stamps the first WhatsApp send.
+    // See migrations/0012_quote_public_token.sql.
+    publicToken: text('public_token'),
+    sentAt: timestamp('sent_at', { withTimezone: true }),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },
@@ -528,6 +540,8 @@ export const quotes = pgTable(
     index('quotes_restaurant_idx').on(t.restaurantId),
     index('quotes_created_at_idx').on(t.createdAt),
     index('quotes_status_idx').on(t.status),
+    index('quotes_lead_idx').on(t.leadId),
+    uniqueIndex('quotes_public_token_uniq').on(t.publicToken),
   ],
 );
 
@@ -552,6 +566,10 @@ export const quotesRelations = relations(quotes, ({ one, many }) => ({
     references: [restaurants.id],
   }),
   items: many(quoteItems),
+  lead: one(eventLeads, {
+    fields: [quotes.leadId],
+    references: [eventLeads.id],
+  }),
 }));
 
 export const quoteItemsRelations = relations(quoteItems, ({ one }) => ({

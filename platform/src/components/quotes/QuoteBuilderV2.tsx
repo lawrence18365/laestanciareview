@@ -43,6 +43,9 @@ type Tab = 'plantillas' | 'constructor' | 'carta' | 'preview';
 type Props = {
   initialConfig?: QuoteConfig;
   quoteId?: number;
+  // Set when creating a quote from an event lead — forwarded to POST /api/quotes
+  // so the server links the quote and advances the lead to "quoted".
+  leadId?: number;
   quoteNumber?: string;
   restaurantName?: string;
   logoSrc?: string;
@@ -56,6 +59,7 @@ type Props = {
 export default function QuoteBuilderV2({
   initialConfig,
   quoteId,
+  leadId,
   quoteNumber,
   restaurantName = 'La Estancia',
   logoSrc,
@@ -339,6 +343,8 @@ export default function QuoteBuilderV2({
         ivaPercent: '0',
         terms: config.terms ?? '',
         configJson: config,
+        // Only meaningful on create; the server links it and advances the lead.
+        leadId,
       };
 
       if (quoteId) {
