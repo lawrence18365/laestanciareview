@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server';
-import { and, desc, eq, inArray } from 'drizzle-orm';
+import { and, desc, eq, inArray, sql } from 'drizzle-orm';
 import { db } from '@/db';
 import { quotes, quoteItems, restaurants, eventLeads } from '@/db/schema';
 import { verifySession } from '@/lib/session';
@@ -113,7 +113,13 @@ export async function POST(req: NextRequest) {
   if (linkedLeadId != null) {
     await db
       .update(eventLeads)
-      .set({ status: 'quoted' })
+      // Stamp claimedAt too (preserving an existing value) so a lead quoted
+      // straight from "new" doesn't keep reading as "sin tomar" — the leads
+      // dashboard defines taken/untaken by claimedAt.
+      .set({
+        status: 'quoted',
+        claimedAt: sql`COALESCE(${eventLeads.claimedAt}, now())`,
+      })
       .where(
         and(
           eq(eventLeads.id, linkedLeadId),

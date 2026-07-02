@@ -73,17 +73,33 @@ export default function QuoteList({
   // client. First send flips the quote to "sent".
   async function handleSend(id: number) {
     setSending(id);
+    // Open the tab synchronously inside the click gesture so mobile Safari
+    // doesn't block the popup; we redirect it once the link is minted, or
+    // close it on failure. (Hostesses run this on phones.)
+    const waWindow = window.open('', '_blank');
     try {
       const res = await fetch(`/api/quotes/${id}/send`, { method: 'POST' });
       if (!res.ok) {
-        alert('No se pudo generar el enlace para compartir.');
+        waWindow?.close();
+        let msg = 'No se pudo generar el enlace para compartir.';
+        try {
+          const err = (await res.json()) as { error?: string };
+          if (err?.error) msg = err.error;
+        } catch {
+          /* non-JSON error body — keep the default message */
+        }
+        alert(msg);
         return;
       }
       const data = (await res.json()) as { waLink: string; status: string };
       setQuotes((prev) =>
         prev.map((q) => (q.id === id ? { ...q, status: data.status } : q)),
       );
-      window.open(data.waLink, '_blank', 'noopener,noreferrer');
+      if (waWindow) waWindow.location.href = data.waLink;
+      else window.open(data.waLink, '_blank', 'noopener,noreferrer');
+    } catch {
+      waWindow?.close();
+      alert('Error de red. Intenta de nuevo.');
     } finally {
       setSending(null);
     }

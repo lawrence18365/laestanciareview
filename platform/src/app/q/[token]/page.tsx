@@ -48,12 +48,23 @@ export default async function PublicQuotePage({
     .limit(1);
   if (!restaurant) notFound();
 
-  // Only V2 quotes (with builder state) are shareable; legacy rows aren't.
-  if (!quote.configJson || typeof quote.configJson !== 'object') notFound();
+  // Only well-formed V2 quotes (with builder state) are shareable. configJson
+  // is stored as unvalidated JSON, so guard hard: reject null/array, and treat
+  // a migrate failure or a config missing the fields QuotePreview depends on
+  // (evento/modo) as a 404 rather than 500-ing the page for the guest.
+  const raw = quote.configJson;
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) notFound();
+
+  let config: QuoteConfig | null = null;
+  try {
+    config = migrateConfig(raw as QuoteConfig);
+  } catch {
+    config = null;
+  }
+  if (!config || !config.evento || !config.modo) notFound();
 
   const brand = getBrandForSlug(restaurant.slug);
   const folio = quote.quoteNumber ?? `Q-${String(quote.id).padStart(4, '0')}`;
-  const config = migrateConfig(quote.configJson as QuoteConfig);
 
   return (
     <div style={{ background: '#F5F2EC', minHeight: '100vh', padding: '2rem 1rem' }}>
