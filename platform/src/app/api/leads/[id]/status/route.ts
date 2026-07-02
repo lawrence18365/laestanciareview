@@ -98,8 +98,10 @@ export async function POST(req: NextRequest, ctx: RouteContext) {
   }
 
   const patch: { status: string; claimedAt?: Date } = { status: next };
-  // Claiming through this route stamps claimedAt if it wasn't set.
-  if (next === 'claimed' && lead.claimedAt === null) patch.claimedAt = new Date();
+  // Any advance out of "new" means the lead has been picked up — stamp the
+  // claim time if it wasn't already, so a quoted/won/lost lead never keeps
+  // reading as "sin tomar" (the dashboard defines taken/untaken by claimedAt).
+  if (lead.claimedAt === null && next !== 'new') patch.claimedAt = new Date();
 
   const [updated] = await db
     .update(eventLeads)

@@ -104,6 +104,8 @@ export default function LeadsTable({
         cur.map((r) => (r.id === id ? { ...r, ...data.lead } : r)),
       );
       setSelected((cur) => (cur && cur.id === id ? { ...cur, ...data.lead } : cur));
+      // Re-fetch so the server-computed hero/filter counts reflect the change.
+      router.refresh();
     } finally {
       setBusyId(null);
     }
@@ -132,6 +134,8 @@ export default function LeadsTable({
       const data = (await res.json()) as { lead: LeadRow };
       setRows((cur) => cur.map((r) => (r.id === id ? { ...r, ...data.lead } : r)));
       setSelected((cur) => (cur && cur.id === id ? { ...cur, ...data.lead } : cur));
+      // Keep the server-computed hero/filter counts in sync.
+      router.refresh();
     } finally {
       setBusyId(null);
     }

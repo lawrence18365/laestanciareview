@@ -64,6 +64,23 @@ export async function POST(req: NextRequest, ctx: RouteContext) {
     .limit(1);
   if (!quote) return Response.json({ error: 'Not found' }, { status: 404 });
 
+  // The public /q/[token] page can only render V2 quotes (with builder state).
+  // Refuse to mint a share link for a legacy/empty quote so a hostess never
+  // hands a client a link that 404s.
+  if (
+    !quote.configJson ||
+    typeof quote.configJson !== 'object' ||
+    Array.isArray(quote.configJson)
+  ) {
+    return Response.json(
+      {
+        error:
+          'Esta cotización no se puede compartir por enlace. Ábrela, guárdala de nuevo y reintenta.',
+      },
+      { status: 422 },
+    );
+  }
+
   // Reuse an existing token so previously shared links keep resolving.
   const token = quote.publicToken ?? randomBytes(12).toString('hex');
 
@@ -76,7 +93,8 @@ export async function POST(req: NextRequest, ctx: RouteContext) {
       sentAt: quote.sentAt ?? new Date(),
       updatedAt: new Date(),
     })
-    .where(eq(quotes.id, quoteId));
+    // Tenant-scope the write too (defense-in-depth beyond the SELECT above).
+    .where(and(eq(quotes.id, quoteId), eq(quotes.restaurantId, restaurant.id)));
 
   const url = `${baseUrl()}/q/${token}`;
   const folio = quote.quoteNumber ?? `Q-${String(quoteId).padStart(4, '0')}`;
