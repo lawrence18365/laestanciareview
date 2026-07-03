@@ -207,3 +207,21 @@ export const quoteCreateSchema = z.object({
 export const quoteUpdateSchema = quoteCreateSchema.extend({
   status: z.enum(['draft', 'sent', 'accepted', 'expired']).optional(),
 });
+
+// Manual event-lead entry from the dashboard (GM adds a walk-in / phone
+// inquiry the bot didn't capture). source is forced to 'manual' server-side.
+export const eventLeadManualSchema = z.object({
+  name: z.string().max(200).optional().nullable(),
+  phone: z
+    .string()
+    .min(7)
+    .max(32)
+    .regex(/^[\d+\s\-()]+$/, 'Teléfono inválido'),
+  tipoEvento: z.string().max(120).optional().nullable(),
+  pax: z.coerce.number().int().min(1).max(100000).optional().nullable(),
+  fechaTentativa: z.string().max(120).optional().nullable(),
+  presupuestoPp: z.string().max(120).optional().nullable(),
+  prioridad: z.string().max(60).optional().nullable(),
+  notasExtra: z.string().max(5000).optional().nullable(),
+  urgente: z.boolean().optional().default(false),
+});

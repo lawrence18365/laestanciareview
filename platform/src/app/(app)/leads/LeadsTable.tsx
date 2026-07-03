@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import NewLeadModal from './NewLeadModal';
 
 export type LeadRow = {
   id: number;
@@ -65,6 +66,7 @@ export default function LeadsTable({
   const [search, setSearch] = useState('');
   const [selected, setSelected] = useState<LeadRow | null>(null);
   const [busyId, setBusyId] = useState<number | null>(null);
+  const [showNew, setShowNew] = useState(false);
 
   // Re-sync when the server pushes new data (router.refresh / revalidate).
   useEffect(() => setRows(initial), [initial]);
@@ -164,6 +166,9 @@ export default function LeadsTable({
               </span>
             </p>
           </div>
+          <button className="leads-new-btn" onClick={() => setShowNew(true)}>
+            + Nuevo lead
+          </button>
         </div>
       </header>
 
@@ -372,6 +377,16 @@ export default function LeadsTable({
           onQuote={() => goQuote(selected.id)}
           onStatus={(s) => setStatus(selected.id, s)}
           claiming={busyId === selected.id}
+        />
+      )}
+
+      {showNew && (
+        <NewLeadModal
+          onClose={() => setShowNew(false)}
+          onCreated={() => {
+            setShowNew(false);
+            router.refresh();
+          }}
         />
       )}
     </div>
@@ -863,6 +878,23 @@ const LEADS_CSS = `
 }
 .leads-subtitle-meta { color: var(--text-main); }
 .leads-urgent-count { color: var(--red); font-weight: 700; }
+.leads-new-btn {
+  align-self: center;
+  padding: 0.6rem 1.1rem;
+  background: var(--text-main);
+  color: var(--panel-bg);
+  border: 1px solid var(--text-main);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-family: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+  border-radius: 0;
+  transition: all 0.12s ease;
+}
+.leads-new-btn:hover { background: var(--gold); border-color: var(--gold); color: var(--text-main); }
 
 /* ── Filter bar ──────────────────────────────────────────────── */
 .leads-filterbar {
