@@ -325,9 +325,9 @@ export default async function AuditPage({
           </div>
           {[
             { stat: 'Google', desc: 'tu calificación visible influye antes de que el cliente te escriba' },
-            { stat: 'NFC', desc: 'menos fricción para que el cliente correcto deje su opinión' },
+            { stat: 'NFC', desc: 'menos fricción para que cada cliente deje su opinión' },
             { stat: 'Equipo', desc: 'cada tarjeta permite medir meseros, turnos y ubicaciones' },
-            { stat: 'Datos', desc: 'separas intención de reseña, feedback privado y desempeño real' },
+            { stat: 'Datos', desc: 'ves reseñas públicas, comentarios privados y desempeño del equipo por separado' },
           ].map((item) => (
             <div key={item.stat} style={{
               display: 'flex',
@@ -362,8 +362,8 @@ export default async function AuditPage({
           </div>
           {[
             { step: '1', title: 'Tu mesero entrega una tarjeta', desc: 'El cliente escanea un QR después de su visita' },
-            { step: '2', title: 'Calificación inteligente', desc: 'Si es 4-5★ → va directo a Google. Si es 1-3★ → te llega como feedback privado' },
-            { step: '3', title: 'Tu calificación sube', desc: 'Más reseñas positivas en Google, feedback negativo solo lo ves tú' },
+            { step: '2', title: 'El cliente elige', desc: 'Cada cliente ve dos opciones iguales: dejar una reseña en Google o enviarte un comentario privado.' },
+            { step: '3', title: 'Mejoras con datos reales', desc: 'Recopilas más reseñas reales en Google y detectas a los clientes insatisfechos a tiempo para atenderlos.' },
           ].map((item) => (
             <div key={item.step} style={{
               display: 'flex',
