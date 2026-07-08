@@ -111,7 +111,7 @@ export default function InterceptedDrilldown({ reviews }: Props) {
         Comentario: r.feedback || '',
         Estado: statusLabel[r.status] || r.status,
       })),
-      'reseñas-interceptadas.csv',
+      'feedback-privado.csv',
     );
   };
 

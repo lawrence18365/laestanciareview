@@ -60,7 +60,7 @@ export const t = {
     googleSends: 'Envíos a Google',
     vsLastWeek: 'vs semana pasada',
     monthlyTrend: 'Tendencia Mensual',
-    intercepted: 'Interceptados',
+    intercepted: 'Feedback privado',
     staffLeaderboard: 'Clasificación del Personal',
     exportCsv: 'Exportar CSV',
     noReviewsThisWeek: 'Sin reseñas esta semana aún.',
@@ -72,7 +72,7 @@ export const t = {
     googleConversion: (sends: number, gained: number) =>
       `RateTap envió ${sends} clientes a Google — tu conteo de reseñas creció en ${gained}`,
     sentToGoogleChart: 'enviados a Google',
-    interceptedChart: 'interceptados',
+    interceptedChart: 'feedback privado',
   },
 
   // ── Analytics ──
@@ -83,8 +83,8 @@ export const t = {
     sentToGoogle: 'Enviados a Google',
     confirmedNewReviews: (n: number) => `${n} nuevas reseñas confirmadas`,
     customersDirectedToGoogle: 'clientes dirigidos a Google',
-    intercepted: 'Interceptados',
-    badReviewsCaughtPrivately: 'reseñas negativas captadas en privado',
+    intercepted: 'Feedback privado',
+    badReviewsCaughtPrivately: 'comentarios privados recibidos',
     allTimeReviews: 'Reseñas Totales',
     allTimeAvg: 'Promedio Total',
     googleSends: 'Envíos a Google',
@@ -179,7 +179,7 @@ export const t = {
     caught: 'captado',
     unknown: 'Desconocido',
     totalScans: 'Total Escaneos',
-    intercepted: 'Interceptados',
+    intercepted: 'Feedback privado',
     today: 'hoy',
     vsLastWk: 'vs sem pasada',
     teamLeaderboard: 'Clasificación del Equipo',
@@ -243,9 +243,9 @@ export const t = {
 
   // ── Intercepted Drilldown ──
   intercepted: {
-    title: 'Reseñas Negativas Prevenidas',
-    subtitle: 'Detalle de reseñas captadas en privado por ubicación',
-    totalIntercepted: 'Total Captadas',
+    title: 'Feedback privado',
+    subtitle: 'Detalle de comentarios privados por ubicación',
+    totalIntercepted: 'Total privados',
     allUnits: 'Todas las ubicaciones',
     filterByRating: 'Filtrar por calificación',
     allRatings: 'Todas',
@@ -404,11 +404,11 @@ export const t = {
 
     dashboardTitle: 'Panel Principal',
     dashboardSubtitle: 'Tu centro de control — /dashboard',
-    dashboardBody: 'Aquí ves todo de un vistazo: tu calificación de Google actual, cuántas reseñas se enviaron a Google, cuántas negativas se interceptaron, y el rendimiento semanal de tu equipo. También incluye alertas cuando hay comentarios sin leer o reseñas negativas que necesitan atención.',
+    dashboardBody: 'Aquí ves todo de un vistazo: tu calificación de Google actual, cuántas reseñas se enviaron a Google, cuántos comentarios privados recibiste, y el rendimiento semanal de tu equipo. También incluye alertas cuando hay comentarios sin leer que necesitan atención.',
 
     liveTitle: 'Vista En Vivo',
     liveSubtitle: 'Monitoreo en tiempo real — /live',
-    liveBody: 'La pantalla En Vivo se actualiza automáticamente mostrando cada escaneo conforme sucede. Puedes ver quién escaneó, qué calificación dio, y si fue enviado a Google o interceptado. Perfecto para tenerlo en una pantalla en la oficina durante el servicio.',
+    liveBody: 'La pantalla En Vivo se actualiza automáticamente mostrando cada escaneo conforme sucede. Puedes ver quién escaneó, qué calificación dio, y si fue a Google o dejó un comentario privado. Perfecto para tenerlo en una pantalla en la oficina durante el servicio.',
     liveTip: 'Usa el botón de pantalla completa para proyectar esta vista en un monitor o TV durante las horas de servicio.',
 
     inboxTitle: 'Buzón de Comentarios',
