@@ -44,8 +44,11 @@ export async function POST(req: NextRequest) {
 
   const staffMember = await getStaffByCode(restaurant.id, staffCode);
 
-  const sentToGoogle =
-    rating >= restaurant.googleThreshold && !!restaurant.googleReviewUrl;
+  // Compliant flow: capture the rating for internal analytics + waiter
+  // attribution, but do NOT route the guest by it. Every guest is offered the
+  // same two options (Google review OR private feedback) and chooses. The
+  // Google link is built for everyone; sent_to_google is recorded only when the
+  // guest actually chooses Google (see /api/reviews/chose-google).
   const feedbackToken = randomToken();
   const feedbackTokenHash = await tokenHash(feedbackToken);
 
@@ -58,17 +61,16 @@ export async function POST(req: NextRequest) {
       staffName: staffMember?.name ?? staffCode,
       rating,
       feedbackTokenHash,
-      sentToGoogle,
+      sentToGoogle: false,
     })
     .returning();
 
   // Alerts are fired only when the customer actually submits feedback (see
-  // /api/reviews/feedback). Tapping a star alone is not enough signal — too many
-  // customers open the form and abandon, which used to flood GM inboxes with
-  // placeholder "(sin comentario aún)" alerts.
+  // /api/reviews/feedback). Tapping a star alone is not enough signal.
 
+  // Google review link — offered to EVERY guest, regardless of rating.
   let googleReviewUrl: string | null = null;
-  if (sentToGoogle && restaurant.googleReviewUrl) {
+  if (restaurant.googleReviewUrl) {
     try {
       const u = new URL(restaurant.googleReviewUrl);
       u.searchParams.set('utm_source', 'ratetap');
@@ -91,23 +93,8 @@ export async function POST(req: NextRequest) {
         review_id: review.id,
         rating,
         staff_code: staffCode || null,
-        sent_to_google: sentToGoogle,
       },
     });
-
-    if (sentToGoogle) {
-      await trackCommercialEvent({
-        eventName: 'google_redirected',
-        restaurantId: restaurant.id,
-        source: 'review_flow',
-        path: `/r/${restaurantSlug}`,
-        metadata: {
-          review_id: review.id,
-          rating,
-          staff_code: staffCode || null,
-        },
-      });
-    }
   } catch (err) {
     console.error('[reviews/submit] commercial event failed:', err);
   }
@@ -115,7 +102,7 @@ export async function POST(req: NextRequest) {
   return Response.json({
     reviewId: review.id,
     feedbackToken,
-    action: sentToGoogle ? 'google' : 'feedback',
+    action: 'choice',
     googleReviewUrl,
   });
 }

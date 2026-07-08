@@ -52,9 +52,9 @@ const NURTURE: Record<string, { days: number; whatsapp: (name: string) => string
   day3: {
     days: 3,
     whatsapp: (name) =>
-      `Hola *${name}* 👋 Llevas 3 días con RateTap. Tip: pídele a tu equipo que entreguen la tarjeta con la frase "Si todo estuvo bien, nos ayudaría mucho una reseña ⭐". Eso duplica la tasa de escaneo. ¿Cómo va hasta ahora?`,
+      `Hola *${name}* 👋 Llevas 3 días con RateTap. Tip: pídele a tu equipo que entreguen la tarjeta con la frase "Nos encantaría conocer tu opinión, ¿nos ayudas con una reseña? ⭐". Eso duplica la tasa de escaneo. ¿Cómo va hasta ahora?`,
     subject: (name) => `Tip del día 3 — ${name}`,
-    html: (name) => `<p>Hola ${name},</p><p>Llevas 3 días con RateTap. El truco que mejor funciona: tu mesero entrega la tarjeta y dice "Si todo estuvo a su gusto, nos ayudaría muchísimo una reseñita en Google ⭐".</p><p>Eso solo duplica la tasa de escaneo.</p><p><a href="${BASE_URL}/dashboard">Ver mi dashboard →</a></p>`,
+    html: (name) => `<p>Hola ${name},</p><p>Llevas 3 días con RateTap. El truco que mejor funciona: tu mesero entrega la tarjeta y dice "Nos encantaría conocer su opinión, ¿nos ayuda con una reseña en Google? ⭐".</p><p>Eso solo duplica la tasa de escaneo.</p><p><a href="${BASE_URL}/dashboard">Ver mi dashboard →</a></p>`,
   },
   day7: {
     days: 7,

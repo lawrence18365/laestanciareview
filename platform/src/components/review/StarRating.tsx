@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, type CSSProperties } from 'react';
 import { useRouter } from 'next/navigation';
 import { t } from '@/lib/i18n';
 
@@ -41,6 +41,11 @@ export default function StarRating({
   const [popStar, setPopStar] = useState(0);
   const [error, setError] = useState(false);
   const [redirecting, setRedirecting] = useState(false);
+  const [choice, setChoice] = useState<{
+    reviewId: number;
+    feedbackToken: string;
+    googleReviewUrl: string | null;
+  } | null>(null);
 
   const handleSubmit = useCallback(
     async (rating: number) => {
@@ -59,30 +64,16 @@ export default function StarRating({
         if (!res.ok) throw new Error('Submit failed');
 
         const data = await res.json();
+        if (!data.feedbackToken) throw new Error('Missing feedback token');
 
-        if (data.action === 'google' && data.googleReviewUrl) {
-          const dl = (window as unknown as { dataLayer?: Array<Record<string, unknown>> }).dataLayer;
-          if (Array.isArray(dl)) {
-            dl.push({
-              event: 'review_redirect_to_google',
-              review_id: data.reviewId,
-              rating,
-              restaurant_slug: restaurantSlug,
-              staff_code: staffCode || 'no-card',
-            });
-          }
-          setRedirecting(true);
-          setTimeout(() => {
-            window.location.href = data.googleReviewUrl;
-          }, 1000);
-        } else {
-          if (!data.feedbackToken) throw new Error('Missing feedback token');
-          setTimeout(() => {
-            router.push(
-              `/r/${restaurantSlug}/feedback?reviewId=${data.reviewId}&feedbackToken=${encodeURIComponent(data.feedbackToken)}`,
-            );
-          }, 400);
-        }
+        // No rating-based routing: offer every guest the same two options and
+        // let them choose (see chooseGoogle / chooseFeedback).
+        setChoice({
+          reviewId: data.reviewId,
+          feedbackToken: data.feedbackToken,
+          googleReviewUrl: data.googleReviewUrl ?? null,
+        });
+        setSubmitting(false);
       } catch {
         setSubmitting(false);
         setSelectedStar(0);
@@ -93,7 +84,58 @@ export default function StarRating({
     [restaurantSlug, staffCode, router],
   );
 
+  function chooseFeedback() {
+    if (!choice) return;
+    router.push(
+      `/r/${restaurantSlug}/feedback?reviewId=${choice.reviewId}&feedbackToken=${encodeURIComponent(choice.feedbackToken)}`,
+    );
+  }
+
+  function chooseGoogle() {
+    if (!choice?.googleReviewUrl) return;
+    const url = choice.googleReviewUrl;
+    // Record the guest's ACTUAL choice (analytics: sent_to_google). Best-effort.
+    fetch('/api/reviews/chose-google', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ reviewId: choice.reviewId, feedbackToken: choice.feedbackToken }),
+    }).catch(() => {});
+    const dl = (window as unknown as { dataLayer?: Array<Record<string, unknown>> }).dataLayer;
+    if (Array.isArray(dl)) {
+      dl.push({
+        event: 'review_redirect_to_google',
+        review_id: choice.reviewId,
+        rating: selectedStar,
+        restaurant_slug: restaurantSlug,
+        staff_code: staffCode || 'no-card',
+      });
+    }
+    setRedirecting(true);
+    setTimeout(() => {
+      window.location.href = url;
+    }, 800);
+  }
+
+  // Stars lock once submitted / a choice is shown / redirecting.
+  const locked = submitting || choice !== null || redirecting;
   const displayRating = hoveredStar || selectedStar;
+
+  // Both choice buttons share one style — equal visual weight is the point
+  // (no steering toward Google or away from a public review).
+  const CHOICE_BTN: CSSProperties = {
+    width: '100%',
+    padding: '0.95rem 1rem',
+    border: '1px solid #111',
+    borderRadius: 0,
+    background: '#fff',
+    color: '#111',
+    fontWeight: 700,
+    fontSize: '0.78rem',
+    letterSpacing: '0.08em',
+    textTransform: 'uppercase',
+    cursor: 'pointer',
+    fontFamily: 'var(--font-sans)',
+  };
 
   return (
     <div
@@ -162,23 +204,23 @@ export default function StarRating({
           return (
             <button
               key={star}
-              disabled={submitting}
-              onMouseEnter={() => !submitting && setHoveredStar(star)}
-              onMouseLeave={() => !submitting && setHoveredStar(0)}
+              disabled={locked}
+              onMouseEnter={() => !locked && setHoveredStar(star)}
+              onMouseLeave={() => !locked && setHoveredStar(0)}
               onClick={() => handleSubmit(star)}
               aria-label={t.starRating.rateStars(star)}
               style={{
                 border: 'none',
                 background: 'transparent',
                 padding: '0.5rem',
-                cursor: submitting ? 'default' : 'pointer',
+                cursor: locked ? 'default' : 'pointer',
                 transition: 'transform 0.2s ease, filter 0.25s ease',
                 transform: isFilled && !isPopping ? 'scale(1.1)' : 'scale(1)',
                 filter: isFilled
                   ? 'drop-shadow(0 2px 12px rgba(217, 119, 6, 0.4))'
                   : 'none',
                 color: isFilled ? '#D97706' : '#D4D4D4',
-                opacity: submitting && !isFilled ? 0.2 : 1,
+                opacity: locked && !isFilled ? 0.2 : 1,
                 animation: isPopping ? 'starPop 0.35s ease-out' : 'none',
                 WebkitTapHighlightColor: 'transparent',
               }}
@@ -276,6 +318,25 @@ export default function StarRating({
                 transformOrigin: 'left',
               }}
             />
+          </div>
+        </div>
+      ) : choice ? (
+        <div style={{ textAlign: 'center', width: '100%', animation: 'reviewFadeIn 0.4s ease-out both' }}>
+          <p style={{ fontFamily: 'var(--font-serif)', fontSize: '1.25rem', fontWeight: 600, color: '#111', margin: '0 0 0.35rem', letterSpacing: '-0.01em' }}>
+            ¡Gracias por tu calificación!
+          </p>
+          <p style={{ fontSize: '0.85rem', color: '#666', margin: '0 0 1.1rem', fontFamily: 'var(--font-sans)' }}>
+            ¿Cómo te gustaría compartir tu experiencia?
+          </p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.7rem' }}>
+            {choice.googleReviewUrl && (
+              <button onClick={chooseGoogle} style={CHOICE_BTN}>
+                Dejar reseña en Google
+              </button>
+            )}
+            <button onClick={chooseFeedback} style={CHOICE_BTN}>
+              Enviar comentario privado
+            </button>
           </div>
         </div>
       ) : (
