@@ -5,8 +5,17 @@ import { db } from '@/db';
 import { guests, guestVisits } from '@/db/schema';
 import { verifySession } from '@/lib/session';
 import { getRestaurantBySlug } from '@/lib/queries';
-import { todayBirthdayKeyMexico } from '@/lib/mexico-tz';
 import VipList from './VipList';
+
+// Current month in Mexico City as zero-padded "MM", to match the "MM" tail of
+// how guest captures store birthday_mmdd ("DD/MM"). Kept local so this route
+// carries no dependency on shared tz helpers.
+function currentMonthMexico(): string {
+  return new Intl.DateTimeFormat('en-US', {
+    timeZone: 'America/Mexico_City',
+    month: '2-digit',
+  }).format(new Date());
+}
 
 export const metadata: Metadata = {
   title: 'Club VIP · Cena Maridaje — RateTap',
@@ -57,7 +66,7 @@ export default async function VipVinoPage() {
   }));
 
   // "DD/MM" → "MM": guests whose birthday falls in the current Mexico-City month.
-  const currentMonthMm = todayBirthdayKeyMexico().slice(3);
+  const currentMonthMm = currentMonthMexico();
 
   return <VipList guests={list} currentMonthMm={currentMonthMm} />;
 }
