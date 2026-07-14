@@ -53,6 +53,7 @@ export async function middleware(req: NextRequest) {
     pathname.startsWith('/guests') ||
     pathname.startsWith('/leads') ||
     pathname.startsWith('/commercial-leads') ||
+    pathname.startsWith('/vip-vino') ||
     pathname.startsWith('/admin');
 
   if (isAppRoute) {
