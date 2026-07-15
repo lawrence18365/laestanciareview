@@ -100,8 +100,25 @@ function formatPhone(wa: string): string {
   return `+${wa}`;
 }
 
-function waUrl(g: VipGuest): string {
-  return `https://wa.me/${g.whatsapp}?text=${encodeURIComponent(MESSAGE)}`;
+function firstName(value: string): string {
+  return value.trim().split(/\s+/)[0] || value;
+}
+
+// Copa de Vino (hottest tier) gets a personal greeting; birthday-of-the-month
+// guests get a birthday intro instead (it wins over the copa greeting and
+// already carries the name). Everyone else receives MESSAGE exactly as written.
+function messageFor(g: VipGuest, currentMonthMm: string): string {
+  if (g.birthdayMmdd?.slice(3) === currentMonthMm) {
+    return `¡Hola ${firstName(g.name)}! Vi que cumples este mes 🎂 y pensé que esto podría ser una forma bonita de celebrarlo:\n\n${MESSAGE}`;
+  }
+  if (tierOf(g) === 'copa') {
+    return `¡Hola ${firstName(g.name)}! 🍷\n\n${MESSAGE}`;
+  }
+  return MESSAGE;
+}
+
+function waUrl(g: VipGuest, currentMonthMm: string): string {
+  return `https://wa.me/${g.whatsapp}?text=${encodeURIComponent(messageFor(g, currentMonthMm))}`;
 }
 
 const WhatsAppIcon = (
@@ -199,11 +216,6 @@ export default function VipList({ guests, currentMonthMm }: Props) {
                   🎂 Cumple este mes
                 </span>
               )}
-              {!g.marketingConsent && (
-                <span style={{ background: 'rgba(148,163,184,0.12)', color: '#94A3B8', fontSize: '11px', fontWeight: 600, padding: '2px 8px', borderRadius: '999px' }}>
-                  Sin consentimiento MKT
-                </span>
-              )}
             </div>
 
             <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginTop: '6px', flexWrap: 'wrap' }}>
@@ -229,7 +241,7 @@ export default function VipList({ guests, currentMonthMm }: Props) {
 
         <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
           <a
-            href={waUrl(g)}
+            href={waUrl(g, currentMonthMm)}
             target="_blank"
             rel="noopener noreferrer"
             onClick={() => markContacted(g.id)}
@@ -292,7 +304,7 @@ export default function VipList({ guests, currentMonthMm }: Props) {
           🍷 Cena Maridaje Santo Tomás
         </h1>
         <p style={{ color: '#64748B', fontSize: '14px', margin: 0 }}>
-          Toca WhatsApp → se abre el mensaje → manda. Igual que prospectos.
+          Toca WhatsApp → se abre el mensaje → manda. Solo invitados con consentimiento.
         </p>
         <div style={{ color: '#94A3B8', fontSize: '13px', marginTop: '10px', fontWeight: 600 }}>
           {contactedCount} de {guests.length} contactados
@@ -352,6 +364,7 @@ export default function VipList({ guests, currentMonthMm }: Props) {
           </div>
           <ul style={{ color: '#CBD5E1', fontSize: '13px', lineHeight: 1.6, margin: 0, paddingLeft: '16px' }}>
             <li>El mensaje ya viene llenado — solo dale send</li>
+            <li>🍷 Copa de Vino y 🎂 cumpleañeros llevan saludo personalizado con su nombre — los demás reciben el mensaje exacto</li>
             <li>Empieza por la sección 🍷 Copa de Vino: ya probaron el vino, es el cierre más fácil</li>
             <li>Al tocar WhatsApp la tarjeta se marca sola como enviada (se guarda en este teléfono)</li>
             <li>⭐ VIP y 🎂 cumple este mes = trato personal, agrega una línea a mano si puedes</li>

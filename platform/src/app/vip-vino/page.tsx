@@ -1,6 +1,6 @@
 import { Metadata } from 'next';
 import { redirect } from 'next/navigation';
-import { desc, eq, sql } from 'drizzle-orm';
+import { and, desc, eq, sql } from 'drizzle-orm';
 import { db } from '@/db';
 import { guests, guestVisits } from '@/db/schema';
 import { verifySession } from '@/lib/session';
@@ -48,7 +48,8 @@ export default async function VipVinoPage() {
     })
     .from(guests)
     .leftJoin(guestVisits, eq(guestVisits.guestId, guests.id))
-    .where(eq(guests.restaurantId, restaurant.id))
+    // LFPDPPP: outreach list carries only guests who opted into marketing.
+    .where(and(eq(guests.restaurantId, restaurant.id), eq(guests.marketingConsent, true)))
     .groupBy(guests.id)
     .orderBy(desc(sql`count(${guestVisits.id})`));
 
