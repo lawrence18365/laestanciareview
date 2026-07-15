@@ -8,6 +8,7 @@ export const t = {
     live: 'En Vivo',
     inbox: 'Buzón',
     guests: 'Invitados',
+    campaigns: 'Campañas',
     leads: 'Leads',
     quotes: 'Cotizaciones',
     staff: 'Personal',

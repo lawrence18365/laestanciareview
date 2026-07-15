@@ -10,6 +10,8 @@ import {
   uniqueIndex,
   unique,
   jsonb,
+  numeric,
+  date,
 } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 
@@ -636,5 +638,164 @@ export const eventLeadsRelations = relations(eventLeads, ({ one }) => ({
   claimedByStaff: one(staff, {
     fields: [eventLeads.claimedBy],
     references: [staff.id],
+  }),
+}));
+
+// ── Event revenue campaigns ────────────────────────────────────────────────
+
+export const eventCampaigns = pgTable(
+  'event_campaigns',
+  {
+    id: serial('id').primaryKey(),
+    restaurantId: integer('restaurant_id')
+      .notNull()
+      .references(() => restaurants.id, { onDelete: 'cascade' }),
+    slug: text('slug').notNull(),
+    name: text('name').notNull(),
+    campaignType: text('campaign_type').notNull().default('house_event'),
+    audienceRule: text('audience_rule').notNull().default('all_consented'),
+    status: text('status').notNull().default('draft'),
+    eventDate: date('event_date').notNull(),
+    eventTime: text('event_time'),
+    offerName: text('offer_name').notNull(),
+    messageText: text('message_text').notNull(),
+    pricePerPerson: numeric('price_per_person', { precision: 12, scale: 2 })
+      .notNull()
+      .default('0'),
+    capacity: integer('capacity').notNull().default(1),
+    minimumSeats: integer('minimum_seats').notNull().default(0),
+    baselineSeats: integer('baseline_seats').notNull().default(0),
+    attributionDays: integer('attribution_days').notNull().default(30),
+    feePercent: numeric('fee_percent', { precision: 5, scale: 2 })
+      .notNull()
+      .default('12'),
+    audienceSeededAt: timestamp('audience_seeded_at', { withTimezone: true }),
+    launchedAt: timestamp('launched_at', { withTimezone: true }),
+    completedAt: timestamp('completed_at', { withTimezone: true }),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    uniqueIndex('event_campaigns_restaurant_slug_uniq').on(t.restaurantId, t.slug),
+    index('event_campaigns_restaurant_status_idx').on(t.restaurantId, t.status, t.eventDate),
+  ],
+);
+
+export const campaignContacts = pgTable(
+  'campaign_contacts',
+  {
+    id: serial('id').primaryKey(),
+    campaignId: integer('campaign_id')
+      .notNull()
+      .references(() => eventCampaigns.id, { onDelete: 'cascade' }),
+    restaurantId: integer('restaurant_id')
+      .notNull()
+      .references(() => restaurants.id, { onDelete: 'cascade' }),
+    guestId: integer('guest_id')
+      .notNull()
+      .references(() => guests.id, { onDelete: 'cascade' }),
+    segment: text('segment').notNull(),
+    priority: integer('priority').notNull().default(100),
+    status: text('status').notNull().default('queued'),
+    openedAt: timestamp('opened_at', { withTimezone: true }),
+    sentAt: timestamp('sent_at', { withTimezone: true }),
+    repliedAt: timestamp('replied_at', { withTimezone: true }),
+    optedOutAt: timestamp('opted_out_at', { withTimezone: true }),
+    lastActionAt: timestamp('last_action_at', { withTimezone: true }),
+    notes: text('notes'),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    uniqueIndex('campaign_contacts_campaign_guest_uniq').on(t.campaignId, t.guestId),
+    index('campaign_contacts_campaign_status_idx').on(t.campaignId, t.status, t.priority),
+    index('campaign_contacts_restaurant_idx').on(t.restaurantId),
+  ],
+);
+
+export const campaignBookings = pgTable(
+  'campaign_bookings',
+  {
+    id: serial('id').primaryKey(),
+    campaignId: integer('campaign_id')
+      .notNull()
+      .references(() => eventCampaigns.id, { onDelete: 'cascade' }),
+    restaurantId: integer('restaurant_id')
+      .notNull()
+      .references(() => restaurants.id, { onDelete: 'cascade' }),
+    contactId: integer('contact_id').references(() => campaignContacts.id, { onDelete: 'set null' }),
+    guestId: integer('guest_id').references(() => guests.id, { onDelete: 'set null' }),
+    quoteId: integer('quote_id').references(() => quotes.id, { onDelete: 'set null' }),
+    eventLeadId: integer('event_lead_id').references(() => eventLeads.id, { onDelete: 'set null' }),
+    clientName: text('client_name').notNull(),
+    clientPhone: text('client_phone'),
+    partySize: integer('party_size').notNull().default(1),
+    status: text('status').notNull().default('inquiry'),
+    attributionSource: text('attribution_source').notNull().default('direct'),
+    attributionEvidence: text('attribution_evidence'),
+    bookedAmount: numeric('booked_amount', { precision: 12, scale: 2 }).notNull().default('0'),
+    depositAmount: numeric('deposit_amount', { precision: 12, scale: 2 }).notNull().default('0'),
+    collectedAmount: numeric('collected_amount', { precision: 12, scale: 2 }).notNull().default('0'),
+    refundedAmount: numeric('refunded_amount', { precision: 12, scale: 2 }).notNull().default('0'),
+    ivaAmount: numeric('iva_amount', { precision: 12, scale: 2 }).notNull().default('0'),
+    serviceChargeAmount: numeric('service_charge_amount', { precision: 12, scale: 2 }).notNull().default('0'),
+    gratuityAmount: numeric('gratuity_amount', { precision: 12, scale: 2 }).notNull().default('0'),
+    eligibleRevenue: numeric('eligible_revenue', { precision: 12, scale: 2 }).notNull().default('0'),
+    feeAmount: numeric('fee_amount', { precision: 12, scale: 2 }).notNull().default('0'),
+    depositReceivedAt: timestamp('deposit_received_at', { withTimezone: true }),
+    bookedAt: timestamp('booked_at', { withTimezone: true }),
+    attendedAt: timestamp('attended_at', { withTimezone: true }),
+    cancelledAt: timestamp('cancelled_at', { withTimezone: true }),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    index('campaign_bookings_campaign_status_idx').on(t.campaignId, t.status, t.createdAt),
+    index('campaign_bookings_restaurant_idx').on(t.restaurantId),
+    index('campaign_bookings_contact_idx').on(t.contactId),
+  ],
+);
+
+export const eventCampaignsRelations = relations(eventCampaigns, ({ one, many }) => ({
+  restaurant: one(restaurants, {
+    fields: [eventCampaigns.restaurantId],
+    references: [restaurants.id],
+  }),
+  contacts: many(campaignContacts),
+  bookings: many(campaignBookings),
+}));
+
+export const campaignContactsRelations = relations(campaignContacts, ({ one, many }) => ({
+  campaign: one(eventCampaigns, {
+    fields: [campaignContacts.campaignId],
+    references: [eventCampaigns.id],
+  }),
+  guest: one(guests, {
+    fields: [campaignContacts.guestId],
+    references: [guests.id],
+  }),
+  bookings: many(campaignBookings),
+}));
+
+export const campaignBookingsRelations = relations(campaignBookings, ({ one }) => ({
+  campaign: one(eventCampaigns, {
+    fields: [campaignBookings.campaignId],
+    references: [eventCampaigns.id],
+  }),
+  contact: one(campaignContacts, {
+    fields: [campaignBookings.contactId],
+    references: [campaignContacts.id],
+  }),
+  guest: one(guests, {
+    fields: [campaignBookings.guestId],
+    references: [guests.id],
+  }),
+  quote: one(quotes, {
+    fields: [campaignBookings.quoteId],
+    references: [quotes.id],
+  }),
+  eventLead: one(eventLeads, {
+    fields: [campaignBookings.eventLeadId],
+    references: [eventLeads.id],
   }),
 }));

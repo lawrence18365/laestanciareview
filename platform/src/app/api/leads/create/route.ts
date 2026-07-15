@@ -166,6 +166,9 @@ function normalizeBody(body: Record<string, unknown>) {
     utmContent: getString(body, 'utmContent', 'utm_content'),
     offer: getString(body, 'offer') ?? 'demo',
     metadata: {
+      ...(body.metadata && typeof body.metadata === 'object' && !Array.isArray(body.metadata)
+        ? body.metadata as Record<string, unknown>
+        : {}),
       form_id: getString(body, 'form_id', 'formId'),
       source_cluster: getString(body, 'source_cluster', 'sourceCluster'),
       cta_context: getString(body, 'cta_context', 'ctaContext'),

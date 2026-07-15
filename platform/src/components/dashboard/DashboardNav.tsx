@@ -9,6 +9,7 @@ const gmLinks = [
   { href: '/live', label: t.nav.live },
   { href: '/inbox', label: t.nav.inbox, badge: true },
   { href: '/guests', label: t.nav.guests },
+  { href: '/campaigns', label: t.nav.campaigns },
   { href: '/leads', label: t.nav.leads },
   { href: '/quotes', label: t.nav.quotes },
   { href: '/staff', label: t.nav.staff },
