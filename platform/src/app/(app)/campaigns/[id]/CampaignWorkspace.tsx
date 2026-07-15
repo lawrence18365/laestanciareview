@@ -333,7 +333,7 @@ export default function CampaignWorkspace({
               <article className="contact-row" key={contact.id}>
                 <div className="contact-person">
                   <div className="avatar">{initials(contact.name)}</div>
-                  <div><h3>{contact.name}</h3><p>{formatPhone(contact.whatsapp)} · {segmentLabel(contact.segment)}{contact.visitCount ? ` · ${contact.visitCount} visitas` : ''}</p></div>
+                  <div><h3>{contact.name}</h3><p>{formatPhone(contact.whatsapp)} · {segmentLabel(contact.segment)}{contact.visitCount ? ` · ${contact.visitCount} visitas` : ''}{isEventMonthBirthday(campaign, contact) ? ' · 🎂 cumple este mes' : ''}</p></div>
                 </div>
                 <div className="contact-state"><span>{contactStatus(contact.status)}</span>{contact.sentAt && <small>{shortDate(contact.sentAt)}</small>}</div>
                 <div className="contact-actions">
@@ -408,7 +408,19 @@ function TopMetric({ label, value, note, money }: { label: string; value: string
 function Field({ label, wide, children }: { label: string; wide?: boolean; children: React.ReactNode }) { return <label className={wide ? 'booking-field wide' : 'booking-field'}><span>{label}</span>{children}</label>; }
 function MoneyField({ label, value, onChange }: { label: string; value: string; onChange: (value: string) => void }) { return <Field label={label}><div className="money-input"><span>$</span><input min="0" step="0.01" type="number" value={value} onChange={(event) => onChange(event.target.value)} /></div></Field>; }
 
-function renderMessage(campaign: Campaign, contact: Contact) { return campaign.messageText.replaceAll('{nombre}', contact.name).replaceAll('{evento}', campaign.name).replaceAll('{fecha}', formatDate(campaign.eventDate)).replaceAll('{precio}', mxn(Number(campaign.pricePerPerson))); }
+// Hottest tier (wine_redeemer) and event-month birthdays get a personal greeting
+// prepended; every other contact receives the campaign message exactly as written.
+// Both are skipped when the author already personalized via {nombre}.
+function renderMessage(campaign: Campaign, contact: Contact) {
+  const base = campaign.messageText.replaceAll('{nombre}', contact.name).replaceAll('{evento}', campaign.name).replaceAll('{fecha}', formatDate(campaign.eventDate)).replaceAll('{precio}', mxn(Number(campaign.pricePerPerson)));
+  if (campaign.messageText.includes('{nombre}')) return base;
+  if (isEventMonthBirthday(campaign, contact)) return `¡Hola ${firstName(contact.name)}! Vi que cumples este mes 🎂 y pensé que esto podría ser una forma bonita de celebrarlo:\n\n${base}`;
+  if (contact.segment === 'wine_redeemer') return `¡Hola ${firstName(contact.name)}! 🍷\n\n${base}`;
+  return base;
+}
+// birthday_mmdd is "DD/MM"; eventDate is "YYYY-MM-DD" — compare month parts.
+function isEventMonthBirthday(campaign: Campaign, contact: Contact) { return !!contact.birthdayMmdd && contact.birthdayMmdd.slice(3, 5) === campaign.eventDate.slice(5, 7); }
+function firstName(value: string) { return value.trim().split(/\s+/)[0] || value; }
 function serializeCampaign(value: Campaign) { return { ...value, audienceSeededAt: value.audienceSeededAt ? new Date(value.audienceSeededAt).toISOString() : null, launchedAt: value.launchedAt ? new Date(value.launchedAt).toISOString() : null, completedAt: value.completedAt ? new Date(value.completedAt).toISOString() : null, createdAt: new Date(value.createdAt).toISOString(), updatedAt: new Date(value.updatedAt).toISOString() }; }
 function serializeContact(value: Contact) { return { ...value, openedAt: value.openedAt ? new Date(value.openedAt).toISOString() : null, sentAt: value.sentAt ? new Date(value.sentAt).toISOString() : null, repliedAt: value.repliedAt ? new Date(value.repliedAt).toISOString() : null, optedOutAt: value.optedOutAt ? new Date(value.optedOutAt).toISOString() : null }; }
 function serializeBooking(value: Booking) { return { ...value, depositReceivedAt: value.depositReceivedAt ? new Date(value.depositReceivedAt).toISOString() : null, bookedAt: value.bookedAt ? new Date(value.bookedAt).toISOString() : null, attendedAt: value.attendedAt ? new Date(value.attendedAt).toISOString() : null, cancelledAt: value.cancelledAt ? new Date(value.cancelledAt).toISOString() : null, createdAt: new Date(value.createdAt).toISOString(), updatedAt: new Date(value.updatedAt).toISOString() }; }
