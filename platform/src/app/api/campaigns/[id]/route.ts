@@ -14,7 +14,9 @@ const ALLOWED: Record<string, string[]> = {
   ready: ['active', 'draft', 'cancelled'],
   active: ['paused', 'completed', 'cancelled'],
   paused: ['active', 'completed', 'cancelled'],
-  completed: [],
+  // Reopening a completed campaign is allowed: closing is a one-tap action in
+  // the UI and a mis-tap otherwise strands the campaign with no way back.
+  completed: ['active'],
   cancelled: [],
 };
 
@@ -68,6 +70,8 @@ export async function PATCH(
       updatedAt: now,
       ...(parsed.data.status === 'active' && !campaign.launchedAt ? { launchedAt: now } : {}),
       ...(parsed.data.status === 'completed' ? { completedAt: now } : {}),
+      // Reopen clears the completion stamp so metrics don't show a closed date.
+      ...(campaign.status === 'completed' && parsed.data.status === 'active' ? { completedAt: null } : {}),
     })
     .where(
       and(

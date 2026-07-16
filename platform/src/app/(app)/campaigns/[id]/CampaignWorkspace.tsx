@@ -399,9 +399,15 @@ export default function CampaignWorkspace({
 
 function CampaignActions({ campaign, busy, onStatus }: { campaign: Campaign; busy: boolean; onStatus: (status: string) => void }) {
   const actions: Record<string, { status: string; label: string }[]> = {
-    draft: [{ status: 'ready', label: 'Marcar lista' }], ready: [{ status: 'active', label: 'Activar campaña' }], active: [{ status: 'paused', label: 'Pausar' }, { status: 'completed', label: 'Cerrar campaña' }], paused: [{ status: 'active', label: 'Reanudar' }, { status: 'completed', label: 'Cerrar campaña' }],
+    draft: [{ status: 'ready', label: 'Marcar lista' }], ready: [{ status: 'active', label: 'Activar campaña' }], active: [{ status: 'paused', label: 'Pausar' }, { status: 'completed', label: 'Cerrar campaña' }], paused: [{ status: 'active', label: 'Reanudar' }, { status: 'completed', label: 'Cerrar campaña' }], completed: [{ status: 'active', label: 'Reabrir campaña' }],
   };
-  return <div className="campaign-actions">{(actions[campaign.status] ?? []).map((action) => <button disabled={busy} key={action.status} onClick={() => onStatus(action.status)}>{action.label}</button>)}</div>;
+  // Closing disables every WhatsApp button mid-blitz — one mis-tap next to
+  // "Pausar" already stranded a live campaign, so it confirms first.
+  const handle = (status: string) => {
+    if (status === 'completed' && !window.confirm('¿Cerrar la campaña? Se desactivan los botones de WhatsApp. Puedes reabrirla después.')) return;
+    onStatus(status);
+  };
+  return <div className="campaign-actions">{(actions[campaign.status] ?? []).map((action) => <button disabled={busy} key={action.status} onClick={() => handle(action.status)}>{action.label}</button>)}</div>;
 }
 
 function TopMetric({ label, value, note, money }: { label: string; value: string; note: string; money?: boolean }) { return <div><span>{label}</span><strong className={money ? 'metric-money' : ''}>{value}</strong><small>{note}</small></div>; }
