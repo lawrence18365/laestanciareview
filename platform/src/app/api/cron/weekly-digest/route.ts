@@ -45,7 +45,7 @@ export async function GET(req: NextRequest) {
           r.googlePlaceId ? getGoogleRatingTrend(r.id) : Promise.resolve(null),
         ]);
 
-      await sendWeeklyDigest({
+      const result = await sendWeeklyDigest({
         to: r.managerEmail,
         restaurantName: r.name,
         lastWeek,
@@ -56,7 +56,11 @@ export async function GET(req: NextRequest) {
         googleTrend,
       });
 
-      gmSent++;
+      if (result.success) {
+        gmSent++;
+      } else {
+        gmFailed++;
+      }
     } catch (err) {
       console.error(`[digest] GM failed for ${r.name}:`, err);
       gmFailed++;
@@ -91,13 +95,17 @@ export async function GET(req: NextRequest) {
         }),
       );
 
-      await sendOwnerDigest({
+      const result = await sendOwnerDigest({
         to: owner.managerEmail,
         locations,
         dashboardUrl: `${baseUrl}/overview`,
       });
 
-      ownerSent++;
+      if (result.success) {
+        ownerSent++;
+      } else {
+        ownerFailed++;
+      }
     } catch (err) {
       console.error(`[digest] Owner failed for ${owner.name}:`, err);
       ownerFailed++;

@@ -3,7 +3,7 @@ import Stripe from 'stripe';
 import { db } from '@/db';
 import { commercialLeads, restaurants, processedStripeEvents, pendingSignups } from '@/db/schema';
 import { eq } from 'drizzle-orm';
-import { getStripe, STRIPE_WEBHOOK_SECRET, TRIAL_DAYS } from '@/lib/stripe';
+import { getStripe, STRIPE_WEBHOOK_SECRET, STRIPE_PRICE_ID, TRIAL_DAYS } from '@/lib/stripe';
 import { generateUniqueSlug } from '@/lib/slug';
 import { generateQrDataUrl, reviewUrlFor } from '@/lib/qr';
 import {
@@ -113,20 +113,72 @@ export async function POST(req: NextRequest) {
 
 // ─────────────────────────────────────────────────────────────
 
+/**
+ * Resolve the subscription tied to a completed checkout session.
+ *
+ * - Legacy `subscription`-mode sessions: Checkout already created the
+ *   subscription; just retrieve it.
+ * - New `payment`-mode (setup-fee) sessions: the one-time NFC/setup fee was
+ *   charged today and the card saved (`setup_future_usage`). Reuse that card to
+ *   start the 30-day-trial subscription off-session. Reuses an existing
+ *   subscription if one is already present so Stripe retries don't double-create.
+ */
+async function resolveSubscription(
+  stripe: Stripe,
+  session: Stripe.Checkout.Session,
+  customerId: string,
+): Promise<Stripe.Subscription | null> {
+  if (session.mode === 'subscription' && session.subscription) {
+    const id = typeof session.subscription === 'string' ? session.subscription : session.subscription.id;
+    return stripe.subscriptions.retrieve(id);
+  }
+
+  const existing = await stripe.subscriptions.list({ customer: customerId, status: 'all', limit: 1 });
+  if (existing.data.length > 0) return existing.data[0];
+
+  // Promote the card used for the setup fee to the customer's default so the
+  // subscription can auto-charge once the 30-day trial ends.
+  let defaultPm: string | undefined;
+  const piId = typeof session.payment_intent === 'string'
+    ? session.payment_intent
+    : session.payment_intent?.id;
+  if (piId) {
+    const pi = await stripe.paymentIntents.retrieve(piId);
+    defaultPm = typeof pi.payment_method === 'string' ? pi.payment_method : pi.payment_method?.id;
+  }
+  if (defaultPm) {
+    await stripe.customers.update(customerId, {
+      invoice_settings: { default_payment_method: defaultPm },
+    });
+  }
+
+  const md = (session.metadata ?? {}) as { pendingSignupId?: string };
+  return stripe.subscriptions.create({
+    customer: customerId,
+    items: [{ price: STRIPE_PRICE_ID }],
+    trial_period_days: TRIAL_DAYS,
+    trial_settings: { end_behavior: { missing_payment_method: 'cancel' } },
+    ...(defaultPm ? { default_payment_method: defaultPm } : {}),
+    metadata: { pendingSignupId: md.pendingSignupId ?? '' },
+  });
+}
+
 async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
-  if (session.mode !== 'subscription' || !session.subscription || !session.customer) {
-    console.warn('[stripe-webhook] checkout.session.completed skipped (not a subscription)');
+  if (!session.customer) {
+    console.warn('[stripe-webhook] checkout.session.completed skipped (no customer)');
     return;
   }
 
-  const subscriptionId = typeof session.subscription === 'string' ? session.subscription : session.subscription.id;
   const customerId = typeof session.customer === 'string' ? session.customer : session.customer.id;
 
-  // Short-circuit if we've already provisioned this subscription
+  // Short-circuit if we've already provisioned this customer. Keyed on customer
+  // (not subscription) because the new setup-fee flow creates the subscription
+  // here, so there's no subscription id on the session yet — and this makes
+  // Stripe webhook retries idempotent.
   const existing = await db
     .select()
     .from(restaurants)
-    .where(eq(restaurants.stripeSubscriptionId, subscriptionId))
+    .where(eq(restaurants.stripeCustomerId, customerId))
     .limit(1);
   if (existing.length > 0) return;
 
@@ -136,10 +188,16 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
     return;
   }
 
+  const stripe = getStripe();
+  const subscription = await resolveSubscription(stripe, session, customerId);
+  if (!subscription) {
+    console.error('[stripe-webhook] could not resolve/create subscription for', session.id);
+    return;
+  }
+  const subscriptionId = subscription.id;
+
   const slug = await generateUniqueSlug(signup.businessName);
 
-  const stripe = getStripe();
-  const subscription = await stripe.subscriptions.retrieve(subscriptionId);
   const trialEndsAt = subscription.trial_end
     ? new Date(subscription.trial_end * 1000)
     : new Date(Date.now() + TRIAL_DAYS * 24 * 60 * 60 * 1000);
@@ -401,7 +459,7 @@ async function handlePaymentSucceeded(invoice: Stripe.Invoice) {
       }
     }
 
-    await Promise.allSettled([
+    const [ownerNotification] = await Promise.allSettled([
       sendOwnerConversionNotification({
         restaurantName: r.name,
         contactName: r.contactName ?? 'Desconocido',
@@ -419,6 +477,29 @@ async function handlePaymentSucceeded(invoice: Stripe.Invoice) {
           })
         : Promise.resolve(),
     ]);
+
+    const ownerNotificationRecipient =
+      (process.env.OWNER_NOTIFICATION_EMAIL ?? '').replace(/\\n/g, '').trim()
+      || (process.env.ADMIN_EMAIL ?? '').replace(/\\n/g, '').trim()
+      || '(unconfigured)';
+
+    if (ownerNotification.status === 'fulfilled' && !ownerNotification.value.success) {
+      console.error(`[stripe-webhook] sendOwnerConversionNotification failed ${JSON.stringify({
+        restaurant: r.name,
+        to: ownerNotificationRecipient,
+        responseCode: ownerNotification.value.error?.responseCode ?? null,
+        message: ownerNotification.value.error?.message ?? 'SMTP send skipped',
+      })}`);
+    } else if (ownerNotification.status === 'rejected') {
+      console.error(`[stripe-webhook] sendOwnerConversionNotification failed ${JSON.stringify({
+        restaurant: r.name,
+        to: ownerNotificationRecipient,
+        responseCode: null,
+        message: ownerNotification.reason instanceof Error
+          ? ownerNotification.reason.message
+          : String(ownerNotification.reason),
+      })}`);
+    }
   }
 }
 

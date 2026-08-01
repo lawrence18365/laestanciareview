@@ -9,8 +9,9 @@ import { NextRequest } from 'next/server';
 import { db } from '@/db';
 import { restaurants, nurtureEvents } from '@/db/schema';
 import { eq, and } from 'drizzle-orm';
-import { Resend } from 'resend';
+import { FROM, sendMail } from '@/lib/mailer';
 
+export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 const CRON_SECRET = process.env.CRON_SECRET;
@@ -82,7 +83,6 @@ export async function GET(req: NextRequest) {
     return Response.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY.trim()) : null;
   const trialing = await db.select().from(restaurants)
     .where(eq(restaurants.subscriptionStatus, 'trialing'));
 
@@ -111,21 +111,34 @@ export async function GET(req: NextRequest) {
         continue; // unique constraint — already inserted by parallel run
       }
 
-      // Send WhatsApp
+      // Send email
+      if (r.managerEmail) {
+        const result = await sendMail({
+          from: FROM,
+          to: r.managerEmail,
+          subject: nurture.subject(r.name),
+          html: nurture.html(r.name),
+        });
+        if (result.success === false) {
+          console.error(`[trial-nurture] sendMail failed ${JSON.stringify({
+            event: eventKey,
+            to: r.managerEmail,
+            responseCode: result.error?.responseCode ?? null,
+            message: result.error?.message ?? 'SMTP send skipped',
+          })}`);
+          await db.delete(nurtureEvents).where(and(
+            eq(nurtureEvents.restaurantId, r.id),
+            eq(nurtureEvents.event, eventKey),
+          ));
+          continue;
+        }
+      }
+
+      // Send WhatsApp only after the retryable email send has succeeded.
       if (r.managerPhone) {
         sendWhatsApp(r.managerPhone, nurture.whatsapp(r.name)).catch(e =>
           console.error(`[trial-nurture] WhatsApp ${eventKey} failed for ${r.name}:`, e)
         );
-      }
-
-      // Send email
-      if (r.managerEmail && resend) {
-        resend.emails.send({
-          from: `RateTap <hola@ratetapmx.com>`,
-          to: r.managerEmail,
-          subject: nurture.subject(r.name),
-          html: nurture.html(r.name),
-        }).catch(e => console.error(`[trial-nurture] email ${eventKey} failed:`, e));
       }
 
       processed++;

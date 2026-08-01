@@ -1,18 +1,35 @@
-import { Resend } from 'resend';
-
-let _resend: Resend | null = null;
-function getResend(): Resend | null {
-  if (!process.env.RESEND_API_KEY) return null;
-  if (!_resend) _resend = new Resend(process.env.RESEND_API_KEY.trim());
-  return _resend;
-}
+import { isPositiveRating } from '@/lib/feedback';
+import { FROM, sendMail, type SendMailResult } from '@/lib/mailer';
 
 /** Strip stray whitespace/newlines from env vars (Vercel CLI sometimes injects \\n). */
 const clean = (v: string | undefined, fallback: string) => (v ?? fallback).replace(/\\n/g, '').trim();
 
-const FROM = clean(process.env.EMAIL_FROM, 'RateTap <notifications@ratetapmx.com>');
+const hasSmtpConfig = () => Boolean(
+  clean(process.env.SMTP_USER, '') && clean(process.env.SMTP_PASS, ''),
+);
+
 const BASE_URL = clean(process.env.NEXT_PUBLIC_BASE_URL, 'https://app.ratetapmx.com');
 const LOGO_URL = `${BASE_URL}/logos/ratetap_logo_transparent_background.png`;
+
+function skippedMailResult(message: string): SendMailResult {
+  return {
+    success: false,
+    skipped: true,
+    messageId: null,
+    response: null,
+    error: { message },
+  };
+}
+
+function reportMailFailure(functionName: string, to: string, result: SendMailResult) {
+  if (result.success === false) {
+    console.error(`[email] ${functionName} failed ${JSON.stringify({
+      to,
+      responseCode: result.error?.responseCode ?? null,
+      message: result.error?.message ?? 'SMTP send skipped',
+    })}`);
+  }
+}
 
 /** Escape HTML special characters to prevent injection. */
 function escapeHtml(str: string): string {
@@ -102,16 +119,16 @@ export async function sendFeedbackAlert({
   staffName,
   feedback,
 }: FeedbackAlertParams) {
-  const resend = getResend();
-  if (!resend) {
-    console.warn('[email] RESEND_API_KEY not set — skipping email');
-    return;
+  if (!hasSmtpConfig()) {
+    console.warn('[email] SMTP_USER or SMTP_PASS not set — skipping email');
+    return skippedMailResult('SMTP_USER or SMTP_PASS not set');
   }
 
+  const positive = isPositiveRating(rating);
   const filledStars = '★'.repeat(rating);
   const emptyStars = '☆'.repeat(5 - rating);
-  const accentColor = rating >= 4 ? '#16a34a' : rating >= 3 ? '#ca8a04' : '#dc2626';
-  const accentBg = rating >= 4 ? '#f0fdf4' : rating >= 3 ? '#fefce8' : '#fef2f2';
+  const accentColor = positive ? '#16a34a' : rating >= 3 ? '#ca8a04' : '#dc2626';
+  const accentBg = positive ? '#f0fdf4' : rating >= 3 ? '#fefce8' : '#fef2f2';
   const urgencyLabel = rating <= 2 ? 'Urgente' : rating <= 3 ? 'Atención' : 'Positivo';
 
   const content = `
@@ -170,12 +187,16 @@ export async function sendFeedbackAlert({
       </div>
     </div>`;
 
-  await resend.emails.send({
+  const result = await sendMail({
     from: FROM,
     to,
-    subject: `${rating <= 2 ? '🔴' : rating <= 3 ? '🟡' : '🟢'} Nuevo comentario de ${rating} estrellas — ${restaurantName}`,
+    subject: positive
+      ? `⭐ Comentario positivo de ${rating} estrellas — ${restaurantName}`
+      : `${rating <= 2 ? '🔴' : '🟡'} Nuevo comentario de ${rating} estrellas — ${restaurantName}`,
     html: emailLayout(content),
   });
+  reportMailFailure('sendFeedbackAlert', to, result);
+  return result;
 }
 
 // ────────────────────────────────────────────────────────────
@@ -217,10 +238,9 @@ export async function sendWeeklyDigest({
   dashboardUrl,
   googleTrend,
 }: WeeklyDigestParams) {
-  const resend = getResend();
-  if (!resend) {
-    console.warn('[email] RESEND_API_KEY not set — skipping weekly digest');
-    return;
+  if (!hasSmtpConfig()) {
+    console.warn('[email] SMTP_USER or SMTP_PASS not set — skipping weekly digest');
+    return skippedMailResult('SMTP_USER or SMTP_PASS not set');
   }
 
   const reviewsDelta = lastWeek.totalReviews - weekBefore.totalReviews;
@@ -332,12 +352,14 @@ export async function sendWeeklyDigest({
       </a>
     </div>`;
 
-  await resend.emails.send({
+  const result = await sendMail({
     from: FROM,
     to,
     subject: `📊 Resumen Semanal — ${restaurantName} — ${lastWeek.totalReviews} reseñas, ${lastWeek.avgRating ? lastWeek.avgRating.toFixed(1) : '--'} prom`,
     html: emailLayout(content, 'Enviado cada lunes por RateTap'),
   });
+  reportMailFailure('sendWeeklyDigest', to, result);
+  return result;
 }
 
 // ────────────────────────────────────────────────────────────
@@ -362,10 +384,9 @@ interface OwnerDigestParams {
 }
 
 export async function sendOwnerDigest({ to, locations, dashboardUrl }: OwnerDigestParams) {
-  const resend = getResend();
-  if (!resend) {
-    console.warn('[email] RESEND_API_KEY not set — skipping owner digest');
-    return;
+  if (!hasSmtpConfig()) {
+    console.warn('[email] SMTP_USER or SMTP_PASS not set — skipping owner digest');
+    return skippedMailResult('SMTP_USER or SMTP_PASS not set');
   }
 
   const totalReviews = locations.reduce((s, l) => s + l.reviews, 0);
@@ -482,12 +503,14 @@ export async function sendOwnerDigest({ to, locations, dashboardUrl }: OwnerDige
       </a>
     </div>`;
 
-  await resend.emails.send({
+  const result = await sendMail({
     from: FROM,
     to,
     subject: `📊 Resumen Semanal — ${totalReviews} reseñas, ${overallAvg} prom en ${locations.length} ubicaciones`,
     html: emailLayout(content, 'Enviado cada lunes por RateTap'),
   });
+  reportMailFailure('sendOwnerDigest', to, result);
+  return result;
 }
 
 // ────────────────────────────────────────────────────────────
@@ -505,10 +528,9 @@ export async function sendPasswordResetEmail({
   restaurantName,
   resetUrl,
 }: PasswordResetParams) {
-  const resend = getResend();
-  if (!resend) {
-    console.warn('[email] RESEND_API_KEY not set — skipping password reset email');
-    return;
+  if (!hasSmtpConfig()) {
+    console.warn('[email] SMTP_USER or SMTP_PASS not set — skipping password reset email');
+    return skippedMailResult('SMTP_USER or SMTP_PASS not set');
   }
 
   const content = `
@@ -536,12 +558,14 @@ export async function sendPasswordResetEmail({
       </div>
     </div>`;
 
-  await resend.emails.send({
+  const result = await sendMail({
     from: FROM,
     to,
     subject: `🔐 Restablecer contraseña — ${restaurantName}`,
     html: emailLayout(content),
   });
+  reportMailFailure('sendPasswordResetEmail', to, result);
+  return result;
 }
 
 // ────────────────────────────────────────────────────────────
@@ -549,9 +573,8 @@ export async function sendPasswordResetEmail({
 // ────────────────────────────────────────────────────────────
 
 export async function sendTestEmail(to: string) {
-  const resend = getResend();
-  if (!resend) {
-    return { success: false, error: 'RESEND_API_KEY not set' };
+  if (!hasSmtpConfig()) {
+    return { success: false, error: 'SMTP_USER or SMTP_PASS not set' };
   }
 
   const content = `
@@ -561,18 +584,23 @@ export async function sendTestEmail(to: string) {
       </div>
       <h1 style="margin: 0 0 8px; font-size: 22px; font-weight: 700; color: #1c1917;">Email Configurado</h1>
       <p style="margin: 0; font-size: 15px; color: #44403c; line-height: 1.5;">
-        La integracion con Resend esta funcionando correctamente. Los emails de RateTap se enviaran desde esta direccion.
+        La integracion con SMTP esta funcionando correctamente. Los emails de RateTap se enviaran desde esta direccion.
       </p>
     </div>`;
 
-  const result = await resend.emails.send({
+  const result = await sendMail({
     from: FROM,
     to,
     subject: '✅ RateTap — Email configurado correctamente',
     html: emailLayout(content),
   });
+  reportMailFailure('sendTestEmail', to, result);
 
-  return { success: true, id: result.data?.id };
+  if (!result.success) {
+    return { success: false, error: result.error?.message ?? 'SMTP send failed' };
+  }
+
+  return { success: true, id: result.messageId ?? undefined };
 }
 
 // ────────────────────────────────────────────────────────────
@@ -588,10 +616,9 @@ export async function sendFeatureAnnouncement({
   to,
   restaurantName,
 }: FeatureAnnouncementParams) {
-  const resend = getResend();
-  if (!resend) {
-    console.warn('[email] RESEND_API_KEY not set — skipping feature announcement');
-    return;
+  if (!hasSmtpConfig()) {
+    console.warn('[email] SMTP_USER or SMTP_PASS not set — skipping feature announcement');
+    return skippedMailResult('SMTP_USER or SMTP_PASS not set');
   }
 
   const content = `
@@ -639,12 +666,14 @@ export async function sendFeatureAnnouncement({
       </div>
     </div>`;
 
-  await resend.emails.send({
+  const result = await sendMail({
     from: FROM,
     to,
     subject: `📱 Nuevo: Notificaciones push en tu celular — ${restaurantName}`,
     html: emailLayout(content),
   });
+  reportMailFailure('sendFeatureAnnouncement', to, result);
+  return result;
 }
 
 // ────────────────────────────────────────────────────────────
@@ -683,16 +712,15 @@ export async function sendGMFeedback({
   const adminEmail = process.env.ADMIN_EMAIL?.replace(/\\n/g, '').trim();
   if (!adminEmail) {
     console.warn('[email] ADMIN_EMAIL not set — skipping GM feedback email');
-    return;
+    return skippedMailResult('ADMIN_EMAIL not set');
   }
   const label = categoryLabels[category] ?? category;
   const colors = categoryColors[category] ?? categoryColors.feedback;
 
-  const resend = getResend();
-  if (!resend) {
-    console.warn('[email] RESEND_API_KEY not set — logging GM feedback to console');
+  if (!hasSmtpConfig()) {
+    console.warn('[email] SMTP_USER or SMTP_PASS not set — logging GM feedback to console');
     console.log(`[GM Feedback] ${label} from ${restaurantName}: ${subject || '(no subject)'}\n${message}`);
-    return;
+    return skippedMailResult('SMTP_USER or SMTP_PASS not set');
   }
 
   const content = `
@@ -713,13 +741,15 @@ export async function sendGMFeedback({
       </div>
     </div>`;
 
-  await resend.emails.send({
+  const result = await sendMail({
     from: FROM,
     to: adminEmail,
     subject: `[GM ${label}] ${subject || restaurantName}`,
     replyTo: adminEmail,
     html: emailLayout(content),
   });
+  reportMailFailure('sendGMFeedback', adminEmail, result);
+  return result;
 }
 
 // ────────────────────────────────────────────────────────────
@@ -750,10 +780,9 @@ export async function sendWelcomeEmail({
   reviewUrl,
   trialEndsAt,
 }: WelcomeEmailParams) {
-  const resend = getResend();
-  if (!resend) {
-    console.warn('[email] RESEND_API_KEY not set — skipping welcome email');
-    return;
+  if (!hasSmtpConfig()) {
+    console.warn('[email] SMTP_USER or SMTP_PASS not set — skipping welcome email');
+    return skippedMailResult('SMTP_USER or SMTP_PASS not set');
   }
 
   const trialEndStr = trialEndsAt.toLocaleDateString('es-MX', { day: 'numeric', month: 'long', year: 'numeric' });
@@ -762,7 +791,7 @@ export async function sendWelcomeEmail({
     <div class="content-pad" style="padding: 32px 28px;">
       <h1 style="margin: 0 0 12px; font-size: 24px; font-weight: 700; color: #1c1917;">¡Bienvenido a RateTap! 🎉</h1>
       <p style="margin: 0 0 20px; font-size: 15px; line-height: 1.6; color: #57534e;">
-        Hola <strong>${escapeHtml(restaurantName)}</strong>, tu prueba gratis de 15 días ya está activa hasta el <strong>${escapeHtml(trialEndStr)}</strong>.
+        Hola <strong>${escapeHtml(restaurantName)}</strong>, tu prueba gratis de 30 días ya está activa hasta el <strong>${escapeHtml(trialEndStr)}</strong>.
       </p>
 
       <div style="text-align: center; padding: 24px; background: #faf8f6; border-radius: 12px; margin: 0 0 20px;">
@@ -774,7 +803,7 @@ export async function sendWelcomeEmail({
       </div>
 
       <p style="margin: 0 0 20px; font-size: 15px; line-height: 1.6; color: #57534e;">
-        Imprime este QR y colócalo en tus mesas hoy mismo. En cuanto confirmes tu pago el día 15, te enviaremos tus tarjetas NFC físicas.
+        Imprime este QR y colócalo en tus mesas hoy mismo. En cuanto confirmes tu pago el día 30, te enviaremos tus tarjetas NFC físicas.
       </p>
 
       <table role="presentation" cellpadding="0" cellspacing="0" style="margin: 0 auto;">
@@ -790,12 +819,14 @@ export async function sendWelcomeEmail({
       </p>
     </div>`;
 
-  await resend.emails.send({
+  const result = await sendMail({
     from: FROM,
     to,
     subject: `Bienvenido a RateTap, ${restaurantName} 🎉`,
-    html: emailLayout(content, 'Tu prueba es gratis por 15 días. Puedes cancelar cuando quieras.'),
+    html: emailLayout(content, 'Tu prueba es gratis por 30 días. Puedes cancelar cuando quieras.'),
   });
+  reportMailFailure('sendWelcomeEmail', to, result);
+  return result;
 }
 
 interface TrialEndingEmailParams {
@@ -806,8 +837,10 @@ interface TrialEndingEmailParams {
 }
 
 export async function sendTrialEndingEmail({ to, restaurantName, daysLeft, amountMxn }: TrialEndingEmailParams) {
-  const resend = getResend();
-  if (!resend) return;
+  if (!hasSmtpConfig()) {
+    console.warn('[email] SMTP_USER or SMTP_PASS not set — skipping trial ending email');
+    return skippedMailResult('SMTP_USER or SMTP_PASS not set');
+  }
 
   const content = `
     <div class="content-pad" style="padding: 32px 28px;">
@@ -827,12 +860,14 @@ export async function sendTrialEndingEmail({ to, restaurantName, daysLeft, amoun
       </table>
     </div>`;
 
-  await resend.emails.send({
+  const result = await sendMail({
     from: FROM,
     to,
     subject: `Tu prueba de RateTap termina en ${daysLeft} días`,
     html: emailLayout(content),
   });
+  reportMailFailure('sendTrialEndingEmail', to, result);
+  return result;
 }
 
 interface ReceiptEmailParams {
@@ -844,8 +879,10 @@ interface ReceiptEmailParams {
 }
 
 export async function sendReceiptEmail({ to, restaurantName, amountMxn, periodEnd, invoiceUrl }: ReceiptEmailParams) {
-  const resend = getResend();
-  if (!resend) return;
+  if (!hasSmtpConfig()) {
+    console.warn('[email] SMTP_USER or SMTP_PASS not set — skipping receipt email');
+    return skippedMailResult('SMTP_USER or SMTP_PASS not set');
+  }
 
   const nextStr = periodEnd.toLocaleDateString('es-MX', { day: 'numeric', month: 'long', year: 'numeric' });
 
@@ -868,12 +905,14 @@ export async function sendReceiptEmail({ to, restaurantName, amountMxn, periodEn
       </table>` : ''}
     </div>`;
 
-  await resend.emails.send({
+  const result = await sendMail({
     from: FROM,
     to,
     subject: `Recibo de RateTap — ${mxnFmt(amountMxn)}`,
     html: emailLayout(content),
   });
+  reportMailFailure('sendReceiptEmail', to, result);
+  return result;
 }
 
 interface PaymentFailedEmailParams {
@@ -884,8 +923,10 @@ interface PaymentFailedEmailParams {
 }
 
 export async function sendPaymentFailedEmail({ to, restaurantName, amountMxn, updatePaymentUrl }: PaymentFailedEmailParams) {
-  const resend = getResend();
-  if (!resend) return;
+  if (!hasSmtpConfig()) {
+    console.warn('[email] SMTP_USER or SMTP_PASS not set — skipping payment failed email');
+    return skippedMailResult('SMTP_USER or SMTP_PASS not set');
+  }
 
   const content = `
     <div class="content-pad" style="padding: 32px 28px;">
@@ -902,12 +943,14 @@ export async function sendPaymentFailedEmail({ to, restaurantName, amountMxn, up
       </table>
     </div>`;
 
-  await resend.emails.send({
+  const result = await sendMail({
     from: FROM,
     to,
     subject: `Problema con tu pago de RateTap`,
     html: emailLayout(content),
   });
+  reportMailFailure('sendPaymentFailedEmail', to, result);
+  return result;
 }
 
 // ── Owner (Lawrence) notifications ───────────────────────────
@@ -935,9 +978,24 @@ interface OwnerLeadParams {
   nextAction?: string | null;
 }
 
+function ownerNotificationPreflight(functionName: string): SendMailResult | null {
+  const missing: string[] = [];
+
+  if (!OWNER_NOTIFICATION_EMAIL) {
+    console.warn(`[email] OWNER_NOTIFICATION_EMAIL and ADMIN_EMAIL not set — skipping ${functionName}`);
+    missing.push('OWNER_NOTIFICATION_EMAIL and ADMIN_EMAIL not set');
+  }
+  if (!hasSmtpConfig()) {
+    console.warn(`[email] SMTP_USER or SMTP_PASS not set — skipping ${functionName}`);
+    missing.push('SMTP_USER or SMTP_PASS not set');
+  }
+
+  return missing.length > 0 ? skippedMailResult(missing.join('; ')) : null;
+}
+
 export async function sendOwnerLeadNotification(p: OwnerLeadParams) {
-  const resend = getResend();
-  if (!resend || !OWNER_NOTIFICATION_EMAIL) return;
+  const unavailable = ownerNotificationPreflight('sendOwnerLeadNotification');
+  if (unavailable) return unavailable;
 
   const sourceLine = [p.source, p.offer].filter(Boolean).join(' / ') || 'unknown';
   const contactLine = [
@@ -967,17 +1025,19 @@ export async function sendOwnerLeadNotification(p: OwnerLeadParams) {
       </p>
     </div>`;
 
-  await resend.emails.send({
+  const result = await sendMail({
     from: FROM,
     to: OWNER_NOTIFICATION_EMAIL,
     subject: `Nuevo lead: ${p.businessName}`,
     html: emailLayout(content),
   });
+  reportMailFailure('sendOwnerLeadNotification', OWNER_NOTIFICATION_EMAIL, result);
+  return result;
 }
 
 export async function sendOwnerSignupNotification(p: OwnerSignupParams) {
-  const resend = getResend();
-  if (!resend || !OWNER_NOTIFICATION_EMAIL) return;
+  const unavailable = ownerNotificationPreflight('sendOwnerSignupNotification');
+  if (unavailable) return unavailable;
 
   const content = `
     <div class="content-pad" style="padding: 28px 24px;">
@@ -993,12 +1053,14 @@ export async function sendOwnerSignupNotification(p: OwnerSignupParams) {
       </table>
     </div>`;
 
-  await resend.emails.send({
+  const result = await sendMail({
     from: FROM,
     to: OWNER_NOTIFICATION_EMAIL,
     subject: `🎉 Nuevo signup: ${p.restaurantName}`,
     html: emailLayout(content),
   });
+  reportMailFailure('sendOwnerSignupNotification', OWNER_NOTIFICATION_EMAIL, result);
+  return result;
 }
 
 interface OwnerConversionParams {
@@ -1018,8 +1080,8 @@ interface OwnerConversionParams {
 }
 
 export async function sendOwnerConversionNotification(p: OwnerConversionParams) {
-  const resend = getResend();
-  if (!resend || !OWNER_NOTIFICATION_EMAIL) return;
+  const unavailable = ownerNotificationPreflight('sendOwnerConversionNotification');
+  if (unavailable) return unavailable;
 
   const addr = p.shippingAddress;
   const addressLines = [
@@ -1044,12 +1106,14 @@ export async function sendOwnerConversionNotification(p: OwnerConversionParams) 
       </p>
     </div>`;
 
-  await resend.emails.send({
+  const result = await sendMail({
     from: FROM,
     to: OWNER_NOTIFICATION_EMAIL,
     subject: `💰 Conversión + envío: ${p.restaurantName}`,
     html: emailLayout(content),
   });
+  reportMailFailure('sendOwnerConversionNotification', OWNER_NOTIFICATION_EMAIL, result);
+  return result;
 }
 
 interface OwnerLapsedParams {
@@ -1059,8 +1123,8 @@ interface OwnerLapsedParams {
 }
 
 export async function sendOwnerTrialLapsedNotification(p: OwnerLapsedParams) {
-  const resend = getResend();
-  if (!resend || !OWNER_NOTIFICATION_EMAIL) return;
+  const unavailable = ownerNotificationPreflight('sendOwnerTrialLapsedNotification');
+  if (unavailable) return unavailable;
 
   const content = `
     <div class="content-pad" style="padding: 28px 24px;">
@@ -1071,10 +1135,12 @@ export async function sendOwnerTrialLapsedNotification(p: OwnerLapsedParams) {
       ${p.contactName ? `<p style="margin: 0; font-size: 13px; color: #78716c;">Contacto: ${escapeHtml(p.contactName)}${p.email ? ` · <a href="mailto:${escapeHtml(p.email)}">${escapeHtml(p.email)}</a>` : ''}</p>` : ''}
     </div>`;
 
-  await resend.emails.send({
+  const result = await sendMail({
     from: FROM,
     to: OWNER_NOTIFICATION_EMAIL,
     subject: `Prueba expirada: ${p.restaurantName}`,
     html: emailLayout(content),
   });
+  reportMailFailure('sendOwnerTrialLapsedNotification', OWNER_NOTIFICATION_EMAIL, result);
+  return result;
 }
