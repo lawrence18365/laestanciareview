@@ -14,6 +14,7 @@
 import { config } from 'dotenv';
 config({ path: '.env.local' });
 
+import { extractEmailFromHtml } from '../src/lib/extract-email';
 import { closeMailer, FROM, sendMail, type MailerError } from '../src/lib/mailer';
 
 const DRY_RUN = !process.argv.includes('--send');
@@ -73,12 +74,7 @@ async function scrapeEmail(website: string): Promise<string | null> {
     });
     if (!res.ok) return null;
     const html = await res.text();
-    // Match mailto: links and raw email patterns
-    const mailtoMatch = html.match(/mailto:([a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,})/);
-    if (mailtoMatch) return mailtoMatch[1];
-    const emailMatch = html.match(/\b([a-zA-Z0-9._%+\-]+@(?!.*\.(png|jpg|gif|svg|webp|css|js))[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,})\b/);
-    if (emailMatch && !emailMatch[1].includes('sentry') && !emailMatch[1].includes('example')) return emailMatch[1];
-    return null;
+    return extractEmailFromHtml(html);
   } catch {
     return null;
   }

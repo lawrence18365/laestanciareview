@@ -31,7 +31,7 @@ export default function PrivacyPage() {
         {
           title: 'Proveedores',
           body: [
-            'Podemos usar proveedores como Stripe para pagos, Resend o proveedores de correo para emails, Telnyx/Twilio/WhatsApp para mensajería, Google APIs para datos de ubicaciones, Sentry para errores, Meta/Google Tag Manager para medición, hosting y base de datos administrada.',
+            'Podemos usar proveedores como Stripe para pagos, Spacemail o proveedores de correo para emails, Telnyx/Twilio/WhatsApp para mensajería, Google APIs para datos de ubicaciones, Sentry para errores, Meta/Google Tag Manager para medición, hosting y base de datos administrada.',
             'Cada proveedor recibe solo los datos necesarios para prestar su servicio. No usamos proveedores como autorización para vender información personal.',
           ],
         },
