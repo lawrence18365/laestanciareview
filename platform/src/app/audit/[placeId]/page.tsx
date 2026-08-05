@@ -1,6 +1,7 @@
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { AuditTracker } from '@/components/audit/AuditTracker';
+import { PilotCta } from '@/components/audit/PilotCta';
 
 // ─── CONFIG ───
 const API_KEY = process.env.GOOGLE_PLACES_API_KEY;
@@ -397,6 +398,9 @@ export default async function AuditPage({
             </div>
           ))}
         </div>
+
+        {/* ─── Pilot CTA ─── */}
+        <PilotCta restaurantName={place.name} />
 
         {/* ─── CTA ─── */}
         <a

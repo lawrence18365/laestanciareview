@@ -1,10 +1,11 @@
 import { NextRequest } from 'next/server';
 import { db } from '@/db';
-import { commercialLeads, prospectQueue, prospectViews } from '@/db/schema';
-import { eq } from 'drizzle-orm';
+import { commercialLeads, prospectQueue, prospectViews, outreachProspects, outreachEvents } from '@/db/schema';
+import { eq, and, gte } from 'drizzle-orm';
 import { requireSameOrigin } from '@/lib/origin';
 import { checkRateLimitAsync, getClientIP, rateLimitResponse } from '@/lib/rate-limit';
 import { logProspectOutreachEvent } from '@/lib/outreach-tracking';
+import { sendAuditViewedAlert } from '@/lib/outreach-notifications';
 
 export const dynamic = 'force-dynamic';
 
@@ -42,6 +43,49 @@ async function notifyOwner(restaurantName: string, placeId: string, rating: stri
     headers: { Authorization: `Basic ${auth}`, 'Content-Type': 'application/x-www-form-urlencoded' },
     body: body.toString(),
   });
+}
+
+async function recordOutreachAuditView(placeId: string, restaurantName: string, rating: string | null) {
+  try {
+    const prospects = await db
+      .select()
+      .from(outreachProspects)
+      .where(eq(outreachProspects.placeId, placeId))
+      .limit(1);
+
+    if (prospects.length === 0) return;
+    const prospect = prospects[0];
+
+    await db.insert(outreachEvents).values({
+      prospectId: prospect.id,
+      type: 'audit_viewed',
+      meta: { restaurant_name: restaurantName, rating },
+    });
+
+    const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    const recentAlert = await db
+      .select({ id: outreachEvents.id })
+      .from(outreachEvents)
+      .where(
+        and(
+          eq(outreachEvents.prospectId, prospect.id),
+          eq(outreachEvents.type, 'alerted'),
+          gte(outreachEvents.createdAt, twentyFourHoursAgo),
+        ),
+      )
+      .limit(1);
+
+    if (recentAlert.length > 0) return;
+
+    await sendAuditViewedAlert(prospect);
+    await db.insert(outreachEvents).values({
+      prospectId: prospect.id,
+      type: 'alerted',
+      meta: { restaurant_name: restaurantName, rating },
+    });
+  } catch (err) {
+    console.error('[audit/track] outreach audit view error:', err);
+  }
 }
 
 async function markProspectViewed(placeId: string, restaurantName: string) {
@@ -123,6 +167,7 @@ export async function POST(req: NextRequest) {
       });
       await markProspectViewed(placeId, restaurantName);
       notifyOwner(restaurantName, placeId, rating ?? null, 1, true).catch(() => {});
+      recordOutreachAuditView(placeId, restaurantName, rating ?? null).catch(() => {});
     } else {
       const e = existing[0];
       const newCount = e.viewCount + 1;
@@ -142,6 +187,7 @@ export async function POST(req: NextRequest) {
         notifyOwner(restaurantName, placeId, rating ?? null, newCount, false).catch(() => {});
       }
       await markProspectViewed(placeId, restaurantName);
+      recordOutreachAuditView(placeId, restaurantName, rating ?? null).catch(() => {});
     }
 
     return Response.json({ ok: true });

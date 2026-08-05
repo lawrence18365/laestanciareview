@@ -800,3 +800,87 @@ export const campaignBookingsRelations = relations(campaignBookings, ({ one }) =
     references: [eventLeads.id],
   }),
 }));
+
+// ── Outbound email outreach ────────────────────────────────────────────────
+
+export const outreachProspectKindEnum = pgEnum('outreach_prospect_kind', [
+  'leon',
+  'group',
+]);
+
+export const outreachProspectStatusEnum = pgEnum('outreach_prospect_status', [
+  'queued',
+  'in_sequence',
+  'finished',
+  'replied',
+  'opted_out',
+]);
+
+export const outreachEventTypeEnum = pgEnum('outreach_event_type', [
+  'sent',
+  'failed',
+  'unsubscribed',
+  'audit_viewed',
+  'alerted',
+]);
+
+export const outreachProspects = pgTable(
+  'outreach_prospects',
+  {
+    id: serial('id').primaryKey(),
+    name: text('name').notNull(),
+    email: text('email').notNull().unique(),
+    kind: outreachProspectKindEnum('kind').notNull(),
+    placeId: text('place_id'),
+    phone: text('phone'),
+    city: text('city'),
+    rating: numeric('rating'),
+    sourceUrl: text('source_url'),
+    confidence: text('confidence'),
+    status: outreachProspectStatusEnum('status').notNull().default('queued'),
+    touchesSent: integer('touches_sent').notNull().default(0),
+    lastTouchAt: timestamp('last_touch_at', { withTimezone: true }),
+    nextTouchAt: timestamp('next_touch_at', { withTimezone: true }),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [
+    index('outreach_prospects_status_idx').on(t.status),
+    index('outreach_prospects_kind_idx').on(t.kind),
+    index('outreach_prospects_next_touch_idx').on(t.nextTouchAt),
+    index('outreach_prospects_email_idx').on(t.email),
+  ],
+);
+
+export const outreachEvents = pgTable(
+  'outreach_events',
+  {
+    id: serial('id').primaryKey(),
+    prospectId: integer('prospect_id')
+      .notNull()
+      .references(() => outreachProspects.id, { onDelete: 'cascade' }),
+    type: outreachEventTypeEnum('type').notNull(),
+    touchNumber: integer('touch_number'),
+    meta: jsonb('meta'),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [
+    index('outreach_events_prospect_idx').on(t.prospectId),
+    index('outreach_events_type_idx').on(t.type),
+    index('outreach_events_created_idx').on(t.createdAt),
+  ],
+);
+
+export const outreachProspectsRelations = relations(outreachProspects, ({ many }) => ({
+  events: many(outreachEvents),
+}));
+
+export const outreachEventsRelations = relations(outreachEvents, ({ one }) => ({
+  prospect: one(outreachProspects, {
+    fields: [outreachEvents.prospectId],
+    references: [outreachProspects.id],
+  }),
+}));

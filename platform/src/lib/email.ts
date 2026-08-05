@@ -1,4 +1,7 @@
 import { Resend } from 'resend';
+import { createTransport, Transporter, SendMailOptions } from 'nodemailer';
+import MailComposer from 'nodemailer/lib/mail-composer';
+import { ImapFlow } from 'imapflow';
 
 let _resend: Resend | null = null;
 function getResend(): Resend | null {
@@ -10,12 +13,201 @@ function getResend(): Resend | null {
 /** Strip stray whitespace/newlines from env vars (Vercel CLI sometimes injects \\n). */
 const clean = (v: string | undefined, fallback: string) => (v ?? fallback).replace(/\\n/g, '').trim();
 
-const FROM = clean(process.env.EMAIL_FROM, 'RateTap <notifications@ratetapmx.com>');
+const FROM = clean(process.env.EMAIL_FROM, 'RateTap <hello@ratetapmx.com>');
 const BASE_URL = clean(process.env.NEXT_PUBLIC_BASE_URL, 'https://app.ratetapmx.com');
 const LOGO_URL = `${BASE_URL}/logos/ratetap_logo_transparent_background.png`;
 
+// ── SMTP / IMAP transport (Spacemail) ───────────────────────────────────────
+
+interface SmtpConfig {
+  host: string;
+  port: number;
+  secure: boolean;
+  auth: { user: string; pass: string };
+}
+
+function getSmtpConfig(): SmtpConfig | null {
+  const host = process.env.SMTP_HOST?.replace(/\\n/g, '').trim();
+  const user = process.env.SMTP_USER?.replace(/\\n/g, '').trim();
+  const pass = process.env.SMTP_PASS?.replace(/\\n/g, '').trim();
+  if (!host || !user || !pass) return null;
+
+  const rawPort = process.env.SMTP_PORT?.replace(/\\n/g, '').trim();
+  const port = rawPort ? Number(rawPort) : 587;
+  const secure = rawPort === '465' || rawPort === '1' || port === 465;
+  return { host, port, secure, auth: { user, pass } };
+}
+
+let _smtpTransporter: Transporter | null = null;
+function getSmtpTransporter(): Transporter | null {
+  const cfg = getSmtpConfig();
+  if (!cfg) return null;
+  if (!_smtpTransporter) {
+    _smtpTransporter = createTransport({
+      host: cfg.host,
+      port: cfg.port,
+      secure: cfg.secure,
+      auth: cfg.auth,
+      tls: { rejectUnauthorized: true },
+    });
+  }
+  return _smtpTransporter;
+}
+
+function getImapConfig() {
+  const smtp = getSmtpConfig();
+  if (!smtp) return null;
+  return {
+    host: smtp.host,
+    port: 993,
+    secure: true,
+    auth: smtp.auth,
+  };
+}
+
+/** Convert our HTML body to a readable plain-text part. */
+function htmlToText(html: string): string {
+  return html
+    .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<\/p>/gi, '\n\n')
+    .replace(/<\/div>/gi, '\n')
+    .replace(/<\/h[1-6]>/gi, '\n\n')
+    .replace(/<a[^>]+href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi, (_, url, text) => {
+      const cleanText = text.replace(/<[^>]+>/g, '').trim();
+      return cleanText ? `${cleanText} (${url})` : url;
+    })
+    .replace(/<[^>]+>/g, '')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+}
+
+interface SendEmailOptions {
+  to: string;
+  subject: string;
+  html: string;
+  /** Optional explicit plain-text part. When omitted, text is derived from HTML. */
+  text?: string;
+  replyTo?: string;
+  attachments?: { filename?: string; content?: Buffer | string; path?: string; cid?: string; contentType?: string }[];
+  headers?: Record<string, string>;
+}
+
+interface SendEmailResult {
+  provider: 'smtp' | 'resend';
+  data?: { id?: string };
+}
+
+/**
+ * Unified send path. Prefers SMTP (Spacemail) so we can append the exact raw
+ * RFC822 message to the IMAP Sent folder. Falls back to Resend when SMTP is not
+ * configured. Always sends multipart (text + html).
+ */
+export async function sendEmail({ to, subject, html, text: textOverride, replyTo, attachments, headers }: SendEmailOptions): Promise<SendEmailResult | void> {
+  const text = textOverride ?? htmlToText(html);
+  const smtp = getSmtpTransporter();
+
+  if (smtp) {
+    const mailOptions: SendMailOptions = {
+      from: FROM,
+      to,
+      subject,
+      text,
+      html,
+      replyTo,
+      attachments,
+      headers,
+    };
+
+    // Build the raw RFC822 buffer once and use it for both SMTP send and IMAP
+    // Sent append so the saved copy is byte-identical to what left the server.
+    const composer = new MailComposer(mailOptions);
+    const rawMessage = await composer.compile().build();
+
+    await smtp.sendMail({ ...mailOptions, raw: rawMessage });
+
+    // Best-effort Sent-folder append. Never blocks or fails the send.
+    appendToSent(rawMessage).catch((err) => {
+      console.warn('[email] IMAP Sent append failed:', err instanceof Error ? err.message : String(err));
+    });
+    return { provider: 'smtp' };
+  }
+
+  // Fallback to Resend when SMTP is unavailable.
+  const resend = getResend();
+  if (!resend) {
+    console.warn('[email] No email provider configured (SMTP_HOST/USER/PASS or RESEND_API_KEY) — skipping send');
+    return;
+  }
+
+  const result = await resend.emails.send({
+    from: FROM,
+    to,
+    subject,
+    html,
+    text,
+    replyTo,
+    attachments,
+    headers,
+  });
+  return { provider: 'resend', data: result.data ?? undefined };
+}
+
+async function appendToSent(rawMessage: Buffer) {
+  const cfg = getImapConfig();
+  if (!cfg) return;
+
+  const client = new ImapFlow({
+    host: cfg.host,
+    port: cfg.port,
+    secure: cfg.secure,
+    auth: cfg.auth,
+    logger: false as unknown as undefined,
+  });
+
+  try {
+    await client.connect();
+    const sentPath = await findSentFolder(client);
+    if (!sentPath) {
+      console.warn('[email] IMAP Sent folder not found');
+      return;
+    }
+    await client.append(sentPath, rawMessage, ['\\Seen']);
+  } finally {
+    await client.logout();
+  }
+}
+
+async function findSentFolder(client: ImapFlow): Promise<string | null> {
+  const candidates = ['Sent', 'INBOX.Sent', 'Sent Items', 'INBOX.Sent Items'];
+  try {
+    const list = await client.list();
+    const special = list.find((box) => box.specialUse === '\\Sent');
+    if (special?.path) return special.path;
+    for (const name of candidates) {
+      const match = list.find((box) => box.path.toLowerCase() === name.toLowerCase());
+      if (match) return match.path;
+    }
+    // Last resort: try to create a standard Sent folder.
+    try {
+      await client.mailboxCreate('Sent');
+      return 'Sent';
+    } catch {
+      return null;
+    }
+  } catch {
+    return null;
+  }
+}
+
 /** Escape HTML special characters to prevent injection. */
-function escapeHtml(str: string): string {
+export function escapeHtml(str: string): string {
   return str
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
@@ -102,11 +294,6 @@ export async function sendFeedbackAlert({
   staffName,
   feedback,
 }: FeedbackAlertParams) {
-  const resend = getResend();
-  if (!resend) {
-    console.warn('[email] RESEND_API_KEY not set — skipping email');
-    return;
-  }
 
   const filledStars = '★'.repeat(rating);
   const emptyStars = '☆'.repeat(5 - rating);
@@ -170,8 +357,7 @@ export async function sendFeedbackAlert({
       </div>
     </div>`;
 
-  await resend.emails.send({
-    from: FROM,
+  await sendEmail({
     to,
     subject: `${rating <= 2 ? '🔴' : rating <= 3 ? '🟡' : '🟢'} Nuevo comentario de ${rating} estrellas — ${restaurantName}`,
     html: emailLayout(content),
@@ -217,11 +403,6 @@ export async function sendWeeklyDigest({
   dashboardUrl,
   googleTrend,
 }: WeeklyDigestParams) {
-  const resend = getResend();
-  if (!resend) {
-    console.warn('[email] RESEND_API_KEY not set — skipping weekly digest');
-    return;
-  }
 
   const reviewsDelta = lastWeek.totalReviews - weekBefore.totalReviews;
   const ratingDelta = lastWeek.avgRating && weekBefore.avgRating
@@ -332,8 +513,7 @@ export async function sendWeeklyDigest({
       </a>
     </div>`;
 
-  await resend.emails.send({
-    from: FROM,
+  await sendEmail({
     to,
     subject: `📊 Resumen Semanal — ${restaurantName} — ${lastWeek.totalReviews} reseñas, ${lastWeek.avgRating ? lastWeek.avgRating.toFixed(1) : '--'} prom`,
     html: emailLayout(content, 'Enviado cada lunes por RateTap'),
@@ -362,11 +542,6 @@ interface OwnerDigestParams {
 }
 
 export async function sendOwnerDigest({ to, locations, dashboardUrl }: OwnerDigestParams) {
-  const resend = getResend();
-  if (!resend) {
-    console.warn('[email] RESEND_API_KEY not set — skipping owner digest');
-    return;
-  }
 
   const totalReviews = locations.reduce((s, l) => s + l.reviews, 0);
   const totalUnresolved = locations.reduce((s, l) => s + l.unresolved, 0);
@@ -482,8 +657,7 @@ export async function sendOwnerDigest({ to, locations, dashboardUrl }: OwnerDige
       </a>
     </div>`;
 
-  await resend.emails.send({
-    from: FROM,
+  await sendEmail({
     to,
     subject: `📊 Resumen Semanal — ${totalReviews} reseñas, ${overallAvg} prom en ${locations.length} ubicaciones`,
     html: emailLayout(content, 'Enviado cada lunes por RateTap'),
@@ -505,11 +679,6 @@ export async function sendPasswordResetEmail({
   restaurantName,
   resetUrl,
 }: PasswordResetParams) {
-  const resend = getResend();
-  if (!resend) {
-    console.warn('[email] RESEND_API_KEY not set — skipping password reset email');
-    return;
-  }
 
   const content = `
     <div style="padding: 32px 28px;">
@@ -536,8 +705,7 @@ export async function sendPasswordResetEmail({
       </div>
     </div>`;
 
-  await resend.emails.send({
-    from: FROM,
+  await sendEmail({
     to,
     subject: `🔐 Restablecer contraseña — ${restaurantName}`,
     html: emailLayout(content),
@@ -549,9 +717,8 @@ export async function sendPasswordResetEmail({
 // ────────────────────────────────────────────────────────────
 
 export async function sendTestEmail(to: string) {
-  const resend = getResend();
-  if (!resend) {
-    return { success: false, error: 'RESEND_API_KEY not set' };
+  if (!getSmtpTransporter() && !getResend()) {
+    return { success: false, error: 'No email provider configured' };
   }
 
   const content = `
@@ -565,14 +732,13 @@ export async function sendTestEmail(to: string) {
       </p>
     </div>`;
 
-  const result = await resend.emails.send({
-    from: FROM,
+  const result = await sendEmail({
     to,
     subject: '✅ RateTap — Email configurado correctamente',
     html: emailLayout(content),
   });
 
-  return { success: true, id: result.data?.id };
+  return { success: true, id: result?.data?.id };
 }
 
 // ────────────────────────────────────────────────────────────
@@ -588,11 +754,6 @@ export async function sendFeatureAnnouncement({
   to,
   restaurantName,
 }: FeatureAnnouncementParams) {
-  const resend = getResend();
-  if (!resend) {
-    console.warn('[email] RESEND_API_KEY not set — skipping feature announcement');
-    return;
-  }
 
   const content = `
     <div style="padding: 32px 28px;">
@@ -639,8 +800,7 @@ export async function sendFeatureAnnouncement({
       </div>
     </div>`;
 
-  await resend.emails.send({
-    from: FROM,
+  await sendEmail({
     to,
     subject: `📱 Nuevo: Notificaciones push en tu celular — ${restaurantName}`,
     html: emailLayout(content),
@@ -688,12 +848,6 @@ export async function sendGMFeedback({
   const label = categoryLabels[category] ?? category;
   const colors = categoryColors[category] ?? categoryColors.feedback;
 
-  const resend = getResend();
-  if (!resend) {
-    console.warn('[email] RESEND_API_KEY not set — logging GM feedback to console');
-    console.log(`[GM Feedback] ${label} from ${restaurantName}: ${subject || '(no subject)'}\n${message}`);
-    return;
-  }
 
   const content = `
     <div style="padding: 32px 28px;">
@@ -713,8 +867,7 @@ export async function sendGMFeedback({
       </div>
     </div>`;
 
-  await resend.emails.send({
-    from: FROM,
+  await sendEmail({
     to: adminEmail,
     subject: `[GM ${label}] ${subject || restaurantName}`,
     replyTo: adminEmail,
@@ -754,11 +907,6 @@ export async function sendWelcomeEmail({
   trialDays = 15,
   pilot = false,
 }: WelcomeEmailParams) {
-  const resend = getResend();
-  if (!resend) {
-    console.warn('[email] RESEND_API_KEY not set — skipping welcome email');
-    return;
-  }
 
   const trialEndStr = trialEndsAt.toLocaleDateString('es-MX', { day: 'numeric', month: 'long', year: 'numeric' });
 
@@ -796,8 +944,7 @@ export async function sendWelcomeEmail({
       </p>
     </div>`;
 
-  await resend.emails.send({
-    from: FROM,
+  await sendEmail({
     to,
     subject: `Bienvenido a RateTap, ${restaurantName} 🎉`,
     html: emailLayout(content, `Tu prueba es gratis por ${trialDays} días. Puedes cancelar cuando quieras.`),
@@ -812,8 +959,6 @@ interface TrialEndingEmailParams {
 }
 
 export async function sendTrialEndingEmail({ to, restaurantName, daysLeft, amountMxn }: TrialEndingEmailParams) {
-  const resend = getResend();
-  if (!resend) return;
 
   const content = `
     <div class="content-pad" style="padding: 32px 28px;">
@@ -833,8 +978,7 @@ export async function sendTrialEndingEmail({ to, restaurantName, daysLeft, amoun
       </table>
     </div>`;
 
-  await resend.emails.send({
-    from: FROM,
+  await sendEmail({
     to,
     subject: `Tu prueba de RateTap termina en ${daysLeft} días`,
     html: emailLayout(content),
@@ -850,8 +994,6 @@ interface ReceiptEmailParams {
 }
 
 export async function sendReceiptEmail({ to, restaurantName, amountMxn, periodEnd, invoiceUrl }: ReceiptEmailParams) {
-  const resend = getResend();
-  if (!resend) return;
 
   const nextStr = periodEnd.toLocaleDateString('es-MX', { day: 'numeric', month: 'long', year: 'numeric' });
 
@@ -874,8 +1016,7 @@ export async function sendReceiptEmail({ to, restaurantName, amountMxn, periodEn
       </table>` : ''}
     </div>`;
 
-  await resend.emails.send({
-    from: FROM,
+  await sendEmail({
     to,
     subject: `Recibo de RateTap — ${mxnFmt(amountMxn)}`,
     html: emailLayout(content),
@@ -890,8 +1031,6 @@ interface PaymentFailedEmailParams {
 }
 
 export async function sendPaymentFailedEmail({ to, restaurantName, amountMxn, updatePaymentUrl }: PaymentFailedEmailParams) {
-  const resend = getResend();
-  if (!resend) return;
 
   const content = `
     <div class="content-pad" style="padding: 32px 28px;">
@@ -908,8 +1047,7 @@ export async function sendPaymentFailedEmail({ to, restaurantName, amountMxn, up
       </table>
     </div>`;
 
-  await resend.emails.send({
-    from: FROM,
+  await sendEmail({
     to,
     subject: `Problema con tu pago de RateTap`,
     html: emailLayout(content),
@@ -942,8 +1080,7 @@ interface OwnerLeadParams {
 }
 
 export async function sendOwnerLeadNotification(p: OwnerLeadParams) {
-  const resend = getResend();
-  if (!resend || !OWNER_NOTIFICATION_EMAIL) return;
+  if (!OWNER_NOTIFICATION_EMAIL) return;
 
   const sourceLine = [p.source, p.offer].filter(Boolean).join(' / ') || 'unknown';
   const contactLine = [
@@ -973,8 +1110,7 @@ export async function sendOwnerLeadNotification(p: OwnerLeadParams) {
       </p>
     </div>`;
 
-  await resend.emails.send({
-    from: FROM,
+  await sendEmail({
     to: OWNER_NOTIFICATION_EMAIL,
     subject: `Nuevo lead: ${p.businessName}`,
     html: emailLayout(content),
@@ -982,8 +1118,7 @@ export async function sendOwnerLeadNotification(p: OwnerLeadParams) {
 }
 
 export async function sendOwnerSignupNotification(p: OwnerSignupParams) {
-  const resend = getResend();
-  if (!resend || !OWNER_NOTIFICATION_EMAIL) return;
+  if (!OWNER_NOTIFICATION_EMAIL) return;
 
   const content = `
     <div class="content-pad" style="padding: 28px 24px;">
@@ -999,8 +1134,7 @@ export async function sendOwnerSignupNotification(p: OwnerSignupParams) {
       </table>
     </div>`;
 
-  await resend.emails.send({
-    from: FROM,
+  await sendEmail({
     to: OWNER_NOTIFICATION_EMAIL,
     subject: `🎉 Nuevo signup: ${p.restaurantName}`,
     html: emailLayout(content),
@@ -1024,8 +1158,7 @@ interface OwnerConversionParams {
 }
 
 export async function sendOwnerConversionNotification(p: OwnerConversionParams) {
-  const resend = getResend();
-  if (!resend || !OWNER_NOTIFICATION_EMAIL) return;
+  if (!OWNER_NOTIFICATION_EMAIL) return;
 
   const addr = p.shippingAddress;
   const addressLines = [
@@ -1050,8 +1183,7 @@ export async function sendOwnerConversionNotification(p: OwnerConversionParams) 
       </p>
     </div>`;
 
-  await resend.emails.send({
-    from: FROM,
+  await sendEmail({
     to: OWNER_NOTIFICATION_EMAIL,
     subject: `💰 Conversión + envío: ${p.restaurantName}`,
     html: emailLayout(content),
@@ -1065,8 +1197,7 @@ interface OwnerLapsedParams {
 }
 
 export async function sendOwnerTrialLapsedNotification(p: OwnerLapsedParams) {
-  const resend = getResend();
-  if (!resend || !OWNER_NOTIFICATION_EMAIL) return;
+  if (!OWNER_NOTIFICATION_EMAIL) return;
 
   const content = `
     <div class="content-pad" style="padding: 28px 24px;">
@@ -1077,8 +1208,7 @@ export async function sendOwnerTrialLapsedNotification(p: OwnerLapsedParams) {
       ${p.contactName ? `<p style="margin: 0; font-size: 13px; color: #78716c;">Contacto: ${escapeHtml(p.contactName)}${p.email ? ` · <a href="mailto:${escapeHtml(p.email)}">${escapeHtml(p.email)}</a>` : ''}</p>` : ''}
     </div>`;
 
-  await resend.emails.send({
-    from: FROM,
+  await sendEmail({
     to: OWNER_NOTIFICATION_EMAIL,
     subject: `Prueba expirada: ${p.restaurantName}`,
     html: emailLayout(content),

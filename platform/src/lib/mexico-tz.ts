@@ -28,3 +28,29 @@ export function startOfTodayMexico(): Date {
   today.setHours(0, 0, 0, 0);
   return new Date(today.getTime() + utcOffset());
 }
+
+/** Start of tomorrow (00:00) in Mexico City, as real UTC Date. */
+export function startOfTomorrowMexico(): Date {
+  const tomorrow = mexicoLocal();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  tomorrow.setHours(0, 0, 0, 0);
+  return new Date(tomorrow.getTime() + utcOffset());
+}
+
+/** Start of yesterday (00:00) in Mexico City, as real UTC Date. */
+export function startOfYesterdayMexico(): Date {
+  const yesterday = mexicoLocal();
+  yesterday.setDate(yesterday.getDate() - 1);
+  yesterday.setHours(0, 0, 0, 0);
+  return new Date(yesterday.getTime() + utcOffset());
+}
+
+/** Current hour (0-23) in Mexico City. */
+export function currentMexicoHour(): number {
+  return mexicoLocal().getHours();
+}
+
+/** Current day of week in Mexico City (0 = Sunday, 6 = Saturday). */
+export function currentMexicoDayOfWeek(): number {
+  return mexicoLocal().getDay();
+}
