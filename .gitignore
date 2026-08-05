@@ -31,3 +31,9 @@ platform/scripts/marketing-stats.json
 .ga4-token.json
 .ga4-property.json
 data/analytics/
+
+# Public-repo safety: prospect PII, platform build/output, dead tokens, board reports
+data/
+platform/output/
+platform/board-report-*/
+*.dead-*
