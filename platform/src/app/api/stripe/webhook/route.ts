@@ -4,7 +4,6 @@ import { db } from '@/db';
 import { commercialLeads, restaurants, processedStripeEvents, pendingSignups } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 import { getStripe, STRIPE_WEBHOOK_SECRET, TRIAL_DAYS } from '@/lib/stripe';
-import { generateUniqueSlug } from '@/lib/slug';
 import { generateQrDataUrl, reviewUrlFor } from '@/lib/qr';
 import {
   sendWelcomeEmail,
@@ -19,6 +18,7 @@ import { sendTrialEndingSms } from '@/lib/sms';
 import { sendPurchaseEvent, sendCompleteRegistrationEvent } from '@/lib/meta-conversions';
 import { sendWhatsAppWelcome } from '@/lib/whatsapp';
 import { trackCommercialEvent } from '@/lib/commercial-tracking';
+import { provisionSignupRestaurant } from '@/lib/signup-provisioning';
 
 export const runtime = 'nodejs';
 // Webhooks must not be statically analyzed / cached
@@ -136,32 +136,19 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
     return;
   }
 
-  const slug = await generateUniqueSlug(signup.businessName);
-
   const stripe = getStripe();
   const subscription = await stripe.subscriptions.retrieve(subscriptionId);
   const trialEndsAt = subscription.trial_end
     ? new Date(subscription.trial_end * 1000)
     : new Date(Date.now() + TRIAL_DAYS * 24 * 60 * 60 * 1000);
 
-  const [restaurant] = await db.insert(restaurants).values({
-    name: signup.businessName,
-    slug,
-    managerEmail: signup.email,
-    contactName: signup.contactName ?? null,
-    city: signup.city ?? null,
-    managerPhone: signup.phone ?? null,
-    googlePlaceId: signup.googlePlaceId || null,
-    googleReviewUrl: signup.googlePlaceId
-      ? `https://search.google.com/local/writereview?placeid=${signup.googlePlaceId}`
-      : null,
-    adminPasswordHash: signup.passwordHash,
-    shippingAddress: signup.shippingAddress ?? null,
+  const restaurant = await provisionSignupRestaurant({
+    ...signup,
     stripeCustomerId: customerId,
     stripeSubscriptionId: subscriptionId,
-    subscriptionStatus: 'trialing',
     trialEndsAt,
-  }).returning({ id: restaurants.id });
+  });
+  const { slug } = restaurant;
 
   if (signup.pendingSignupId) {
     await db

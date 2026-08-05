@@ -63,6 +63,7 @@ export const restaurants = pgTable('restaurants', {
   stripeSubscriptionId: text('stripe_subscription_id'),
   subscriptionStatus: text('subscription_status').notNull().default('active'),
   trialEndsAt: timestamp('trial_ends_at', { withTimezone: true }),
+  pilot: boolean('pilot').notNull().default(false),
   shippingAddress: text('shipping_address'),
   nfcCardsShippedAt: timestamp('nfc_cards_shipped_at', { withTimezone: true }),
   createdAt: timestamp('created_at', { withTimezone: true })

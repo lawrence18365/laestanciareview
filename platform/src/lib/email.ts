@@ -740,6 +740,8 @@ interface WelcomeEmailParams {
   qrDataUrl: string;
   reviewUrl: string;
   trialEndsAt: Date;
+  trialDays?: number;
+  pilot?: boolean;
 }
 
 export async function sendWelcomeEmail({
@@ -749,6 +751,8 @@ export async function sendWelcomeEmail({
   qrDataUrl,
   reviewUrl,
   trialEndsAt,
+  trialDays = 15,
+  pilot = false,
 }: WelcomeEmailParams) {
   const resend = getResend();
   if (!resend) {
@@ -762,7 +766,7 @@ export async function sendWelcomeEmail({
     <div class="content-pad" style="padding: 32px 28px;">
       <h1 style="margin: 0 0 12px; font-size: 24px; font-weight: 700; color: #1c1917;">¡Bienvenido a RateTap! 🎉</h1>
       <p style="margin: 0 0 20px; font-size: 15px; line-height: 1.6; color: #57534e;">
-        Hola <strong>${escapeHtml(restaurantName)}</strong>, tu prueba gratis de 15 días ya está activa hasta el <strong>${escapeHtml(trialEndStr)}</strong>.
+        Hola <strong>${escapeHtml(restaurantName)}</strong>, tu prueba gratis de ${trialDays} días ya está activa hasta el <strong>${escapeHtml(trialEndStr)}</strong>.
       </p>
 
       <div style="text-align: center; padding: 24px; background: #faf8f6; border-radius: 12px; margin: 0 0 20px;">
@@ -774,7 +778,9 @@ export async function sendWelcomeEmail({
       </div>
 
       <p style="margin: 0 0 20px; font-size: 15px; line-height: 1.6; color: #57534e;">
-        Imprime este QR y colócalo en tus mesas hoy mismo. En cuanto confirmes tu pago el día 15, te enviaremos tus tarjetas NFC físicas.
+        ${pilot
+          ? 'Imprime este QR y colócalo en tus mesas hoy mismo. Si decides continuar después del piloto, te enviaremos tus tarjetas NFC físicas.'
+          : 'Imprime este QR y colócalo en tus mesas hoy mismo. En cuanto confirmes tu pago el día 15, te enviaremos tus tarjetas NFC físicas.'}
       </p>
 
       <table role="presentation" cellpadding="0" cellspacing="0" style="margin: 0 auto;">
@@ -794,7 +800,7 @@ export async function sendWelcomeEmail({
     from: FROM,
     to,
     subject: `Bienvenido a RateTap, ${restaurantName} 🎉`,
-    html: emailLayout(content, 'Tu prueba es gratis por 15 días. Puedes cancelar cuando quieras.'),
+    html: emailLayout(content, `Tu prueba es gratis por ${trialDays} días. Puedes cancelar cuando quieras.`),
   });
 }
 

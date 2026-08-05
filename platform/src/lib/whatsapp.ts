@@ -104,12 +104,14 @@ interface WhatsAppWelcomeParams {
   to: string;
   restaurantName: string;
   trialEndsAt: Date;
+  trialDays?: number;
 }
 
 export async function sendWhatsAppWelcome({
   to,
   restaurantName,
   trialEndsAt,
+  trialDays = 15,
 }: WhatsAppWelcomeParams) {
   const cfg = getConfig();
   if (!cfg) {
@@ -130,7 +132,7 @@ export async function sendWhatsAppWelcome({
   const lines = [
     `🎉 *¡Bienvenido a RateTap, ${restaurantName}!*`,
     '',
-    `Tu prueba gratis de 15 días ya está activa (hasta el ${endDate}).`,
+    `Tu prueba gratis de ${trialDays} días ya está activa (hasta el ${endDate}).`,
     '',
     `📊 Tu panel: ${baseUrl}/dashboard`,
     '',

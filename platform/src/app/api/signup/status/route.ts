@@ -5,14 +5,17 @@ import { eq } from 'drizzle-orm';
 import { createSession } from '@/lib/session';
 import { generateQrDataUrl, reviewUrlFor } from '@/lib/qr';
 import { verifyTokenHash } from '@/lib/tokens';
+import { cookies } from 'next/headers';
+import { parseSignupAccess, SIGNUP_ACCESS_COOKIE } from '@/lib/signup-access';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(req: NextRequest) {
-  const signupId = req.nextUrl.searchParams.get('signup_id');
-  const token = req.nextUrl.searchParams.get('token');
+  const access = parseSignupAccess(req.cookies.get(SIGNUP_ACCESS_COOKIE)?.value);
+  const signupId = access?.signupId;
+  const token = access?.token;
 
-  if (!signupId || !token || !signupId.startsWith('ps_')) {
+  if (!signupId || !token) {
     return Response.json({ error: 'Missing signup token' }, { status: 400 });
   }
 
@@ -43,6 +46,8 @@ export async function GET(req: NextRequest) {
 
   // Provision session cookie only after the unguessable onboarding token matches.
   await createSession(r.slug, r.isOwner ? 'owner' : 'gm');
+  const jar = await cookies();
+  jar.delete(SIGNUP_ACCESS_COOKIE);
 
   const qrDataUrl = await generateQrDataUrl(r.slug);
 
@@ -53,5 +58,7 @@ export async function GET(req: NextRequest) {
     reviewUrl: reviewUrlFor(r.slug),
     qrDataUrl,
     trialEndsAt: r.trialEndsAt,
+    pilot: r.pilot,
+    signupId,
   });
 }

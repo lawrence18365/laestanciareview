@@ -1,6 +1,8 @@
 /**
  * Daily cron: send WhatsApp + email nurture messages to trialing restaurants.
- * Day 3 → tips. Day 7 → case study. Day 12 → trial ending warning.
+ * Day 3 → tips. Day 7 → case study. Founder pilots → ending warning
+ * three days before trialEndsAt. Stripe-managed ending warnings come from the
+ * customer.subscription.trial_will_end webhook instead.
  *
  * Schedule: every day at noon Mexico City (18:00 UTC)
  * Vercel cron: "0 18 * * *"
@@ -26,7 +28,7 @@ function getTwilioConfig() {
 
 async function sendWhatsApp(to: string, body: string) {
   const cfg = getTwilioConfig();
-  if (!cfg) return;
+  if (!cfg) throw new Error('Twilio WhatsApp is not configured');
 
   let digits = to.replace(/\D/g, '');
   if (digits.length === 13 && digits.startsWith('521')) digits = '52' + digits.slice(3);
@@ -38,7 +40,7 @@ async function sendWhatsApp(to: string, body: string) {
     Body: body,
   });
 
-  await fetch(`https://api.twilio.com/2010-04-01/Accounts/${cfg.accountSid}/Messages.json`, {
+  const response = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${cfg.accountSid}/Messages.json`, {
     method: 'POST',
     headers: {
       Authorization: `Basic ${Buffer.from(`${cfg.accountSid}:${cfg.authToken}`).toString('base64')}`,
@@ -46,9 +48,17 @@ async function sendWhatsApp(to: string, body: string) {
     },
     body: params.toString(),
   });
+  if (!response.ok) {
+    throw new Error(`Twilio WhatsApp delivery failed with status ${response.status}`);
+  }
 }
 
-const NURTURE: Record<string, { days: number; whatsapp: (name: string) => string; subject: (name: string) => string; html: (name: string) => string }> = {
+const NURTURE: Record<string, {
+  days: number;
+  whatsapp: (name: string, pilot: boolean) => string;
+  subject: (name: string, pilot: boolean) => string;
+  html: (name: string, pilot: boolean) => string;
+}> = {
   day3: {
     days: 3,
     whatsapp: (name) =>
@@ -65,10 +75,13 @@ const NURTURE: Record<string, { days: number; whatsapp: (name: string) => string
   },
   day12: {
     days: 12,
-    whatsapp: (name) =>
-      `Hola *${name}*, tu prueba gratis termina en 3 días. Para seguir recibiendo reseñas de Google sin interrupciones, activa tu plan aquí: ${BASE_URL}/dashboard — $700 MXN/mes, cancela cuando quieras.`,
-    subject: (name) => `Tu prueba termina en 3 días — ${name}`,
-    html: (name) => `<p>Hola ${name},</p><p>Tu prueba gratis de RateTap termina en <strong>3 días</strong>.</p><p>Para que tus reseñas de Google sigan llegando sin interrupciones, activa tu plan ($700 MXN/mes).</p><p><a href="${BASE_URL}/dashboard" style="background:#10B981;color:#fff;padding:12px 24px;text-decoration:none;font-weight:700;display:inline-block;border-radius:6px">Activar mi plan →</a></p><p style="color:#6b7280;font-size:13px">Sin contrato. Cancela cuando quieras.</p>`,
+    whatsapp: (name, pilot) => pilot
+      ? `Hola *${name}*, tu piloto fundador termina en 3 días. Si decides continuar, tu plan será de $700 MXN/mes y la cuota de setup de $1,500 MXN se factura al activar. Escríbenos desde tu panel: ${BASE_URL}/dashboard`
+      : `Hola *${name}*, tu prueba gratis termina en 3 días. Para seguir recibiendo reseñas de Google sin interrupciones, activa tu plan aquí: ${BASE_URL}/dashboard — $700 MXN/mes, cancela cuando quieras.`,
+    subject: (name, pilot) => `${pilot ? 'Tu piloto' : 'Tu prueba'} termina en 3 días — ${name}`,
+    html: (name, pilot) => pilot
+      ? `<p>Hola ${name},</p><p>Tu piloto fundador de RateTap termina en <strong>3 días</strong>.</p><p>Si decides continuar, el plan cuesta $700 MXN/mes y la cuota de setup de $1,500 MXN se factura al activar.</p><p><a href="${BASE_URL}/dashboard" style="background:#10B981;color:#fff;padding:12px 24px;text-decoration:none;font-weight:700;display:inline-block;border-radius:6px">Continuar con RateTap →</a></p><p style="color:#6b7280;font-size:13px">Sin contrato. Cancela cuando quieras.</p>`
+      : `<p>Hola ${name},</p><p>Tu prueba gratis de RateTap termina en <strong>3 días</strong>.</p><p>Para que tus reseñas de Google sigan llegando sin interrupciones, activa tu plan ($700 MXN/mes).</p><p><a href="${BASE_URL}/dashboard" style="background:#10B981;color:#fff;padding:12px 24px;text-decoration:none;font-weight:700;display:inline-block;border-radius:6px">Activar mi plan →</a></p><p style="color:#6b7280;font-size:13px">Sin contrato. Cancela cuando quieras.</p>`,
   },
 };
 
@@ -91,9 +104,16 @@ export async function GET(req: NextRequest) {
   for (const r of trialing) {
     if (!r.createdAt) continue;
     const daysSinceSignup = Math.floor((Date.now() - r.createdAt.getTime()) / 86_400_000);
+    const daysUntilTrialEnd = r.trialEndsAt
+      ? Math.ceil((r.trialEndsAt.getTime() - Date.now()) / 86_400_000)
+      : null;
 
     for (const [eventKey, nurture] of Object.entries(NURTURE)) {
-      if (daysSinceSignup < nurture.days) continue;
+      if (eventKey === 'day12' && !r.pilot) continue;
+      const eligible = eventKey === 'day12' && daysUntilTrialEnd !== null
+        ? daysUntilTrialEnd <= 3
+        : daysSinceSignup >= nurture.days;
+      if (!eligible) continue;
 
       // Check if already sent
       const existing = await db.select().from(nurtureEvents)
@@ -104,28 +124,38 @@ export async function GET(req: NextRequest) {
 
       if (existing.length > 0) continue;
 
-      // Mark as sent first (prevents double-send on retry)
+      const deliveries: Promise<void>[] = [];
+      if (r.managerPhone && getTwilioConfig()) {
+        deliveries.push(sendWhatsApp(r.managerPhone, nurture.whatsapp(r.name, r.pilot)));
+      }
+
+      if (r.managerEmail && resend) {
+        deliveries.push((async () => {
+          const result = await resend.emails.send({
+            from: `RateTap <hola@ratetapmx.com>`,
+            to: r.managerEmail!,
+            subject: nurture.subject(r.name, r.pilot),
+            html: nurture.html(r.name, r.pilot),
+          });
+          if (result.error) throw new Error(result.error.message);
+        })());
+      }
+
+      if (deliveries.length === 0) continue;
+
+      try {
+        await Promise.all(deliveries);
+      } catch (error) {
+        console.error(`[trial-nurture] ${eventKey} delivery failed for ${r.name}:`, error);
+        continue;
+      }
+
+      // Record only after every configured delivery succeeds. If insertion
+      // races another cron invocation, the unique constraint wins harmlessly.
       try {
         await db.insert(nurtureEvents).values({ restaurantId: r.id, event: eventKey });
       } catch {
-        continue; // unique constraint — already inserted by parallel run
-      }
-
-      // Send WhatsApp
-      if (r.managerPhone) {
-        sendWhatsApp(r.managerPhone, nurture.whatsapp(r.name)).catch(e =>
-          console.error(`[trial-nurture] WhatsApp ${eventKey} failed for ${r.name}:`, e)
-        );
-      }
-
-      // Send email
-      if (r.managerEmail && resend) {
-        resend.emails.send({
-          from: `RateTap <hola@ratetapmx.com>`,
-          to: r.managerEmail,
-          subject: nurture.subject(r.name),
-          html: nurture.html(r.name),
-        }).catch(e => console.error(`[trial-nurture] email ${eventKey} failed:`, e));
+        continue;
       }
 
       processed++;

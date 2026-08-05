@@ -23,6 +23,7 @@ export type CommercialEventName =
   | 'outreach_replied'
   | 'checkout_started'
   | 'checkout_completed'
+  | 'pilot_signup_completed'
   | 'restaurant_activated'
   | 'review_submitted'
   | 'google_redirected'
