@@ -39,7 +39,7 @@ export const t = {
   dashboard: {
     negativeReviewNeedsAttention: (n: number) =>
       `${n} ${n === 1 ? 'reseña negativa necesita' : 'reseñas negativas necesitan'} atención`,
-    belowThreshold: 'Por debajo de tu umbral de Google — toca para abrir Buzón',
+    belowThreshold: 'Por debajo de tu umbral de alerta — toca para abrir Buzón',
     unreadFeedback: (n: number) =>
       `${n} ${n === 1 ? 'comentario sin leer' : 'comentarios sin leer'} en tu Buzón`,
     rateTapImpact: 'Impacto RateTap',
@@ -49,8 +49,8 @@ export const t = {
     sentToGoogle: 'Enviados a Google',
     newGoogleReviewsConfirmed: (n: number) => `${n} nuevas reseñas en Google confirmadas`,
     customersDirectedToGoogle: 'clientes dirigidos a dejar una reseña en Google',
-    badReviewsPrevented: 'Reseñas Negativas Prevenidas',
-    negativeReviewsCaughtPrivately: 'reseñas negativas captadas en privado',
+    badReviewsPrevented: 'Feedback privado recibido',
+    negativeReviewsCaughtPrivately: 'comentarios privados de huéspedes',
     reviewVelocity: 'Escaneos por Semana',
     perWeek: '/sem',
     totalOverWeeks: (total: number, weeks: number) =>
@@ -211,8 +211,8 @@ export const t = {
     sentToGoogle: 'Enviados a Google',
     newGoogleReviewsConfirmed: (n: number) => `${n} nuevas reseñas en Google confirmadas`,
     customersDirectedToGoogle: 'clientes dirigidos a Google',
-    badReviewsPrevented: 'Reseñas Negativas Prevenidas',
-    negativeReviewsCaughtPrivately: 'reseñas negativas captadas en privado',
+    badReviewsPrevented: 'Feedback privado recibido',
+    negativeReviewsCaughtPrivately: 'comentarios privados de huéspedes',
     totalScans: 'Total Escaneos',
     thisWeek: (n: number) => `${n} esta semana`,
     unresolvedFeedback: (n: number) =>
@@ -279,13 +279,13 @@ export const t = {
     managerPhone: 'Teléfono del Gerente',
     phoneHint: 'Usado para alertas SMS. Incluye código de país (ej. +52 para México)',
     googleReviewUrl: 'URL de Reseña de Google',
-    googleRedirectThreshold: 'Umbral de Redirección a Google',
-    starAndAbove: (n: number) => `${n} ★ y arriba`,
-    thresholdHint: 'Clientes que califiquen en este nivel o arriba van a Google',
+    googleRedirectThreshold: 'Umbral de Alerta de Calificación',
+    starAndBelow: (n: number) => `Menos de ${n} ★`,
+    thresholdHint: 'Las calificaciones por debajo de este nivel se marcan para seguimiento y disparan alertas al gerente. No cambia lo que ve el cliente: todos los huéspedes ven la opción de dejar reseña en Google.',
     alertTrigger: 'Disparador de Alerta',
     allFeedback: 'Todos los comentarios',
     lowRatingsOnly: 'Solo calificaciones bajas (1-2 estrellas)',
-    belowGoogleThreshold: 'Por debajo del umbral de Google',
+    belowGoogleThreshold: 'Por debajo del umbral de alerta',
     off: 'Desactivado',
     alertHint: 'Controla cuándo recibes alertas por email, SMS y WhatsApp sobre nuevos comentarios de clientes',
     enableSmsAlerts: 'Activar alertas SMS',
@@ -427,7 +427,7 @@ export const t = {
 
     settingsTitle: 'Ajustes',
     settingsSubtitle: 'Configuración del restaurante — /settings',
-    settingsBody: 'Configura tu URL de Google Reviews, el umbral de redirección (qué calificación mínima va a Google), las alertas por email, SMS y WhatsApp, y el teléfono del gerente. También puedes cambiar tu contraseña aquí.',
+    settingsBody: 'Configura tu URL de Google Reviews, el umbral de alerta (qué calificación se marca para seguimiento), las alertas por email, SMS y WhatsApp, y el teléfono del gerente. También puedes cambiar tu contraseña aquí.',
     settingsTip: 'Recomendamos configurar las alertas por WhatsApp o SMS para recibir notificaciones instantáneas cuando llegue una reseña negativa.',
 
     whatsappTitle: 'Activa WhatsApp',
@@ -451,7 +451,7 @@ export const t = {
 
     overviewTitle: 'Resumen del Portafolio',
     overviewSubtitle: 'Todas tus ubicaciones — /overview',
-    overviewBody: 'El Resumen muestra el impacto agregado de RateTap en todas tus ubicaciones: ganancia promedio de calificación en Google, total de escaneos, reseñas enviadas a Google, y reseñas negativas prevenidas. La tabla de ubicaciones te permite comparar y ordenar por cualquier métrica.',
+    overviewBody: 'El Resumen muestra el impacto agregado de RateTap en todas tus ubicaciones: ganancia promedio de calificación en Google, total de escaneos, reseñas enviadas a Google, y feedback privado recibido. La tabla de ubicaciones te permite comparar y ordenar por cualquier métrica.',
     overviewTip: 'Haz clic en el nombre de cualquier restaurante para ir directamente a su panel individual.',
 
     ownerAnalyticsTitle: 'Analíticas del Portafolio',

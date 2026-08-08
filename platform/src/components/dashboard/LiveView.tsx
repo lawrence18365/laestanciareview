@@ -609,7 +609,7 @@ export default function LiveView({ restaurantName, logoSrc, logoDarkBg, googleRa
               large={fs}
             />
             <StatBox
-              label="INTERCEPTADOS"
+              label="ALERTAS PRIVADAS"
               weekValue={data.week.intercepted}
               todayValue={data.today.intercepted}
               lastWeekValue={data.lastWeek.intercepted}
@@ -914,7 +914,7 @@ function ProtectionRing({
             <div style={{ width: 6, height: 6, background: C.textDim, flexShrink: 0 }} />
             <span style={{ fontSize: fs ? '0.85rem' : '0.75rem', display: 'flex', alignItems: 'center', gap: 6 }}>
               <strong className="font-numeric" style={{ fontSize: fs ? '1.1rem' : '1rem', color: C.textMain, fontWeight: 500 }}>{intercepted}</strong>
-              <span style={{ color: C.textMuted }}>INTERCEPTADOS</span>
+              <span style={{ color: C.textMuted }}>ALERTAS PRIVADAS</span>
             </span>
           </div>
         </div>
@@ -1017,7 +1017,7 @@ function LiveFeed({ scans, now, large }: { scans: RecentScan[]; now: Date; large
                       textTransform: 'uppercase' as const,
                     }}
                   >
-                    Interceptado
+                    Privado
                   </span>
                 )}
                 <span
