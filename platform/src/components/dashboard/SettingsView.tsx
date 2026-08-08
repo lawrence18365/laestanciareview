@@ -262,7 +262,7 @@ export default function SettingsView({ settings }: Props) {
                 >
                   {[1, 2, 3, 4, 5].map((n) => (
                     <option key={n} value={n}>
-                      {t.settings.starAndAbove(n)}
+                      {t.settings.starAndBelow(n)}
                     </option>
                   ))}
                 </select>
