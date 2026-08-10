@@ -93,6 +93,7 @@ export async function POST(req: NextRequest) {
         review_id: review.id,
         rating,
         staff_code: staffCode || null,
+        ui_variant: 'hierarchy_v2',
       },
     });
   } catch (err) {
