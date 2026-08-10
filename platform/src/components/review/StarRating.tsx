@@ -86,6 +86,11 @@ export default function StarRating({
 
   function chooseFeedback() {
     if (!choice) return;
+    fetch('/api/reviews/chose-feedback', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ reviewId: choice.reviewId, feedbackToken: choice.feedbackToken }),
+    }).catch(() => {});
     router.push(
       `/r/${restaurantSlug}/feedback?reviewId=${choice.reviewId}&feedbackToken=${encodeURIComponent(choice.feedbackToken)}`,
     );
@@ -108,6 +113,7 @@ export default function StarRating({
         rating: selectedStar,
         restaurant_slug: restaurantSlug,
         staff_code: staffCode || 'no-card',
+        ui_variant: 'hierarchy_v2',
       });
     }
     setRedirecting(true);
@@ -120,19 +126,38 @@ export default function StarRating({
   const locked = submitting || choice !== null || redirecting;
   const displayRating = hoveredStar || selectedStar;
 
-  // Both choice buttons share one style — equal visual weight is the point
-  // (no steering toward Google or away from a public review).
-  const CHOICE_BTN: CSSProperties = {
+  const CHOICE_PRIMARY_BTN: CSSProperties = {
     width: '100%',
     padding: '0.95rem 1rem',
-    border: '1px solid #111',
+    border: 'none',
     borderRadius: 0,
-    background: '#fff',
-    color: '#111',
+    background: '#B45309',
+    color: '#fff',
     fontWeight: 700,
     fontSize: '0.78rem',
     letterSpacing: '0.08em',
     textTransform: 'uppercase',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    cursor: 'pointer',
+    fontFamily: 'var(--font-sans)',
+  };
+
+  const CHOICE_SECONDARY_BTN: CSSProperties = {
+    width: '100%',
+    padding: '0.95rem 1rem',
+    border: '1px solid #DDD',
+    borderRadius: 0,
+    background: '#fff',
+    color: '#666',
+    fontWeight: 500,
+    fontSize: '0.72rem',
+    letterSpacing: '0.08em',
+    textTransform: 'uppercase',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
     cursor: 'pointer',
     fontFamily: 'var(--font-sans)',
   };
@@ -323,19 +348,27 @@ export default function StarRating({
       ) : choice ? (
         <div style={{ textAlign: 'center', width: '100%', animation: 'reviewFadeIn 0.4s ease-out both' }}>
           <p style={{ fontFamily: 'var(--font-serif)', fontSize: '1.25rem', fontWeight: 600, color: '#111', margin: '0 0 0.35rem', letterSpacing: '-0.01em' }}>
-            ¡Gracias por tu calificación!
+            {selectedStar >= 4 ? '¡Qué gusto!' : '¡Gracias por tu calificación!'}
           </p>
           <p style={{ fontSize: '0.85rem', color: '#666', margin: '0 0 1.1rem', fontFamily: 'var(--font-sans)' }}>
-            ¿Cómo te gustaría compartir tu experiencia?
+            {selectedStar >= 4
+              ? 'Tu reseña en Google le ayuda a otros a encontrarnos.'
+              : '¿Cómo te gustaría compartir tu experiencia?'}
           </p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.7rem' }}>
             {choice.googleReviewUrl && (
-              <button onClick={chooseGoogle} style={CHOICE_BTN}>
-                Dejar reseña en Google
+              <button onClick={chooseGoogle} style={CHOICE_PRIMARY_BTN}>
+                Dejar mi reseña en Google
+                <span style={{ fontSize: '0.65rem', fontWeight: 500, textTransform: 'none', letterSpacing: 'normal', marginTop: '0.25rem' }}>
+                  Pública · visible para otros comensales
+                </span>
               </button>
             )}
-            <button onClick={chooseFeedback} style={CHOICE_BTN}>
-              Enviar comentario privado
+            <button onClick={chooseFeedback} style={CHOICE_SECONDARY_BTN}>
+              Enviar comentario privado al gerente
+              <span style={{ fontSize: '0.65rem', textTransform: 'none', letterSpacing: 'normal', color: '#737373', marginTop: '0.25rem' }}>
+                Queja o sugerencia · solo la lee la gerencia
+              </span>
             </button>
           </div>
         </div>

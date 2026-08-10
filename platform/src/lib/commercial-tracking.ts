@@ -27,6 +27,7 @@ export type CommercialEventName =
   | 'restaurant_activated'
   | 'review_submitted'
   | 'google_redirected'
+  | 'review_chose_feedback'
   | 'feedback_submitted'
   | 'guest_captured'
   | 'subscription_paid'
