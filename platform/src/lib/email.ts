@@ -1,12 +1,4 @@
-import { Resend } from 'resend';
 import { sendMail } from '@/lib/mailer';
-
-let _resend: Resend | null = null;
-function getResend(): Resend | null {
-  if (!process.env.RESEND_API_KEY) return null;
-  if (!_resend) _resend = new Resend(process.env.RESEND_API_KEY.trim());
-  return _resend;
-}
 
 /** Strip stray whitespace/newlines from env vars (Vercel CLI sometimes injects \\n). */
 const clean = (v: string | undefined, fallback: string) => (v ?? fallback).replace(/\\n/g, '').trim();
@@ -103,12 +95,6 @@ export async function sendFeedbackAlert({
   staffName,
   feedback,
 }: FeedbackAlertParams) {
-  const resend = getResend();
-  if (!resend) {
-    console.warn('[email] RESEND_API_KEY not set — skipping email');
-    return;
-  }
-
   const filledStars = '★'.repeat(rating);
   const emptyStars = '☆'.repeat(5 - rating);
   const accentColor = rating >= 4 ? '#16a34a' : rating >= 3 ? '#ca8a04' : '#dc2626';
@@ -171,12 +157,21 @@ export async function sendFeedbackAlert({
       </div>
     </div>`;
 
-  await resend.emails.send({
+  const result = await sendMail({
     from: FROM,
     to,
     subject: `${rating <= 2 ? '🔴' : rating <= 3 ? '🟡' : '🟢'} Nuevo comentario de ${rating} estrellas — ${restaurantName}`,
     html: emailLayout(content),
   });
+
+  if (!result.success || result.skipped) {
+    const reason = result.error
+      ? result.error.message
+      : result.skipped
+        ? 'missing SMTP_USER / SMTP_PASS'
+        : (result.response ?? 'unknown');
+    console.error(`[sendFeedbackAlert] failed to ${to}: ${reason}`);
+  }
 }
 
 // ────────────────────────────────────────────────────────────
@@ -218,12 +213,6 @@ export async function sendWeeklyDigest({
   dashboardUrl,
   googleTrend,
 }: WeeklyDigestParams) {
-  const resend = getResend();
-  if (!resend) {
-    console.warn('[email] RESEND_API_KEY not set — skipping weekly digest');
-    return;
-  }
-
   const reviewsDelta = lastWeek.totalReviews - weekBefore.totalReviews;
   const ratingDelta = lastWeek.avgRating && weekBefore.avgRating
     ? (lastWeek.avgRating - weekBefore.avgRating).toFixed(1)
@@ -333,12 +322,21 @@ export async function sendWeeklyDigest({
       </a>
     </div>`;
 
-  await resend.emails.send({
+  const result = await sendMail({
     from: FROM,
     to,
     subject: `📊 Resumen Semanal — ${restaurantName} — ${lastWeek.totalReviews} reseñas, ${lastWeek.avgRating ? lastWeek.avgRating.toFixed(1) : '--'} prom`,
     html: emailLayout(content, 'Enviado cada lunes por RateTap'),
   });
+
+  if (!result.success || result.skipped) {
+    const reason = result.error
+      ? result.error.message
+      : result.skipped
+        ? 'missing SMTP_USER / SMTP_PASS'
+        : (result.response ?? 'unknown');
+    console.error(`[sendWeeklyDigest] failed to ${to}: ${reason}`);
+  }
 }
 
 // ────────────────────────────────────────────────────────────
@@ -363,12 +361,6 @@ interface OwnerDigestParams {
 }
 
 export async function sendOwnerDigest({ to, locations, dashboardUrl }: OwnerDigestParams) {
-  const resend = getResend();
-  if (!resend) {
-    console.warn('[email] RESEND_API_KEY not set — skipping owner digest');
-    return;
-  }
-
   const totalReviews = locations.reduce((s, l) => s + l.reviews, 0);
   const totalUnresolved = locations.reduce((s, l) => s + l.unresolved, 0);
   const totalIntercepted = locations.reduce((s, l) => s + l.intercepted, 0);
@@ -483,12 +475,21 @@ export async function sendOwnerDigest({ to, locations, dashboardUrl }: OwnerDige
       </a>
     </div>`;
 
-  await resend.emails.send({
+  const result = await sendMail({
     from: FROM,
     to,
     subject: `📊 Resumen Semanal — ${totalReviews} reseñas, ${overallAvg} prom en ${locations.length} ubicaciones`,
     html: emailLayout(content, 'Enviado cada lunes por RateTap'),
   });
+
+  if (!result.success || result.skipped) {
+    const reason = result.error
+      ? result.error.message
+      : result.skipped
+        ? 'missing SMTP_USER / SMTP_PASS'
+        : (result.response ?? 'unknown');
+    console.error(`[sendOwnerDigest] failed to ${to}: ${reason}`);
+  }
 }
 
 // ────────────────────────────────────────────────────────────
@@ -506,12 +507,6 @@ export async function sendPasswordResetEmail({
   restaurantName,
   resetUrl,
 }: PasswordResetParams) {
-  const resend = getResend();
-  if (!resend) {
-    console.warn('[email] RESEND_API_KEY not set — skipping password reset email');
-    return;
-  }
-
   const content = `
     <div style="padding: 32px 28px;">
       <p style="margin: 0 0 2px; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: #b45309;">Seguridad</p>
@@ -537,12 +532,21 @@ export async function sendPasswordResetEmail({
       </div>
     </div>`;
 
-  await resend.emails.send({
+  const result = await sendMail({
     from: FROM,
     to,
     subject: `🔐 Restablecer contraseña — ${restaurantName}`,
     html: emailLayout(content),
   });
+
+  if (!result.success || result.skipped) {
+    const reason = result.error
+      ? result.error.message
+      : result.skipped
+        ? 'missing SMTP_USER / SMTP_PASS'
+        : (result.response ?? 'unknown');
+    console.error(`[sendPasswordResetEmail] failed to ${to}: ${reason}`);
+  }
 }
 
 // ────────────────────────────────────────────────────────────
@@ -550,11 +554,6 @@ export async function sendPasswordResetEmail({
 // ────────────────────────────────────────────────────────────
 
 export async function sendTestEmail(to: string) {
-  const resend = getResend();
-  if (!resend) {
-    return { success: false, error: 'RESEND_API_KEY not set' };
-  }
-
   const content = `
     <div style="padding: 32px 28px; text-align: center;">
       <div style="width: 56px; height: 56px; margin: 0 auto 20px; background: #f0fdf4; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
@@ -566,14 +565,24 @@ export async function sendTestEmail(to: string) {
       </p>
     </div>`;
 
-  const result = await resend.emails.send({
+  const result = await sendMail({
     from: FROM,
     to,
     subject: '✅ RateTap — Email configurado correctamente',
     html: emailLayout(content),
   });
 
-  return { success: true, id: result.data?.id };
+  if (!result.success || result.skipped) {
+    const reason = result.error
+      ? result.error.message
+      : result.skipped
+        ? 'missing SMTP_USER / SMTP_PASS'
+        : (result.response ?? 'unknown');
+    console.error(`[sendTestEmail] failed to ${to}: ${reason}`);
+    return { success: false, error: reason };
+  }
+
+  return { success: true, id: result.messageId ?? undefined };
 }
 
 // ────────────────────────────────────────────────────────────
@@ -589,12 +598,6 @@ export async function sendFeatureAnnouncement({
   to,
   restaurantName,
 }: FeatureAnnouncementParams) {
-  const resend = getResend();
-  if (!resend) {
-    console.warn('[email] RESEND_API_KEY not set — skipping feature announcement');
-    return;
-  }
-
   const content = `
     <div style="padding: 32px 28px;">
       <div style="margin-bottom: 16px;">
@@ -640,12 +643,21 @@ export async function sendFeatureAnnouncement({
       </div>
     </div>`;
 
-  await resend.emails.send({
+  const result = await sendMail({
     from: FROM,
     to,
     subject: `📱 Nuevo: Notificaciones push en tu celular — ${restaurantName}`,
     html: emailLayout(content),
   });
+
+  if (!result.success || result.skipped) {
+    const reason = result.error
+      ? result.error.message
+      : result.skipped
+        ? 'missing SMTP_USER / SMTP_PASS'
+        : (result.response ?? 'unknown');
+    console.error(`[sendFeatureAnnouncement] failed to ${to}: ${reason}`);
+  }
 }
 
 // ────────────────────────────────────────────────────────────
@@ -689,13 +701,6 @@ export async function sendGMFeedback({
   const label = categoryLabels[category] ?? category;
   const colors = categoryColors[category] ?? categoryColors.feedback;
 
-  const resend = getResend();
-  if (!resend) {
-    console.warn('[email] RESEND_API_KEY not set — logging GM feedback to console');
-    console.log(`[GM Feedback] ${label} from ${restaurantName}: ${subject || '(no subject)'}\n${message}`);
-    return;
-  }
-
   const content = `
     <div style="padding: 32px 28px;">
       <div style="margin-bottom: 20px;">
@@ -714,13 +719,22 @@ export async function sendGMFeedback({
       </div>
     </div>`;
 
-  await resend.emails.send({
+  const result = await sendMail({
     from: FROM,
     to: adminEmail,
     subject: `[GM ${label}] ${subject || restaurantName}`,
     replyTo: adminEmail,
     html: emailLayout(content),
   });
+
+  if (!result.success || result.skipped) {
+    const reason = result.error
+      ? result.error.message
+      : result.skipped
+        ? 'missing SMTP_USER / SMTP_PASS'
+        : (result.response ?? 'unknown');
+    console.error(`[sendGMFeedback] failed to ${adminEmail}: ${reason}`);
+  }
 }
 
 // ────────────────────────────────────────────────────────────
@@ -755,12 +769,6 @@ export async function sendWelcomeEmail({
   trialDays = 15,
   pilot = false,
 }: WelcomeEmailParams) {
-  const resend = getResend();
-  if (!resend) {
-    console.warn('[email] RESEND_API_KEY not set — skipping welcome email');
-    return;
-  }
-
   const trialEndStr = trialEndsAt.toLocaleDateString('es-MX', { day: 'numeric', month: 'long', year: 'numeric' });
 
   const content = `
@@ -797,12 +805,21 @@ export async function sendWelcomeEmail({
       </p>
     </div>`;
 
-  await resend.emails.send({
+  const result = await sendMail({
     from: FROM,
     to,
     subject: `Bienvenido a RateTap, ${restaurantName} 🎉`,
     html: emailLayout(content, `Tu prueba es gratis por ${trialDays} días. Puedes cancelar cuando quieras.`),
   });
+
+  if (!result.success || result.skipped) {
+    const reason = result.error
+      ? result.error.message
+      : result.skipped
+        ? 'missing SMTP_USER / SMTP_PASS'
+        : (result.response ?? 'unknown');
+    console.error(`[sendWelcomeEmail] failed to ${to}: ${reason}`);
+  }
 }
 
 interface TrialEndingEmailParams {
@@ -813,9 +830,6 @@ interface TrialEndingEmailParams {
 }
 
 export async function sendTrialEndingEmail({ to, restaurantName, daysLeft, amountMxn }: TrialEndingEmailParams) {
-  const resend = getResend();
-  if (!resend) return;
-
   const content = `
     <div class="content-pad" style="padding: 32px 28px;">
       <h1 style="margin: 0 0 12px; font-size: 22px; font-weight: 700; color: #1c1917;">Tu prueba termina en ${daysLeft} días</h1>
@@ -834,12 +848,21 @@ export async function sendTrialEndingEmail({ to, restaurantName, daysLeft, amoun
       </table>
     </div>`;
 
-  await resend.emails.send({
+  const result = await sendMail({
     from: FROM,
     to,
     subject: `Tu prueba de RateTap termina en ${daysLeft} días`,
     html: emailLayout(content),
   });
+
+  if (!result.success || result.skipped) {
+    const reason = result.error
+      ? result.error.message
+      : result.skipped
+        ? 'missing SMTP_USER / SMTP_PASS'
+        : (result.response ?? 'unknown');
+    console.error(`[sendTrialEndingEmail] failed to ${to}: ${reason}`);
+  }
 }
 
 interface ReceiptEmailParams {
@@ -851,9 +874,6 @@ interface ReceiptEmailParams {
 }
 
 export async function sendReceiptEmail({ to, restaurantName, amountMxn, periodEnd, invoiceUrl }: ReceiptEmailParams) {
-  const resend = getResend();
-  if (!resend) return;
-
   const nextStr = periodEnd.toLocaleDateString('es-MX', { day: 'numeric', month: 'long', year: 'numeric' });
 
   const content = `
@@ -875,12 +895,21 @@ export async function sendReceiptEmail({ to, restaurantName, amountMxn, periodEn
       </table>` : ''}
     </div>`;
 
-  await resend.emails.send({
+  const result = await sendMail({
     from: FROM,
     to,
     subject: `Recibo de RateTap — ${mxnFmt(amountMxn)}`,
     html: emailLayout(content),
   });
+
+  if (!result.success || result.skipped) {
+    const reason = result.error
+      ? result.error.message
+      : result.skipped
+        ? 'missing SMTP_USER / SMTP_PASS'
+        : (result.response ?? 'unknown');
+    console.error(`[sendReceiptEmail] failed to ${to}: ${reason}`);
+  }
 }
 
 interface PaymentFailedEmailParams {
@@ -891,9 +920,6 @@ interface PaymentFailedEmailParams {
 }
 
 export async function sendPaymentFailedEmail({ to, restaurantName, amountMxn, updatePaymentUrl }: PaymentFailedEmailParams) {
-  const resend = getResend();
-  if (!resend) return;
-
   const content = `
     <div class="content-pad" style="padding: 32px 28px;">
       <h1 style="margin: 0 0 12px; font-size: 22px; font-weight: 700; color: #b91c1c;">No pudimos procesar tu pago</h1>
@@ -909,12 +935,21 @@ export async function sendPaymentFailedEmail({ to, restaurantName, amountMxn, up
       </table>
     </div>`;
 
-  await resend.emails.send({
+  const result = await sendMail({
     from: FROM,
     to,
     subject: `Problema con tu pago de RateTap`,
     html: emailLayout(content),
   });
+
+  if (!result.success || result.skipped) {
+    const reason = result.error
+      ? result.error.message
+      : result.skipped
+        ? 'missing SMTP_USER / SMTP_PASS'
+        : (result.response ?? 'unknown');
+    console.error(`[sendPaymentFailedEmail] failed to ${to}: ${reason}`);
+  }
 }
 
 // ── Owner (Lawrence) notifications ───────────────────────────
@@ -1099,8 +1134,10 @@ interface OwnerLapsedParams {
 }
 
 export async function sendOwnerTrialLapsedNotification(p: OwnerLapsedParams) {
-  const resend = getResend();
-  if (!resend || !OWNER_NOTIFICATION_EMAIL) return;
+  if (!OWNER_NOTIFICATION_EMAIL) {
+    console.error('[sendOwnerTrialLapsedNotification] skipped: missing OWNER_NOTIFICATION_EMAIL / ADMIN_EMAIL');
+    return;
+  }
 
   const content = `
     <div class="content-pad" style="padding: 28px 24px;">
@@ -1111,10 +1148,19 @@ export async function sendOwnerTrialLapsedNotification(p: OwnerLapsedParams) {
       ${p.contactName ? `<p style="margin: 0; font-size: 13px; color: #78716c;">Contacto: ${escapeHtml(p.contactName)}${p.email ? ` · <a href="mailto:${escapeHtml(p.email)}">${escapeHtml(p.email)}</a>` : ''}</p>` : ''}
     </div>`;
 
-  await resend.emails.send({
+  const result = await sendMail({
     from: FROM,
     to: OWNER_NOTIFICATION_EMAIL,
     subject: `Prueba expirada: ${p.restaurantName}`,
     html: emailLayout(content),
   });
+
+  if (!result.success || result.skipped) {
+    const reason = result.error
+      ? result.error.message
+      : result.skipped
+        ? 'missing SMTP_USER / SMTP_PASS'
+        : (result.response ?? 'unknown');
+    console.error(`[sendOwnerTrialLapsedNotification] failed to ${OWNER_NOTIFICATION_EMAIL}: ${reason}`);
+  }
 }
