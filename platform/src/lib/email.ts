@@ -1,4 +1,5 @@
 import { Resend } from 'resend';
+import { sendMail } from '@/lib/mailer';
 
 let _resend: Resend | null = null;
 function getResend(): Resend | null {
@@ -942,8 +943,10 @@ interface OwnerLeadParams {
 }
 
 export async function sendOwnerLeadNotification(p: OwnerLeadParams) {
-  const resend = getResend();
-  if (!resend || !OWNER_NOTIFICATION_EMAIL) return;
+  if (!OWNER_NOTIFICATION_EMAIL) {
+    console.error('[sendOwnerLeadNotification] skipped: missing OWNER_NOTIFICATION_EMAIL / ADMIN_EMAIL');
+    return;
+  }
 
   const sourceLine = [p.source, p.offer].filter(Boolean).join(' / ') || 'unknown';
   const contactLine = [
@@ -973,17 +976,28 @@ export async function sendOwnerLeadNotification(p: OwnerLeadParams) {
       </p>
     </div>`;
 
-  await resend.emails.send({
+  const result = await sendMail({
     from: FROM,
     to: OWNER_NOTIFICATION_EMAIL,
     subject: `Nuevo lead: ${p.businessName}`,
     html: emailLayout(content),
   });
+
+  if (!result.success || result.skipped) {
+    const reason = result.error
+      ? result.error.message
+      : result.skipped
+        ? 'missing SMTP_USER / SMTP_PASS'
+        : (result.response ?? 'unknown');
+    console.error(`[sendOwnerLeadNotification] failed to ${OWNER_NOTIFICATION_EMAIL}: ${reason}`);
+  }
 }
 
 export async function sendOwnerSignupNotification(p: OwnerSignupParams) {
-  const resend = getResend();
-  if (!resend || !OWNER_NOTIFICATION_EMAIL) return;
+  if (!OWNER_NOTIFICATION_EMAIL) {
+    console.error('[sendOwnerSignupNotification] skipped: missing OWNER_NOTIFICATION_EMAIL / ADMIN_EMAIL');
+    return;
+  }
 
   const content = `
     <div class="content-pad" style="padding: 28px 24px;">
@@ -999,12 +1013,21 @@ export async function sendOwnerSignupNotification(p: OwnerSignupParams) {
       </table>
     </div>`;
 
-  await resend.emails.send({
+  const result = await sendMail({
     from: FROM,
     to: OWNER_NOTIFICATION_EMAIL,
     subject: `🎉 Nuevo signup: ${p.restaurantName}`,
     html: emailLayout(content),
   });
+
+  if (!result.success || result.skipped) {
+    const reason = result.error
+      ? result.error.message
+      : result.skipped
+        ? 'missing SMTP_USER / SMTP_PASS'
+        : (result.response ?? 'unknown');
+    console.error(`[sendOwnerSignupNotification] failed to ${OWNER_NOTIFICATION_EMAIL}: ${reason}`);
+  }
 }
 
 interface OwnerConversionParams {
@@ -1024,8 +1047,10 @@ interface OwnerConversionParams {
 }
 
 export async function sendOwnerConversionNotification(p: OwnerConversionParams) {
-  const resend = getResend();
-  if (!resend || !OWNER_NOTIFICATION_EMAIL) return;
+  if (!OWNER_NOTIFICATION_EMAIL) {
+    console.error('[sendOwnerConversionNotification] skipped: missing OWNER_NOTIFICATION_EMAIL / ADMIN_EMAIL');
+    return;
+  }
 
   const addr = p.shippingAddress;
   const addressLines = [
@@ -1050,12 +1075,21 @@ export async function sendOwnerConversionNotification(p: OwnerConversionParams) 
       </p>
     </div>`;
 
-  await resend.emails.send({
+  const result = await sendMail({
     from: FROM,
     to: OWNER_NOTIFICATION_EMAIL,
     subject: `💰 Conversión + envío: ${p.restaurantName}`,
     html: emailLayout(content),
   });
+
+  if (!result.success || result.skipped) {
+    const reason = result.error
+      ? result.error.message
+      : result.skipped
+        ? 'missing SMTP_USER / SMTP_PASS'
+        : (result.response ?? 'unknown');
+    console.error(`[sendOwnerConversionNotification] failed to ${OWNER_NOTIFICATION_EMAIL}: ${reason}`);
+  }
 }
 
 interface OwnerLapsedParams {
