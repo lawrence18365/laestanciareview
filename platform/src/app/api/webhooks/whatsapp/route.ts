@@ -9,8 +9,14 @@
 import { NextRequest } from 'next/server';
 import { getAnthropic, RATETAP_SYSTEM_PROMPT } from '@/lib/anthropic';
 import { markProspectReplied } from '@/lib/outreach-tracking';
+import { verifyTwilioSignature } from '@/lib/webhook-verify';
 
 export const dynamic = 'force-dynamic';
+
+const WEBHOOK_URL = `${(process.env.NEXT_PUBLIC_BASE_URL ?? 'https://app.ratetapmx.com')
+  .replace(/\\n/g, '')
+  .trim()
+  .replace(/\/$/, '')}/api/webhooks/whatsapp`;
 
 // Conversation memory — in-memory per serverless instance, good enough for short sessions
 const conversations = new Map<string, { role: 'user' | 'assistant'; content: string }[]>();
@@ -22,6 +28,24 @@ function twimlReply(message: string): Response {
 
 export async function POST(req: NextRequest) {
   const body = await req.formData();
+
+  // Verify the request actually came from Twilio before doing any work
+  // (each call below fires a paid Anthropic completion). Fail closed.
+  const params: Record<string, string> = {};
+  for (const [key, value] of body.entries()) {
+    if (typeof value === 'string') params[key] = value;
+  }
+  const valid = verifyTwilioSignature({
+    signature: req.headers.get('x-twilio-signature'),
+    url: WEBHOOK_URL,
+    params,
+    authToken: process.env.TWILIO_AUTH_TOKEN?.trim(),
+  });
+  if (!valid) {
+    console.error('[whatsapp] Invalid Twilio signature — rejecting');
+    return new Response('Forbidden', { status: 403 });
+  }
+
   const from = (body.get('From') as string)?.replace('whatsapp:', '') ?? '';
   const text = (body.get('Body') as string)?.trim() ?? '';
 
