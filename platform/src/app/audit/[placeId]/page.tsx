@@ -443,7 +443,7 @@ export default async function AuditPage({
           fontSize: '13px',
           margin: '0 0 40px',
         }}>
-          Auditoría sin tarjeta · La prueba requiere tarjeta y puedes cancelarla
+          Auditoría sin costo · Prueba gratis 30 días, sin tarjeta de crédito
         </p>
 
         {/* ─── Footer ─── */}

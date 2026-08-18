@@ -111,7 +111,7 @@ export async function sendWhatsAppWelcome({
   to,
   restaurantName,
   trialEndsAt,
-  trialDays = 15,
+  trialDays = 30,
 }: WhatsAppWelcomeParams) {
   const cfg = getConfig();
   if (!cfg) {

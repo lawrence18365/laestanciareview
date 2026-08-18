@@ -5,6 +5,7 @@ import { guests, guestVisits, restaurants, staff } from '@/db/schema';
 import { guestValidateSchema } from '@/lib/validations';
 import { checkRateLimitAsync, getClientIP, rateLimitResponse } from '@/lib/rate-limit';
 import { requireSameOrigin } from '@/lib/origin';
+import { sendPushToRestaurant } from '@/lib/push';
 
 export const runtime = 'nodejs';
 
@@ -140,6 +141,17 @@ export async function POST(req: NextRequest) {
       loggedBy: staffMember.id,
       notes: input.notes,
     });
+  }
+
+  try {
+    await sendPushToRestaurant(restaurant.id, {
+      title: 'Nuevo miembro VIP',
+      body: `${guest.name} se sumó al Club. Hoy ya es parte.`,
+      url: '/guests',
+      tag: `vip-new-${guest.id}`,
+    });
+  } catch (err) {
+    console.error(`[push] VIP-new failed for guest #${guest.id}:`, err);
   }
 
   return Response.json({

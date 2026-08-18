@@ -11,6 +11,7 @@ import { checkRateLimitAsync, getClientIP, rateLimitResponse } from '@/lib/rate-
 import { requireSameOrigin } from '@/lib/origin';
 import { tokenHash } from '@/lib/tokens';
 import { trackCommercialEvent } from '@/lib/commercial-tracking';
+import { isPositiveRating } from '@/lib/feedback';
 
 // 10 feedback submissions per minute per IP
 const FEEDBACK_LIMIT = 10;
@@ -102,6 +103,13 @@ export async function POST(req: NextRequest) {
             rating: updated.rating,
             staffName: updated.staffName,
             feedback: feedback,
+          }).then((result) => {
+            if (result.success === false) {
+              const responseCode = result.error?.responseCode != null
+                ? ` SMTP ${result.error.responseCode}`
+                : '';
+              errors.push(`email${responseCode}: ${result.error?.message ?? 'send skipped'}`);
+            }
           }).catch((err) => { errors.push(`email: ${err?.message ?? err}`); }),
         );
       }
@@ -134,7 +142,9 @@ export async function POST(req: NextRequest) {
 
       alerts.push(
         sendPushToRestaurant(updated.restaurantId, {
-          title: `⚠️ Reseña de ${updated.rating} estrella${updated.rating === 1 ? '' : 's'}`,
+          title: isPositiveRating(updated.rating)
+            ? `⭐ Comentario positivo de ${updated.rating} estrellas`
+            : `⚠️ Reseña de ${updated.rating} estrella${updated.rating === 1 ? '' : 's'}`,
           body: feedback.length > 100 ? feedback.slice(0, 100) + '…' : feedback,
           url: '/inbox',
           tag: `review-${updated.id}`,

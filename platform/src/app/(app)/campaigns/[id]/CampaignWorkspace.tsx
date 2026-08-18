@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 
 type Campaign = {
@@ -77,6 +77,26 @@ type Booking = {
 
 type Tab = 'pending' | 'sent' | 'interest' | 'booked' | 'closed';
 
+type ContactPatchResult = {
+  ok: boolean;
+  code: string;
+  canOpenWhatsApp: boolean;
+};
+
+const CONTACT_ERROR_MESSAGES: Record<string, string> = {
+  STALE_CONTACT_STATE: 'El estado de este invitado cambió en otra pestaña. La fila ya fue actualizada; revísala antes de continuar.',
+  OPTED_OUT: 'Este invitado se dio de baja y no puede recibir mensajes.',
+  DECLINED: 'Este invitado está marcado como no interesado y no puede recibir mensajes.',
+  INVALID_TRANSITION: 'No se puede realizar ese cambio desde el estado actual del invitado.',
+  NOT_CONTACTABLE: 'Este invitado no tiene consentimiento activo o no está validado para recibir mensajes.',
+  CAMPAIGN_NOT_OPERABLE: 'La campaña debe estar lista o activa antes de operar WhatsApp.',
+  INVALID_ORIGIN: 'La solicitud no es válida para este sitio. Recarga la página e inténtalo de nuevo.',
+  UNAUTHORIZED: 'Tu sesión no permite realizar esta acción. Recarga la página e inténtalo de nuevo.',
+  NOT_FOUND: 'El contacto ya no está disponible. Recarga la página para actualizar la lista.',
+  VALIDATION_ERROR: 'No se pudo validar el cambio solicitado.',
+  CANNOT_OPEN_WHATSAPP: 'No se puede abrir WhatsApp para este invitado en su estado actual.',
+};
+
 const EMPTY_BOOKING = {
   contactId: null as number | null,
   clientName: '',
@@ -116,6 +136,7 @@ export default function CampaignWorkspace({
   const [bookingForm, setBookingForm] = useState(EMPTY_BOOKING);
   const [bookingError, setBookingError] = useState('');
   const [contactError, setContactError] = useState('');
+  const inFlightContactIds = useRef(new Set<number>());
 
   const metrics = useMemo(() => {
     const sent = contacts.filter((contact) => contact.sentAt).length;
@@ -176,7 +197,11 @@ export default function CampaignWorkspace({
     }
   }
 
-  async function patchContact(contactId: number, status: string, notes?: string | null) {
+  async function patchContact(contactId: number, status: string, notes?: string | null): Promise<ContactPatchResult> {
+    if (inFlightContactIds.current.has(contactId)) {
+      return { ok: false, code: 'IN_FLIGHT', canOpenWhatsApp: false };
+    }
+    inFlightContactIds.current.add(contactId);
     setBusyId(contactId);
     setContactError('');
     try {
@@ -185,35 +210,52 @@ export default function CampaignWorkspace({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status, notes }),
       });
-      const data = await response.json();
-      if (response.ok) {
+      const data = await response.json().catch(() => ({}));
+      if (data.contact) {
         setContacts((current) => current.map((contact) => contact.id === contactId ? { ...contact, ...serializeContact(data.contact) } : contact));
-      } else {
-        setContactError(data.error ?? 'No se pudo actualizar el contacto. Recarga la página e inténtalo de nuevo.');
       }
-      return response.ok;
+      const code = typeof data.code === 'string' ? data.code : 'UNKNOWN_ERROR';
+      const ok = ['OK', 'NOOP'].includes(code);
+      if (!ok) setContactError(contactErrorMessage(code));
+      return { ok, code, canOpenWhatsApp: data.canOpenWhatsApp === true };
     } catch {
       setContactError('Error de red. No se abrió WhatsApp ni se registró el cambio.');
-      return false;
+      return { ok: false, code: 'NETWORK_ERROR', canOpenWhatsApp: false };
     } finally {
-      setBusyId(null);
+      inFlightContactIds.current.delete(contactId);
+      setBusyId((current) => current === contactId ? null : current);
     }
   }
 
   async function openWhatsApp(contact: Contact) {
-    const url = `https://wa.me/${contact.whatsapp.replace(/\D/g, '')}?text=${encodeURIComponent(renderMessage(campaign, contact))}`;
-    const pendingWindow = window.open('about:blank', '_blank');
-    const contactable = await patchContact(contact.id, 'opened', contact.notes);
-    if (!contactable) {
-      pendingWindow?.close();
+    if (inFlightContactIds.current.has(contact.id)) return;
+    setContactError('');
+    if (!['queued', 'opened'].includes(contact.status)) {
+      const code = contact.status === 'opted_out' ? 'OPTED_OUT' : contact.status === 'declined' ? 'DECLINED' : 'STALE_CONTACT_STATE';
+      setContactError(contactErrorMessage(code));
       return;
     }
-    if (pendingWindow) {
-      pendingWindow.opener = null;
-      pendingWindow.location.href = url;
-    } else {
-      window.open(url, '_blank', 'noopener,noreferrer');
+    if (!['ready', 'active'].includes(campaign.status)) {
+      setContactError(contactErrorMessage('CAMPAIGN_NOT_OPERABLE'));
+      return;
     }
+    if (!contact.marketingConsent || contact.guestStatus !== 'validated') {
+      setContactError(contactErrorMessage('NOT_CONTACTABLE'));
+      return;
+    }
+    const url = `https://wa.me/${contact.whatsapp.replace(/\D/g, '')}?text=${encodeURIComponent(renderMessage(campaign, contact))}`;
+    const pendingWindow = window.open('about:blank', '_blank');
+    if (contact.status === 'opened') {
+      navigateWhatsApp(pendingWindow, url);
+      return;
+    }
+    const result = await patchContact(contact.id, 'opened', contact.notes);
+    if (!result.ok || !result.canOpenWhatsApp) {
+      pendingWindow?.close();
+      if (result.ok) setContactError(contactErrorMessage('CANNOT_OPEN_WHATSAPP'));
+      return;
+    }
+    navigateWhatsApp(pendingWindow, url);
   }
 
   function newBooking(contact?: Contact) {
@@ -435,6 +477,8 @@ function formatDate(value: string) { return new Date(`${value}T12:00:00`).toLoca
 function shortDate(value: string) { return new Date(value).toLocaleDateString('es-MX', { day: 'numeric', month: 'short' }); }
 function formatPhone(value: string) { const digits = value.replace(/\D/g, ''); return digits.startsWith('52') && digits.length === 12 ? `+52 ${digits.slice(2, 5)} ${digits.slice(5, 8)} ${digits.slice(8)}` : `+${digits}`; }
 function initials(value: string) { return value.split(/\s+/).slice(0, 2).map((part) => part[0]?.toUpperCase()).join(''); }
+function contactErrorMessage(code: string) { return CONTACT_ERROR_MESSAGES[code] ?? 'No se pudo actualizar el contacto. Recarga la página e inténtalo de nuevo.'; }
+function navigateWhatsApp(pendingWindow: Window | null, url: string) { if (pendingWindow) { pendingWindow.opener = null; pendingWindow.location.href = url; } else { window.open(url, '_blank', 'noopener,noreferrer'); } }
 function campaignStatus(value: string) { return ({ draft: 'Borrador', ready: 'Lista', active: 'Activa', paused: 'Pausada', completed: 'Cerrada', cancelled: 'Cancelada' } as Record<string, string>)[value] ?? value; }
 function contactStatus(value: string) { return ({ queued: 'Pendiente', opened: 'WhatsApp abierto', sent: 'Enviado confirmado', replied: 'Respondió', interested: 'Interesado', deposit_pending: 'Anticipo pendiente', booked: 'Reservado', declined: 'No interesado', opted_out: 'Baja' } as Record<string, string>)[value] ?? value; }
 function bookingStatus(value: string) { return ({ inquiry: 'Consulta', quoted: 'Cotizado', deposit_pending: 'Anticipo pendiente', booked: 'Reservado', attended: 'Asistió', cancelled: 'Cancelado', refunded: 'Reembolsado' } as Record<string, string>)[value] ?? value; }

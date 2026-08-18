@@ -9,6 +9,8 @@ import { drizzle } from 'drizzle-orm/neon-http';
 import { restaurants, reviews } from './schema';
 import { eq, desc, and, isNotNull } from 'drizzle-orm';
 
+const clean = (value: string | undefined) => (value ?? '').replace(/\\n/g, '').trim();
+
 async function check() {
   const sql = neon(process.env.DATABASE_URL!);
   const db = drizzle(sql);
@@ -112,7 +114,10 @@ async function check() {
   }
 
   console.log('\n=== Environment check ===');
-  console.log(`RESEND_API_KEY: ${process.env.RESEND_API_KEY ? 'SET' : 'MISSING'}`);
+  const smtpUser = clean(process.env.SMTP_USER);
+  const smtpPass = clean(process.env.SMTP_PASS);
+  console.log(`SMTP_USER: ${smtpUser ? 'SET' : 'MISSING'}`);
+  console.log(`SMTP_PASS: ${smtpPass ? 'SET' : 'MISSING'}`);
   console.log(`TELNYX_API_KEY: ${process.env.TELNYX_API_KEY ? 'SET' : 'MISSING'}`);
   console.log(`TELNYX_MESSAGING_PROFILE_ID: ${process.env.TELNYX_MESSAGING_PROFILE_ID ? 'SET' : 'MISSING'}`);
   console.log(`TWILIO_ACCOUNT_SID: ${process.env.TWILIO_ACCOUNT_SID ? 'SET' : 'MISSING'}`);

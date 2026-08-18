@@ -6,19 +6,24 @@
 import dotenv from 'dotenv';
 dotenv.config({ path: '.env.production.local' });
 import { sendFeatureAnnouncement } from '../src/lib/email';
+import { closeMailer } from '../src/lib/mailer';
 
 async function main() {
   console.log('Sending push notification feature announcement to Leon GM...');
 
-  await sendFeatureAnnouncement({
+  const result = await sendFeatureAnnouncement({
     to: 'guillermo1606@gmail.com',
     restaurantName: 'Estancia Leon',
   });
+
+  if (!result.success) {
+    throw new Error(result.error?.message ?? 'SMTP send failed');
+  }
 
   console.log('Email sent successfully!');
 }
 
 main().catch((err) => {
   console.error('Failed to send email:', err);
-  process.exit(1);
-});
+  process.exitCode = 1;
+}).finally(closeMailer);

@@ -28,3 +28,21 @@ export function startOfTodayMexico(): Date {
   today.setHours(0, 0, 0, 0);
   return new Date(today.getTime() + utcOffset());
 }
+
+/** Start of yesterday (00:00) in Mexico City, as real UTC Date. */
+export function startOfYesterdayMexico(): Date {
+  const d = new Date(startOfTodayMexico());
+  d.setUTCDate(d.getUTCDate() - 1);
+  return d;
+}
+
+/**
+ * Today's birthday key in Mexico City, formatted "DD/MM" zero-padded
+ * to match how guest captures store `birthday_mmdd`.
+ */
+export function todayBirthdayKeyMexico(): string {
+  const local = mexicoLocal();
+  const dd = String(local.getDate()).padStart(2, '0');
+  const mm = String(local.getMonth() + 1).padStart(2, '0');
+  return `${dd}/${mm}`;
+}

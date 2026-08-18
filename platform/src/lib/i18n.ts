@@ -104,10 +104,14 @@ export const t = {
 
   // ── Feedback Inbox ──
   inbox: {
+    porAtender: 'Por atender',
+    reconocimientos: 'Reconocimientos',
     all: 'Todos',
     new: 'Nuevo',
     reviewed: 'Revisado',
     resolved: 'Resuelto',
+    unread: 'Sin leer',
+    read: 'Leído',
     allRatings: 'Todas las calificaciones',
     searchPlaceholder: 'Buscar nombre, comentario, personal...',
     exportCsv: 'Exportar CSV',
@@ -115,6 +119,7 @@ export const t = {
     noFeedbackMatches: 'Ningún comentario coincide con tus filtros.',
     anonymous: 'Anónimo',
     markReviewed: 'Marcar Revisado',
+    markAsRead: 'Marcar como leído',
     resolve: 'Resolver',
     replyViaEmail: 'Responder por Email',
     reYourFeedback: 'Re: Tu comentario',

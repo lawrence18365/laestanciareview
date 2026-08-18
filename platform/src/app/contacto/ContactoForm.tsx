@@ -167,7 +167,11 @@ export default function ContactoForm({ pilotOffer }: { pilotOffer: boolean }) {
       });
       const data = await res.json();
       if (!res.ok || !data.url) {
-        setError(data.error || 'No pudimos iniciar el pago. Revisa los datos e intenta de nuevo.');
+        const friendly =
+          res.status >= 500
+            ? 'No pudimos iniciar el pago en este momento. Inténtalo de nuevo en unos minutos o escríbenos por WhatsApp.'
+            : data.error || 'No pudimos iniciar el pago. Revisa los datos e intenta de nuevo.';
+        setError(friendly);
         setLoading(false);
         return;
       }
@@ -227,12 +231,12 @@ export default function ContactoForm({ pilotOffer }: { pilotOffer: boolean }) {
               letterSpacing: '-0.02em',
               margin: '0 0 0.5rem',
             }}>
-              {pilotOffer ? 'Piloto fundador: empieza por $0 hoy' : 'Empieza tu prueba gratis de 15 días'}
+              {pilotOffer ? 'Piloto fundador: empieza por $0 hoy' : 'Empieza tu prueba gratis de 30 días'}
             </h1>
             <p style={{ color: 'var(--text-muted, #57534e)', fontSize: '0.95rem', margin: 0 }}>
               {pilotOffer
                 ? 'Piloto fundador: $0 hoy · 30 días gratis · después $700 MXN/mes · la cuota de setup de $1,500 MXN solo se factura si decides continuar'
-                : 'Requiere tarjeta para activar la prueba. No te cobramos hoy; cancela cuando quieras antes del día 15.'}
+                : 'Hoy pagas solo la cuota única de configuración + tus tarjetas NFC ($1,500 MXN). El servicio es gratis los primeros 30 días; cancela cuando quieras antes de que termine la prueba.'}
             </p>
           </div>
 
@@ -321,7 +325,7 @@ export default function ContactoForm({ pilotOffer }: { pilotOffer: boolean }) {
             <p style={{ fontSize: '0.85rem', color: 'var(--text-muted, #57534e)', marginTop: '-0.5rem', marginBottom: '1rem' }}>
               {pilotOffer
                 ? 'Tu QR digital queda activo hoy. Las tarjetas físicas se envían si decides continuar después del piloto.'
-                : 'Te enviamos las tarjetas físicas cuando confirmes tu pago el día 15. Tu QR digital ya queda activo hoy.'}
+                : 'Te enviamos las tarjetas físicas en cuanto se confirme tu pago de hoy. Tu QR digital queda activo de inmediato.'}
             </p>
             <Field label="Dirección">
               <input
@@ -402,13 +406,13 @@ export default function ContactoForm({ pilotOffer }: { pilotOffer: boolean }) {
             >
               {loading
                 ? (pilotOffer ? 'ACTIVANDO TU PILOTO…' : 'REDIRIGIENDO A STRIPE…')
-                : (pilotOffer ? 'ACTIVAR MI PILOTO GRATIS' : 'INICIAR MI PRUEBA DE 15 DÍAS')}
+                : (pilotOffer ? 'ACTIVAR MI PILOTO GRATIS' : 'CONTINUAR AL PAGO SEGURO')}
             </button>
 
             <p style={{ fontSize: '0.75rem', color: 'var(--text-dim, #a8a29e)', textAlign: 'center', marginTop: '1rem', lineHeight: 1.5 }}>
               {pilotOffer
                 ? 'No necesitas tarjeta. Después de 30 días, tú decides si continúas por $700 MXN/mes más la cuota de setup de $1,500 MXN. '
-                : 'Pago seguro con Stripe. Después del día 15 se cobran $700 MXN/mes automáticamente. Cancela cuando quieras desde tu panel. '}
+                : 'Pago seguro con Stripe. Hoy se cobra una cuota única de $1,500 MXN (configuración + tarjetas NFC). Después de tu prueba gratis de 30 días se cobran $700 MXN/mes automáticamente; cancela cuando quieras desde tu panel. '}
               Al continuar aceptas la{' '}
               <a href="/privacy" style={{ color: '#1c1917', fontWeight: 700 }}>Política de Privacidad</a>, los{' '}
               <a href="/terms" style={{ color: '#1c1917', fontWeight: 700 }}>Términos</a> y la{' '}
