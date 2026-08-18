@@ -2,7 +2,7 @@ import { NextRequest } from 'next/server';
 import { checkRateLimitAsync, getClientIP, rateLimitResponse } from '@/lib/rate-limit';
 import { signupSchema } from '@/lib/validations';
 import { hashPassword } from '@/lib/auth';
-import { getStripe, STRIPE_PRICE_ID, TRIAL_DAYS } from '@/lib/stripe';
+import { getStripe, STRIPE_PRICE_ID, STRIPE_SETUP_PRICE_ID } from '@/lib/stripe';
 import { requireSameOrigin } from '@/lib/origin';
 import { db } from '@/db';
 import { commercialLeads, pendingSignups } from '@/db/schema';
@@ -22,6 +22,9 @@ export async function POST(req: NextRequest) {
   try {
     if (!STRIPE_PRICE_ID) {
       return Response.json({ error: 'Stripe not configured (missing STRIPE_PRICE_ID)' }, { status: 500 });
+    }
+    if (!STRIPE_SETUP_PRICE_ID) {
+      return Response.json({ error: 'Stripe not configured (missing STRIPE_SETUP_PRICE_ID)' }, { status: 500 });
     }
 
     const ip = getClientIP(req);
@@ -91,21 +94,25 @@ export async function POST(req: NextRequest) {
 
     const signupPayload = { pendingSignupId };
 
+    // Offer: charge the one-time NFC + setup fee TODAY, save the card, and start
+    // the 30-day free subscription trial from that saved card in the webhook
+    // (handleSetupFeeCheckout). A one-time line item in subscription mode would
+    // bill at trial end, not now — so the fee runs through `payment` mode and the
+    // subscription is created off-session afterward.
     const session = await stripe.checkout.sessions.create({
-      mode: 'subscription',
+      mode: 'payment',
       customer_email: input.email,
-      line_items: [{ price: STRIPE_PRICE_ID, quantity: 1 }],
-      subscription_data: {
-        trial_period_days: TRIAL_DAYS,
-        trial_settings: { end_behavior: { missing_payment_method: 'cancel' } },
+      customer_creation: 'always',
+      line_items: [{ price: STRIPE_SETUP_PRICE_ID, quantity: 1 }],
+      payment_intent_data: {
+        setup_future_usage: 'off_session',
         metadata: signupPayload,
       },
-      payment_method_collection: 'always',
       allow_promotion_codes: true,
       locale: 'es-419',
       success_url: `${baseUrl}/bienvenida?signup_id=${encodeURIComponent(pendingSignupId)}&token=${encodeURIComponent(statusToken)}`,
       cancel_url: `${baseUrl}/contacto?canceled=1`,
-      metadata: signupPayload,
+      metadata: { ...signupPayload, flow: 'setup_fee_then_trial' },
     });
 
     await db

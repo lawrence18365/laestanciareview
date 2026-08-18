@@ -3,6 +3,7 @@ import { reviews, staff, restaurants } from '@/db/schema';
 import { eq, and, gte, sql, desc, count, avg, asc } from 'drizzle-orm';
 import { startOfWeek } from 'date-fns';
 import { startOfWeekMexico, startOfTodayMexico } from '@/lib/mexico-tz';
+import { POSITIVE_RATING_MIN } from '@/lib/feedback';
 
 /** Helper: raw SQL count that returns a JS number (Postgres bigint → string otherwise). */
 const countSql = (strings: TemplateStringsArray, ...values: unknown[]) =>
@@ -209,7 +210,7 @@ export async function getLastWeekStats(restaurantId: number, threshold: number =
   return rows[0] ?? { totalReviews: 0, avgRating: 0, googleSends: 0, intercepted: 0 };
 }
 
-/** Count of unread feedback below a given threshold. */
+/** Count of unread complaint feedback below a threshold, excluding all positive ratings. */
 export async function getUnreadLowRatingCount(restaurantId: number, threshold: number) {
   const rows = await db
     .select({ count: count(reviews.id) })
@@ -220,6 +221,7 @@ export async function getUnreadLowRatingCount(restaurantId: number, threshold: n
         eq(reviews.status, 'new'),
         sql`${reviews.feedback} is not null`,
         sql`${reviews.rating} < ${threshold}`,
+        sql`${reviews.rating} < ${POSITIVE_RATING_MIN}`,
       ),
     );
   return rows[0]?.count ?? 0;
@@ -325,7 +327,7 @@ export async function getAllTimeStats(restaurantId: number) {
   return rows[0] ?? { totalReviews: 0, avgRating: 0, googleSends: 0, feedbackCount: 0 };
 }
 
-/** Count of feedback items with status='new' for a restaurant. */
+/** Count of complaint feedback (below the positive threshold) with status='new'. */
 export async function getNewFeedbackCount(restaurantId: number) {
   const rows = await db
     .select({ count: count(reviews.id) })
@@ -335,6 +337,7 @@ export async function getNewFeedbackCount(restaurantId: number) {
         eq(reviews.restaurantId, restaurantId),
         eq(reviews.status, 'new'),
         sql`${reviews.feedback} is not null`,
+        sql`${reviews.rating} < ${POSITIVE_RATING_MIN}`,
       ),
     );
   return rows[0]?.count ?? 0;

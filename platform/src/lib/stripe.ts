@@ -12,4 +12,11 @@ export function getStripe(): Stripe {
 
 export const STRIPE_PRICE_ID = (process.env.STRIPE_PRICE_ID ?? '').trim();
 export const STRIPE_WEBHOOK_SECRET = (process.env.STRIPE_WEBHOOK_SECRET ?? '').trim();
-export const TRIAL_DAYS = 15;
+export const TRIAL_DAYS = 30;
+
+// One-time NFC card + onboarding/setup fee, charged at checkout (today).
+// STRIPE_SETUP_PRICE_ID must point at a one-time (not recurring) Price in Stripe
+// for SETUP_FEE_MXN. The fee is collected up front in `payment` mode and the
+// saved card is reused to start the 30-day-trial subscription in the webhook.
+export const STRIPE_SETUP_PRICE_ID = (process.env.STRIPE_SETUP_PRICE_ID ?? '').trim();
+export const SETUP_FEE_MXN = 1500;

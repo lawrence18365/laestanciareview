@@ -21,6 +21,57 @@ export const CONTACT_STATUSES = [
   'opted_out',
 ] as const;
 
+export type ContactStatus = (typeof CONTACT_STATUSES)[number];
+
+export const ALLOWED_CONTACT_TRANSITIONS: Record<ContactStatus, readonly ContactStatus[]> = {
+  queued: ['opened', 'declined', 'opted_out'],
+  opened: ['sent', 'declined', 'opted_out'],
+  sent: ['replied', 'interested', 'declined', 'opted_out'],
+  replied: ['interested', 'deposit_pending', 'booked', 'declined', 'opted_out'],
+  interested: ['deposit_pending', 'booked', 'declined', 'opted_out'],
+  deposit_pending: ['booked', 'declined', 'opted_out'],
+  booked: ['opted_out'],
+  declined: ['opted_out'],
+  opted_out: [],
+};
+
+export type ContactTransitionDecision =
+  | { kind: 'apply'; to: ContactStatus }
+  | { kind: 'noop' }
+  | { kind: 'stale' }
+  | { kind: 'blocked'; reason: 'opted_out' | 'declined' }
+  | { kind: 'invalid'; code: 'INVALID_TRANSITION' };
+
+export function decideContactTransition({
+  currentStatus,
+  requestedStatus,
+}: {
+  currentStatus: ContactStatus;
+  requestedStatus: ContactStatus;
+}): ContactTransitionDecision {
+  if (currentStatus === requestedStatus) return { kind: 'noop' };
+
+  if (
+    (currentStatus === 'opted_out' || currentStatus === 'declined') &&
+    (requestedStatus === 'opened' || requestedStatus === 'sent')
+  ) {
+    return { kind: 'blocked', reason: currentStatus };
+  }
+
+  if (
+    requestedStatus === 'opened' &&
+    ['sent', 'replied', 'interested', 'deposit_pending', 'booked'].includes(currentStatus)
+  ) {
+    return { kind: 'stale' };
+  }
+
+  if (ALLOWED_CONTACT_TRANSITIONS[currentStatus].includes(requestedStatus)) {
+    return { kind: 'apply', to: requestedStatus };
+  }
+
+  return { kind: 'invalid', code: 'INVALID_TRANSITION' };
+}
+
 export const BOOKING_STATUSES = [
   'inquiry',
   'quoted',
@@ -114,7 +165,7 @@ export function calculateBookingEconomics(
   };
 }
 
-export function contactTimestamps(status: (typeof CONTACT_STATUSES)[number], now = new Date()) {
+export function contactTimestamps(status: ContactStatus, now = new Date()) {
   return {
     ...(status === 'opened' ? { openedAt: now } : {}),
     ...(status === 'sent' ? { sentAt: now } : {}),

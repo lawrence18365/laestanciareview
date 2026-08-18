@@ -130,7 +130,7 @@ export async function sendWhatsAppWelcome({
   const lines = [
     `🎉 *¡Bienvenido a RateTap, ${restaurantName}!*`,
     '',
-    `Tu prueba gratis de 15 días ya está activa (hasta el ${endDate}).`,
+    `Tu prueba gratis de 30 días ya está activa (hasta el ${endDate}).`,
     '',
     `📊 Tu panel: ${baseUrl}/dashboard`,
     '',

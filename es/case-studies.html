@@ -60,6 +60,96 @@ fbq('track', 'PageView');
 <link as="style" href="../styles.css" rel="preload"/>
 <link href="../styles.css" rel="stylesheet"/>
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet"/>
+<style>
+/* ===== Case Studies — on-brand redesign (scoped, cs-*) ===== */
+.cs-serif{font-family:'Instrument Serif',Georgia,serif;font-weight:400;}
+.cs-section{position:relative;padding:6rem 0;}
+.cs-eyebrow{display:inline-flex;align-items:center;gap:.5rem;padding:.45rem 1.1rem;border-radius:999px;
+  background:rgba(45,156,219,.08);border:1px solid rgba(45,156,219,.22);color:var(--brand-blue);
+  font-size:.72rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;}
+.cs-eyebrow::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--brand-gold);box-shadow:0 0 0 3px rgba(242,201,76,.25);}
+.cs-hero h1{font-family:'Instrument Serif',serif;font-weight:400;font-size:clamp(2.8rem,6.2vw,5rem);line-height:1.02;letter-spacing:-.02em;margin:1.2rem 0 0;}
+.cs-hero h1 em{font-style:italic;color:var(--brand-blue);}
+.cs-lede{max-width:660px;margin:1.4rem auto 0;color:var(--text-secondary);font-size:1.15rem;line-height:1.6;}
+.cs-source{max-width:660px;margin:.8rem auto 0;color:var(--text-secondary);font-size:.85rem;}
+.cs-source a{color:var(--brand-blue);text-decoration:underline;}
+/* stat cards */
+.cs-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1.25rem;}
+.cs-stat{position:relative;padding:2.1rem 1.5rem;border-radius:20px;background:rgba(255,255,255,.62);
+  backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.9);
+  box-shadow:var(--shadow-glass);overflow:hidden;transition:transform .45s cubic-bezier(.2,.8,.2,1),box-shadow .45s;}
+.cs-stat::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--brand-gold),var(--brand-blue));}
+.cs-stat:hover{transform:translateY(-6px);box-shadow:var(--shadow-float);}
+.cs-stat .n{font-family:'Instrument Serif',serif;font-size:3.6rem;line-height:1;color:var(--brand-charcoal);font-variant-numeric:tabular-nums;}
+.cs-stat .l{font-weight:700;margin-top:.7rem;}
+.cs-stat .s{color:var(--text-secondary);font-size:.85rem;margin-top:.4rem;line-height:1.45;}
+/* featured cases */
+.cs-case{display:grid;grid-template-columns:1.02fr .98fr;gap:4rem;align-items:center;margin-bottom:6rem;}
+.cs-case:last-child{margin-bottom:0;}
+.cs-tag{font-weight:700;text-transform:uppercase;letter-spacing:.09em;font-size:.78rem;}
+.cs-case h3{font-family:'Instrument Serif',serif;font-weight:400;font-size:2.5rem;line-height:1.05;letter-spacing:-.01em;margin:.7rem 0 1rem;}
+.cs-case p{color:var(--text-secondary);line-height:1.65;margin-bottom:1rem;}
+.cs-case p strong{color:var(--text-primary);}
+.cs-metrics{display:flex;gap:2.6rem;margin-top:1.8rem;padding-top:1.6rem;border-top:1px solid rgba(15,23,42,.1);flex-wrap:wrap;}
+.cs-metric .n{font-family:'Instrument Serif',serif;font-size:2.5rem;line-height:1;font-variant-numeric:tabular-nums;}
+.cs-metric .k{font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-secondary);margin-top:.35rem;}
+/* live google-profile mockup */
+.cs-profile{position:relative;padding:2.2rem;border-radius:26px;background:#fff;box-shadow:var(--shadow-float);border:1px solid rgba(255,255,255,.9);}
+.cs-profile::after{content:'';position:absolute;inset:auto -15% -28% -15%;height:55%;background:radial-gradient(ellipse at center,rgba(45,156,219,.2),transparent 70%);z-index:-1;filter:blur(22px);}
+.cs-phead{display:flex;align-items:center;gap:.85rem;margin-bottom:1.4rem;}
+.cs-glogo{width:42px;height:42px;border-radius:50%;display:grid;place-items:center;font-family:'Instrument Serif',serif;font-size:1.5rem;font-weight:700;color:var(--brand-blue);background:#fff;box-shadow:0 2px 10px rgba(0,0,0,.1);}
+.cs-pname{font-weight:800;line-height:1.1;}
+.cs-psub{font-size:.8rem;color:var(--text-secondary);}
+.cs-live{margin-left:auto;display:inline-flex;align-items:center;gap:.4rem;font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#16a34a;}
+.cs-live::before{content:'';width:7px;height:7px;border-radius:50%;background:#16a34a;box-shadow:0 0 0 3px rgba(22,163,74,.18);}
+.cs-bigrate{display:flex;align-items:baseline;gap:1rem;}
+.cs-bigrate .r{font-family:'Instrument Serif',serif;font-size:4.6rem;line-height:.9;color:var(--brand-charcoal);}
+.cs-stars{color:var(--brand-gold);font-size:1.25rem;letter-spacing:3px;}
+.cs-pcount{font-size:.82rem;color:var(--text-secondary);margin-top:.2rem;}
+.cs-funnel{margin-top:1.7rem;}
+.cs-bar{height:14px;border-radius:999px;background:rgba(15,23,42,.06);overflow:hidden;display:flex;}
+.cs-bar i{display:block;height:100%;}
+.cs-bar .blue{background:var(--brand-blue);}
+.cs-bar .gold{background:var(--brand-gold);}
+.cs-flabels{display:flex;justify-content:space-between;margin-top:.65rem;font-size:.78rem;font-weight:600;}
+.cs-flabels .b{color:var(--brand-blue);}
+.cs-flabels .g{color:#b8860b;}
+.cs-chip{display:inline-flex;align-items:center;gap:.45rem;margin-top:1.1rem;padding:.45rem .85rem;border-radius:999px;background:rgba(15,23,42,.04);font-size:.78rem;color:var(--text-secondary);}
+.cs-chip i{color:var(--brand-gold);}
+/* table */
+.cs-tablewrap{max-width:920px;margin:0 auto;border-radius:24px;overflow:hidden;box-shadow:var(--shadow-float);background:#fff;}
+.cs-table{width:100%;border-collapse:collapse;font-size:.95rem;}
+.cs-table thead th{background:var(--brand-charcoal);color:#fff;padding:1.05rem 1.3rem;font-size:.72rem;text-transform:uppercase;letter-spacing:.07em;text-align:center;}
+.cs-table thead th:first-child{text-align:left;}
+.cs-table td{padding:.95rem 1.3rem;border-bottom:1px solid rgba(15,23,42,.07);text-align:center;}
+.cs-table td:first-child{text-align:left;}
+.cs-table tbody tr{transition:background .2s;}
+.cs-table tbody tr:hover{background:rgba(45,156,219,.05);}
+.cs-loc{font-weight:700;color:var(--brand-charcoal);}
+.cs-rate{color:#b8860b;font-weight:700;white-space:nowrap;}
+.cs-cap{display:flex;align-items:center;gap:.7rem;justify-content:flex-end;}
+.cs-minibar{width:70px;height:6px;border-radius:999px;background:rgba(45,156,219,.13);overflow:hidden;}
+.cs-minibar i{display:block;height:100%;background:linear-gradient(90deg,var(--brand-blue),#56b6e6);}
+.cs-num{font-variant-numeric:tabular-nums;font-weight:700;color:var(--brand-blue);min-width:46px;text-align:right;}
+.cs-table tfoot td{background:rgba(15,23,42,.035);font-weight:800;color:var(--brand-charcoal);border-top:2px solid var(--brand-charcoal);font-variant-numeric:tabular-nums;}
+.cs-note{max-width:700px;margin:1.8rem auto 0;color:var(--text-secondary);font-size:.85rem;text-align:center;}
+.cs-note a{color:var(--brand-blue);text-decoration:underline;}
+/* CTA */
+.cs-cta{position:relative;overflow:hidden;background:var(--brand-charcoal);border-radius:32px;padding:4.5rem 2rem;text-align:center;color:#fff;}
+.cs-cta::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at 28% 18%,rgba(45,156,219,.42),transparent 52%),radial-gradient(circle at 78% 92%,rgba(242,201,76,.26),transparent 52%);}
+.cs-cta>*{position:relative;z-index:1;}
+.cs-cta h2{font-family:'Instrument Serif',serif;font-weight:400;font-size:clamp(2rem,4vw,3rem);color:#fff;}
+.cs-cta p{color:rgba(255,255,255,.85);max-width:560px;margin:1rem auto 2rem;line-height:1.6;}
+@media(max-width:860px){
+  .cs-stats{grid-template-columns:1fr 1fr;}
+  .cs-case{grid-template-columns:1fr;gap:2.2rem;}
+  .cs-case .cs-visual{order:-1;}
+}
+@media(max-width:520px){.cs-stats{grid-template-columns:1fr;}.cs-bigrate .r{font-size:3.6rem;}}
+</style>
 </head>
 <body>
 <!-- Google Tag Manager (noscript) -->
@@ -80,178 +170,139 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <a class="btn btn-primary" href="/demo" style="padding: 0.7rem 1.8rem; font-size: 0.9rem;">Agenda una Demo</a>
 </div>
 </nav>
-<section class="reveal section" style="padding-top: 10rem; padding-bottom: 4rem;">
-<div class="container text-center"><span class="hero-eyebrow reveal">MEDIDO DESDE PRODUCCIÓN</span>
-<h1 style="font-size: clamp(2.25rem, 4.5vw, 3.75rem); line-height: 1.1; letter-spacing: -0.02em;">Resultados reales de 12 restaurantes</h1>
-<p class="reveal" style="max-width: 760px; margin: 1rem auto 0; color: var(--text-secondary); font-size: 1.15rem;">
-     RateTap se construyó y se opera a diario dentro de un grupo de 12 restaurantes. Cada número de esta página proviene de nuestra base de datos de producción: reseñas capturadas en la mesa y enrutadas a Google. Son métricas de captura y enrutamiento — no estimaciones de marketing. Las calificaciones de Google del grupo se ubican hoy entre 4.5 y 4.8★.
-    </p>
+<section class="cs-section cs-hero reveal" style="padding-top:10rem;padding-bottom:3rem;">
+<div class="container text-center">
+<span class="cs-eyebrow reveal">Medido desde producción</span>
+<h1 class="reveal">Resultados reales de <em>12 restaurantes</em></h1>
+<p class="cs-lede reveal">Cada cifra de esta página proviene de nuestra base de datos de producción. Las calificaciones de Google se obtienen directamente del Perfil de Negocio de cada ubicación, no son datos autodeclarados.</p>
+<p class="cs-source reveal">Datos a julio de 2026 · <a href="/methodology">metodología</a></p>
 </div>
 </section>
 <!-- Aggregate Stats -->
-<section class="reveal section" style="padding-top: 0;">
+<section class="cs-section reveal" style="padding-top:0;">
 <div class="container">
-<div class="grid-4">
-<div style="text-align: center; padding: 2rem;">
-<div style="font-size: 3.5rem; font-weight: 800; color: var(--brand-charcoal);">12 / 12</div>
-<div style="font-weight: 600;">Ubicaciones Activas</div>
-<div style="color: var(--text-secondary); font-size: 0.9rem;">Las 12 sucursales del grupo, en uso diario</div>
-</div>
-<div style="text-align: center; padding: 2rem;">
-<div style="font-size: 3.5rem; font-weight: 800; color: var(--brand-blue);">13,151</div>
-<div style="font-weight: 600;">Reseñas Capturadas</div>
-<div style="color: var(--text-secondary); font-size: 0.9rem;">Total en la plataforma desde el lanzamiento</div>
-</div>
-<div style="text-align: center; padding: 2rem;">
-<div style="font-size: 3.5rem; font-weight: 800; color: var(--brand-gold);">12,192</div>
-<div style="font-weight: 600;">Enrutadas a Google</div>
-<div style="color: var(--text-secondary); font-size: 0.9rem;">92.7% de las reseñas capturadas</div>
-</div>
-<div style="text-align: center; padding: 2rem;">
-<div style="font-size: 3.5rem; font-weight: 800; color: #FBBF24;">959</div>
-<div style="font-weight: 600;">Alertas a Gerencia</div>
-<div style="color: var(--text-secondary); font-size: 0.9rem;">649 de baja calificación (≤3★) atendidas por gerencia</div>
-</div>
+<div class="cs-stats">
+<div class="cs-stat reveal"><div class="n">18,726</div><div class="l">Reseñas Capturadas</div><div class="s">Reseñas genuinas de comensales en 12 ubicaciones activas</div></div>
+<div class="cs-stat reveal"><div class="n">16,604</div><div class="l">Enrutadas a Google</div><div class="s">88.7% de las reseñas capturadas</div></div>
+<div class="cs-stat reveal"><div class="n">877</div><div class="l">Calificaciones Bajas Atendidas en Privado</div><div class="s">Comensales que calificaron 1&ndash;3&starf; y eligieron compartir comentarios privados con el gerente en turno</div></div>
+<div class="cs-stat reveal"><div class="n" style="color:var(--brand-blue);">4.5&ndash;4.8&starf;</div><div class="l">Calificaciones de Google en Vivo</div><div class="s">Las 12 ubicaciones, hoy</div></div>
 </div>
 </div>
 </section>
 <!-- Featured Case Studies -->
-<section class="reveal section bg-muted">
+<section class="cs-section bg-muted reveal">
 <div class="container">
-<div class="text-center" style="max-width: 700px; margin: 0 auto 4rem;">
-<span class="hero-eyebrow reveal">UBICACIONES DESTACADAS</span>
-<h2 class="reveal">Cómo se ve la captura y el enrutamiento en sitio</h2>
+<div class="text-center" style="max-width:700px;margin:0 auto 4rem;">
+<span class="cs-eyebrow reveal">Ubicaciones destacadas</span>
+<h2 class="cs-serif reveal" style="font-size:2.7rem;margin-top:1rem;line-height:1.05;">Tres de los resultados más sólidos</h2>
 </div>
-<!-- Case 1: Estancia Angelópolis -->
-<div class="grid-2 mb-8" style="margin-bottom: 6rem; align-items: center;">
-<div style="order: 2;">
-<span style="color: var(--brand-blue); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; font-size: 0.85rem;">UBICACIÓN INSIGNIA — ANGELÓPOLIS, PUEBLA</span>
-<h2 class="mb-4 reveal" style="font-size: 2rem; margin-top: 0.5rem;">Estancia Angelópolis: la ubicación con más reseñas capturadas</h2>
-<p class="reveal">El insignia de Angelópolis maneja el mayor volumen de comensales del grupo. Antes de RateTap, solo una fracción de esos clientes dejaba una reseña. Hoy es la ubicación con más reseñas capturadas de toda la plataforma.</p>
-<p class="reveal"><strong>Cómo funciona:</strong> el host stand y cada estación de meseros se convirtieron en puntos de toque. Los clientes con una gran experiencia tocan una vez y aterrizan en el formulario de reseña de Google; quien tiene una queja activa una alerta interna para que el gerente pueda atenderlo a tiempo. La calificación de Google de la ubicación se ubica hoy en 4.8★.</p>
-<div style="display: flex; gap: 2rem; margin-top: 2rem; flex-wrap: wrap;">
+<!-- Case 1: Estancia Juárez (visual right) -->
+<div class="cs-case reveal">
 <div>
-<div style="font-size: 2.5rem; font-weight: 800; color: var(--brand-blue);">2,510</div>
-<div style="font-size: 0.9rem; font-weight: 600; text-transform: uppercase;">Reseñas Capturadas</div>
-</div>
-<div>
-<div style="font-size: 2.5rem; font-weight: 800; color: var(--brand-gold);">2,384</div>
-<div style="font-size: 0.9rem; font-weight: 600; text-transform: uppercase;">Enrutadas a Google (95.0%)</div>
-</div>
-<div>
-<div style="font-size: 2.5rem; font-weight: 800; color: var(--brand-charcoal);">126</div>
-<div style="font-size: 0.9rem; font-weight: 600; text-transform: uppercase;">Alertas a Gerencia</div>
+<span class="cs-tag" style="color:var(--brand-charcoal);">Restaurante de cortes premium · Juárez, México</span>
+<h3>Estancia Juárez: 730 reseñas de comensales capturadas</h3>
+<p>Estancia Juárez cuenta con un equipo de servicio sólido, pero muchos comensales satisfechos solían irse sin publicar una reseña y, en ocasiones, las quejas no llegaban al gerente a tiempo para resolverlas.</p>
+<p><strong>Qué cambió:</strong> cada mesero recibió una tarjeta NFC personal. Después de tocar, cada comensal elige entre dejar una reseña en Google o enviar comentarios privados a gerencia. Los comentarios privados notifican al gerente en tiempo real para que los problemas puedan resolverse en la mesa. La ubicación tiene actualmente 4.7&starf; en Google.</p>
+<div class="cs-metrics">
+<div class="cs-metric"><div class="n" style="color:var(--brand-blue);">730</div><div class="k">Reseñas Capturadas</div></div>
+<div class="cs-metric"><div class="n" style="color:var(--brand-charcoal);">682</div><div class="k">Enrutadas a Google</div></div>
+<div class="cs-metric"><div class="n" style="color:#b8860b;">4.7&starf;</div><div class="k">Calificación Actual</div></div>
 </div>
 </div>
+<div class="cs-visual">
+<div class="cs-profile">
+<div class="cs-phead"><span class="cs-glogo">G</span><div><div class="cs-pname">Estancia Juárez</div><div class="cs-psub">Restaurante de cortes · Juárez</div></div><span class="cs-live">En vivo</span></div>
+<div class="cs-bigrate"><span class="r">4.7</span><div><div class="cs-stars">★★★★★</div><div class="cs-pcount">730 reseñas capturadas por RateTap</div></div></div>
+<div class="cs-funnel"><div class="cs-bar"><i class="blue" style="width:93.4%"></i><i class="gold" style="width:6.6%"></i></div><div class="cs-flabels"><span class="b">682 enrutadas a Google</span><span class="g">48 compartidas en privado</span></div></div>
+<span class="cs-chip"><i class="fa-solid fa-shield-halved"></i> Los comentarios privados dan a gerencia una vía rápida de recuperación</span>
 </div>
-<div style="order: 1; background: rgba(255,255,255,0.7); height: 400px; border-radius: 24px; display: flex; align-items: center; justify-content: center;">
-<i class="fa-solid fa-utensils fa-4x" style="color: var(--text-secondary);"></i>
 </div>
 </div>
-<!-- Case 2: Harbor's Veracruz -->
-<div class="grid-2 mb-8" style="margin-bottom: 6rem; align-items: center;">
-<div style="background: rgba(255,255,255,0.7); height: 400px; border-radius: 24px; display: flex; align-items: center; justify-content: center;">
-<i class="fa-solid fa-fish fa-4x" style="color: var(--text-secondary);"></i>
+<!-- Case 2: Estancia Angelópolis (visual left) -->
+<div class="cs-case reveal">
+<div class="cs-visual">
+<div class="cs-profile">
+<div class="cs-phead"><span class="cs-glogo">G</span><div><div class="cs-pname">Estancia Angelópolis</div><div class="cs-psub">Restaurante de cortes · Puebla</div></div><span class="cs-live">En vivo</span></div>
+<div class="cs-bigrate"><span class="r">4.8</span><div><div class="cs-stars">★★★★★</div><div class="cs-pcount">3,708 reseñas capturadas por RateTap</div></div></div>
+<div class="cs-funnel"><div class="cs-bar"><i class="blue" style="width:90.5%"></i><i class="gold" style="width:9.5%"></i></div><div class="cs-flabels"><span class="b">3,357 enrutadas a Google</span><span class="g">351 compartidas en privado</span></div></div>
+<span class="cs-chip"><i class="fa-solid fa-trophy"></i> La ubicación con más reseñas capturadas en la plataforma</span>
 </div>
-<div>
-<span style="color: var(--brand-charcoal); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; font-size: 0.85rem;">ENRUTAMIENTO MÁS LIMPIO — VERACRUZ</span>
-<h2 class="mb-4 reveal" style="font-size: 2rem; margin-top: 0.5rem;">Harbor's Veracruz: la tasa de enrutamiento más alta del grupo</h2>
-<p class="reveal">Harbor's Veracruz tiene la operación de captura más consistente de la plataforma: casi todas las reseñas capturadas terminan enrutadas a Google, y los pocos comentarios de baja calificación generan una alerta interna que llega a gerencia.</p>
-<p class="reveal"><strong>Cómo funciona:</strong> tarjetas NFC por mesero y un umbral de estrellas bien configurado mantienen el flujo limpio — el cliente feliz va a Google, y el insatisfecho genera una alerta interna para que el gerente pueda atenderlo a tiempo. La calificación de Google de la ubicación se ubica hoy en 4.6★.</p>
-<div style="display: flex; gap: 2rem; margin-top: 2rem; flex-wrap: wrap;">
-<div>
-<div style="font-size: 2.5rem; font-weight: 800; color: var(--brand-blue);">1,292</div>
-<div style="font-size: 0.9rem; font-weight: 600; text-transform: uppercase;">Reseñas Capturadas</div>
 </div>
 <div>
-<div style="font-size: 2.5rem; font-weight: 800; color: var(--brand-gold);">1,243</div>
-<div style="font-size: 0.9rem; font-weight: 600; text-transform: uppercase;">Enrutadas a Google (96.2%)</div>
+<span class="cs-tag" style="color:var(--brand-blue);">Ubicación insignia · Angelópolis, Puebla</span>
+<h3>La ubicación con más reseñas capturadas</h3>
+<p>La sucursal insignia de Angelópolis atiende el mayor volumen de comensales del grupo. Antes de RateTap, solo una fracción de ellos dejaba una reseña. Hoy es la ubicación con mayor captura de reseñas en la plataforma.</p>
+<p><strong>Qué cambió:</strong> la recepción y cada estación de meseros se convirtieron en puntos de contacto. Después de tocar, cada comensal elige entre dejar una reseña en Google o enviar comentarios privados a gerencia. El tablero de desempeño convierte la captura de reseñas en una competencia amistosa entre meseros. La ubicación tiene actualmente 4.8&starf; en Google.</p>
+<div class="cs-metrics">
+<div class="cs-metric"><div class="n" style="color:var(--brand-blue);">3,708</div><div class="k">Reseñas Capturadas</div></div>
+<div class="cs-metric"><div class="n" style="color:var(--brand-charcoal);">3,357</div><div class="k">Enrutadas a Google</div></div>
+<div class="cs-metric"><div class="n" style="color:#b8860b;">4.8&starf;</div><div class="k">Calificación Actual</div></div>
 </div>
+</div>
+</div>
+<!-- Case 3: Regio Norte (visual right) -->
+<div class="cs-case reveal">
 <div>
-<div style="font-size: 2.5rem; font-weight: 800; color: var(--brand-charcoal);">49</div>
-<div style="font-size: 0.9rem; font-weight: 600; text-transform: uppercase;">Alertas a Gerencia</div>
+<span class="cs-tag" style="color:#b8860b;">Ubicación con mejor calificación · Regio Norte</span>
+<h3>La calificación en vivo más alta del grupo: 4.8 estrellas</h3>
+<p>Regio Norte tiene la calificación actual de Google más alta de todas las ubicaciones de la plataforma: 4.8&starf;. Aunque su volumen de reseñas es menor, captura un flujo constante de opiniones auténticas de sus comensales.</p>
+<p><strong>Qué cambió:</strong> después de tocar, cada comensal elige entre dejar una reseña en Google o enviar comentarios privados a gerencia. Los gerentes pueden atender los comentarios privados en tiempo real para dar una respuesta rápida.</p>
+<div class="cs-metrics">
+<div class="cs-metric"><div class="n" style="color:#b8860b;">4.8&starf;</div><div class="k">Calificación Actual</div></div>
+<div class="cs-metric"><div class="n" style="color:var(--brand-blue);">564</div><div class="k">Reseñas Capturadas</div></div>
+<div class="cs-metric"><div class="n" style="color:var(--brand-charcoal);">415</div><div class="k">Enrutadas a Google</div></div>
 </div>
 </div>
+<div class="cs-visual">
+<div class="cs-profile">
+<div class="cs-phead"><span class="cs-glogo">G</span><div><div class="cs-pname">Regio Norte</div><div class="cs-psub">Restaurante · Monterrey</div></div><span class="cs-live">En vivo</span></div>
+<div class="cs-bigrate"><span class="r">4.8</span><div><div class="cs-stars">★★★★★</div><div class="cs-pcount">564 reseñas capturadas por RateTap</div></div></div>
+<div class="cs-funnel"><div class="cs-bar"><i class="blue" style="width:73.6%"></i><i class="gold" style="width:26.4%"></i></div><div class="cs-flabels"><span class="b">415 enrutadas a Google</span><span class="g">149 compartidas en privado</span></div></div>
+<span class="cs-chip"><i class="fa-solid fa-shield-halved"></i> Los comentarios privados dan a gerencia una vía directa de recuperación</span>
 </div>
-</div>
-<!-- Case 3: Estancia León -->
-<div class="grid-2" style="align-items: center;">
-<div style="order: 2;">
-<span style="color: var(--brand-gold); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; font-size: 0.85rem;">ALERTA INTERNA EN ACCIÓN — LEÓN</span>
-<h2 class="mb-4 reveal" style="font-size: 2rem; margin-top: 0.5rem;">Estancia León: la retroalimentación de baja calificación alerta a gerencia a tiempo</h2>
-<p class="reveal">León muestra el otro lado del valor de RateTap: no solo capturar reseñas positivas, sino detectar a los clientes insatisfechos a tiempo para poder recuperarlos. 117 comensales con una calificación ≤3★ activaron una alerta interna, donde gerencia puede atender la queja directamente.</p>
-<p class="reveal"><strong>Cómo funciona:</strong> cuando una calificación cae por debajo del umbral, el comensal llega a un formulario que avisa de inmediato al gerente en turno para que pueda atenderlo. La calificación de Google de la ubicación se ubica hoy en 4.7★.</p>
-<div style="display: flex; gap: 2rem; margin-top: 2rem; flex-wrap: wrap;">
-<div>
-<div style="font-size: 2.5rem; font-weight: 800; color: var(--brand-blue);">1,791</div>
-<div style="font-size: 0.9rem; font-weight: 600; text-transform: uppercase;">Reseñas Capturadas</div>
-</div>
-<div>
-<div style="font-size: 2.5rem; font-weight: 800; color: var(--brand-gold);">1,595</div>
-<div style="font-size: 0.9rem; font-weight: 600; text-transform: uppercase;">Enrutadas a Google</div>
-</div>
-<div>
-<div style="font-size: 2.5rem; font-weight: 800; color: var(--brand-charcoal);">117</div>
-<div style="font-size: 0.9rem; font-weight: 600; text-transform: uppercase;">Baja Calif. a Gerencia</div>
-</div>
-</div>
-</div>
-<div style="order: 1; background: rgba(255,255,255,0.7); height: 400px; border-radius: 24px; display: flex; align-items: center; justify-content: center;">
-<i class="fa-solid fa-comment-dots fa-4x" style="color: var(--text-secondary);"></i>
 </div>
 </div>
 </div>
 </section>
 <!-- Full Results Table -->
-<section class="reveal section">
+<section class="cs-section reveal">
 <div class="container">
-<div class="text-center" style="max-width: 700px; margin: 0 auto 3rem;">
-<span class="hero-eyebrow reveal">DATOS COMPLETOS</span>
-<h2 class="reveal">Cada ubicación, con su captura y enrutamiento</h2>
-<p class="reveal" style="color: var(--text-secondary);">Reseñas capturadas en la mesa, enrutadas al Perfil de Negocio de Google de cada ubicación o atendidas por gerencia mediante una alerta interna. La columna de calificación es la calificación de Google actual de cada ubicación — un estado presente, no un cambio atribuido a RateTap.</p>
+<div class="text-center" style="max-width:700px;margin:0 auto 3rem;">
+<span class="cs-eyebrow reveal">Datos completos</span>
+<h2 class="cs-serif reveal" style="font-size:2.6rem;margin-top:1rem;">Cada ubicación, con su fuente</h2>
+<p class="reveal" style="color:var(--text-secondary);max-width:640px;margin:1rem auto 0;line-height:1.6;">Las reseñas capturadas y enrutadas a Google se contabilizan directamente en la plataforma RateTap. La calificación actual de Google es la captura más reciente del Perfil de Negocio de cada ubicación.</p>
 </div>
-<div style="overflow-x: auto;">
-<table style="width: 100%; border-collapse: collapse; background: white; border-radius: 24px; overflow: hidden; max-width: 960px; margin: 0 auto;">
-<thead>
-<tr style="background: var(--brand-charcoal); color: white;">
-<th style="padding: 1rem; text-align: left;">Ubicación</th>
-<th style="padding: 1rem; text-align: center;">Calificación actual</th>
-<th style="padding: 1rem; text-align: center;">Capturadas</th>
-<th style="padding: 1rem; text-align: center;">Enrutadas a Google</th>
-<th style="padding: 1rem; text-align: center;">Alertas a gerencia</th>
-</tr>
-</thead>
+<div class="cs-tablewrap reveal" style="overflow-x:auto;">
+<table class="cs-table">
+<thead><tr><th>Ubicación</th><th>Calificación actual de Google</th><th>Reseñas capturadas</th><th>Enrutadas a Google</th></tr></thead>
 <tbody>
-<tr><td style="padding: 1rem; border-bottom: 1px solid var(--border);"><strong>Estancia Angelópolis</strong></td><td style="padding: 1rem; text-align: center; border-bottom: 1px solid var(--border);">4.8 ⭐</td><td style="padding: 1rem; text-align: center; border-bottom: 1px solid var(--border); color: var(--brand-blue); font-weight: 700;">2,510</td><td style="padding: 1rem; text-align: center; border-bottom: 1px solid var(--border);">2,384</td><td style="padding: 1rem; text-align: center; border-bottom: 1px solid var(--border);">126</td></tr>
-<tr><td style="padding: 1rem; border-bottom: 1px solid var(--border);"><strong>Estancia Veracruz</strong></td><td style="padding: 1rem; text-align: center; border-bottom: 1px solid var(--border);">4.6 ⭐</td><td style="padding: 1rem; text-align: center; border-bottom: 1px solid var(--border); color: var(--brand-blue); font-weight: 700;">2,276</td><td style="padding: 1rem; text-align: center; border-bottom: 1px solid var(--border);">2,156</td><td style="padding: 1rem; text-align: center; border-bottom: 1px solid var(--border);">120</td></tr>
-<tr><td style="padding: 1rem; border-bottom: 1px solid var(--border);"><strong>Estancia León</strong></td><td style="padding: 1rem; text-align: center; border-bottom: 1px solid var(--border);">4.7 ⭐</td><td style="padding: 1rem; text-align: center; border-bottom: 1px solid var(--border); color: var(--brand-blue); font-weight: 700;">1,791</td><td style="padding: 1rem; text-align: center; border-bottom: 1px solid var(--border);">1,595</td><td style="padding: 1rem; text-align: center; border-bottom: 1px solid var(--border);">196</td></tr>
-<tr><td style="padding: 1rem; border-bottom: 1px solid var(--border);"><strong>Harbor's Veracruz</strong></td><td style="padding: 1rem; text-align: center; border-bottom: 1px solid var(--border);">4.6 ⭐</td><td style="padding: 1rem; text-align: center; border-bottom: 1px solid var(--border); color: var(--brand-blue); font-weight: 700;">1,292</td><td style="padding: 1rem; text-align: center; border-bottom: 1px solid var(--border);">1,243</td><td style="padding: 1rem; text-align: center; border-bottom: 1px solid var(--border);">49</td></tr>
-<tr><td style="padding: 1rem; border-bottom: 1px solid var(--border);"><strong>La Silla Juárez</strong></td><td style="padding: 1rem; text-align: center; border-bottom: 1px solid var(--border);">4.7 ⭐</td><td style="padding: 1rem; text-align: center; border-bottom: 1px solid var(--border); color: var(--brand-blue); font-weight: 700;">1,213</td><td style="padding: 1rem; text-align: center; border-bottom: 1px solid var(--border);">1,106</td><td style="padding: 1rem; text-align: center; border-bottom: 1px solid var(--border);">107</td></tr>
-<tr><td style="padding: 1rem; border-bottom: 1px solid var(--border);"><strong>Harbor's Angelópolis</strong></td><td style="padding: 1rem; text-align: center; border-bottom: 1px solid var(--border);">4.7 ⭐</td><td style="padding: 1rem; text-align: center; border-bottom: 1px solid var(--border); color: var(--brand-blue); font-weight: 700;">1,026</td><td style="padding: 1rem; text-align: center; border-bottom: 1px solid var(--border);">949</td><td style="padding: 1rem; text-align: center; border-bottom: 1px solid var(--border);">77</td></tr>
-<tr><td style="padding: 1rem; border-bottom: 1px solid var(--border);"><strong>La Silla Huexotitla</strong></td><td style="padding: 1rem; text-align: center; border-bottom: 1px solid var(--border);">4.6 ⭐</td><td style="padding: 1rem; text-align: center; border-bottom: 1px solid var(--border); color: var(--brand-blue); font-weight: 700;">946</td><td style="padding: 1rem; text-align: center; border-bottom: 1px solid var(--border);">876</td><td style="padding: 1rem; text-align: center; border-bottom: 1px solid var(--border);">70</td></tr>
-<tr><td style="padding: 1rem; border-bottom: 1px solid var(--border);"><strong>Estancia Juárez</strong></td><td style="padding: 1rem; text-align: center; border-bottom: 1px solid var(--border);">4.7 ⭐</td><td style="padding: 1rem; text-align: center; border-bottom: 1px solid var(--border); color: var(--brand-blue); font-weight: 700;">618</td><td style="padding: 1rem; text-align: center; border-bottom: 1px solid var(--border);">591</td><td style="padding: 1rem; text-align: center; border-bottom: 1px solid var(--border);">27</td></tr>
-<tr><td style="padding: 1rem; border-bottom: 1px solid var(--border);"><strong>Estancia Xalapa</strong></td><td style="padding: 1rem; text-align: center; border-bottom: 1px solid var(--border);">4.7 ⭐</td><td style="padding: 1rem; text-align: center; border-bottom: 1px solid var(--border); color: var(--brand-blue); font-weight: 700;">490</td><td style="padding: 1rem; text-align: center; border-bottom: 1px solid var(--border);">451</td><td style="padding: 1rem; text-align: center; border-bottom: 1px solid var(--border);">39</td></tr>
-<tr><td style="padding: 1rem; border-bottom: 1px solid var(--border);"><strong>Estancia Querétaro</strong></td><td style="padding: 1rem; text-align: center; border-bottom: 1px solid var(--border);">4.6 ⭐</td><td style="padding: 1rem; text-align: center; border-bottom: 1px solid var(--border); color: var(--brand-blue); font-weight: 700;">447</td><td style="padding: 1rem; text-align: center; border-bottom: 1px solid var(--border);">420</td><td style="padding: 1rem; text-align: center; border-bottom: 1px solid var(--border);">27</td></tr>
-<tr><td style="padding: 1rem; border-bottom: 1px solid var(--border);"><strong>Regio Norte</strong></td><td style="padding: 1rem; text-align: center; border-bottom: 1px solid var(--border);">4.8 ⭐</td><td style="padding: 1rem; text-align: center; border-bottom: 1px solid var(--border); color: var(--brand-blue); font-weight: 700;">391</td><td style="padding: 1rem; text-align: center; border-bottom: 1px solid var(--border);">278</td><td style="padding: 1rem; text-align: center; border-bottom: 1px solid var(--border);">113</td></tr>
-<tr><td style="padding: 1rem;"><strong>SteakCompany Querétaro</strong></td><td style="padding: 1rem; text-align: center;">4.5 ⭐</td><td style="padding: 1rem; text-align: center; color: var(--brand-blue); font-weight: 700;">151</td><td style="padding: 1rem; text-align: center;">143</td><td style="padding: 1rem; text-align: center;">8</td></tr>
+<tr><td class="cs-loc">Estancia Angelópolis</td><td class="cs-rate">4.8&starf;</td><td><div class="cs-cap"><span class="cs-minibar"><i style="width:100%"></i></span><span class="cs-num">3,708</span></div></td><td><span class="cs-num" style="color:var(--brand-charcoal);">3,357</span></td></tr>
+<tr><td class="cs-loc">Estancia Veracruz</td><td class="cs-rate">4.7&starf;</td><td><div class="cs-cap"><span class="cs-minibar"><i style="width:87.5%"></i></span><span class="cs-num">3,246</span></div></td><td><span class="cs-num" style="color:var(--brand-charcoal);">2,946</span></td></tr>
+<tr><td class="cs-loc">Estancia León</td><td class="cs-rate">4.7&starf;</td><td><div class="cs-cap"><span class="cs-minibar"><i style="width:52.8%"></i></span><span class="cs-num">1,959</span></div></td><td><span class="cs-num" style="color:var(--brand-charcoal);">1,721</span></td></tr>
+<tr><td class="cs-loc">La Silla Juárez</td><td class="cs-rate">4.7&starf;</td><td><div class="cs-cap"><span class="cs-minibar"><i style="width:51.0%"></i></span><span class="cs-num">1,892</span></div></td><td><span class="cs-num" style="color:var(--brand-charcoal);">1,606</span></td></tr>
+<tr><td class="cs-loc">Harbor's Veracruz</td><td class="cs-rate">4.6&starf;</td><td><div class="cs-cap"><span class="cs-minibar"><i style="width:45.1%"></i></span><span class="cs-num">1,673</span></div></td><td><span class="cs-num" style="color:var(--brand-charcoal);">1,557</span></td></tr>
+<tr><td class="cs-loc">La Silla Huexotitla</td><td class="cs-rate">4.6&starf;</td><td><div class="cs-cap"><span class="cs-minibar"><i style="width:43.5%"></i></span><span class="cs-num">1,612</span></div></td><td><span class="cs-num" style="color:var(--brand-charcoal);">1,417</span></td></tr>
+<tr><td class="cs-loc">Harbor's Angelópolis</td><td class="cs-rate">4.7&starf;</td><td><div class="cs-cap"><span class="cs-minibar"><i style="width:40.9%"></i></span><span class="cs-num">1,515</span></div></td><td><span class="cs-num" style="color:var(--brand-charcoal);">1,266</span></td></tr>
+<tr><td class="cs-loc">Estancia Xalapa</td><td class="cs-rate">4.7&starf;</td><td><div class="cs-cap"><span class="cs-minibar"><i style="width:20.7%"></i></span><span class="cs-num">769</span></div></td><td><span class="cs-num" style="color:var(--brand-charcoal);">662</span></td></tr>
+<tr><td class="cs-loc">Estancia Juárez</td><td class="cs-rate">4.7&starf;</td><td><div class="cs-cap"><span class="cs-minibar"><i style="width:19.7%"></i></span><span class="cs-num">730</span></div></td><td><span class="cs-num" style="color:var(--brand-charcoal);">682</span></td></tr>
+<tr><td class="cs-loc">Estancia Querétaro</td><td class="cs-rate">4.6&starf;</td><td><div class="cs-cap"><span class="cs-minibar"><i style="width:19.1%"></i></span><span class="cs-num">707</span></div></td><td><span class="cs-num" style="color:var(--brand-charcoal);">658</span></td></tr>
+<tr><td class="cs-loc">Regio Norte</td><td class="cs-rate">4.8&starf;</td><td><div class="cs-cap"><span class="cs-minibar"><i style="width:15.2%"></i></span><span class="cs-num">564</span></div></td><td><span class="cs-num" style="color:var(--brand-charcoal);">415</span></td></tr>
+<tr><td class="cs-loc">SteakCompany Querétaro</td><td class="cs-rate">4.5&starf;</td><td><div class="cs-cap"><span class="cs-minibar"><i style="width:9.5%"></i></span><span class="cs-num">351</span></div></td><td><span class="cs-num" style="color:var(--brand-charcoal);">317</span></td></tr>
 </tbody>
-<tfoot>
-<tr style="background: var(--brand-charcoal); color: white; font-weight: 700;"><td style="padding: 1rem;">Total (12 ubicaciones)</td><td style="padding: 1rem; text-align: center;">4.5–4.8 ⭐</td><td style="padding: 1rem; text-align: center;">13,151</td><td style="padding: 1rem; text-align: center;">12,192</td><td style="padding: 1rem; text-align: center;">959</td></tr>
-</tfoot>
+<tfoot><tr><td>12 ubicaciones</td><td class="cs-rate">4.5&ndash;4.8&starf;</td><td style="text-align:right;">18,726</td><td style="text-align:center;">16,604</td></tr></tfoot>
 </table>
 </div>
-<p class="reveal text-center" style="max-width: 720px; margin: 2rem auto 0; color: var(--text-secondary); font-size: 0.9rem;">
-     Cifras de la base de datos de producción, corte del 14 de junio de 2026. Enrutadas + Alertas a gerencia = Capturadas en cada ubicación. La plataforma sigue capturando reseñas en vivo, así que los totales pueden subir ligeramente. Las calificaciones son el estado actual del Perfil de Negocio de Google de cada ubicación y no se atribuyen a RateTap.
-    </p>
+<p class="cs-note reveal">Las reseñas capturadas y enrutadas se contabilizan en la plataforma (corte de producción: 20 de julio de 2026); la calificación actual de Google es el estado presente del Perfil de Negocio de cada ubicación, no un cambio atribuido a RateTap. Cada comensal elige entre Google y comentarios privados; enrutadas a Google + compartidas en privado = capturadas en cada ubicación. <a href="/methodology">Metodología completa</a>.</p>
 </div>
 </section>
-<section class="reveal section bg-muted" style="background: var(--brand-charcoal); color: white; text-align: center;">
+<!-- CTA -->
+<section class="cs-section reveal" style="padding-top:0;">
 <div class="container">
-<h2 class="reveal" style="color: white;">¿Quiere capturar y enrutar reseñas así en su restaurante?</h2>
-<p class="reveal" style="color: rgba(255,255,255,0.9); max-width: 600px; margin: 0 auto 2rem;">
-     Agende una demo de 15 minutos. Recorreremos el dashboard y le mostraremos cómo se ve el despliegue para las ubicaciones de arriba.
-    </p>
-<a class="btn btn-primary" href="/demo#demo-form" style="background: white; color: var(--brand-charcoal);">Agenda una Demo</a>
+<div class="cs-cta">
+<h2>¿Quiere resultados como estos para su restaurante?</h2>
+<p>Agende una demo de 15 minutos. Recorreremos el panel y le mostraremos exactamente cómo fue la implementación en las ubicaciones anteriores.</p>
+<a class="btn btn-primary" href="/demo#demo-form" style="background:#fff;color:var(--brand-charcoal);">Agendar una demo</a>
+</div>
 </div>
 </section>
 <footer class="footer">

@@ -9,6 +9,7 @@ node_modules/
 
 # Local agent/tool artifacts
 .claude/
+.playwright-mcp/
 __pycache__/
 scripts/__pycache__/
 
@@ -25,9 +26,16 @@ assets/ac9a437c-35df-4b6e-9baa-8d08558366de.jpg
 
 # Generated operational snapshots
 platform/scripts/marketing-stats.json
+/platform/scratch_leads.*
 
 # Analytics OAuth tokens and pulled data
 .gsc-token.json
 .ga4-token.json
 .ga4-property.json
 data/analytics/
+
+# Public-repo safety: prospect PII, platform build/output, dead tokens, board reports
+data/
+platform/output/
+platform/board-report-*/
+*.dead-*
