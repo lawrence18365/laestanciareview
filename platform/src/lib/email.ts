@@ -1,4 +1,5 @@
 import { sendMail } from '@/lib/mailer';
+import { createTransport, type SendMailOptions, type Transporter } from 'nodemailer';
 
 /** Strip stray whitespace/newlines from env vars (Vercel CLI sometimes injects \\n). */
 const clean = (v: string | undefined, fallback: string) => (v ?? fallback).replace(/\\n/g, '').trim();
@@ -7,8 +8,154 @@ const FROM = clean(process.env.EMAIL_FROM, 'RateTap <notifications@ratetapmx.com
 const BASE_URL = clean(process.env.NEXT_PUBLIC_BASE_URL, 'https://app.ratetapmx.com');
 const LOGO_URL = `${BASE_URL}/logos/ratetap_logo_transparent_background.png`;
 
+interface SendEmailOptions {
+  to: string;
+  subject: string;
+  html: string;
+  text?: string;
+  replyTo?: string;
+  attachments?: {
+    filename?: string;
+    content?: Buffer | string;
+    path?: string;
+    cid?: string;
+    contentType?: string;
+  }[];
+  headers?: Record<string, string>;
+}
+
+interface OutreachSmtpConfig {
+  host: string;
+  port: number;
+  secure: boolean;
+  auth: { user: string; pass: string };
+}
+
+let outreachTransport: Transporter | null = null;
+
+function getOutreachSmtpConfig(): OutreachSmtpConfig | null {
+  const host = clean(process.env.SMTP_HOST, 'mail.spacemail.com');
+  const user = clean(process.env.SMTP_USER, '');
+  const pass = clean(process.env.SMTP_PASS, '');
+  if (!user || !pass) return null;
+
+  const parsedPort = Number.parseInt(clean(process.env.SMTP_PORT, '465'), 10);
+  const port = Number.isFinite(parsedPort) ? parsedPort : 465;
+  return { host, port, secure: port === 465, auth: { user, pass } };
+}
+
+function getOutreachTransport(config: OutreachSmtpConfig): Transporter {
+  if (!outreachTransport) {
+    outreachTransport = createTransport({
+      host: config.host,
+      port: config.port,
+      secure: config.secure,
+      auth: config.auth,
+      tls: { rejectUnauthorized: true },
+    });
+  }
+  return outreachTransport;
+}
+
+function htmlToText(html: string): string {
+  return html
+    .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<\/(p|div|h[1-6])>/gi, '\n')
+    .replace(/<a[^>]+href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi, (_, url, text) => {
+      const cleanText = String(text).replace(/<[^>]+>/g, '').trim();
+      return cleanText ? `${cleanText} (${url})` : url;
+    })
+    .replace(/<[^>]+>/g, '')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+}
+
+/**
+ * Outreach send path. It requires SMTP, sends multipart mail, and appends the
+ * exact RFC822 payload to the provider's Sent folder on a best-effort basis.
+ */
+export async function sendEmail({
+  to,
+  subject,
+  html,
+  text: textOverride,
+  replyTo,
+  attachments,
+  headers,
+}: SendEmailOptions): Promise<{ provider: 'smtp'; data?: { id?: string } }> {
+  const config = getOutreachSmtpConfig();
+  if (!config) {
+    throw new Error('SMTP_USER or SMTP_PASS not set');
+  }
+
+  const options: SendMailOptions = {
+    from: FROM,
+    to,
+    subject,
+    text: textOverride ?? htmlToText(html),
+    html,
+    replyTo,
+    attachments,
+    headers,
+  };
+  const { default: MailComposer } = await import('nodemailer/lib/mail-composer');
+  const rawMessage = await new MailComposer(options).compile().build();
+  const result = await getOutreachTransport(config).sendMail({ ...options, raw: rawMessage });
+
+  appendOutreachToSent(rawMessage, config).catch((error: unknown) => {
+    console.warn(
+      '[email] IMAP Sent append failed:',
+      error instanceof Error ? error.message : String(error),
+    );
+  });
+
+  return {
+    provider: 'smtp',
+    data: result.messageId ? { id: result.messageId } : undefined,
+  };
+}
+
+async function appendOutreachToSent(rawMessage: Buffer, config: OutreachSmtpConfig) {
+  const { ImapFlow } = await import('imapflow');
+  const client = new ImapFlow({
+    host: config.host,
+    port: 993,
+    secure: true,
+    auth: config.auth,
+    logger: false as unknown as undefined,
+  });
+
+  try {
+    await client.connect();
+    const boxes = await client.list();
+    const sent = boxes.find((box) => box.specialUse === '\\Sent')
+      ?? boxes.find((box) => ['sent', 'inbox.sent', 'sent items', 'inbox.sent items']
+        .includes(box.path.toLowerCase()));
+    let sentPath = sent?.path;
+    if (!sentPath) {
+      try {
+        await client.mailboxCreate('Sent');
+        sentPath = 'Sent';
+      } catch {
+        console.warn('[email] IMAP Sent folder not found');
+        return;
+      }
+    }
+    await client.append(sentPath, rawMessage, ['\\Seen']);
+  } finally {
+    await client.logout();
+  }
+}
+
 /** Escape HTML special characters to prevent injection. */
-function escapeHtml(str: string): string {
+export function escapeHtml(str: string): string {
   return str
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
@@ -172,6 +319,7 @@ export async function sendFeedbackAlert({
         : (result.response ?? 'unknown');
     console.error(`[sendFeedbackAlert] failed to ${to}: ${reason}`);
   }
+  return result;
 }
 
 // ────────────────────────────────────────────────────────────
@@ -337,6 +485,7 @@ export async function sendWeeklyDigest({
         : (result.response ?? 'unknown');
     console.error(`[sendWeeklyDigest] failed to ${to}: ${reason}`);
   }
+  return result;
 }
 
 // ────────────────────────────────────────────────────────────
@@ -490,6 +639,7 @@ export async function sendOwnerDigest({ to, locations, dashboardUrl }: OwnerDige
         : (result.response ?? 'unknown');
     console.error(`[sendOwnerDigest] failed to ${to}: ${reason}`);
   }
+  return result;
 }
 
 // ────────────────────────────────────────────────────────────
@@ -561,7 +711,7 @@ export async function sendTestEmail(to: string) {
       </div>
       <h1 style="margin: 0 0 8px; font-size: 22px; font-weight: 700; color: #1c1917;">Email Configurado</h1>
       <p style="margin: 0; font-size: 15px; color: #44403c; line-height: 1.5;">
-        La integracion con Resend esta funcionando correctamente. Los emails de RateTap se enviaran desde esta direccion.
+        La integracion con SMTP esta funcionando correctamente. Los emails de RateTap se enviaran desde esta direccion.
       </p>
     </div>`;
 
@@ -658,6 +808,7 @@ export async function sendFeatureAnnouncement({
         : (result.response ?? 'unknown');
     console.error(`[sendFeatureAnnouncement] failed to ${to}: ${reason}`);
   }
+  return result;
 }
 
 // ────────────────────────────────────────────────────────────

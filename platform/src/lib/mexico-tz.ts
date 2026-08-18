@@ -46,3 +46,21 @@ export function todayBirthdayKeyMexico(): string {
   const mm = String(local.getMonth() + 1).padStart(2, '0');
   return `${dd}/${mm}`;
 }
+
+/** Start of tomorrow (00:00) in Mexico City, as a real UTC Date. */
+export function startOfTomorrowMexico(): Date {
+  const tomorrow = mexicoLocal();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  tomorrow.setHours(0, 0, 0, 0);
+  return new Date(tomorrow.getTime() + utcOffset());
+}
+
+/** Current hour (0-23) in Mexico City. */
+export function currentMexicoHour(): number {
+  return mexicoLocal().getHours();
+}
+
+/** Current day of week in Mexico City (0 = Sunday, 6 = Saturday). */
+export function currentMexicoDayOfWeek(): number {
+  return mexicoLocal().getDay();
+}

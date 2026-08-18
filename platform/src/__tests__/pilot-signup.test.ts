@@ -44,7 +44,8 @@ vi.mock('@/lib/tokens', () => ({
 vi.mock('@/lib/stripe', () => ({
   getStripe: mocks.getStripe,
   STRIPE_PRICE_ID: 'price_test',
-  TRIAL_DAYS: 15,
+  STRIPE_SETUP_PRICE_ID: 'price_setup_test',
+  TRIAL_DAYS: 30,
 }));
 vi.mock('@/lib/commercial-tracking', () => ({
   trackCommercialEvent: mocks.trackCommercialEvent,
@@ -214,7 +215,7 @@ describe('founder pilot signup', () => {
     }));
   });
 
-  it('uses the unchanged Stripe trial checkout when the pilot code is invalid', async () => {
+  it('charges the setup fee and saves the card when the pilot code is invalid', async () => {
     mocks.stripeSessionCreate.mockResolvedValue({
       id: 'cs_test_123',
       url: 'https://checkout.stripe.com/c/pay/test',
@@ -233,9 +234,11 @@ describe('founder pilot signup', () => {
     expect(mocks.insertedValues.some((values) => values.pilot === true)).toBe(false);
     expect(mocks.getStripe).toHaveBeenCalledOnce();
     expect(mocks.stripeSessionCreate).toHaveBeenCalledWith(expect.objectContaining({
-      mode: 'subscription',
-      payment_method_collection: 'always',
-      subscription_data: expect.objectContaining({ trial_period_days: 15 }),
+      mode: 'payment',
+      customer_creation: 'always',
+      line_items: [{ price: 'price_setup_test', quantity: 1 }],
+      payment_intent_data: expect.objectContaining({ setup_future_usage: 'off_session' }),
+      metadata: expect.objectContaining({ flow: 'setup_fee_then_trial' }),
     }));
     expect(mocks.insertedValues).toContainEqual(expect.objectContaining({
       status: 'checkout_started',

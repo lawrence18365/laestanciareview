@@ -3,6 +3,7 @@ import { and, eq, gte, lt, sql } from 'drizzle-orm';
 import { db } from '@/db';
 import { guests, restaurants, reviews } from '@/db/schema';
 import { sendPushToRestaurant } from '@/lib/push';
+import { sendDailyDigest as sendOutreachDailyDigest } from '@/lib/outreach-notifications';
 import {
   startOfTodayMexico,
   startOfYesterdayMexico,
@@ -21,6 +22,12 @@ export async function GET(req: NextRequest) {
   if (!secret || secret !== cronSecret) {
     return Response.json({ error: 'Unauthorized' }, { status: 401 });
   }
+
+  const outreach = await sendOutreachDailyDigest().catch((error: unknown) => {
+    const message = error instanceof Error ? error.message : String(error);
+    console.error('[daily-digest] outreach digest failed:', message);
+    return { sent: false, skipped: false, error: message };
+  });
 
   const todayStart = startOfTodayMexico();
   const yesterdayStart = startOfYesterdayMexico();
@@ -104,5 +111,8 @@ export async function GET(req: NextRequest) {
     }
   }
 
-  return Response.json({ sent, skipped, failed, total: operational.length });
+  return Response.json({
+    restaurantPush: { sent, skipped, failed, total: operational.length },
+    outreach,
+  });
 }

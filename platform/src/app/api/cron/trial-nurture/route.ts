@@ -11,8 +11,9 @@ import { NextRequest } from 'next/server';
 import { db } from '@/db';
 import { restaurants, nurtureEvents } from '@/db/schema';
 import { eq, and } from 'drizzle-orm';
-import { Resend } from 'resend';
+import { FROM, sendMail } from '@/lib/mailer';
 
+export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 const CRON_SECRET = process.env.CRON_SECRET;
@@ -95,7 +96,6 @@ export async function GET(req: NextRequest) {
     return Response.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY.trim()) : null;
   const trialing = await db.select().from(restaurants)
     .where(eq(restaurants.subscriptionStatus, 'trialing'));
 
@@ -124,37 +124,39 @@ export async function GET(req: NextRequest) {
 
       if (existing.length > 0) continue;
 
-      const deliveries: Promise<void>[] = [];
-      if (r.managerPhone && getTwilioConfig()) {
-        deliveries.push(sendWhatsApp(r.managerPhone, nurture.whatsapp(r.name, r.pilot)));
-      }
+      const hasEmail = Boolean(r.managerEmail);
+      const hasWhatsApp = Boolean(r.managerPhone && getTwilioConfig());
+      if (!hasEmail && !hasWhatsApp) continue;
 
-      if (r.managerEmail && resend) {
-        deliveries.push((async () => {
-          const result = await resend.emails.send({
-            from: `RateTap <hola@ratetapmx.com>`,
-            to: r.managerEmail!,
-            subject: nurture.subject(r.name, r.pilot),
-            html: nurture.html(r.name, r.pilot),
-          });
-          if (result.error) throw new Error(result.error.message);
-        })());
-      }
-
-      if (deliveries.length === 0) continue;
-
-      try {
-        await Promise.all(deliveries);
-      } catch (error) {
-        console.error(`[trial-nurture] ${eventKey} delivery failed for ${r.name}:`, error);
-        continue;
-      }
-
-      // Record only after every configured delivery succeeds. If insertion
-      // races another cron invocation, the unique constraint wins harmlessly.
+      // Claim the event before delivery so overlapping cron invocations cannot
+      // double-send. Remove the claim on failure so the next run can retry.
       try {
         await db.insert(nurtureEvents).values({ restaurantId: r.id, event: eventKey });
       } catch {
+        continue;
+      }
+
+      try {
+        if (r.managerEmail) {
+          const result = await sendMail({
+            from: FROM,
+            to: r.managerEmail,
+            subject: nurture.subject(r.name, r.pilot),
+            html: nurture.html(r.name, r.pilot),
+          });
+          if (!result.success) {
+            throw new Error(result.error?.message ?? 'SMTP send skipped');
+          }
+        }
+        if (r.managerPhone && hasWhatsApp) {
+          await sendWhatsApp(r.managerPhone, nurture.whatsapp(r.name, r.pilot));
+        }
+      } catch (error) {
+        await db.delete(nurtureEvents).where(and(
+          eq(nurtureEvents.restaurantId, r.id),
+          eq(nurtureEvents.event, eventKey),
+        ));
+        console.error(`[trial-nurture] ${eventKey} delivery failed for ${r.name}:`, error);
         continue;
       }
 
