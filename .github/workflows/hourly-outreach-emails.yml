@@ -1,0 +1,44 @@
+name: Hourly outreach emails
+
+on:
+  schedule:
+    # GitHub schedules are UTC. The endpoint enforces the Mexico City send
+    # window and daily cap, so calls outside the window exit without sending.
+    - cron: '7 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: hourly-outreach-emails
+  cancel-in-progress: false
+
+jobs:
+  trigger:
+    name: Trigger RateTap outreach queue
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Call the protected production endpoint
+        env:
+          CRON_SECRET: ${{ secrets.RATETAP_CRON_SECRET }}
+          CRON_URL: https://app.ratetapmx.com/api/cron/outreach-emails
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if [[ -z "${CRON_SECRET}" ]]; then
+            echo "RATETAP_CRON_SECRET is not configured"
+            exit 1
+          fi
+
+          curl \
+            --fail-with-body \
+            --silent \
+            --show-error \
+            --retry 3 \
+            --retry-all-errors \
+            --max-time 90 \
+            --header "Authorization: Bearer ${CRON_SECRET}" \
+            "${CRON_URL}"
