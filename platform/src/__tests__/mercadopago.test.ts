@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { NextRequest } from 'next/server';
 import { createHmac } from 'node:crypto';
 import { mercadopagoSubscriptions, restaurants } from '@/db/schema';
@@ -6,9 +6,19 @@ import { mercadopagoSubscriptions, restaurants } from '@/db/schema';
 const mocks = vi.hoisted(() => {
   const seenEventIds = new Set<string>();
   const updatedRows: Array<{ table: unknown; values: Record<string, unknown> }> = [];
+  const dbInsert = vi.fn(() => ({
+    values: vi.fn((values: { eventId: string }) => {
+      if (seenEventIds.has(values.eventId)) {
+        return Promise.reject(new Error('duplicate key value'));
+      }
+      seenEventIds.add(values.eventId);
+      return Promise.resolve(undefined);
+    }),
+  }));
   return {
     seenEventIds,
     updatedRows,
+    dbInsert,
     getPreapproval: vi.fn(),
     getAuthorizedPayment: vi.fn(),
   };
@@ -16,15 +26,7 @@ const mocks = vi.hoisted(() => {
 
 vi.mock('@/db', () => ({
   db: {
-    insert: vi.fn(() => ({
-      values: vi.fn((values: { eventId: string }) => {
-        if (mocks.seenEventIds.has(values.eventId)) {
-          return Promise.reject(new Error('duplicate key value'));
-        }
-        mocks.seenEventIds.add(values.eventId);
-        return Promise.resolve(undefined);
-      }),
-    })),
+    insert: mocks.dbInsert,
     select: vi.fn(() => ({
       from: vi.fn((table: unknown) => ({
         where: vi.fn(() => ({
@@ -66,7 +68,6 @@ vi.mock('@/lib/mercadopago', async (importOriginal) => {
   return {
     ...original,
     MERCADOPAGO_ACCESS_TOKEN: 'test-access-token',
-    MERCADOPAGO_WEBHOOK_SECRET: undefined,
     getPreapproval: mocks.getPreapproval,
     getAuthorizedPayment: mocks.getAuthorizedPayment,
   };
@@ -93,10 +94,30 @@ function signPayload({
   return createHmac('sha256', secret).update(manifest).digest('hex');
 }
 
-function webhookRequest(payload: Record<string, unknown>) {
+function webhookRequest(
+  payload: Record<string, unknown>,
+  options: {
+    secret?: string;
+    requestId?: string | null;
+    ts?: string;
+    xSignature?: string | null;
+  } = {},
+) {
+  const secret = options.secret ?? 'mp-webhook-secret';
+  const requestId = options.requestId === undefined ? 'req-webhook' : options.requestId;
+  const ts = options.ts ?? '1700000000';
+  const dataId = String((payload.data as { id?: string | number } | undefined)?.id ?? '');
+  const signingRequestId = requestId ?? 'req-webhook';
+  const v1 = signPayload({ dataId, requestId: signingRequestId, ts, secret });
+  const xSignature =
+    options.xSignature === undefined ? `ts=${ts},v1=${v1}` : options.xSignature;
+  const headers: Record<string, string> = { 'content-type': 'application/json' };
+  if (xSignature !== null) headers['x-signature'] = xSignature;
+  if (requestId !== null) headers['x-request-id'] = requestId;
+
   return new NextRequest('https://app.ratetapmx.com/api/webhooks/mercadopago', {
     method: 'POST',
-    headers: { 'content-type': 'application/json' },
+    headers,
     body: JSON.stringify(payload),
   });
 }
@@ -173,10 +194,15 @@ describe('mapPreapprovalStatus', () => {
 });
 
 describe('mercadopago webhook route', () => {
+  const secret = 'mp-webhook-secret';
+
   beforeEach(() => {
+    vi.stubEnv('MERCADOPAGO_WEBHOOK_SECRET', secret);
     mocks.seenEventIds.clear();
     mocks.updatedRows.length = 0;
+    mocks.dbInsert.mockClear();
     mocks.getPreapproval.mockReset();
+    mocks.getAuthorizedPayment.mockReset();
     mocks.getPreapproval.mockResolvedValue({
       id: 'preapproval-123',
       status: 'authorized',
@@ -186,12 +212,65 @@ describe('mercadopago webhook route', () => {
     });
   });
 
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
   const eventPayload = {
     id: 'evt-1',
     type: 'subscription_preapproval',
     action: 'updated',
     data: { id: 'preapproval-123' },
   };
+
+  it('returns 503 without a configured webhook secret before DB access', async () => {
+    vi.stubEnv('MERCADOPAGO_WEBHOOK_SECRET', undefined);
+
+    const response = await webhookPOST(webhookRequest(eventPayload));
+
+    expect(response.status).toBe(503);
+    expect(await response.text()).toBe('Webhook secret not configured');
+    expect(mocks.dbInsert).not.toHaveBeenCalled();
+  });
+
+  it('returns 401 without x-signature before DB access', async () => {
+    const response = await webhookPOST(
+      webhookRequest(eventPayload, { xSignature: null }),
+    );
+
+    expect(response.status).toBe(401);
+    expect(await response.json()).toEqual({ error: 'Invalid signature' });
+    expect(mocks.dbInsert).not.toHaveBeenCalled();
+  });
+
+  it('returns 401 without x-request-id before DB access', async () => {
+    const response = await webhookPOST(
+      webhookRequest(eventPayload, { requestId: null }),
+    );
+
+    expect(response.status).toBe(401);
+    expect(await response.json()).toEqual({ error: 'Invalid signature' });
+    expect(mocks.dbInsert).not.toHaveBeenCalled();
+  });
+
+  it('returns 401 for a tampered v1 before DB access', async () => {
+    const v1 = signPayload({
+      dataId: 'preapproval-123',
+      requestId: 'req-webhook',
+      ts: '1700000000',
+      secret,
+    });
+    const tampered = v1.slice(0, -2) + (v1.endsWith('00') ? 'ff' : '00');
+    const response = await webhookPOST(
+      webhookRequest(eventPayload, {
+        xSignature: `ts=1700000000,v1=${tampered}`,
+      }),
+    );
+
+    expect(response.status).toBe(401);
+    expect(await response.json()).toEqual({ error: 'Invalid signature' });
+    expect(mocks.dbInsert).not.toHaveBeenCalled();
+  });
 
   it('activates the restaurant on an authorized preapproval', async () => {
     const response = await webhookPOST(webhookRequest(eventPayload));

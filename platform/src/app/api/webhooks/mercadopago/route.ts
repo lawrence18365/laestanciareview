@@ -7,7 +7,6 @@ import {
 } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 import {
-  MERCADOPAGO_WEBHOOK_SECRET,
   getAuthorizedPayment,
   getPreapproval,
   mapPreapprovalStatus,
@@ -34,24 +33,27 @@ export async function POST(req: NextRequest) {
   const dataIdRaw = body.data?.id ?? req.nextUrl.searchParams.get('data.id') ?? '';
   const dataId = String(dataIdRaw);
 
-  // Signature verification. When the secret is configured, an invalid
-  // signature is a hard 401. When it is not configured (test/sandbox setups
-  // where MP has no secret yet) we log and still process.
-  if (MERCADOPAGO_WEBHOOK_SECRET) {
-    const valid = verifyMercadoPagoSignature({
-      xSignature: req.headers.get('x-signature'),
-      xRequestId: req.headers.get('x-request-id'),
-      dataId,
-      secret: MERCADOPAGO_WEBHOOK_SECRET,
-    });
-    if (!valid) {
-      console.warn('[mercadopago-webhook] invalid x-signature');
-      return Response.json({ error: 'Invalid signature' }, { status: 401 });
-    }
-  } else {
-    console.warn(
-      '[mercadopago-webhook] MERCADOPAGO_WEBHOOK_SECRET not set — processing without signature verification (test mode)',
-    );
+  // Do not call db.* until the signature check succeeds.
+  const webhookSecret = process.env.MERCADOPAGO_WEBHOOK_SECRET;
+  if (!webhookSecret) {
+    return new Response('Webhook secret not configured', { status: 503 });
+  }
+
+  const xSignature = req.headers.get('x-signature');
+  const xRequestId = req.headers.get('x-request-id');
+  if (!xSignature || !xRequestId) {
+    return Response.json({ error: 'Invalid signature' }, { status: 401 });
+  }
+
+  const valid = verifyMercadoPagoSignature({
+    xSignature,
+    xRequestId,
+    dataId,
+    secret: webhookSecret,
+  });
+  if (!valid) {
+    console.warn('[mercadopago-webhook] invalid x-signature');
+    return Response.json({ error: 'Invalid signature' }, { status: 401 });
   }
 
   const eventKey = `${body.type ?? ''}:${body.action ?? ''}:${dataId}:${body.id ?? ''}`;
