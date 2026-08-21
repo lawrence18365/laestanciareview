@@ -54,6 +54,7 @@ export default async function AppLayout({
         isOwner={isMultiView}
         isRegional={isRegional}
         slug={session.slug}
+        role={session.role}
       >
         {children}
       </DashboardShell>

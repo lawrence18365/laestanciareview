@@ -149,6 +149,10 @@ export async function POST(req: NextRequest) {
       body: `${guest.name} se sumó al Club. Hoy ya es parte.`,
       url: '/guests',
       tag: `vip-new-${guest.id}`,
+    }, {
+      kind: 'vip_validated',
+      subjectType: 'guest',
+      subjectId: guest.id,
     });
   } catch (err) {
     console.error(`[push] VIP-new failed for guest #${guest.id}:`, err);

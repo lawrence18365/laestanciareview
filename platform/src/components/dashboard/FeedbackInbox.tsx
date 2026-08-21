@@ -4,6 +4,7 @@ import { useState, useMemo } from 'react';
 import { downloadCSV } from '@/lib/csv';
 import { isPositiveRating } from '@/lib/feedback';
 import { t } from '@/lib/i18n';
+import { track } from '@/lib/analytics-client';
 
 interface FeedbackItem {
   id: number;
@@ -206,6 +207,7 @@ export default function FeedbackInbox({ initialFeedback }: Props) {
   }
 
   function handleExport() {
+    track('csv_export', { feature: 'inbox' });
     const rows = filtered.map((f) => ({
       Date: f.createdAt.slice(0, 10),
       Customer: f.customerName ?? '',
@@ -470,6 +472,7 @@ export default function FeedbackInbox({ initialFeedback }: Props) {
                     <a
                       href={`mailto:${encodeURIComponent(fb.customerEmail)}?subject=${encodeURIComponent(t.inbox.reYourFeedback)}`}
                       style={actionButton('var(--text-main)', 'transparent', 'var(--border-dark)')}
+                      onClick={() => track('feedback_email_reply_click', { review_id: fb.id })}
                     >
                       {t.inbox.replyViaEmail}
                     </a>

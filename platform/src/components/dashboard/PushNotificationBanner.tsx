@@ -9,6 +9,7 @@ import {
   subscribeToPush,
   isSubscribed,
 } from '@/lib/push-client';
+import { track } from '@/lib/analytics-client';
 
 type BannerState =
   | 'loading'
@@ -71,6 +72,10 @@ export default function PushNotificationBanner({ slug: _slug }: { slug: string }
   const handleSubscribe = useCallback(async () => {
     setSubscribing(true);
     const ok = await subscribeToPush();
+    // Permission prompt has resolved one way or the other — record the outcome.
+    if (typeof Notification !== 'undefined') {
+      track('push_permission_result', { result: Notification.permission });
+    }
     setState(ok ? 'subscribed' : 'denied');
     setSubscribing(false);
   }, []);

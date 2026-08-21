@@ -103,7 +103,7 @@ export async function GET(req: NextRequest) {
         body: parts.join(' · '),
         url,
         tag: `daily-${dayTag}`,
-      });
+      }, { kind: 'daily_digest' });
       sent++;
     } catch (err) {
       console.error(`[daily-digest] ${r.name} failed:`, err);

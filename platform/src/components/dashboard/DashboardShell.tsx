@@ -5,6 +5,7 @@ import DashboardNav from './DashboardNav';
 import OnboardingWizard from './OnboardingWizard';
 import FeatureAnnouncementBanner from './FeatureAnnouncementBanner';
 import PushNotificationBanner from './PushNotificationBanner';
+import ProductAnalytics from './ProductAnalytics';
 
 export default function DashboardShell({
   restaurantName,
@@ -14,6 +15,7 @@ export default function DashboardShell({
   isOwner,
   isRegional,
   slug,
+  role,
   children,
 }: {
   restaurantName: string;
@@ -23,6 +25,7 @@ export default function DashboardShell({
   isOwner: boolean;
   isRegional?: boolean;
   slug: string;
+  role: 'gm' | 'owner' | 'regional';
   children: React.ReactNode;
 }) {
   const [guideOpen, setGuideOpen] = useState(false);
@@ -43,6 +46,7 @@ export default function DashboardShell({
       />
       <FeatureAnnouncementBanner slug={slug} />
       <PushNotificationBanner slug={slug} />
+      <ProductAnalytics slug={slug} role={role} />
       <main>{children}</main>
       <OnboardingWizard
         slug={slug}

@@ -1,6 +1,6 @@
 import { db } from '@/db';
 import { reviews } from '@/db/schema';
-import { eq, and } from 'drizzle-orm';
+import { eq, and, sql } from 'drizzle-orm';
 import { verifySession } from '@/lib/session';
 import { getRestaurantBySlug } from '@/lib/queries';
 import { sessionFeedbackPatchSchema } from '@/lib/validations';
@@ -31,9 +31,25 @@ export async function PATCH(req: Request) {
     );
   }
 
+  // Status timestamps power review-resolution funnel metrics. reviewedAt is
+  // set on the first transition out of 'new' and never overwritten (COALESCE
+  // keeps the original); resolvedAt is set whenever the review reaches
+  // 'resolved'.
+  const now = new Date();
+  const status = parsed.data.status;
+  const reviewedAtPatch =
+    status === 'reviewed' || status === 'resolved'
+      ? sql`COALESCE(${reviews.reviewedAt}, ${now})`
+      : undefined;
+  const resolvedAtPatch = status === 'resolved' ? now : undefined;
+
   const [updated] = await db
     .update(reviews)
-    .set({ status: parsed.data.status })
+    .set({
+      status,
+      ...(reviewedAtPatch ? { reviewedAt: reviewedAtPatch } : {}),
+      ...(resolvedAtPatch ? { resolvedAt: resolvedAtPatch } : {}),
+    })
     .where(
       and(
         eq(reviews.id, parsed.data.reviewId),

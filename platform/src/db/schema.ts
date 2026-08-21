@@ -1,6 +1,7 @@
 import {
   pgTable,
   serial,
+  bigserial,
   text,
   integer,
   boolean,
@@ -238,6 +239,8 @@ export const reviews = pgTable(
     customerEmail: text('customer_email'),
     feedback: text('feedback'),
     status: reviewStatusEnum('status').notNull().default('new'),
+    reviewedAt: timestamp('reviewed_at', { withTimezone: true }),
+    resolvedAt: timestamp('resolved_at', { withTimezone: true }),
     sentToGoogle: boolean('sent_to_google').notNull().default(false),
     alertSentAt: timestamp('alert_sent_at', { withTimezone: true }),
     alertError: text('alert_error'),
@@ -293,6 +296,7 @@ export const pushSubscriptions = pgTable(
     endpoint: text('endpoint').notNull(),
     p256dh: text('p256dh').notNull(),
     auth: text('auth').notNull(),
+    role: text('role'),
     createdAt: timestamp('created_at', { withTimezone: true })
       .notNull()
       .defaultNow(),
@@ -300,6 +304,58 @@ export const pushSubscriptions = pgTable(
   (t) => [
     index('push_subs_restaurant_id_idx').on(t.restaurantId),
     unique('push_subs_endpoint_uniq').on(t.endpoint),
+  ],
+);
+
+export const productEvents = pgTable(
+  'product_events',
+  {
+    id: bigserial('id', { mode: 'number' }).primaryKey(),
+    eventName: text('event_name').notNull(),
+    restaurantId: integer('restaurant_id').references(() => restaurants.id, {
+      onDelete: 'set null',
+    }),
+    role: text('role'),
+    staffId: integer('staff_id').references(() => staff.id, {
+      onDelete: 'set null',
+    }),
+    sessionId: text('session_id'),
+    path: text('path'),
+    displayMode: text('display_mode'),
+    properties: jsonb('properties')
+      .notNull()
+      .$type<Record<string, unknown>>()
+      .default({}),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [
+    index('product_events_name_created_idx').on(t.eventName, t.createdAt),
+    index('product_events_restaurant_created_idx').on(t.restaurantId, t.createdAt),
+  ],
+);
+
+export const pushNotifications = pgTable(
+  'push_notifications',
+  {
+    id: serial('id').primaryKey(),
+    restaurantId: integer('restaurant_id')
+      .notNull()
+      .references(() => restaurants.id, { onDelete: 'cascade' }),
+    kind: text('kind').notNull(),
+    subjectType: text('subject_type'),
+    subjectId: integer('subject_id'),
+    url: text('url').notNull(),
+    subscriptionsTargeted: integer('subscriptions_targeted').notNull().default(0),
+    acceptedCount: integer('accepted_count').notNull().default(0),
+    failedCount: integer('failed_count').notNull().default(0),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [
+    index('push_notifications_restaurant_created_idx').on(t.restaurantId, t.createdAt),
   ],
 );
 

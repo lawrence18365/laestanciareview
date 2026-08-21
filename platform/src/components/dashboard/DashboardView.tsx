@@ -3,6 +3,7 @@
 import { useMemo } from 'react';
 import { downloadCSV } from '@/lib/csv';
 import { t } from '@/lib/i18n';
+import { track } from '@/lib/analytics-client';
 
 function fmt(n: number): string {
   return n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
@@ -377,7 +378,8 @@ export default function DashboardView({
           {leaderboard.length > 0 && (
             <button
               className="btn btn-outline"
-              onClick={() =>
+              onClick={() => {
+                track('csv_export', { feature: 'dashboard' });
                 downloadCSV(
                   leaderboard.map((e, i) => ({
                     Rank: i + 1,
@@ -387,8 +389,8 @@ export default function DashboardView({
                     Reviews: e.reviewCount,
                   })),
                   'leaderboard.csv',
-                )
-              }
+                );
+              }}
               style={{ fontSize: '0.8125rem', padding: '0.4rem 1rem' }}
             >
               {t.dashboard.exportCsv}

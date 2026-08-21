@@ -18,7 +18,7 @@ self.addEventListener('push', (event) => {
     renotify: true,
     vibrate: [200, 100, 200],
     requireInteraction: data.requireInteraction || false,
-    data: { url: data.url || '/dashboard' },
+    data: { url: data.url || '/dashboard', nid: data.nid ?? null, kind: data.kind ?? null },
   };
 
   event.waitUntil(self.registration.showNotification(data.title || 'RateTap', options));
@@ -27,16 +27,29 @@ self.addEventListener('push', (event) => {
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
   const url = event.notification.data?.url || '/dashboard';
+  const nid = event.notification.data?.nid ?? null;
+  const kind = event.notification.data?.kind ?? null;
 
   event.waitUntil(
-    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
-      for (const client of windowClients) {
-        if (client.url.includes(url) && 'focus' in client) {
-          return client.focus();
+    Promise.all([
+      // Fire-and-forget attribution ping — must never block window focus/open.
+      fetch('/api/analytics/track', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          events: [{ name: 'push_notification_click', path: url, properties: { nid, kind } }],
+        }),
+      }).catch(() => {}),
+      clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
+        for (const client of windowClients) {
+          if (client.url.includes(url) && 'focus' in client) {
+            return client.focus();
+          }
         }
-      }
-      return clients.openWindow(url);
-    })
+        return clients.openWindow(url);
+      }),
+    ])
   );
 });
 

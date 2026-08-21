@@ -2,6 +2,7 @@
 
 import { useMemo, useState, useEffect, useRef, useCallback, useSyncExternalStore } from 'react';
 import { useRouter } from 'next/navigation';
+import { track } from '@/lib/analytics-client';
 
 interface GuestRow {
   id: number;
@@ -61,6 +62,28 @@ export default function GuestsTable({
 }) {
   const router = useRouter();
   const [filter, setFilter] = useState<Filter>(initialFilter ?? 'all');
+
+  // Wrap setFilter so every filter change is a product event.
+  const changeFilter = useCallback((f: Filter) => {
+    setFilter((prev) => {
+      if (prev !== f) track('guest_filter_changed', { filter: f });
+      return f;
+    });
+  }, []);
+
+  // Landing with a deep-linked filter (?filter=today from the daily-digest
+  // push) counts as a filter change too — record it once on mount.
+  useEffect(() => {
+    if (initialFilter && initialFilter !== 'all') {
+      track('guest_filter_changed', { filter: initialFilter });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const selectGuest = useCallback((g: GuestRow | null) => {
+    if (g) track('guest_profile_opened', { guest_id: g.id });
+    setSelected(g);
+  }, []);
   const [search, setSearch] = useState('');
   const [selected, setSelected] = useState<GuestRow | null>(null);
   const [liveMetrics, setLiveMetrics] = useState<Metrics>(initialMetrics);
@@ -193,7 +216,11 @@ export default function GuestsTable({
               <option>{brand ? brand.toUpperCase() : 'Una marca'} — Próximamente multi-marca</option>
             </select>
             {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
-            <a href="/api/v1/guests/export" className="guests-export-btn">
+            <a
+              href="/api/v1/guests/export"
+              className="guests-export-btn"
+              onClick={() => track('csv_export', { feature: 'guests' })}
+            >
               Exportar CSV
             </a>
             {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
@@ -217,7 +244,7 @@ export default function GuestsTable({
             return (
               <button
                 key={f}
-                onClick={() => setFilter(f)}
+                onClick={() => changeFilter(f)}
                 className={`guests-filter-btn${active ? ' active' : ''}`}
               >
                 {f === 'today' && todayCount > 0
@@ -261,7 +288,7 @@ export default function GuestsTable({
               </thead>
               <tbody>
                 {filtered.map((g) => (
-                  <tr key={g.id} onClick={() => setSelected(g)} className="guests-row">
+                  <tr key={g.id} onClick={() => selectGuest(g)} className="guests-row">
                     <Td>
                       <div style={{ fontWeight: 600, color: 'var(--text-main)' }}>{g.name}</div>
                       {g.visitCount >= 5 && <VipBadge />}
@@ -308,7 +335,7 @@ export default function GuestsTable({
           {/* Mobile: card list */}
           <ul className="guests-cards">
             {filtered.map((g) => (
-              <li key={g.id} className="guests-card" onClick={() => setSelected(g)}>
+              <li key={g.id} className="guests-card" onClick={() => selectGuest(g)}>
                 <div className="guests-card-top">
                   <div style={{ minWidth: 0, flex: 1 }}>
                     <div className="guests-card-name">{g.name}</div>
@@ -1124,6 +1151,10 @@ function WhatsAppButton({
       rel="noreferrer"
       onClick={(e) => {
         e.stopPropagation();
+        track('guest_whatsapp_link_click', {
+          guest_id: guest.id,
+          kind: guest.birthdayMmdd === todayMmdd ? 'birthday' : 'generic',
+        });
         onSent(guest.id);
       }}
       aria-label={`Enviar WhatsApp a ${firstName(guest.name)}`}

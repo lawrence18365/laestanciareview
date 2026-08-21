@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import { t } from '@/lib/i18n';
+import { track } from '@/lib/analytics-client';
 import MeseroQrModal from './MeseroQrModal';
 
 interface StaffMember {
@@ -317,7 +318,13 @@ export default function StaffManager({ initialStaff, slug }: Props) {
                         </td>
                         <td style={{ padding: '0.6rem 0.75rem', textAlign: 'right' }}>
                           <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
-                            <button style={btnSecondary} onClick={() => setQrFor(s)}>
+                            <button
+                              style={btnSecondary}
+                              onClick={() => {
+                                track('mesero_qr_generated', { staff_id: s.id });
+                                setQrFor(s);
+                              }}
+                            >
                               Tablero
                             </button>
                             <button style={btnSecondary} onClick={() => startEdit(s)}>

@@ -44,6 +44,7 @@ export async function middleware(req: NextRequest) {
   // Protected app routes — require valid session
   const isAppRoute = pathname.startsWith('/dashboard') ||
     pathname.startsWith('/overview') ||
+    pathname.startsWith('/insights') ||
     pathname.startsWith('/analytics') ||
     pathname.startsWith('/inbox') ||
     pathname.startsWith('/staff') ||

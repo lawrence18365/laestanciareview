@@ -148,6 +148,10 @@ export async function POST(req: NextRequest) {
           body: feedback.length > 100 ? feedback.slice(0, 100) + '…' : feedback,
           url: '/inbox',
           tag: `review-${updated.id}`,
+        }, {
+          kind: updated.rating < 4 ? 'low_review' : 'positive_review',
+          subjectType: 'review',
+          subjectId: updated.id,
         }).then(() => {}).catch((err) => { errors.push(`push: ${err?.message ?? err}`); }),
       );
 

@@ -2,6 +2,7 @@
 
 import { downloadCSV } from '@/lib/csv';
 import { t } from '@/lib/i18n';
+import { track } from '@/lib/analytics-client';
 
 /* ── Types ── */
 
@@ -203,7 +204,8 @@ export default function AnalyticsView({
           {staffRanking.length > 0 && (
             <button
               className="btn btn-outline"
-              onClick={() =>
+              onClick={() => {
+                track('csv_export', { feature: 'analytics' });
                 downloadCSV(
                   staffRanking.map((s, i) => ({
                     Rango: i + 1,
@@ -215,8 +217,8 @@ export default function AnalyticsView({
                     'Calif. Prom.': s.avgRating ? s.avgRating.toFixed(1) : '',
                   })),
                   'ranking-personal.csv',
-                )
-              }
+                );
+              }}
               style={{ fontSize: '0.8125rem', padding: '0.4rem 1rem' }}
             >
               {t.analytics.exportCsv}
@@ -286,7 +288,8 @@ export default function AnalyticsView({
           {dailyCounts.length > 0 && (
             <button
               className="btn btn-outline"
-              onClick={() =>
+              onClick={() => {
+                track('csv_export', { feature: 'analytics' });
                 downloadCSV(
                   dailyCounts.map((d) => ({
                     Fecha: d.date,
@@ -294,8 +297,8 @@ export default function AnalyticsView({
                     'Calif. Prom.': d.avgRating?.toFixed(1) ?? '',
                   })),
                   'resenas-diarias.csv',
-                )
-              }
+                );
+              }}
               style={{ fontSize: '0.8125rem', padding: '0.4rem 1rem' }}
             >
               {t.analytics.exportCsv}

@@ -48,6 +48,7 @@ export async function POST(req: NextRequest) {
       endpoint,
       p256dh: keys.p256dh,
       auth: keys.auth,
+      role: session.role,
     })
     .onConflictDoUpdate({
       target: pushSubscriptions.endpoint,
@@ -55,6 +56,7 @@ export async function POST(req: NextRequest) {
         restaurantId: restaurant.id,
         p256dh: keys.p256dh,
         auth: keys.auth,
+        role: session.role,
       },
     });
 

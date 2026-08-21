@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation';
 import { getRestaurantBySlug, getStaffByCode } from '@/lib/queries';
 import { getBrandForSlug } from '@/lib/brands';
+import { recordProductEvent } from '@/lib/product-events';
 import StarRating from '@/components/review/StarRating';
 
 interface PageProps {
@@ -19,6 +20,16 @@ export default async function ReviewPage({ params, searchParams }: PageProps) {
   const staffMember = staffCode ? await getStaffByCode(restaurant.id, staffCode) : null;
   const staffName = staffMember?.name ?? 'Tu mesero';
   const brand = getBrandForSlug(slug);
+
+  // Fire-and-forget — analytics must never block the render path.
+  void recordProductEvent({
+    name: 'review_page_open',
+    restaurantId: restaurant.id,
+    staffId: staffMember?.id ?? null,
+    role: 'guest',
+    path: `/r/${slug}`,
+    properties: { staff_code: staffCode || null, has_card: !!card },
+  });
 
   return (
     <main

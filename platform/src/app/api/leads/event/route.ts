@@ -200,7 +200,11 @@ export async function POST(req: NextRequest) {
   //    on retries. Failures don't fail the webhook; the lead is durably
   //    stored regardless.
   if (!deduped) {
-    sendPushToRestaurant(restaurant.id, buildPushPayload(lead, data)).catch(
+    sendPushToRestaurant(restaurant.id, buildPushPayload(lead, data), {
+      kind: 'event_lead',
+      subjectType: 'event_lead',
+      subjectId: lead.id,
+    }).catch(
       (e) => console.error('[leads-webhook] push failed', e),
     );
   }

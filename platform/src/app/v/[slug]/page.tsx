@@ -4,6 +4,7 @@ import { staff } from '@/db/schema';
 import { and, eq } from 'drizzle-orm';
 import { getRestaurantBySlug } from '@/lib/queries';
 import { getBrandForSlug } from '@/lib/brands';
+import { recordProductEvent } from '@/lib/product-events';
 import ValidateForm from './ValidateForm';
 
 // Public page bookmarked on the server/hostess tablet. Waiter types the 4-digit
@@ -27,6 +28,14 @@ export default async function ValidatePage({
     .orderBy(staff.name);
 
   const brand = getBrandForSlug(slug);
+
+  // Fire-and-forget — analytics must never block the render path.
+  void recordProductEvent({
+    name: 'validation_page_open',
+    restaurantId: restaurant.id,
+    role: 'staff',
+    path: `/v/${slug}`,
+  });
 
   return (
     <ValidateForm

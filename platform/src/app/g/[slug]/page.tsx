@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation';
 import { getRestaurantBySlug } from '@/lib/queries';
 import { getBrandForSlug } from '@/lib/brands';
+import { recordProductEvent } from '@/lib/product-events';
 import GuestCaptureForm from './GuestCaptureForm';
 
 // Per-brand Instagram handles shown on the confirmation screen.
@@ -38,6 +39,15 @@ export default async function GuestCapturePage({
 
   const brand = getBrandForSlug(slug);
   const igHandles = igByBrand[restaurant.brand] ?? [];
+
+  // Fire-and-forget — analytics must never block the render path.
+  void recordProductEvent({
+    name: 'guest_capture_page_open',
+    restaurantId: restaurant.id,
+    role: 'guest',
+    path: `/g/${slug}`,
+    properties: { promo: sp.promo ?? null, utm_source: sp.utm_source ?? null },
+  });
 
   return (
     <GuestCaptureForm
