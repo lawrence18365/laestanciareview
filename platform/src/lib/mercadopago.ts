@@ -4,10 +4,52 @@ const API_BASE = 'https://api.mercadopago.com';
 
 export const MERCADOPAGO_ACCESS_TOKEN = process.env.MERCADOPAGO_ACCESS_TOKEN;
 export const MERCADOPAGO_WEBHOOK_SECRET = process.env.MERCADOPAGO_WEBHOOK_SECRET;
+
+function amountFromEnv(name: string, fallback: number): number {
+  const parsed = parseFloat(process.env[name] ?? '');
+  return Number.isFinite(parsed) && parsed >= 0 ? parsed : fallback;
+}
+
+export const MERCADOPAGO_BASE_AMOUNT_MXN = amountFromEnv(
+  'MERCADOPAGO_BASE_AMOUNT_MXN',
+  700,
+);
+export const MERCADOPAGO_PROCESSING_CHARGE_MXN = amountFromEnv(
+  'MERCADOPAGO_PROCESSING_CHARGE_MXN',
+  27,
+);
+export const MERCADOPAGO_TAX_AMOUNT_MXN = amountFromEnv(
+  'MERCADOPAGO_TAX_AMOUNT_MXN',
+  0,
+);
 export const MERCADOPAGO_MONTHLY_AMOUNT_MXN = (() => {
   const parsed = parseFloat(process.env.MERCADOPAGO_MONTHLY_AMOUNT_MXN ?? '');
-  return Number.isFinite(parsed) && parsed > 0 ? parsed : 700;
+  return Number.isFinite(parsed) && parsed > 0
+    ? parsed
+    : MERCADOPAGO_BASE_AMOUNT_MXN +
+        MERCADOPAGO_PROCESSING_CHARGE_MXN +
+        MERCADOPAGO_TAX_AMOUNT_MXN;
 })();
+
+export function getPriceBreakdown(): {
+  base: number;
+  processingCharge: number;
+  tax: number;
+  total: number;
+} {
+  return {
+    base: MERCADOPAGO_BASE_AMOUNT_MXN,
+    processingCharge: MERCADOPAGO_PROCESSING_CHARGE_MXN,
+    tax: MERCADOPAGO_TAX_AMOUNT_MXN,
+    total: MERCADOPAGO_MONTHLY_AMOUNT_MXN,
+  };
+}
+
+export const BILLING_START_DATE = new Date('2026-09-01T00:00:00.000-06:00');
+
+export function billingHasStarted(now: Date = new Date()): boolean {
+  return now.getTime() >= BILLING_START_DATE.getTime();
+}
 
 /** Public base URL of the app, stripped of stray `\n` and trailing slash. */
 export function getMercadoPagoBaseUrl(): string {
@@ -47,7 +89,25 @@ export async function createPreapproval(params: {
   payerEmail: string;
   amount: number;
   backUrl: string;
+  startDate?: Date;
 }): Promise<{ id: string; init_point: string; status: string }> {
+  const autoRecurring: {
+    frequency: number;
+    frequency_type: string;
+    transaction_amount: number;
+    currency_id: string;
+    start_date?: string;
+  } = {
+    frequency: 1,
+    frequency_type: 'months',
+    transaction_amount: params.amount,
+    currency_id: 'MXN',
+  };
+
+  if (params.startDate && params.startDate.getTime() > Date.now()) {
+    autoRecurring.start_date = params.startDate.toISOString();
+  }
+
   const res = await fetch(`${API_BASE}/preapproval`, {
     method: 'POST',
     headers: {
@@ -60,12 +120,7 @@ export async function createPreapproval(params: {
       payer_email: params.payerEmail,
       back_url: params.backUrl,
       status: 'pending',
-      auto_recurring: {
-        frequency: 1,
-        frequency_type: 'months',
-        transaction_amount: params.amount,
-        currency_id: 'MXN',
-      },
+      auto_recurring: autoRecurring,
     }),
   });
 

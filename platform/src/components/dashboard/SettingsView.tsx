@@ -8,6 +8,12 @@ interface BillingInfo {
   status: string;
   mercadopagoStatus: string | null;
   nextPaymentDate: string | null;
+  billingStarted: boolean;
+  priceBreakdown: {
+    base: number;
+    processingCharge: number;
+    total: number;
+  };
 }
 
 interface Props {
@@ -443,6 +449,13 @@ function billingStatusLabel(status: string): string {
   }
 }
 
+const mxnFormatter = new Intl.NumberFormat('es-MX', {
+  style: 'currency',
+  currency: 'MXN',
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+});
+
 function BillingCard({ billing }: { billing: BillingInfo }) {
   const [state, setState] = useState<'idle' | 'loading' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState('');
@@ -532,6 +545,69 @@ function BillingCard({ billing }: { billing: BillingInfo }) {
           </div>
         )}
       </div>
+
+      <div
+        style={{
+          borderTop: '1px solid var(--border-dark)',
+          borderBottom: '1px solid var(--border-dark)',
+          padding: '0.9rem 0',
+          marginBottom: '1rem',
+        }}
+      >
+        <span style={{ ...labelStyle, marginBottom: '0.65rem' }}>
+          {t.billing.priceBreakdown}
+        </span>
+        <div style={{ display: 'grid', gap: '0.55rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem' }}>
+            <span style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>
+              {t.billing.planName}
+            </span>
+            <span style={{ color: 'var(--text-main)', fontSize: '0.9rem' }}>
+              {mxnFormatter.format(billing.priceBreakdown.base)}
+            </span>
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem' }}>
+            <span style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>
+              {t.billing.serviceCharge}
+            </span>
+            <span style={{ color: 'var(--text-main)', fontSize: '0.9rem' }}>
+              {mxnFormatter.format(billing.priceBreakdown.processingCharge)}
+            </span>
+          </div>
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              gap: '1rem',
+              paddingTop: '0.65rem',
+              borderTop: '1px solid var(--border-dark)',
+            }}
+          >
+            <strong style={{ color: 'var(--text-main)', fontSize: '0.9rem' }}>
+              {t.billing.monthlyTotal}
+            </strong>
+            <strong style={{ color: 'var(--text-main)', fontSize: '1.15rem' }}>
+              {mxnFormatter.format(billing.priceBreakdown.total)} {t.billing.perMonth}
+            </strong>
+          </div>
+        </div>
+      </div>
+
+      {!billing.billingStarted && (
+        <p
+          style={{
+            margin: '0 0 1rem',
+            padding: '0.75rem 1rem',
+            borderLeft: '3px solid var(--text-main)',
+            background: 'var(--bg-base)',
+            color: 'var(--text-muted)',
+            fontSize: '0.85rem',
+            lineHeight: 1.5,
+          }}
+        >
+          {t.billing.billingStartsNote}
+        </p>
+      )}
 
       {showSubscribeButton && (
         <button

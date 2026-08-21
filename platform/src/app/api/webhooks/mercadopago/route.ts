@@ -7,6 +7,7 @@ import {
 } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 import {
+  billingHasStarted,
   getAuthorizedPayment,
   getPreapproval,
   mapPreapprovalStatus,
@@ -23,6 +24,49 @@ type MercadoPagoWebhookBody = {
   action?: string;
   data?: { id?: string | number };
 };
+
+function isUniqueViolation(err: unknown): boolean {
+  const errors: unknown[] = [];
+  const seen = new Set<unknown>();
+  let current = err;
+
+  while (
+    current !== null &&
+    (typeof current === 'object' || typeof current === 'function') &&
+    !seen.has(current)
+  ) {
+    seen.add(current);
+    errors.push(current);
+    current = (current as { cause?: unknown }).cause;
+  }
+
+  if (
+    errors.some(
+      (error) => (error as { code?: unknown }).code === '23505',
+    )
+  ) {
+    return true;
+  }
+
+  const duplicateMessage = /duplicate key value|unique constraint/i;
+  return (
+    (typeof err === 'string' && duplicateMessage.test(err)) ||
+    errors.some((error) => {
+      const message = (error as { message?: unknown }).message;
+      return typeof message === 'string' && duplicateMessage.test(message);
+    })
+  );
+}
+
+function shouldSkipPreBillingStartDowngrade(
+  currentStatus: string,
+  nextStatus: string,
+): boolean {
+  const currentlyHasAccess =
+    currentStatus === 'active' || currentStatus === 'trialing';
+  const wouldLoseAccess = nextStatus === 'canceled' || nextStatus === 'past_due';
+  return !billingHasStarted() && currentlyHasAccess && wouldLoseAccess;
+}
 
 export async function POST(req: NextRequest) {
   const body = (await req.json().catch(() => null)) as MercadoPagoWebhookBody | null;
@@ -61,9 +105,13 @@ export async function POST(req: NextRequest) {
   // Idempotency — skip if we've already processed this event
   try {
     await db.insert(processedMercadopagoEvents).values({ eventId: eventKey });
-  } catch {
-    // Primary key conflict → already processed
-    return Response.json({ received: true, duplicate: true });
+  } catch (err) {
+    if (isUniqueViolation(err)) {
+      return Response.json({ received: true, duplicate: true });
+    }
+
+    console.error('[mercadopago-webhook] idempotency insert error:', err);
+    return new Response('Idempotency error', { status: 500 });
   }
 
   try {
@@ -166,6 +214,13 @@ async function handlePreapproval(dataId: string) {
   const restaurant = restaurantRows[0];
   if (!restaurant || restaurant.subscriptionStatus === mapped) return;
 
+  if (shouldSkipPreBillingStartDowngrade(restaurant.subscriptionStatus, mapped)) {
+    console.log(
+      `[mercadopago-webhook] pre-billing-start downgrade skipped restaurant=${restaurant.id} current=${restaurant.subscriptionStatus} mapped=${mapped}`,
+    );
+    return;
+  }
+
   await db
     .update(restaurants)
     .set({ subscriptionStatus: mapped, billingProvider: 'mercadopago' })
@@ -227,6 +282,18 @@ async function handleAuthorizedPayment(dataId: string) {
     .limit(1);
   const restaurant = restaurantRows[0];
   if (!restaurant || restaurant.subscriptionStatus === newStatus) return;
+
+  if (
+    shouldSkipPreBillingStartDowngrade(
+      restaurant.subscriptionStatus,
+      newStatus,
+    )
+  ) {
+    console.log(
+      `[mercadopago-webhook] pre-billing-start downgrade skipped restaurant=${restaurant.id} current=${restaurant.subscriptionStatus} mapped=${newStatus}`,
+    );
+    return;
+  }
 
   await db
     .update(restaurants)

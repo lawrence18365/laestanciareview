@@ -2,6 +2,7 @@ import { verifySession } from '@/lib/session';
 import { redirect } from 'next/navigation';
 import { getRestaurantBySlug, getLatestMercadopagoSubscription } from '@/lib/queries';
 import SettingsView from '@/components/dashboard/SettingsView';
+import { billingHasStarted, getPriceBreakdown } from '@/lib/mercadopago';
 
 export default async function SettingsPage() {
   const session = await verifySession();
@@ -11,6 +12,7 @@ export default async function SettingsPage() {
   if (!restaurant) redirect('/login');
 
   const mercadopagoSubscription = await getLatestMercadopagoSubscription(restaurant.id);
+  const priceBreakdown = getPriceBreakdown();
 
   return (
     <SettingsView
@@ -30,6 +32,12 @@ export default async function SettingsPage() {
         status: restaurant.subscriptionStatus,
         mercadopagoStatus: mercadopagoSubscription?.status ?? null,
         nextPaymentDate: mercadopagoSubscription?.nextPaymentDate?.toISOString() ?? null,
+        billingStarted: billingHasStarted(),
+        priceBreakdown: {
+          base: priceBreakdown.base,
+          processingCharge: priceBreakdown.processingCharge,
+          total: priceBreakdown.total,
+        },
       }}
     />
   );

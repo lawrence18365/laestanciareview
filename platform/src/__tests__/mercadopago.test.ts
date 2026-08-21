@@ -2,12 +2,17 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { NextRequest } from 'next/server';
 import { createHmac } from 'node:crypto';
 import { mercadopagoSubscriptions, restaurants } from '@/db/schema';
+import { t } from '@/lib/i18n';
 
 const mocks = vi.hoisted(() => {
   const seenEventIds = new Set<string>();
+  const insertErrors: unknown[] = [];
   const updatedRows: Array<{ table: unknown; values: Record<string, unknown> }> = [];
   const dbInsert = vi.fn(() => ({
     values: vi.fn((values: { eventId: string }) => {
+      if (insertErrors.length > 0) {
+        return Promise.reject(insertErrors.shift());
+      }
       if (seenEventIds.has(values.eventId)) {
         return Promise.reject(new Error('duplicate key value'));
       }
@@ -17,8 +22,10 @@ const mocks = vi.hoisted(() => {
   }));
   return {
     seenEventIds,
+    insertErrors,
     updatedRows,
     dbInsert,
+    restaurantStatus: 'canceled',
     getPreapproval: vi.fn(),
     getAuthorizedPayment: vi.fn(),
   };
@@ -45,7 +52,13 @@ vi.mock('@/db', () => ({
               ];
             }
             if (table === restaurants) {
-              return [{ id: 77, subscriptionStatus: 'canceled', billingProvider: null }];
+              return [
+                {
+                  id: 77,
+                  subscriptionStatus: mocks.restaurantStatus,
+                  billingProvider: null,
+                },
+              ];
             }
             return [];
           }),
@@ -74,6 +87,10 @@ vi.mock('@/lib/mercadopago', async (importOriginal) => {
 });
 
 import {
+  BILLING_START_DATE,
+  billingHasStarted,
+  createPreapproval,
+  getPriceBreakdown,
   mapPreapprovalStatus,
   verifyMercadoPagoSignature as realVerifySignature,
 } from '@/lib/mercadopago';
@@ -121,6 +138,95 @@ function webhookRequest(
     body: JSON.stringify(payload),
   });
 }
+
+describe('Mercado Pago deferred pricing', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.useRealTimers();
+  });
+
+  it('returns the 700 + 27 + 0 = 727 price breakdown', () => {
+    const breakdown = getPriceBreakdown();
+
+    expect(breakdown).toEqual({
+      base: 700,
+      processingCharge: 27,
+      tax: 0,
+      total: 727,
+    });
+    expect(breakdown.tax).toBe(0);
+  });
+
+  it('includes auto_recurring.start_date for a future first charge', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-08-21T12:00:00.000Z'));
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({ id: 'pre-1', init_point: 'https://mp.test/pre-1', status: 'pending' }),
+        { status: 200, headers: { 'content-type': 'application/json' } },
+      ),
+    );
+    vi.stubGlobal('fetch', fetchMock);
+
+    await createPreapproval({
+      reason: 'RateTap Pro',
+      externalReference: '77',
+      payerEmail: 'gm@example.com',
+      amount: 727,
+      backUrl: 'https://app.ratetapmx.com/settings',
+      startDate: BILLING_START_DATE,
+    });
+
+    const request = fetchMock.mock.calls[0]?.[1] as RequestInit;
+    const body = JSON.parse(String(request.body)) as {
+      auto_recurring: { start_date?: string };
+    };
+    expect(body.auto_recurring.start_date).toBe(BILLING_START_DATE.toISOString());
+  });
+
+  it('omits auto_recurring.start_date for a past first charge', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-09-02T12:00:00.000Z'));
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({ id: 'pre-2', init_point: 'https://mp.test/pre-2', status: 'pending' }),
+        { status: 200, headers: { 'content-type': 'application/json' } },
+      ),
+    );
+    vi.stubGlobal('fetch', fetchMock);
+
+    await createPreapproval({
+      reason: 'RateTap Pro',
+      externalReference: '77',
+      payerEmail: 'gm@example.com',
+      amount: 727,
+      backUrl: 'https://app.ratetapmx.com/settings',
+      startDate: BILLING_START_DATE,
+    });
+
+    const request = fetchMock.mock.calls[0]?.[1] as RequestInit;
+    const body = JSON.parse(String(request.body)) as {
+      auto_recurring: { start_date?: string };
+    };
+    expect(body.auto_recurring).not.toHaveProperty('start_date');
+  });
+
+  it.each([
+    ['before', '2026-09-01T05:59:59.999Z', false],
+    ['on', '2026-09-01T06:00:00.000Z', true],
+    ['after', '2026-09-01T06:00:00.001Z', true],
+  ] as const)('reports billing as started %s the boundary', (_label, now, expected) => {
+    expect(billingHasStarted(new Date(now))).toBe(expected);
+  });
+
+  it('keeps billing copy free of forbidden charge labels', () => {
+    const billingStrings = Object.values(t.billing).filter(
+      (value): value is string => typeof value === 'string',
+    );
+
+    expect(billingStrings.join('\n')).not.toMatch(/\b(?:impuesto|iva|tax)\b/i);
+  });
+});
 
 describe('verifyMercadoPagoSignature', () => {
   const secret = 'mp-webhook-secret';
@@ -197,9 +303,13 @@ describe('mercadopago webhook route', () => {
   const secret = 'mp-webhook-secret';
 
   beforeEach(() => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-08-21T12:00:00.000Z'));
     vi.stubEnv('MERCADOPAGO_WEBHOOK_SECRET', secret);
     mocks.seenEventIds.clear();
+    mocks.insertErrors.length = 0;
     mocks.updatedRows.length = 0;
+    mocks.restaurantStatus = 'canceled';
     mocks.dbInsert.mockClear();
     mocks.getPreapproval.mockReset();
     mocks.getAuthorizedPayment.mockReset();
@@ -214,6 +324,7 @@ describe('mercadopago webhook route', () => {
 
   afterEach(() => {
     vi.unstubAllEnvs();
+    vi.useRealTimers();
   });
 
   const eventPayload = {
@@ -272,7 +383,7 @@ describe('mercadopago webhook route', () => {
     expect(mocks.dbInsert).not.toHaveBeenCalled();
   });
 
-  it('activates the restaurant on an authorized preapproval', async () => {
+  it('still activates the restaurant on an authorized preapproval', async () => {
     const response = await webhookPOST(webhookRequest(eventPayload));
     const body = await response.json();
 
@@ -296,6 +407,85 @@ describe('mercadopago webhook route', () => {
     );
   });
 
+  it('records a cancelled preapproval without downgrading an active restaurant before billing starts', async () => {
+    mocks.restaurantStatus = 'active';
+    mocks.getPreapproval.mockResolvedValue({
+      id: 'preapproval-123',
+      status: 'cancelled',
+      external_reference: '77',
+      payer_email: 'gm@example.com',
+      next_payment_date: null,
+    });
+
+    const response = await webhookPOST(webhookRequest(eventPayload));
+
+    expect(response.status).toBe(200);
+    expect(
+      mocks.updatedRows.find((row) => row.table === restaurants),
+    ).toBeUndefined();
+    expect(
+      mocks.updatedRows.find((row) => row.table === mercadopagoSubscriptions)
+        ?.values,
+    ).toEqual(expect.objectContaining({ status: 'cancelled' }));
+  });
+
+  it('downgrades an active restaurant for a cancelled preapproval after billing starts', async () => {
+    vi.setSystemTime(new Date('2026-09-01T06:00:00.000Z'));
+    mocks.restaurantStatus = 'active';
+    mocks.getPreapproval.mockResolvedValue({
+      id: 'preapproval-123',
+      status: 'cancelled',
+      external_reference: '77',
+      payer_email: 'gm@example.com',
+      next_payment_date: null,
+    });
+
+    const response = await webhookPOST(webhookRequest(eventPayload));
+
+    expect(response.status).toBe(200);
+    expect(
+      mocks.updatedRows.find((row) => row.table === restaurants)?.values,
+    ).toEqual(
+      expect.objectContaining({
+        subscriptionStatus: 'canceled',
+        billingProvider: 'mercadopago',
+      }),
+    );
+  });
+
+  it('records a rejected authorized payment without downgrading active access before billing starts', async () => {
+    mocks.restaurantStatus = 'active';
+    mocks.getAuthorizedPayment.mockResolvedValue({
+      id: 'authorized-payment-1',
+      status: 'rejected',
+      preapproval_id: 'preapproval-123',
+      external_reference: '77',
+      payment: { id: 'payment-1', status: 'rejected' },
+    });
+    const payload = {
+      id: 'evt-authorized-payment-1',
+      type: 'subscription_authorized_payment',
+      action: 'updated',
+      data: { id: 'authorized-payment-1' },
+    };
+
+    const response = await webhookPOST(webhookRequest(payload));
+
+    expect(response.status).toBe(200);
+    expect(
+      mocks.updatedRows.find((row) => row.table === restaurants),
+    ).toBeUndefined();
+    expect(
+      mocks.updatedRows.find((row) => row.table === mercadopagoSubscriptions)
+        ?.values,
+    ).toEqual(
+      expect.objectContaining({
+        lastPaymentId: 'payment-1',
+        lastPaymentStatus: 'rejected',
+      }),
+    );
+  });
+
   it('returns duplicate:true on a second delivery without calling getPreapproval', async () => {
     const first = await webhookPOST(webhookRequest(eventPayload));
     expect(first.status).toBe(200);
@@ -307,6 +497,42 @@ describe('mercadopago webhook route', () => {
     expect(second.status).toBe(200);
     expect(body).toEqual({ received: true, duplicate: true });
     expect(mocks.getPreapproval).toHaveBeenCalledTimes(1);
+  });
+
+  it('returns duplicate:true for a 23505 idempotency insert error', async () => {
+    mocks.insertErrors.push(
+      Object.assign(new Error('wrapped database error'), {
+        cause: { code: '23505' },
+      }),
+    );
+
+    const response = await webhookPOST(webhookRequest(eventPayload));
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ received: true, duplicate: true });
+    expect(mocks.getPreapproval).not.toHaveBeenCalled();
+  });
+
+  it('returns 500 for a non-unique idempotency insert error', async () => {
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const insertError = Object.assign(new Error('connection terminated'), {
+      code: '57P01',
+    });
+    mocks.insertErrors.push(insertError);
+
+    try {
+      const response = await webhookPOST(webhookRequest(eventPayload));
+
+      expect(response.status).toBe(500);
+      expect(await response.text()).toBe('Idempotency error');
+      expect(mocks.getPreapproval).not.toHaveBeenCalled();
+      expect(consoleError).toHaveBeenCalledWith(
+        '[mercadopago-webhook] idempotency insert error:',
+        insertError,
+      );
+    } finally {
+      consoleError.mockRestore();
+    }
   });
 
   it('acknowledges unrelated event types as no-ops', async () => {

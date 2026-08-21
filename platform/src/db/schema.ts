@@ -119,6 +119,16 @@ export const mercadopagoSubscriptions = pgTable(
     status: text('status').notNull().default('pending'),
     plan: text('plan').notNull().default('pro'),
     amount: numeric('amount', { precision: 10, scale: 2 }).notNull(),
+    baseAmount: numeric('base_amount', { precision: 10, scale: 2 }),
+    processingChargeAmount: numeric('processing_charge_amount', {
+      precision: 10,
+      scale: 2,
+    }),
+    taxAmount: numeric('tax_amount', { precision: 10, scale: 2 })
+      .notNull()
+      .default('0'),
+    totalAmount: numeric('total_amount', { precision: 10, scale: 2 }),
+    billingStartsAt: timestamp('billing_starts_at', { withTimezone: true }),
     currency: text('currency').notNull().default('MXN'),
     payerEmail: text('payer_email'),
     nextPaymentDate: timestamp('next_payment_date', { withTimezone: true }),

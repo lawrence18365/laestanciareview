@@ -6,10 +6,11 @@ import { verifySession } from '@/lib/session';
 import { getRestaurantBySlug } from '@/lib/queries';
 import { requireSameOrigin } from '@/lib/origin';
 import {
+  BILLING_START_DATE,
   MERCADOPAGO_ACCESS_TOKEN,
-  MERCADOPAGO_MONTHLY_AMOUNT_MXN,
   createPreapproval,
   getMercadoPagoBaseUrl,
+  getPriceBreakdown,
 } from '@/lib/mercadopago';
 
 export const dynamic = 'force-dynamic';
@@ -44,14 +45,16 @@ export async function POST(req: NextRequest) {
   }
 
   const baseUrl = getMercadoPagoBaseUrl();
+  const breakdown = getPriceBreakdown();
 
   try {
     const preapproval = await createPreapproval({
       reason: 'RateTap Pro',
       externalReference: String(restaurant.id),
       payerEmail: restaurant.managerEmail,
-      amount: MERCADOPAGO_MONTHLY_AMOUNT_MXN,
+      amount: breakdown.total,
       backUrl: `${baseUrl}/settings?billing=mercadopago`,
+      startDate: BILLING_START_DATE,
     });
 
     // One active row per restaurant: reuse/update a non-cancelled row if one
@@ -73,7 +76,12 @@ export async function POST(req: NextRequest) {
         .set({
           preapprovalId: preapproval.id,
           status: preapproval.status ?? 'pending',
-          amount: String(MERCADOPAGO_MONTHLY_AMOUNT_MXN),
+          amount: String(breakdown.total),
+          baseAmount: String(breakdown.base),
+          processingChargeAmount: String(breakdown.processingCharge),
+          taxAmount: String(breakdown.tax),
+          totalAmount: String(breakdown.total),
+          billingStartsAt: BILLING_START_DATE,
           payerEmail: restaurant.managerEmail,
           externalReference: String(restaurant.id),
           updatedAt: new Date(),
@@ -85,7 +93,12 @@ export async function POST(req: NextRequest) {
         preapprovalId: preapproval.id,
         externalReference: String(restaurant.id),
         status: preapproval.status ?? 'pending',
-        amount: String(MERCADOPAGO_MONTHLY_AMOUNT_MXN),
+        amount: String(breakdown.total),
+        baseAmount: String(breakdown.base),
+        processingChargeAmount: String(breakdown.processingCharge),
+        taxAmount: String(breakdown.tax),
+        totalAmount: String(breakdown.total),
+        billingStartsAt: BILLING_START_DATE,
         payerEmail: restaurant.managerEmail,
       });
     }

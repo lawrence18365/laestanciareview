@@ -55,10 +55,11 @@ async function main() {
   }
 
   const {
+    BILLING_START_DATE,
     MERCADOPAGO_ACCESS_TOKEN,
-    MERCADOPAGO_MONTHLY_AMOUNT_MXN,
     createPreapproval,
     getMercadoPagoBaseUrl,
+    getPriceBreakdown,
   } = await import('../src/lib/mercadopago');
 
   if (!MERCADOPAGO_ACCESS_TOKEN) {
@@ -79,6 +80,7 @@ async function main() {
 
   let created = 0;
   let failed = 0;
+  const breakdown = getPriceBreakdown();
 
   for (const slug of options.slugs) {
     try {
@@ -101,8 +103,9 @@ async function main() {
         reason: 'RateTap Pro',
         externalReference: String(restaurant.id),
         payerEmail,
-        amount: MERCADOPAGO_MONTHLY_AMOUNT_MXN,
+        amount: breakdown.total,
         backUrl: `${getMercadoPagoBaseUrl()}/settings?billing=mercadopago`,
+        startDate: BILLING_START_DATE,
       });
 
       const existing = await db
@@ -122,7 +125,12 @@ async function main() {
           .set({
             preapprovalId: preapproval.id,
             status: preapproval.status ?? 'pending',
-            amount: String(MERCADOPAGO_MONTHLY_AMOUNT_MXN),
+            amount: String(breakdown.total),
+            baseAmount: String(breakdown.base),
+            processingChargeAmount: String(breakdown.processingCharge),
+            taxAmount: String(breakdown.tax),
+            totalAmount: String(breakdown.total),
+            billingStartsAt: BILLING_START_DATE,
             payerEmail,
             externalReference: String(restaurant.id),
             updatedAt: new Date(),
@@ -134,7 +142,12 @@ async function main() {
           preapprovalId: preapproval.id,
           externalReference: String(restaurant.id),
           status: preapproval.status ?? 'pending',
-          amount: String(MERCADOPAGO_MONTHLY_AMOUNT_MXN),
+          amount: String(breakdown.total),
+          baseAmount: String(breakdown.base),
+          processingChargeAmount: String(breakdown.processingCharge),
+          taxAmount: String(breakdown.tax),
+          totalAmount: String(breakdown.total),
+          billingStartsAt: BILLING_START_DATE,
           payerEmail,
         });
       }
