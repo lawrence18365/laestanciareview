@@ -28,6 +28,7 @@ export default async function AppLayout({
       <SubscriptionBlocked
         status={restaurant.subscriptionStatus}
         restaurantName={restaurant.name}
+        billingProvider={restaurant.billingProvider}
       />
     );
   }

@@ -1,6 +1,6 @@
 import { verifySession } from '@/lib/session';
 import { redirect } from 'next/navigation';
-import { getRestaurantBySlug } from '@/lib/queries';
+import { getRestaurantBySlug, getLatestMercadopagoSubscription } from '@/lib/queries';
 import SettingsView from '@/components/dashboard/SettingsView';
 
 export default async function SettingsPage() {
@@ -9,6 +9,8 @@ export default async function SettingsPage() {
 
   const restaurant = await getRestaurantBySlug(session.slug);
   if (!restaurant) redirect('/login');
+
+  const mercadopagoSubscription = await getLatestMercadopagoSubscription(restaurant.id);
 
   return (
     <SettingsView
@@ -22,6 +24,12 @@ export default async function SettingsPage() {
         alertPreference: restaurant.alertPreference ?? 'all',
         smsAlerts: restaurant.smsAlerts ?? false,
         whatsappAlerts: restaurant.whatsappAlerts ?? false,
+      }}
+      billing={{
+        provider: restaurant.billingProvider,
+        status: restaurant.subscriptionStatus,
+        mercadopagoStatus: mercadopagoSubscription?.status ?? null,
+        nextPaymentDate: mercadopagoSubscription?.nextPaymentDate?.toISOString() ?? null,
       }}
     />
   );

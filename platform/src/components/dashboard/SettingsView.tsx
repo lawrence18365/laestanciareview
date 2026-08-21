@@ -1,7 +1,14 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { t } from '@/lib/i18n';
+
+interface BillingInfo {
+  provider: string | null;
+  status: string;
+  mercadopagoStatus: string | null;
+  nextPaymentDate: string | null;
+}
 
 interface Props {
   settings: {
@@ -15,6 +22,7 @@ interface Props {
     smsAlerts: boolean;
     whatsappAlerts: boolean;
   };
+  billing: BillingInfo;
 }
 
 const card: React.CSSProperties = {
@@ -67,7 +75,7 @@ const btnPrimary: React.CSSProperties = {
   borderRadius: 0,
 };
 
-export default function SettingsView({ settings }: Props) {
+export default function SettingsView({ settings, billing }: Props) {
   const [googleReviewUrl, setGoogleReviewUrl] = useState(settings.googleReviewUrl);
   const [googleThreshold, setGoogleThreshold] = useState(settings.googleThreshold);
   const [managerEmail, setManagerEmail] = useState(settings.managerEmail);
@@ -358,6 +366,9 @@ export default function SettingsView({ settings }: Props) {
         </form>
       </section>
 
+      {/* Billing */}
+      <BillingCard billing={billing} />
+
       {/* Change Password */}
       <section style={card}>
         <h2 style={sectionTitle}>{t.settings.changePassword}</h2>
@@ -414,5 +425,130 @@ export default function SettingsView({ settings }: Props) {
         </form>
       </section>
     </div>
+  );
+}
+
+function billingStatusLabel(status: string): string {
+  switch (status) {
+    case 'active':
+      return t.billing.statusActive;
+    case 'trialing':
+      return t.billing.statusTrialing;
+    case 'past_due':
+      return t.billing.statusPastDue;
+    case 'canceled':
+      return t.billing.statusCanceled;
+    default:
+      return status;
+  }
+}
+
+function BillingCard({ billing }: { billing: BillingInfo }) {
+  const [state, setState] = useState<'idle' | 'loading' | 'error'>('idle');
+  const [errorMessage, setErrorMessage] = useState('');
+  const [pendingNote, setPendingNote] = useState(false);
+
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get('billing') === 'mercadopago') {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- Read client-only URL state after hydration.
+      setPendingNote(true);
+    }
+  }, []);
+
+  // Manual/Stripe-active customers never see it; pilot/trialing restaurants and pending/paused Mercado Pago ones do.
+  const showSubscribeButton =
+    billing.mercadopagoStatus !== 'authorized' &&
+    billing.provider !== 'stripe' &&
+    !(billing.status === 'active' && billing.provider !== 'mercadopago');
+
+  async function handleSubscribe() {
+    setState('loading');
+    setErrorMessage('');
+
+    try {
+      const res = await fetch('/api/billing/mercadopago/subscribe', { method: 'POST' });
+      const data = (await res.json()) as { url?: string; error?: string };
+      if (res.ok && data.url) {
+        window.location.href = data.url;
+        return; // navigation starts — no state update needed
+      }
+      setErrorMessage(data.error || t.billing.subscribeError);
+    } catch {
+      setErrorMessage(t.billing.subscribeError);
+    }
+    setState('error');
+  }
+
+  const providerLabel =
+    billing.provider === 'stripe'
+      ? t.billing.providerStripe
+      : billing.provider === 'mercadopago'
+        ? t.billing.providerMercadoPago
+        : t.billing.providerNone;
+
+  const nextPayment = billing.nextPaymentDate
+    ? new Date(billing.nextPaymentDate).toLocaleDateString('es-MX', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+      })
+    : null;
+
+  return (
+    <section style={card}>
+      <h2 style={sectionTitle}>{t.billing.title}</h2>
+
+      {pendingNote && (
+        <p
+          style={{
+            margin: '0 0 1rem',
+            padding: '0.6rem 1rem',
+            fontSize: '0.85rem',
+            fontWeight: 500,
+            border: '1px solid var(--green)',
+            background: 'var(--green-light)',
+            color: 'var(--green)',
+          }}
+        >
+          {t.billing.mercadoPagoPendingNote}
+        </p>
+      )}
+
+      <div style={{ display: 'flex', gap: '1.5rem', flexWrap: 'wrap', marginBottom: '1rem' }}>
+        <div>
+          <span style={{ ...labelStyle, marginBottom: '0.15rem' }}>{t.billing.currentStatus}</span>
+          <p style={{ margin: 0, fontSize: '1rem', fontWeight: 500, color: 'var(--text-main)' }}>
+            {billingStatusLabel(billing.status)}
+          </p>
+        </div>
+        <div>
+          <span style={{ ...labelStyle, marginBottom: '0.15rem' }}>{t.billing.provider}</span>
+          <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--text-muted)' }}>{providerLabel}</p>
+        </div>
+        {nextPayment && (
+          <div>
+            <span style={{ ...labelStyle, marginBottom: '0.15rem' }}>{t.billing.nextPaymentDate}</span>
+            <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--text-muted)' }}>{nextPayment}</p>
+          </div>
+        )}
+      </div>
+
+      {showSubscribeButton && (
+        <button
+          type="button"
+          onClick={handleSubscribe}
+          disabled={state === 'loading'}
+          style={{ ...btnPrimary, opacity: state === 'loading' ? 0.6 : 1 }}
+        >
+          {state === 'loading' ? t.billing.subscribing : t.billing.subscribeWithMercadoPago}
+        </button>
+      )}
+
+      {state === 'error' && errorMessage && (
+        <p role="alert" style={{ margin: '0.75rem 0 0', fontSize: '0.85rem', color: 'var(--red)' }}>
+          {errorMessage}
+        </p>
+      )}
+    </section>
   );
 }

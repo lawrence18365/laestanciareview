@@ -1,5 +1,5 @@
 import { db } from '@/db';
-import { reviews, staff, restaurants } from '@/db/schema';
+import { reviews, staff, restaurants, mercadopagoSubscriptions } from '@/db/schema';
 import { eq, and, gte, sql, desc, count, avg, asc } from 'drizzle-orm';
 import { startOfWeek } from 'date-fns';
 import { startOfWeekMexico, startOfTodayMexico } from '@/lib/mexico-tz';
@@ -15,6 +15,17 @@ export async function getRestaurantBySlug(slug: string) {
     .select()
     .from(restaurants)
     .where(eq(restaurants.slug, slug))
+    .limit(1);
+  return rows[0] ?? null;
+}
+
+/** Latest Mercado Pago subscription row for a restaurant (null if none). */
+export async function getLatestMercadopagoSubscription(restaurantId: number) {
+  const rows = await db
+    .select()
+    .from(mercadopagoSubscriptions)
+    .where(eq(mercadopagoSubscriptions.restaurantId, restaurantId))
+    .orderBy(desc(mercadopagoSubscriptions.createdAt))
     .limit(1);
   return rows[0] ?? null;
 }

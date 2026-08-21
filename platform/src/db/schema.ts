@@ -13,6 +13,7 @@ import {
   jsonb,
   numeric,
   date,
+  uuid,
 } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 
@@ -62,6 +63,9 @@ export const restaurants = pgTable('restaurants', {
   city: text('city'),
   stripeCustomerId: text('stripe_customer_id'),
   stripeSubscriptionId: text('stripe_subscription_id'),
+  // 'stripe' | 'mercadopago' | NULL (manual/legacy). Set by whichever billing
+  // provider most recently touched the subscription; never backfilled.
+  billingProvider: text('billing_provider'),
   subscriptionStatus: text('subscription_status').notNull().default('active'),
   trialEndsAt: timestamp('trial_ends_at', { withTimezone: true }),
   pilot: boolean('pilot').notNull().default(false),
@@ -93,6 +97,44 @@ export const passwordResetTokens = pgTable(
 );
 
 export const processedStripeEvents = pgTable('processed_stripe_events', {
+  eventId: text('event_id').primaryKey(),
+  processedAt: timestamp('processed_at', { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+
+// Mercado Pago recurring subscriptions (preapproval). restaurants.id is a
+// serial, so restaurantId is integer — matches migrations/0017_mercadopago.sql.
+export const mercadopagoSubscriptions = pgTable(
+  'mercadopago_subscriptions',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    restaurantId: integer('restaurant_id')
+      .notNull()
+      .references(() => restaurants.id, { onDelete: 'cascade' }),
+    // Nullable until Mercado Pago returns the preapproval id.
+    preapprovalId: text('preapproval_id').unique(),
+    externalReference: text('external_reference').notNull(),
+    // Raw MP status: pending | authorized | paused | cancelled
+    status: text('status').notNull().default('pending'),
+    plan: text('plan').notNull().default('pro'),
+    amount: numeric('amount', { precision: 10, scale: 2 }).notNull(),
+    currency: text('currency').notNull().default('MXN'),
+    payerEmail: text('payer_email'),
+    nextPaymentDate: timestamp('next_payment_date', { withTimezone: true }),
+    lastPaymentStatus: text('last_payment_status'),
+    lastPaymentId: text('last_payment_id'),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [index('mercadopago_subscriptions_restaurant_idx').on(t.restaurantId)],
+);
+
+export const processedMercadopagoEvents = pgTable('processed_mercadopago_events', {
   eventId: text('event_id').primaryKey(),
   processedAt: timestamp('processed_at', { withTimezone: true })
     .notNull()

@@ -10,9 +10,11 @@ import {
 export default function SubscriptionBlocked({
   status,
   restaurantName,
+  billingProvider,
 }: {
   status: 'canceled' | 'past_due' | string;
   restaurantName: string;
+  billingProvider?: string | null;
 }) {
   const isPastDue = status === 'past_due';
 
@@ -89,7 +91,7 @@ export default function SubscriptionBlocked({
         )}
 
         {isPastDue ? (
-          <UpdatePaymentButton />
+          <UpdatePaymentButton billingProvider={billingProvider} />
         ) : (
           <a
             href={SUPPORT_WHATSAPP_URL}
@@ -134,14 +136,19 @@ export default function SubscriptionBlocked({
   );
 }
 
-function UpdatePaymentButton() {
+function UpdatePaymentButton({ billingProvider }: { billingProvider?: string | null }) {
   const [state, setState] = React.useState<'idle' | 'loading' | 'error'>('idle');
 
   async function handleClick() {
     setState('loading');
 
+    const endpoint =
+      billingProvider === 'mercadopago'
+        ? '/api/billing/mercadopago/subscribe'
+        : '/api/stripe/portal';
+
     try {
-      const res = await fetch('/api/stripe/portal', { method: 'POST' });
+      const res = await fetch(endpoint, { method: 'POST' });
       const data = (await res.json()) as { url?: string; error?: string };
       if (data.url) {
         window.location.href = data.url;

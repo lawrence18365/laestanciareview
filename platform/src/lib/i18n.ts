@@ -322,6 +322,25 @@ export const t = {
     passwordUpdated: 'Contraseña actualizada exitosamente',
   },
 
+  // ── Billing ──
+  billing: {
+    title: 'Facturación',
+    currentStatus: 'Estado actual',
+    provider: 'Método de pago',
+    statusActive: 'Activa',
+    statusTrialing: 'En prueba',
+    statusPastDue: 'Pago pendiente',
+    statusCanceled: 'Cancelada',
+    providerStripe: 'Tarjeta (Stripe)',
+    providerMercadoPago: 'Mercado Pago',
+    providerNone: 'Sin método de pago registrado',
+    nextPaymentDate: 'Próximo cobro',
+    subscribeWithMercadoPago: 'Suscribirme con Mercado Pago',
+    subscribing: 'Abriendo Mercado Pago…',
+    subscribeError: 'No se pudo iniciar la suscripción con Mercado Pago. Inténtalo de nuevo.',
+    mercadoPagoPendingNote: 'Estamos confirmando tu suscripción con Mercado Pago. Tu acceso se actualizará en unos minutos.',
+  },
+
   // ── Staff Manager ──
   staffManager: {
     addStaffMember: 'Agregar Miembro del Personal',
