@@ -4,15 +4,28 @@ import { db } from '@/db';
 import { guests, guestVisits, staff } from '@/db/schema';
 import { verifySession } from '@/lib/session';
 import { getRestaurantBySlug } from '@/lib/queries';
-import GuestsTable from './GuestsTable';
+import { todayBirthdayKeyMexico } from '@/lib/mexico-tz';
+import GuestsTable, { type Filter } from './GuestsTable';
 
-export default async function GuestsPage() {
+const VALID_FILTERS: Filter[] = ['all', 'today', 'birthdays', 'absent60', 'vip'];
+
+export default async function GuestsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ filter?: string }>;
+}) {
   const session = await verifySession();
   if (!session) redirect('/login');
   if (session.role !== 'gm') redirect('/overview');
 
   const restaurant = await getRestaurantBySlug(session.slug);
   if (!restaurant) redirect('/login');
+
+  const todayMmdd = todayBirthdayKeyMexico();
+  const { filter: filterParam } = await searchParams;
+  const initialFilter = VALID_FILTERS.includes(filterParam as Filter)
+    ? (filterParam as Filter)
+    : undefined;
 
   // Run all three queries in parallel to minimise latency.
   const [rows, metricsResult, leaderboardResult] = await Promise.all([
@@ -102,6 +115,8 @@ export default async function GuestsPage() {
       brand={restaurant.brand ?? ''}
       slug={session.slug}
       metrics={metrics}
+      todayMmdd={todayMmdd}
+      initialFilter={initialFilter}
     />
   );
 }

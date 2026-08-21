@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState, useEffect, useRef } from 'react';
+import { useMemo, useState, useEffect, useRef, useCallback, useSyncExternalStore } from 'react';
 import { useRouter } from 'next/navigation';
 
 interface GuestRow {
@@ -32,9 +32,10 @@ interface Metrics {
   leaderboard: { name: string; count: number }[];
 }
 
-type Filter = 'all' | 'birthdays' | 'absent60' | 'vip';
+export type Filter = 'all' | 'today' | 'birthdays' | 'absent60' | 'vip';
 
 const FILTER_LABELS: Record<Filter, string> = {
+  today: 'Cumple hoy',
   all: 'Todos',
   birthdays: 'Cumple este mes',
   absent60: 'Sin venir 60 días',
@@ -47,20 +48,57 @@ export default function GuestsTable({
   brand,
   slug,
   metrics: initialMetrics,
+  todayMmdd,
+  initialFilter,
 }: {
   guests: GuestRow[];
   restaurantName: string;
   brand: string;
   slug: string;
   metrics: Metrics;
+  todayMmdd: string;
+  initialFilter?: Filter;
 }) {
   const router = useRouter();
-  const [filter, setFilter] = useState<Filter>('all');
+  const [filter, setFilter] = useState<Filter>(initialFilter ?? 'all');
   const [search, setSearch] = useState('');
   const [selected, setSelected] = useState<GuestRow | null>(null);
   const [liveMetrics, setLiveMetrics] = useState<Metrics>(initialMetrics);
   const [justUpdated, setJustUpdated] = useState(false);
   const prevTotalRef = useRef<number>(initialMetrics.total);
+
+  // Per-day "contacted" marks so a guest's WhatsApp button turns into a muted
+  // "Enviado ✓" once the message has been opened today. Resets each day
+  // because the localStorage key embeds today's DD/MM (Mexico City).
+  const contactedKey = `guests-contacted-${todayMmdd}`;
+  const readContactedRaw = useCallback(
+    () => localStorage.getItem(contactedKey) ?? '[]',
+    [contactedKey],
+  );
+  const contactedRaw = useSyncExternalStore(subscribeContacted, readContactedRaw, () => '[]');
+  const contacted = useMemo<number[]>(() => {
+    try {
+      const parsed = JSON.parse(contactedRaw);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  }, [contactedRaw]);
+
+  const markContacted = (id: number) => {
+    if (contacted.includes(id)) return;
+    try {
+      localStorage.setItem(contactedKey, JSON.stringify([...contacted, id]));
+    } catch {
+      // ignore quota/privacy errors
+    }
+    window.dispatchEvent(new Event(CONTACTED_EVENT));
+  };
+
+  const todayCount = useMemo(
+    () => guests.filter((g) => g.birthdayMmdd === todayMmdd).length,
+    [guests, todayMmdd],
+  );
 
   // Poll the lightweight stats endpoint every 15 s.
   // When the total ticks up the hero number briefly turns green — the "magic
@@ -100,7 +138,9 @@ export default function GuestsTable({
     const q = search.trim().toLowerCase();
 
     return guests.filter((g) => {
-      if (filter === 'birthdays') {
+      if (filter === 'today') {
+        if (g.birthdayMmdd !== todayMmdd) return false;
+      } else if (filter === 'birthdays') {
         const mm = g.birthdayMmdd?.split('/')[1];
         if (mm !== thisMonth) return false;
       } else if (filter === 'absent60') {
@@ -115,7 +155,7 @@ export default function GuestsTable({
       }
       return true;
     });
-  }, [guests, filter, search]);
+  }, [guests, filter, search, todayMmdd]);
 
   const captureUrl = `/g/${slug}`;
 
@@ -172,7 +212,7 @@ export default function GuestsTable({
       {/* ── Filter bar + search ─────────────────────────────────────── */}
       <div className="guests-filterbar">
         <div className="guests-filters">
-          {(['all', 'birthdays', 'absent60', 'vip'] as Filter[]).map((f) => {
+          {(['today', 'all', 'birthdays', 'absent60', 'vip'] as Filter[]).map((f) => {
             const active = filter === f;
             return (
               <button
@@ -180,7 +220,9 @@ export default function GuestsTable({
                 onClick={() => setFilter(f)}
                 className={`guests-filter-btn${active ? ' active' : ''}`}
               >
-                {FILTER_LABELS[f]}
+                {f === 'today' && todayCount > 0
+                  ? `${FILTER_LABELS[f]} · ${todayCount}`
+                  : FILTER_LABELS[f]}
               </button>
             );
           })}
@@ -195,7 +237,11 @@ export default function GuestsTable({
       </div>
 
       {filtered.length === 0 ? (
-        <EmptyState captureUrl={captureUrl} guestsTotal={guests.length} />
+        <EmptyState
+          captureUrl={captureUrl}
+          guestsTotal={guests.length}
+          activeFilter={filter}
+        />
       ) : (
         <>
           {/* Desktop / iPad: table */}
@@ -210,6 +256,7 @@ export default function GuestsTable({
                   <Th>Visitas</Th>
                   <Th>Última visita</Th>
                   <Th>Estado</Th>
+                  <Th>Enviar</Th>
                 </tr>
               </thead>
               <tbody>
@@ -242,6 +289,15 @@ export default function GuestsTable({
                     <Td style={{ color: 'var(--text-muted)' }}>{g.lastVisit ? formatRelative(g.lastVisit) : '—'}</Td>
                     <Td>
                       <StatusBadge status={g.status} />
+                    </Td>
+                    <Td>
+                      <WhatsAppButton
+                        guest={g}
+                        restaurantName={restaurantName}
+                        todayMmdd={todayMmdd}
+                        sent={contacted.includes(g.id)}
+                        onSent={markContacted}
+                      />
                     </Td>
                   </tr>
                 ))}
@@ -280,6 +336,14 @@ export default function GuestsTable({
                 {g.preferences && g.preferences.length > 0 && (
                   <div className="guests-card-prefs">{g.preferences.join(' · ')}</div>
                 )}
+                <WhatsAppButton
+                  guest={g}
+                  restaurantName={restaurantName}
+                  todayMmdd={todayMmdd}
+                  sent={contacted.includes(g.id)}
+                  onSent={markContacted}
+                  block
+                />
               </li>
             ))}
           </ul>
@@ -289,6 +353,10 @@ export default function GuestsTable({
       {selected && (
         <GuestDrawer
           guest={selected}
+          restaurantName={restaurantName}
+          todayMmdd={todayMmdd}
+          contacted={contacted.includes(selected.id)}
+          onSent={markContacted}
           onClose={() => setSelected(null)}
           onSaved={() => {
             setSelected(null);
@@ -491,9 +559,11 @@ function StatusBadge({ status }: { status: GuestRow['status'] }) {
 function EmptyState({
   captureUrl,
   guestsTotal,
+  activeFilter,
 }: {
   captureUrl: string;
   guestsTotal: number;
+  activeFilter: Filter;
 }) {
   return (
     <div
@@ -517,7 +587,9 @@ function EmptyState({
       >
         {guestsTotal === 0
           ? 'Aún no has capturado invitados.'
-          : 'Ningún invitado coincide con este filtro.'}
+          : activeFilter === 'today'
+            ? 'Nadie cumple años hoy.'
+            : 'Ningún invitado coincide con este filtro.'}
       </p>
       {guestsTotal === 0 && (
         <a
@@ -549,10 +621,18 @@ function EmptyState({
 
 function GuestDrawer({
   guest,
+  restaurantName,
+  todayMmdd,
+  contacted,
+  onSent,
   onClose,
   onSaved,
 }: {
   guest: GuestRow;
+  restaurantName: string;
+  todayMmdd: string;
+  contacted: boolean;
+  onSent: (id: number) => void;
   onClose: () => void;
   onSaved: () => void;
 }) {
@@ -728,6 +808,13 @@ function GuestDrawer({
               </p>
             )}
           </div>
+          <WhatsAppButton
+            guest={guest}
+            restaurantName={restaurantName}
+            todayMmdd={todayMmdd}
+            sent={contacted}
+            onSent={onSent}
+          />
           <button
             onClick={onClose}
             style={{
@@ -996,7 +1083,80 @@ function DlRow({ label, value }: { label: string; value: React.ReactNode }) {
   );
 }
 
+// ── WhatsApp send button ──────────────────────────────────────────────────────
+
+// Minimal localStorage-backed store: components re-read the "contacted" list
+// when another click updates it (same tab) or another tab writes (storage).
+const CONTACTED_EVENT = 'guests-contacted-changed';
+
+function subscribeContacted(onChange: () => void): () => void {
+  window.addEventListener(CONTACTED_EVENT, onChange);
+  window.addEventListener('storage', onChange);
+  return () => {
+    window.removeEventListener(CONTACTED_EVENT, onChange);
+    window.removeEventListener('storage', onChange);
+  };
+}
+
+const WhatsAppIcon = (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+);
+
+function WhatsAppButton({
+  guest,
+  restaurantName,
+  todayMmdd,
+  sent,
+  onSent,
+  block,
+}: {
+  guest: GuestRow;
+  restaurantName: string;
+  todayMmdd: string;
+  sent: boolean;
+  onSent: (id: number) => void;
+  block?: boolean;
+}) {
+  return (
+    <a
+      href={waUrl(guest, todayMmdd, restaurantName)}
+      target="_blank"
+      rel="noreferrer"
+      onClick={(e) => {
+        e.stopPropagation();
+        onSent(guest.id);
+      }}
+      aria-label={`Enviar WhatsApp a ${firstName(guest.name)}`}
+      className={`guests-wa-btn${sent ? ' guests-wa-btn--sent' : ''}${block ? ' guests-wa-btn--block' : ''}`}
+    >
+      {WhatsAppIcon}
+      {sent ? 'Enviado ✓' : 'WhatsApp'}
+    </a>
+  );
+}
+
 // ── Formatters ───────────────────────────────────────────────────────────────
+
+function firstName(value: string): string {
+  const first = value.trim().split(/\s+/)[0] || '';
+  if (!first) return value.trim();
+  return first.charAt(0).toUpperCase() + first.slice(1).toLowerCase();
+}
+
+// Birthday-of-the-day guests get the copa-de-vino invitation; everyone else
+// gets a plain greeting. Names are stored in caps ("QUINTIN Morgado"), so the
+// first token is Title-cased before going into the message.
+function messageFor(g: GuestRow, todayMmdd: string, restaurantName: string): string {
+  if (g.birthdayMmdd === todayMmdd) {
+    return `¡Feliz cumpleaños, ${firstName(g.name)}! 🎂 De parte de todo el equipo de ${restaurantName}. Si quieres celebrarlo con nosotros esta semana, la copa de vino va por nuestra cuenta — solo menciona este mensaje al llegar.`;
+  }
+  return `¡Hola ${firstName(g.name)}! Te escribimos de ${restaurantName}.`;
+}
+
+function waUrl(g: GuestRow, todayMmdd: string, restaurantName: string): string {
+  const phone = g.whatsapp.replace(/\D/g, '');
+  return `https://wa.me/${phone}?text=${encodeURIComponent(messageFor(g, todayMmdd, restaurantName))}`;
+}
 
 function formatPhone(raw: string): string {
   const digits = raw.replace(/\D/g, '');
@@ -1329,6 +1489,34 @@ const GUESTS_CSS = `
 .guests-row:hover { background: var(--bg-base); }
 .guests-cards { display: none; list-style: none; padding: 0; margin: 0; }
 
+/* ── WhatsApp send button ────────────────────────────────────────── */
+.guests-wa-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.65rem;
+  background: #25D366;
+  color: #fff;
+  border: 1px solid #25D366;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  text-decoration: none;
+  white-space: nowrap;
+  border-radius: 0;
+  transition: all 0.15s ease;
+}
+.guests-wa-btn:hover { background: #1fb858; border-color: #1fb858; }
+.guests-wa-btn--sent {
+  background: var(--bg-base);
+  color: var(--text-muted);
+  border-color: var(--panel-border);
+}
+.guests-wa-btn--sent:hover { background: var(--bg-base); border-color: var(--panel-border); }
+.guests-wa-btn--block { width: 100%; padding: 0.6rem; box-sizing: border-box; }
+
 /* ── Drawer ────────────────────────────────────────────────────── */
 .guests-drawer {
   width: 100%;
@@ -1446,7 +1634,7 @@ const GUESTS_CSS = `
   .guests-filterbar { padding: 0 1rem; gap: 0.6rem; flex-direction: column; align-items: stretch; }
   .guests-filters { width: 100%; }
   .guests-filter-btn { flex: 1 1 calc(50% - 0.2rem); font-size: 0.66rem; padding: 0.55rem 0.5rem; border-right-width: 1px; border-bottom-width: 0; }
-  .guests-filter-btn:nth-last-child(-n+2) { border-bottom-width: 1px; }
+  .guests-filter-btn:last-child { border-bottom-width: 1px; }
   .guests-search { margin-left: 0; width: 100%; font-size: 16px; padding: 0.7rem 0.75rem; }
 
   .guests-table-wrap { display: none; }

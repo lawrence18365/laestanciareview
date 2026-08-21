@@ -96,7 +96,7 @@ export async function GET(req: NextRequest) {
       }
 
       const title = birthdayCount > 0 ? 'Cumpleaños del día' : 'Resumen del día';
-      const url = birthdayCount > 0 ? '/guests' : '/dashboard';
+      const url = birthdayCount > 0 ? '/guests?filter=today' : '/dashboard';
 
       await sendPushToRestaurant(r.id, {
         title,
