@@ -7,6 +7,7 @@ import { checkRateLimitAsync, getClientIP, rateLimitResponse } from '@/lib/rate-
 import { requireSameOrigin } from '@/lib/origin';
 import { randomToken, tokenHash } from '@/lib/tokens';
 import { trackCommercialEvent } from '@/lib/commercial-tracking';
+import { normalizeStaffCode } from '@/lib/staff-code';
 
 // 30 reviews per minute per IP (generous for busy restaurants with shared tablet)
 const SUBMIT_LIMIT = 30;
@@ -36,13 +37,14 @@ export async function POST(req: NextRequest) {
   }
 
   const { restaurantSlug, staffCode, rating } = parsed.data;
+  const normalizedStaffCode = normalizeStaffCode(staffCode);
 
   const restaurant = await getRestaurantBySlug(restaurantSlug);
   if (!restaurant) {
     return Response.json({ error: 'Restaurant not found' }, { status: 404 });
   }
 
-  const staffMember = await getStaffByCode(restaurant.id, staffCode);
+  const staffMember = await getStaffByCode(restaurant.id, normalizedStaffCode);
 
   // Compliant flow: capture the rating for internal analytics + waiter
   // attribution, but do NOT route the guest by it. Every guest is offered the
@@ -57,8 +59,8 @@ export async function POST(req: NextRequest) {
     .values({
       restaurantId: restaurant.id,
       staffId: staffMember?.id ?? null,
-      staffCode,
-      staffName: staffMember?.name ?? staffCode,
+      staffCode: normalizedStaffCode,
+      staffName: staffMember?.name ?? normalizedStaffCode,
       rating,
       feedbackTokenHash,
       sentToGoogle: false,
@@ -76,7 +78,7 @@ export async function POST(req: NextRequest) {
       u.searchParams.set('utm_source', 'ratetap');
       u.searchParams.set('utm_medium', 'nfc');
       u.searchParams.set('utm_campaign', restaurantSlug);
-      u.searchParams.set('utm_content', staffCode || 'no-card');
+      u.searchParams.set('utm_content', normalizedStaffCode || 'no-card');
       googleReviewUrl = u.toString();
     } catch {
       googleReviewUrl = restaurant.googleReviewUrl;
@@ -92,7 +94,7 @@ export async function POST(req: NextRequest) {
       metadata: {
         review_id: review.id,
         rating,
-        staff_code: staffCode || null,
+        staff_code: normalizedStaffCode || null,
         ui_variant: 'hierarchy_v2',
       },
     });

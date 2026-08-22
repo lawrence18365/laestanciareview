@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation';
 import { getRestaurantBySlug, getStaffByCode, getStaffPersonalStats } from '@/lib/queries';
 import { getBrandForSlug } from '@/lib/brands';
 import { recordProductEvent } from '@/lib/product-events';
+import { normalizeStaffCode } from '@/lib/staff-code';
 import MeseroCard from '@/components/mesero/MeseroCard';
 
 export const dynamic = 'force-dynamic';
@@ -16,7 +17,10 @@ export default async function MeseroPage({ params }: PageProps) {
   const restaurant = await getRestaurantBySlug(slug);
   if (!restaurant) notFound();
 
-  const staffMember = await getStaffByCode(restaurant.id, decodeURIComponent(code));
+  const staffMember = await getStaffByCode(
+    restaurant.id,
+    normalizeStaffCode(decodeURIComponent(code)),
+  );
   if (!staffMember) notFound();
 
   const stats = await getStaffPersonalStats(restaurant.id, staffMember.id);

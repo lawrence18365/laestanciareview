@@ -30,12 +30,17 @@ export async function getLatestMercadopagoSubscription(restaurantId: number) {
   return rows[0] ?? null;
 }
 
-/** Resolve a staff member by code within a restaurant (case-insensitive). */
+/** Resolve a staff member by code within a restaurant (case-insensitive, whitespace-tolerant). */
 export async function getStaffByCode(restaurantId: number, code: string) {
   const rows = await db
     .select()
     .from(staff)
-    .where(and(eq(staff.restaurantId, restaurantId), sql`lower(${staff.code}) = lower(${code})`))
+    .where(
+      and(
+        eq(staff.restaurantId, restaurantId),
+        sql`lower(btrim(${staff.code})) = lower(btrim(${code}))`,
+      ),
+    )
     .limit(1);
   return rows[0] ?? null;
 }

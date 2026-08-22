@@ -1,3 +1,8 @@
+/** Remove accidental surrounding whitespace from an NFC staff code. */
+export function normalizeStaffCode(code: string): string {
+  return code.trim();
+}
+
 /**
  * Turn a name like "JUAN CARLOS" into a staff code like "JUANCARLOS".
  * If duplicates exist in the same restaurant, a numeric suffix is appended.

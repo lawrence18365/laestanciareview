@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation';
 import { getRestaurantBySlug, getStaffByCode } from '@/lib/queries';
 import { getBrandForSlug } from '@/lib/brands';
 import { recordProductEvent } from '@/lib/product-events';
+import { normalizeStaffCode } from '@/lib/staff-code';
 import StarRating from '@/components/review/StarRating';
 
 interface PageProps {
@@ -16,7 +17,7 @@ export default async function ReviewPage({ params, searchParams }: PageProps) {
   const restaurant = await getRestaurantBySlug(slug);
   if (!restaurant) notFound();
 
-  const staffCode = card ?? '';
+  const staffCode = normalizeStaffCode(card ?? '');
   const staffMember = staffCode ? await getStaffByCode(restaurant.id, staffCode) : null;
   const staffName = staffMember?.name ?? 'Tu mesero';
   const brand = getBrandForSlug(slug);
