@@ -10,6 +10,7 @@ import {
   getProblemLocations,
   getPushAnalytics,
   getReviewFunnel,
+  metricTrendDirection,
   type FunnelStep,
   type IntegrityTag,
   type TrendedMetric,
@@ -40,6 +41,39 @@ function fmtHours(h: number | null): string {
   if (h === null) return '—';
   if (h < 1) return `${Math.round(h * 60)} min`;
   return `${Math.round(h * 10) / 10} h`;
+}
+
+function ReviewsPerWaiterValue({
+  value,
+  previous,
+}: {
+  value: number | null;
+  previous: number | null;
+}) {
+  if (value === null) return <span className="font-numeric">—</span>;
+
+  const trend = metricTrendDirection(value, previous);
+  const arrow = trend === 'up' ? '↑' : trend === 'down' ? '↓' : '→';
+  const color = trend === 'up'
+    ? 'var(--green)'
+    : trend === 'down'
+      ? 'var(--red)'
+      : 'var(--text-dim)';
+
+  return (
+    <>
+      <span className="font-numeric" style={{ fontWeight: 600 }}>
+        {value.toLocaleString('es-MX', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}
+      </span>
+      <span
+        className="font-numeric"
+        title="vs periodo anterior"
+        style={{ fontSize: '0.7rem', marginLeft: 4, color }}
+      >
+        {arrow}
+      </span>
+    </>
+  );
 }
 
 /* ── Integrity badges ── */
@@ -363,6 +397,8 @@ export default async function InsightsPage({
                 <th style={thStyle('right')}>Usuarios activos <IntegrityBadge tag="inferred" /></th>
                 <th style={thStyle('left')}>Última actividad <IntegrityBadge tag="inferred" /></th>
                 <th style={thStyle('right')}>Reseñas (Δ) <IntegrityBadge tag="verified" /></th>
+                <th style={thStyle('right')}>Reseñas / mesero registrado <IntegrityBadge tag="verified" /></th>
+                <th style={thStyle('right')}>Reseñas / mesero activo <IntegrityBadge tag="verified" /></th>
                 <th style={thStyle('right')}>Feedback bajo <IntegrityBadge tag="verified" /></th>
                 <th style={thStyle('right')}>% resuelto <IntegrityBadge tag="verified" /></th>
                 <th style={thStyle('right')}>Mediana h. a resolver <IntegrityBadge tag="inferred" /></th>
@@ -389,6 +425,18 @@ export default async function InsightsPage({
                       )}
                     </td>
                     <td style={tdNumStyle}>
+                      <ReviewsPerWaiterValue
+                        value={loc.reviewsPerRegisteredWaiter}
+                        previous={loc.reviewsPerRegisteredWaiterPrev}
+                      />
+                    </td>
+                    <td style={tdNumStyle}>
+                      <ReviewsPerWaiterValue
+                        value={loc.reviewsPerActiveWaiter}
+                        previous={loc.reviewsPerActiveWaiterPrev}
+                      />
+                    </td>
+                    <td style={tdNumStyle}>
                       <span className="font-numeric">{loc.lowCount}</span>
                       {loc.lowWithText > 0 && (
                         <span style={{ fontSize: '0.7rem', color: 'var(--text-dim)' }}> ({loc.lowWithText} con texto)</span>
@@ -407,7 +455,7 @@ export default async function InsightsPage({
               })}
               {comparison.length === 0 && (
                 <tr>
-                  <td colSpan={11} style={{ ...tdStyle, color: 'var(--text-dim)' }}>
+                  <td colSpan={13} style={{ ...tdStyle, color: 'var(--text-dim)' }}>
                     Sin ubicaciones operativas.
                   </td>
                 </tr>
@@ -415,6 +463,9 @@ export default async function InsightsPage({
             </tbody>
           </table>
         </div>
+        <p style={{ fontSize: '0.7rem', color: 'var(--text-dim)', margin: '0.75rem 0 0' }}>
+          Intensidad de solicitud: reseñas por mesero. Una ubicación puede tener todos sus meseros activos y aun así caer en intensidad.
+        </p>
       </section>
 
       {/* ── d) Feature adoption matrix ── */}

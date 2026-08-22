@@ -80,6 +80,25 @@ export function rateOrNull(part: number, whole: number): number | null {
   return Math.round((part / whole) * 1000) / 1000;
 }
 
+/** Reviews per waiter (1 decimal), or null when no waiter denominator exists. */
+export function reviewsPerWaiter(reviewCount: number, waiterCount: number): number | null {
+  if (!Number.isFinite(reviewCount) || !Number.isFinite(waiterCount) || waiterCount <= 0) {
+    return null;
+  }
+  return Math.round((reviewCount / waiterCount) * 10) / 10;
+}
+
+export type MetricTrendDirection = 'up' | 'down' | 'flat';
+
+/** Comparison direction; missing values are not comparable and render flat. */
+export function metricTrendDirection(
+  current: number | null,
+  previous: number | null,
+): MetricTrendDirection {
+  if (current === null || previous === null || current === previous) return 'flat';
+  return current > previous ? 'up' : 'down';
+}
+
 /** Conversion % between two consecutive funnel steps; null when the previous
  *  step is 0 (conversion undefined, not 0%). */
 export function funnelConversion(from: number, to: number): number | null {
@@ -400,6 +419,10 @@ export interface LocationComparisonRow {
   lastActiveAt: Date | null; // max product_events.created_at for gm/owner/regional
   reviews: number;
   reviewsPrev: number;
+  reviewsPerRegisteredWaiter: number | null; // verified: reviews / active staff rows
+  reviewsPerRegisteredWaiterPrev: number | null;
+  reviewsPerActiveWaiter: number | null; // verified: reviews / staff with reviews
+  reviewsPerActiveWaiterPrev: number | null;
   googleClickPct: number | null; // since 2026-07-08 only
   lowCount: number;
   lowPct: number;
@@ -464,6 +487,7 @@ export async function getLocationComparison(days: 7 | 30 = 30): Promise<Location
         lowText: countSql`count(*) filter (where ${reviews.createdAt} >= ${start} and ${reviews.rating} <= 3 and ${reviews.feedback} is not null)`,
         lowTouched: countSql`count(*) filter (where ${reviews.createdAt} >= ${start} and ${reviews.rating} <= 3 and ${reviews.feedback} is not null and (${reviews.status} <> 'new' or ${reviews.reviewedAt} is not null or ${reviews.resolvedAt} is not null))`,
         staffWithReviews: countSql`count(distinct ${reviews.staffId}) filter (where ${reviews.createdAt} >= ${start} and ${reviews.staffId} is not null)`,
+        staffWithReviewsPrev: countSql`count(distinct ${reviews.staffId}) filter (where ${reviews.createdAt} < ${start} and ${reviews.staffId} is not null)`,
         unknownCode: countSql`count(*) filter (where ${reviews.createdAt} >= ${start} and ${reviews.staffId} is null)`,
         lastReviewAt: sql<Date | null>`max(${reviews.createdAt}) filter (where ${reviews.createdAt} >= ${start})`,
       })
@@ -673,9 +697,13 @@ export async function getLocationComparison(days: 7 | 30 = 30): Promise<Location
     const m = medianMap.get(loc.id);
 
     const total = num(r?.total);
+    const totalPrev = num(r?.totalPrev);
     const low = num(r?.low);
     const lowText = num(r?.lowText);
     const googleBase = num(r?.googleBase);
+    const registeredWaiters = num(staffMap.get(loc.id)?.active);
+    const activeWaiters = num(r?.staffWithReviews);
+    const activeWaitersPrev = num(r?.staffWithReviewsPrev);
 
     return {
       restaurantId: loc.id,
@@ -684,7 +712,11 @@ export async function getLocationComparison(days: 7 | 30 = 30): Promise<Location
       activeUsers: num(e?.activeRoles),
       lastActiveAt: e?.lastActiveAt ?? null,
       reviews: total,
-      reviewsPrev: num(r?.totalPrev),
+      reviewsPrev: totalPrev,
+      reviewsPerRegisteredWaiter: reviewsPerWaiter(total, registeredWaiters),
+      reviewsPerRegisteredWaiterPrev: reviewsPerWaiter(totalPrev, registeredWaiters),
+      reviewsPerActiveWaiter: reviewsPerWaiter(total, activeWaiters),
+      reviewsPerActiveWaiterPrev: reviewsPerWaiter(totalPrev, activeWaitersPrev),
       googleClickPct: googleBase > 0 ? pct(num(r?.google), googleBase) : null,
       lowCount: low,
       lowPct: pct(low, total),
@@ -692,8 +724,8 @@ export async function getLocationComparison(days: 7 | 30 = 30): Promise<Location
       resolutionPct: lowText > 0 ? pct(num(r?.lowTouched), lowText) : null,
       medianHoursToView: m?.medianViewHours ?? null,
       medianHoursToResolve: m?.medianResolveHours ?? null,
-      staffActive: num(staffMap.get(loc.id)?.active),
-      staffWithReviews: num(r?.staffWithReviews),
+      staffActive: registeredWaiters,
+      staffWithReviews: activeWaiters,
       unknownCodePct: total > 0 ? pct(num(r?.unknownCode), total) : null,
       guestsCaptured: num(g?.captured),
       guestsConsented: num(g?.consented),

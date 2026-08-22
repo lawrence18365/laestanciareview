@@ -49,6 +49,27 @@ describe('rateOrNull (bookingRate / revenuePerContact math)', () => {
   });
 });
 
+describe('reviewsPerWaiter', () => {
+  it('returns null when the waiter denominator is 0', () => {
+    expect(pa.reviewsPerWaiter(0, 0)).toBeNull();
+    expect(pa.reviewsPerWaiter(12, 0)).toBeNull();
+  });
+
+  it('rounds reviews per waiter to one decimal', () => {
+    expect(pa.reviewsPerWaiter(10, 3)).toBe(3.3);
+    expect(pa.reviewsPerWaiter(2, 3)).toBe(0.7);
+  });
+});
+
+describe('metricTrendDirection', () => {
+  it('returns the correct trend direction', () => {
+    expect(pa.metricTrendDirection(3.3, 2.1)).toBe('up');
+    expect(pa.metricTrendDirection(1.5, 2.1)).toBe('down');
+    expect(pa.metricTrendDirection(2.1, 2.1)).toBe('flat');
+    expect(pa.metricTrendDirection(2.1, null)).toBe('flat');
+  });
+});
+
 describe('adoptionState thresholds', () => {
   it('is unused with 0 active days', () => {
     expect(pa.adoptionState(0)).toBe('unused');

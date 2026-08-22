@@ -309,6 +309,33 @@ export const reviews = pgTable(
   ],
 );
 
+export const staffAttributionBackfill = pgTable(
+  'staff_attribution_backfill',
+  {
+    id: bigserial('id', { mode: 'number' }).primaryKey(),
+    reviewId: integer('review_id')
+      .notNull()
+      .references(() => reviews.id, { onDelete: 'cascade' }),
+    restaurantId: integer('restaurant_id').notNull(),
+    oldStaffId: integer('old_staff_id'),
+    oldStaffName: text('old_staff_name'),
+    newStaffId: integer('new_staff_id').notNull(),
+    newStaffName: text('new_staff_name').notNull(),
+    matchedCode: text('matched_code').notNull(),
+    originalStaffCode: text('original_staff_code').notNull(),
+    appliedAt: timestamp('applied_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [
+    index('staff_attribution_backfill_review_idx').on(t.reviewId),
+    index('staff_attribution_backfill_restaurant_applied_idx').on(
+      t.restaurantId,
+      t.appliedAt,
+    ),
+  ],
+);
+
 export const googleRatingSnapshots = pgTable(
   'google_rating_snapshots',
   {

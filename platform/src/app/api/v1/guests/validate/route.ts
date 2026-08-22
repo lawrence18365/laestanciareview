@@ -6,6 +6,7 @@ import { guestValidateSchema } from '@/lib/validations';
 import { checkRateLimitAsync, getClientIP, rateLimitResponse } from '@/lib/rate-limit';
 import { requireSameOrigin } from '@/lib/origin';
 import { sendPushToRestaurant } from '@/lib/push';
+import { normalizeStaffCode } from '@/lib/staff-code';
 
 export const runtime = 'nodejs';
 
@@ -38,6 +39,7 @@ export async function POST(req: NextRequest) {
     );
   }
   const input = parsed.data;
+  const normalizedStaffCode = normalizeStaffCode(input.staffCode);
 
   const restaurantRow = await db
     .select()
@@ -63,7 +65,7 @@ export async function POST(req: NextRequest) {
     .where(
       and(
         eq(staff.restaurantId, restaurant.id),
-        sql`lower(${staff.code}) = lower(${input.staffCode})`,
+        sql`lower(btrim(${staff.code})) = lower(btrim(${normalizedStaffCode}))`,
       ),
     )
     .limit(1);
