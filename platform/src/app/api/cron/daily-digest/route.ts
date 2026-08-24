@@ -83,8 +83,8 @@ export async function GET(req: NextRequest) {
       if (birthdayCount > 0) {
         parts.push(
           birthdayCount === 1
-            ? '1 cumpleaños hoy — manda la invitación'
-            : `${birthdayCount} cumpleaños hoy — manda las invitaciones`,
+            ? '1 cumpleaños hoy. Manda la invitación'
+            : `${birthdayCount} cumpleaños hoy. Manda las invitaciones`,
         );
       }
       if (fiveStarCount > 0) {

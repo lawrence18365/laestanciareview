@@ -40,7 +40,7 @@ const CRON_SECRET = process.env.CRON_SECRET;
 const OUTREACH_DAILY_LIMIT = Number(process.env.OUTREACH_DAILY_LIMIT ?? 20);
 
 function smsMessage(name: string, rating: string, placeId: string): string {
-  return `Hola ${name}, preparamos un análisis gratuito de sus reseñas de Google (actualmente ${rating}★). Sin costo: ${BASE_URL}/audit/${placeId} — RateTap`;
+  return `Hola ${name}, preparamos un análisis gratuito de sus reseñas de Google (actualmente ${rating}★). Sin costo: ${BASE_URL}/audit/${placeId} (RateTap)`;
 }
 
 function providerMessageId(message: unknown): string | null {

@@ -139,7 +139,7 @@ export async function POST(req: NextRequest) {
     const d = new Date(data.created_at);
     if (isNaN(d.getTime())) {
       return Response.json(
-        { error: 'Invalid created_at — expected ISO 8601' },
+        { error: 'Invalid created_at: expected ISO 8601' },
         { status: 400 },
       );
     }

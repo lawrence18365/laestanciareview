@@ -66,7 +66,7 @@ export async function sendWhatsAppAlert({
   const preview =
     feedback.length > 200 ? feedback.slice(0, 200) + '...' : feedback;
 
-  const lines = [`${urgency} *${restaurantName}* — ${stars}`];
+  const lines = [`${urgency} *${restaurantName}*: ${stars}`];
   if (staffName) lines.push(`*Mesero:* ${staffName}`);
   lines.push(`*Cliente:* ${customer}`);
   lines.push('');

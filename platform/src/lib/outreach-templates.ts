@@ -203,7 +203,7 @@ export async function buildOutreachEmail(
     subject = `¿Alcanzó a ver la auditoría de ${prospect.name}?`;
     paragraphs = touch2Paragraphs(kind, prospect);
   } else {
-    subject = `Último correo — ${prospect.name}`;
+    subject = `Último correo: ${prospect.name}`;
     paragraphs = touch3Paragraphs(prospect);
   }
 
@@ -246,6 +246,6 @@ export function founderWhatsappUrl(restaurantName: string): string {
 export function hotLeadWhatsappUrl(prospect: OutreachProspect): string {
   const phone = prospect.phone ? prospect.phone.replace(/\D/g, '') : '';
   const digits = phone.length >= 10 ? phone : FOUNDER_WHATSAPP;
-  const message = `Hola, soy Lawrence de RateTap — vi que revisó la auditoría de ${prospect.name}. ¿Le quedó alguna duda?`;
+  const message = `Hola, soy Lawrence de RateTap. Vi que revisó la auditoría de ${prospect.name}. ¿Le quedó alguna duda?`;
   return whatsappUrl(digits, message);
 }

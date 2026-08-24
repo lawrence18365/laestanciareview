@@ -64,22 +64,22 @@ const NURTURE: Record<string, {
     days: 3,
     whatsapp: (name) =>
       `Hola *${name}* 👋 Llevas 3 días con RateTap. Tip: pídele a tu equipo que entreguen la tarjeta con la frase "Nos encantaría conocer tu opinión, ¿nos ayudas con una reseña? ⭐". Eso duplica la tasa de escaneo. ¿Cómo va hasta ahora?`,
-    subject: (name) => `Tip del día 3 — ${name}`,
+    subject: (name) => `Tip del día 3: ${name}`,
     html: (name) => `<p>Hola ${name},</p><p>Llevas 3 días con RateTap. El truco que mejor funciona: tu mesero entrega la tarjeta y dice "Nos encantaría conocer su opinión, ¿nos ayuda con una reseña en Google? ⭐".</p><p>Eso solo duplica la tasa de escaneo.</p><p><a href="${BASE_URL}/dashboard">Ver mi dashboard →</a></p>`,
   },
   day7: {
     days: 7,
     whatsapp: (name) =>
       `*${name}*, llevas una semana 🎉 La Estancia (12 restaurantes en León) logró subir consistentemente sus calificaciones en todos sus locales con RateTap. Tus reseñas nuevas ya están trabajando para ti. Panel: ${BASE_URL}/dashboard`,
-    subject: (name) => `Una semana con RateTap — ${name}`,
+    subject: (name) => `Una semana con RateTap: ${name}`,
     html: (name) => `<p>Hola ${name},</p><p>Llevas 7 días con RateTap. Un cliente nuestro, Grupo La Estancia (12 restaurantes en León), ha visto cómo sus reseñas de Google crecen consistentemente desde que usan el sistema.</p><p>Tus reseñas nuevas ya están llegando.</p><p><a href="${BASE_URL}/dashboard">Ver mi progreso →</a></p>`,
   },
   day12: {
     days: 12,
     whatsapp: (name, pilot) => pilot
       ? `Hola *${name}*, tu piloto fundador termina en 3 días. Si decides continuar, tu plan será de $700 MXN/mes y la cuota de setup de $1,500 MXN se factura al activar. Escríbenos desde tu panel: ${BASE_URL}/dashboard`
-      : `Hola *${name}*, tu prueba gratis termina en 3 días. Para seguir recibiendo reseñas de Google sin interrupciones, activa tu plan aquí: ${BASE_URL}/dashboard — $700 MXN/mes, cancela cuando quieras.`,
-    subject: (name, pilot) => `${pilot ? 'Tu piloto' : 'Tu prueba'} termina en 3 días — ${name}`,
+      : `Hola *${name}*, tu prueba gratis termina en 3 días. Para seguir recibiendo reseñas de Google sin interrupciones, activa tu plan aquí: ${BASE_URL}/dashboard. $700 MXN/mes, cancela cuando quieras.`,
+    subject: (name, pilot) => `${pilot ? 'Tu piloto' : 'Tu prueba'} termina en 3 días, ${name}`,
     html: (name, pilot) => pilot
       ? `<p>Hola ${name},</p><p>Tu piloto fundador de RateTap termina en <strong>3 días</strong>.</p><p>Si decides continuar, el plan cuesta $700 MXN/mes y la cuota de setup de $1,500 MXN se factura al activar.</p><p><a href="${BASE_URL}/dashboard" style="background:#10B981;color:#fff;padding:12px 24px;text-decoration:none;font-weight:700;display:inline-block;border-radius:6px">Continuar con RateTap →</a></p><p style="color:#6b7280;font-size:13px">Sin contrato. Cancela cuando quieras.</p>`
       : `<p>Hola ${name},</p><p>Tu prueba gratis de RateTap termina en <strong>3 días</strong>.</p><p>Para que tus reseñas de Google sigan llegando sin interrupciones, activa tu plan ($700 MXN/mes).</p><p><a href="${BASE_URL}/dashboard" style="background:#10B981;color:#fff;padding:12px 24px;text-decoration:none;font-weight:700;display:inline-block;border-radius:6px">Activar mi plan →</a></p><p style="color:#6b7280;font-size:13px">Sin contrato. Cancela cuando quieras.</p>`,

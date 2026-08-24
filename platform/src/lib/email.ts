@@ -307,7 +307,7 @@ export async function sendFeedbackAlert({
   const result = await sendMail({
     from: FROM,
     to,
-    subject: `${rating <= 2 ? '🔴' : rating <= 3 ? '🟡' : '🟢'} Nuevo comentario de ${rating} estrellas — ${restaurantName}`,
+    subject: `${rating <= 2 ? '🔴' : rating <= 3 ? '🟡' : '🟢'} Nuevo comentario de ${rating} estrellas: ${restaurantName}`,
     html: emailLayout(content),
   });
 
@@ -473,7 +473,7 @@ export async function sendWeeklyDigest({
   const result = await sendMail({
     from: FROM,
     to,
-    subject: `📊 Resumen Semanal — ${restaurantName} — ${lastWeek.totalReviews} reseñas, ${lastWeek.avgRating ? lastWeek.avgRating.toFixed(1) : '--'} prom`,
+    subject: `📊 Resumen Semanal: ${restaurantName}, ${lastWeek.totalReviews} reseñas, ${lastWeek.avgRating ? lastWeek.avgRating.toFixed(1) : '--'} prom`,
     html: emailLayout(content, 'Enviado cada lunes por RateTap'),
   });
 
@@ -627,7 +627,7 @@ export async function sendOwnerDigest({ to, locations, dashboardUrl }: OwnerDige
   const result = await sendMail({
     from: FROM,
     to,
-    subject: `📊 Resumen Semanal — ${totalReviews} reseñas, ${overallAvg} prom en ${locations.length} ubicaciones`,
+    subject: `📊 Resumen Semanal: ${totalReviews} reseñas, ${overallAvg} prom en ${locations.length} ubicaciones`,
     html: emailLayout(content, 'Enviado cada lunes por RateTap'),
   });
 
@@ -677,7 +677,7 @@ export async function sendPasswordResetEmail({
 
       <div style="padding: 16px; background: #faf8f6; border-radius: 10px;">
         <p style="margin: 0; font-size: 13px; color: #78716c; line-height: 1.5;">
-          Este enlace expira en <strong>1 hora</strong>. Si no solicitaste esto, puedes ignorar este correo — tu contraseña no sera modificada.
+          Este enlace expira en <strong>1 hora</strong>. Si no solicitaste esto, puedes ignorar este correo. Tu contraseña no sera modificada.
         </p>
       </div>
     </div>`;
@@ -685,7 +685,7 @@ export async function sendPasswordResetEmail({
   const result = await sendMail({
     from: FROM,
     to,
-    subject: `🔐 Restablecer contraseña — ${restaurantName}`,
+    subject: `🔐 Restablecer contraseña: ${restaurantName}`,
     html: emailLayout(content),
   });
 
@@ -718,7 +718,7 @@ export async function sendTestEmail(to: string) {
   const result = await sendMail({
     from: FROM,
     to,
-    subject: '✅ RateTap — Email configurado correctamente',
+    subject: '✅ RateTap: Email configurado correctamente',
     html: emailLayout(content),
   });
 
@@ -760,7 +760,7 @@ export async function sendFeatureAnnouncement({
         Notificaciones Push en tu Celular
       </h1>
       <p style="margin: 0 0 24px; font-size: 15px; line-height: 1.6; color: #44403c;">
-        Hola! Ahora <strong>${escapeHtml(restaurantName)}</strong> puede recibir alertas instantaneas cuando un cliente deje una resena negativa — directo en tu iPhone, como un mensaje de WhatsApp.
+        Hola! Ahora <strong>${escapeHtml(restaurantName)}</strong> puede recibir alertas instantaneas cuando un cliente deje una resena negativa, directo en tu iPhone, como un mensaje de WhatsApp.
       </p>
 
       <div style="padding: 20px; background: #faf8f6; border-radius: 12px; margin-bottom: 24px;">
@@ -782,7 +782,7 @@ export async function sendFeatureAnnouncement({
 
       <div style="padding: 16px 20px; background: #fffbeb; border-radius: 10px; border-left: 4px solid #f59e0b; margin-bottom: 28px;">
         <p style="margin: 0; font-size: 14px; color: #92400e; line-height: 1.5;">
-          Cuando un cliente deje una resena de 3 estrellas o menos, recibiras una notificacion al instante en tu celular — para que puedas actuar de inmediato.
+          Cuando un cliente deje una resena de 3 estrellas o menos, recibiras una notificacion al instante en tu celular, para que puedas actuar de inmediato.
         </p>
       </div>
 
@@ -796,7 +796,7 @@ export async function sendFeatureAnnouncement({
   const result = await sendMail({
     from: FROM,
     to,
-    subject: `📱 Nuevo: Notificaciones push en tu celular — ${restaurantName}`,
+    subject: `📱 Nuevo: Notificaciones push en tu celular (${restaurantName})`,
     html: emailLayout(content),
   });
 
@@ -1049,7 +1049,7 @@ export async function sendReceiptEmail({ to, restaurantName, amountMxn, periodEn
   const result = await sendMail({
     from: FROM,
     to,
-    subject: `Recibo de RateTap — ${mxnFmt(amountMxn)}`,
+    subject: `Recibo de RateTap: ${mxnFmt(amountMxn)}`,
     html: emailLayout(content),
   });
 
@@ -1248,7 +1248,7 @@ export async function sendOwnerConversionNotification(p: OwnerConversionParams) 
 
   const content = `
     <div class="content-pad" style="padding: 28px 24px;">
-      <h1 style="margin: 0 0 12px; font-size: 20px; font-weight: 700; color: #16a34a;">💰 Conversión — enviar tarjetas NFC</h1>
+      <h1 style="margin: 0 0 12px; font-size: 20px; font-weight: 700; color: #16a34a;">💰 Conversión: enviar tarjetas NFC</h1>
       <p style="margin: 0 0 16px; font-size: 15px; color: #1c1917;">
         <strong>${escapeHtml(p.restaurantName)}</strong> pagó ${mxnFmt(p.amountMxn)}. Enviar tarjetas NFC físicas a:
       </p>

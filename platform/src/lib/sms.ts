@@ -61,7 +61,7 @@ export async function sendSMSAlert({
   const preview = feedback.length > 100 ? feedback.slice(0, 100) + '...' : feedback;
 
   const lines = [
-    `${urgency} ${restaurantName} — ${stars}`,
+    `${urgency} ${restaurantName}: ${stars}`,
   ];
   if (staffName) lines.push(`Mesero: ${staffName}`);
   lines.push(`Cliente: ${customer}`);

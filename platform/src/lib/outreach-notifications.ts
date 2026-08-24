@@ -63,7 +63,7 @@ export async function sendAuditViewedAlert(prospect: OutreachProspect): Promise<
     <p style="margin:0 0 16px;"><strong>${escapeHtml(prospect.name)}</strong> acaba de abrir su auditoría.</p>
     <table cellpadding="0" cellspacing="0" style="width:100%;margin-bottom:20px;font-size:14px;color:#1c1917;">
       <tr><td style="color:#78716c;padding:6px 0;">Email</td><td style="font-weight:500;">${escapeHtml(prospect.email)}</td></tr>
-      <tr><td style="color:#78716c;padding:6px 0;">Ciudad</td><td style="font-weight:500;">${escapeHtml(prospect.city ?? '—')}</td></tr>
+      <tr><td style="color:#78716c;padding:6px 0;">Ciudad</td><td style="font-weight:500;">${escapeHtml(prospect.city ?? '-')}</td></tr>
       <tr><td style="color:#78716c;padding:6px 0;">Google</td><td style="font-weight:500;">${escapeHtml(ratingText)}</td></tr>
       <tr><td style="color:#78716c;padding:6px 0;">Tipo</td><td style="font-weight:500;">${prospect.kind === 'group' ? 'Grupo' : 'León'}</td></tr>
       ${auditUrl ? `<tr><td style="color:#78716c;padding:6px 0;">Auditoría</td><td style="font-weight:500;"><a href="${auditUrl}" style="color:#2563EB;">${auditUrl}</a></td></tr>` : ''}
@@ -232,12 +232,12 @@ export async function sendDailyDigest(): Promise<DigestResult> {
       .map((v) => {
         const url = v.placeId ? `${BASE_URL}/audit/${encodeURIComponent(v.placeId)}` : null;
         const wa = v.phone
-          ? `https://wa.me/${v.phone.replace(/\D/g, '').length === 10 ? '52' + v.phone.replace(/\D/g, '') : v.phone.replace(/\D/g, '')}?text=${encodeURIComponent(`Hola, soy Lawrence de RateTap — vi que revisó la auditoría de ${v.name}. ¿Le quedó alguna duda?`)}`
+          ? `https://wa.me/${v.phone.replace(/\D/g, '').length === 10 ? '52' + v.phone.replace(/\D/g, '') : v.phone.replace(/\D/g, '')}?text=${encodeURIComponent(`Hola, soy Lawrence de RateTap. Vi que revisó la auditoría de ${v.name}. ¿Le quedó alguna duda?`)}`
           : null;
         return `<tr>
           <td style="padding:8px 0;border-bottom:1px solid #f0ece7;">${escapeHtml(v.name)}</td>
-          <td style="padding:8px 0;border-bottom:1px solid #f0ece7;text-align:right;">${url ? `<a href="${url}" style="color:#2563EB;">auditoría</a>` : '—'}</td>
-          <td style="padding:8px 0;border-bottom:1px solid #f0ece7;text-align:right;">${wa ? `<a href="${wa}" style="color:#2563EB;">WhatsApp</a>` : '—'}</td>
+          <td style="padding:8px 0;border-bottom:1px solid #f0ece7;text-align:right;">${url ? `<a href="${url}" style="color:#2563EB;">auditoría</a>` : '-'}</td>
+          <td style="padding:8px 0;border-bottom:1px solid #f0ece7;text-align:right;">${wa ? `<a href="${wa}" style="color:#2563EB;">WhatsApp</a>` : '-'}</td>
         </tr>`;
       })
       .join('');
@@ -295,7 +295,7 @@ export async function sendDailyDigest(): Promise<DigestResult> {
 
   await sendEmail({
     to,
-    subject: 'Resumen diario — RateTap Outreach',
+    subject: 'Resumen diario: RateTap Outreach',
     html: emailLayout('Resumen diario', body),
   });
 
