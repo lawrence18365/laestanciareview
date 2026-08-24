@@ -43,6 +43,20 @@ function fmtHours(h: number | null): string {
   return `${Math.round(h * 10) / 10} h`;
 }
 
+const PUSH_REVOCATION_LABELS: Record<string, string> = {
+  user_unsubscribe: 'usuario',
+  endpoint_invalid: 'endpoint inválido',
+  permission_revoked: 'permiso revocado',
+  unknown: 'desconocido',
+};
+
+const PUSH_ROLE_LABELS: Record<string, string> = {
+  owner: 'dueño',
+  regional: 'regional',
+  gm: 'gerente',
+  unknown: 'desconocido',
+};
+
 function ReviewsPerWaiterValue({
   value,
   previous,
@@ -609,6 +623,24 @@ export default async function InsightsPage({
               barColor="var(--blue)"
             />
             <p style={{ fontSize: '0.7rem', color: 'var(--text-dim)', margin: '0.5rem 0 0' }}>{push.note}</p>
+            <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '0.75rem', lineHeight: 1.6 }}>
+              <div>
+                Suscripciones activas <IntegrityBadge tag={push.activeSubscriptions.tag} />:{' '}
+                <span className="font-numeric">{fmt(push.activeSubscriptions.value)}</span>
+              </div>
+              <div>
+                Activas por rol <IntegrityBadge tag={push.subscriptionsByRole.tag} />:{' '}
+                {Object.entries(push.subscriptionsByRole.value)
+                  .map(([role, count]) => `${PUSH_ROLE_LABELS[role] ?? role} ${fmt(count)}`)
+                  .join(' · ')}
+              </div>
+              <div>
+                Revocadas por motivo <IntegrityBadge tag={push.revokedByReason.tag} />:{' '}
+                {Object.entries(push.revokedByReason.value)
+                  .map(([reason, count]) => `${PUSH_REVOCATION_LABELS[reason] ?? reason} ${fmt(count)}`)
+                  .join(' · ')}
+              </div>
+            </div>
           </div>
         </div>
 

@@ -58,6 +58,19 @@ describe('PUBLIC_EVENT_NAMES', () => {
       expect(all.has(name)).toBe(true);
     }
   });
+
+  it('keeps authenticated push banner events private', () => {
+    const publicNames = new Set<string>(productEvents.PUBLIC_EVENT_NAMES);
+    for (const name of [
+      'push_banner_shown',
+      'push_banner_dismissed',
+      'push_subscribe_click',
+      'push_subscribe_failed',
+      'push_permission_revoked_detected',
+    ]) {
+      expect(publicNames.has(name)).toBe(false);
+    }
+  });
 });
 
 describe('withPushTracking', () => {

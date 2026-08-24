@@ -382,9 +382,26 @@ async function main() {
     sections.push({
       title: '10. PUSH ADOPTION — push_subscriptions table',
       data: {
-        total: await q(`SELECT COUNT(*)::int AS n FROM push_subscriptions`, 'p_total'),
-        unique_restaurants: await q(
-          `SELECT COUNT(DISTINCT restaurant_id)::int AS n FROM push_subscriptions`,
+        active: await q(
+          `SELECT COUNT(*)::int AS n FROM push_subscriptions WHERE revoked_at IS NULL`,
+          'p_active',
+        ),
+        revoked: await q(
+          `SELECT COUNT(*)::int AS n FROM push_subscriptions WHERE revoked_at IS NOT NULL`,
+          'p_revoked',
+        ),
+        revoked_by_reason: await q(
+          `SELECT COALESCE(revoked_reason, 'unknown') AS reason, COUNT(*)::int AS n
+           FROM push_subscriptions
+           WHERE revoked_at IS NOT NULL
+           GROUP BY 1
+           ORDER BY 1`,
+          'p_revoked_reason',
+        ),
+        active_unique_restaurants: await q(
+          `SELECT COUNT(DISTINCT restaurant_id)::int AS n
+           FROM push_subscriptions
+           WHERE revoked_at IS NULL`,
           'p_uniq',
         ),
       },
