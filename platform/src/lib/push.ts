@@ -1,7 +1,7 @@
 import webpush from 'web-push';
 import { db } from '@/db';
 import { pushNotifications, pushSubscriptions } from '@/db/schema';
-import { eq } from 'drizzle-orm';
+import { and, eq, isNull, sql } from 'drizzle-orm';
 
 const VAPID_PUBLIC_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY?.trim() ?? '';
 const VAPID_PRIVATE_KEY = process.env.VAPID_PRIVATE_KEY?.trim() ?? '';
@@ -57,7 +57,7 @@ export function withPushTracking(url: string, nid: number): string {
 
 /**
  * Send push notifications to all subscribers for a restaurant.
- * Automatically removes stale/expired subscriptions.
+ * Automatically revokes stale/expired subscriptions.
  *
  * Every send is recorded in push_notifications: one row per logical
  * notification with subscriptions_targeted and, after the fan-out,
@@ -76,7 +76,12 @@ export async function sendPushToRestaurant(
   const subs = await db
     .select()
     .from(pushSubscriptions)
-    .where(eq(pushSubscriptions.restaurantId, restaurantId));
+    .where(
+      and(
+        eq(pushSubscriptions.restaurantId, restaurantId),
+        isNull(pushSubscriptions.revokedAt),
+      ),
+    );
 
   const url = payload.url ?? '/dashboard';
 
@@ -128,7 +133,11 @@ export async function sendPushToRestaurant(
         // 404 or 410 means the subscription is no longer valid
         if (statusCode === 404 || statusCode === 410) {
           await db
-            .delete(pushSubscriptions)
+            .update(pushSubscriptions)
+            .set({
+              revokedAt: sql`now()`,
+              revokedReason: 'endpoint_invalid',
+            })
             .where(eq(pushSubscriptions.id, sub.id));
         }
         failed++;

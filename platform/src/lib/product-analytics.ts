@@ -14,7 +14,7 @@ import {
   pushNotifications,
   pushSubscriptions,
 } from '@/db/schema';
-import { and, asc, eq, gte, inArray, sql } from 'drizzle-orm';
+import { and, asc, eq, gte, inArray, isNotNull, isNull, sql } from 'drizzle-orm';
 import {
   startOfTodayMexico,
   startOfWeekMexico,
@@ -636,14 +636,19 @@ export async function getLocationComparison(days: 7 | 30 = 30): Promise<Location
       )
       .groupBy(quotes.restaurantId),
 
-    // Push subscription counts (all-time presence, not windowed).
+    // Active push subscription counts (all-time presence, not windowed).
     db
       .select({
         restaurantId: pushSubscriptions.restaurantId,
         count: countSql`count(*)`,
       })
       .from(pushSubscriptions)
-      .where(inArray(pushSubscriptions.restaurantId, ids))
+      .where(
+        and(
+          inArray(pushSubscriptions.restaurantId, ids),
+          isNull(pushSubscriptions.revokedAt),
+        ),
+      )
       .groupBy(pushSubscriptions.restaurantId),
 
     // Median hours to view / resolve (inferred from reviewed_at/resolved_at,
@@ -1131,7 +1136,12 @@ export async function getFeatureAdoptionMatrix(): Promise<FeatureAdoptionMatrix>
         n: countSql`count(*)`,
       })
       .from(pushSubscriptions)
-      .where(inArray(pushSubscriptions.restaurantId, ids))
+      .where(
+        and(
+          inArray(pushSubscriptions.restaurantId, ids),
+          isNull(pushSubscriptions.revokedAt),
+        ),
+      )
       .groupBy(pushSubscriptions.restaurantId),
 
     // Owner/regional group-level usage
@@ -1744,6 +1754,12 @@ export interface PushKindBreakdown {
   clicks: number;
 }
 
+export type PushRevocationReason =
+  | 'user_unsubscribe'
+  | 'endpoint_invalid'
+  | 'permission_revoked'
+  | 'unknown';
+
 export interface PushAnalytics {
   created: TaggedMetric<number>;
   /** "accepted" = the push SERVICE returned 2xx — it is NOT delivery. */
@@ -1755,6 +1771,10 @@ export interface PushAnalytics {
   destinationOpened: TaggedMetric<number>;
   /** Resulting action after the push (see query comments). */
   resultingAction: TaggedMetric<number>;
+  activeSubscriptions: TaggedMetric<number>;
+  revokedByReason: TaggedMetric<Record<PushRevocationReason, number>>;
+  /** Active subscriptions grouped by the role that most recently subscribed. */
+  subscriptionsByRole: TaggedMetric<Record<string, number>>;
   byKind: PushKindBreakdown[];
   subscriptionsByLocation: { slug: string; name: string; count: number }[];
   note: string;
@@ -1762,8 +1782,15 @@ export interface PushAnalytics {
 
 export async function getPushAnalytics(days: 7 | 30 = 30): Promise<PushAnalytics> {
   const { start } = windowBounds(days);
-  const locations = await getOperationalLocations();
+  const [locations, lifecycleAccounts] = await Promise.all([
+    getOperationalLocations(),
+    db
+      .select({ id: restaurants.id })
+      .from(restaurants)
+      .where(inArray(restaurants.subscriptionStatus, ['active', 'trialing'])),
+  ]);
   const ids = locations.map((l) => l.id);
+  const lifecycleAccountIds = lifecycleAccounts.map((account) => account.id);
 
   const base: PushAnalytics = {
     created: tag(0, 'verified'),
@@ -1773,13 +1800,36 @@ export async function getPushAnalytics(days: 7 | 30 = 30): Promise<PushAnalytics
     clickRate: null,
     destinationOpened: tag(0, 'verified'),
     resultingAction: tag(0, 'inferred'),
+    activeSubscriptions: tag(0, 'verified'),
+    revokedByReason: tag(
+      {
+        user_unsubscribe: 0,
+        endpoint_invalid: 0,
+        permission_revoked: 0,
+        unknown: 0,
+      },
+      'verified',
+    ),
+    subscriptionsByRole: tag(
+      { owner: 0, regional: 0, gm: 0, unknown: 0 },
+      'verified',
+    ),
     byKind: [],
     subscriptionsByLocation: [],
     note: '«Aceptados» significa que el servicio de push respondió 2xx — no confirma entrega ni visualización en el dispositivo.',
   };
   if (ids.length === 0) return base;
 
-  const [pushAgg, kindRows, clickRows, destAgg, actionAgg, subRows] = await Promise.all([
+  const [
+    pushAgg,
+    kindRows,
+    clickRows,
+    destAgg,
+    actionAgg,
+    subRows,
+    revokedReasonRows,
+    subscriptionRoleRows,
+  ] = await Promise.all([
     db
       .select({
         created: countSql`count(*)`,
@@ -1869,14 +1919,63 @@ export async function getPushAnalytics(days: 7 | 30 = 30): Promise<PushAnalytics
         count: countSql`count(*)`,
       })
       .from(pushSubscriptions)
-      .where(inArray(pushSubscriptions.restaurantId, ids))
+      .where(
+        and(
+          inArray(pushSubscriptions.restaurantId, ids),
+          isNull(pushSubscriptions.revokedAt),
+        ),
+      )
       .groupBy(pushSubscriptions.restaurantId),
+
+    // Deliberately includes revoked rows and group-level account rows to expose
+    // lifecycle attrition for owner/regional devices as well as GMs.
+    db
+      .select({
+        reason: sql<string>`coalesce(${pushSubscriptions.revokedReason}, 'unknown')`,
+        count: countSql`count(*)`,
+      })
+      .from(pushSubscriptions)
+      .where(
+        and(
+          inArray(pushSubscriptions.restaurantId, lifecycleAccountIds),
+          isNotNull(pushSubscriptions.revokedAt),
+        ),
+      )
+      .groupBy(sql`coalesce(${pushSubscriptions.revokedReason}, 'unknown')`),
+
+    db
+      .select({
+        role: sql<string>`coalesce(${pushSubscriptions.role}, 'unknown')`,
+        count: countSql`count(*)`,
+      })
+      .from(pushSubscriptions)
+      .where(
+        and(
+          inArray(pushSubscriptions.restaurantId, lifecycleAccountIds),
+          isNull(pushSubscriptions.revokedAt),
+        ),
+      )
+      .groupBy(sql`coalesce(${pushSubscriptions.role}, 'unknown')`),
   ]);
 
   const p = pushAgg[0];
   const created = num(p?.created);
   const totalClicks = clickRows.reduce((s, r) => s + num(r.clicks), 0);
   const clicksByKind = new Map(clickRows.map((r) => [r.kind, num(r.clicks)]));
+  const activeSubscriptions = subscriptionRoleRows.reduce(
+    (sum, row) => sum + num(row.count),
+    0,
+  );
+  const revokedByReason = { ...base.revokedByReason.value };
+  for (const row of revokedReasonRows) {
+    if (row.reason in revokedByReason) {
+      revokedByReason[row.reason as PushRevocationReason] = num(row.count);
+    }
+  }
+  const subscriptionsByRole = { ...base.subscriptionsByRole.value };
+  for (const row of subscriptionRoleRows) {
+    subscriptionsByRole[row.role] = num(row.count);
+  }
 
   const locById = new Map(locations.map((l) => [l.id, l]));
 
@@ -1888,6 +1987,9 @@ export async function getPushAnalytics(days: 7 | 30 = 30): Promise<PushAnalytics
     clickRate: rateOrNull(totalClicks, created),
     destinationOpened: tag(num(destAgg[0]?.count), 'verified'),
     resultingAction: tag(num(actionAgg[0]?.count), 'inferred'),
+    activeSubscriptions: tag(activeSubscriptions, 'verified'),
+    revokedByReason: tag(revokedByReason, 'verified'),
+    subscriptionsByRole: tag(subscriptionsByRole, 'verified'),
     byKind: kindRows.map((k) => ({
       kind: k.kind,
       created: num(k.created),
@@ -1963,7 +2065,12 @@ export async function getProblemLocations(): Promise<ProblemLocation[]> {
       db
         .select({ restaurantId: pushSubscriptions.restaurantId, count: countSql`count(*)` })
         .from(pushSubscriptions)
-        .where(inArray(pushSubscriptions.restaurantId, ids))
+        .where(
+          and(
+            inArray(pushSubscriptions.restaurantId, ids),
+            isNull(pushSubscriptions.revokedAt),
+          ),
+        )
         .groupBy(pushSubscriptions.restaurantId),
 
       // Active campaigns.

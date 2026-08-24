@@ -14,8 +14,9 @@ import {
   numeric,
   date,
   uuid,
+  check,
 } from 'drizzle-orm/pg-core';
-import { relations } from 'drizzle-orm';
+import { relations, sql } from 'drizzle-orm';
 
 export const reviewStatusEnum = pgEnum('review_status', [
   'new',
@@ -376,13 +377,32 @@ export const pushSubscriptions = pgTable(
     p256dh: text('p256dh').notNull(),
     auth: text('auth').notNull(),
     role: text('role'),
+    revokedAt: timestamp('revoked_at', { withTimezone: true }),
+    revokedReason: text('revoked_reason'),
+    deviceKind: text('device_kind'),
+    userAgent: text('user_agent'),
+    lastSubscribedAt: timestamp('last_subscribed_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    resubscribeCount: integer('resubscribe_count').notNull().default(0),
     createdAt: timestamp('created_at', { withTimezone: true })
       .notNull()
       .defaultNow(),
   },
   (t) => [
     index('push_subs_restaurant_id_idx').on(t.restaurantId),
+    index('push_subs_restaurant_active_idx')
+      .on(t.restaurantId)
+      .where(sql`${t.revokedAt} is null`),
     unique('push_subs_endpoint_uniq').on(t.endpoint),
+    check(
+      'push_subs_revoked_reason_check',
+      sql`${t.revokedReason} is null or ${t.revokedReason} in ('user_unsubscribe', 'endpoint_invalid', 'permission_revoked', 'unknown')`,
+    ),
+    check(
+      'push_subs_device_kind_check',
+      sql`${t.deviceKind} is null or ${t.deviceKind} in ('ios_pwa', 'ios_safari', 'android', 'desktop', 'unknown')`,
+    ),
   ],
 );
 
