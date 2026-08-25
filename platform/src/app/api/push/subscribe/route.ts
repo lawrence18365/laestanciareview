@@ -10,6 +10,40 @@ import {
   type PushDisplayMode,
 } from '@/lib/push-device';
 
+export async function GET(req: NextRequest) {
+  const csrf = requireSameOrigin(req);
+  if (csrf) return csrf;
+
+  const session = await verifySession();
+  if (!session) {
+    return Response.json({ error: 'No autorizado' }, { status: 401 });
+  }
+
+  const restaurant = await getRestaurantBySlug(session.slug);
+  if (!restaurant) {
+    return Response.json({ error: 'Restaurante no encontrado' }, { status: 404 });
+  }
+
+  const endpoint = req.nextUrl.searchParams.get('endpoint');
+  if (!endpoint || endpoint.length > 1024) {
+    return Response.json({ error: 'Endpoint requerido' }, { status: 400 });
+  }
+
+  const rows = await db
+    .select({ id: pushSubscriptions.id })
+    .from(pushSubscriptions)
+    .where(
+      and(
+        eq(pushSubscriptions.restaurantId, restaurant.id),
+        eq(pushSubscriptions.endpoint, endpoint),
+        isNull(pushSubscriptions.revokedAt),
+      ),
+    )
+    .limit(1);
+
+  return Response.json({ active: rows.length > 0 });
+}
+
 export async function POST(req: NextRequest) {
   const csrf = requireSameOrigin(req);
   if (csrf) return csrf;

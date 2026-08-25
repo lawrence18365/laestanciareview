@@ -63,10 +63,12 @@ describe('PUBLIC_EVENT_NAMES', () => {
     const publicNames = new Set<string>(productEvents.PUBLIC_EVENT_NAMES);
     for (const name of [
       'push_banner_shown',
+      'push_banner_suppressed',
       'push_banner_dismissed',
       'push_subscribe_click',
       'push_subscribe_failed',
       'push_permission_revoked_detected',
+      'push_subscription_healed',
     ]) {
       expect(publicNames.has(name)).toBe(false);
     }

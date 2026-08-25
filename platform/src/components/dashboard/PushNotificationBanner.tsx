@@ -7,7 +7,8 @@ import {
   isInstalledPWA,
   isIOS,
   subscribeToPush,
-  isSubscribed,
+  getPushSubscription,
+  healPushSubscriptionIfOrphaned,
   getPushDeviceKind,
   consumePermissionRevokedEndpoint,
   reportPermissionRevoked,
@@ -26,6 +27,7 @@ type BannerState =
 
 type ShownBannerState = 'prompt' | 'ios-install' | 'denied';
 type VisibleBannerState = ShownBannerState | 'error';
+type SuppressedBannerState = 'unsupported' | 'subscribed' | 'dismissed';
 
 function isShownBannerState(state: BannerState): state is ShownBannerState {
   return state === 'prompt' || state === 'ios-install' || state === 'denied';
@@ -35,13 +37,31 @@ function isVisibleBannerState(state: BannerState): state is VisibleBannerState {
   return isShownBannerState(state) || state === 'error';
 }
 
+function isSuppressedBannerState(state: BannerState): state is SuppressedBannerState {
+  return state === 'unsupported' || state === 'subscribed' || state === 'dismissed';
+}
+
 const DISMISS_KEY = 'ratetap_push_dismissed';
+const HEAL_ATTEMPT_KEY = 'ratetap_push_heal_attempted';
 
 export default function PushNotificationBanner() {
   const [state, setState] = useState<BannerState>('loading');
   const [subscribing, setSubscribing] = useState(false);
   const [deviceKind] = useState(getPushDeviceKind);
-  const shownTracked = useRef(false);
+  const resolutionTracked = useRef(false);
+  const healAttempted = useRef(false);
+
+  const claimHealAttempt = useCallback(() => {
+    if (healAttempted.current) return false;
+    healAttempted.current = true;
+    try {
+      if (sessionStorage.getItem(HEAL_ATTEMPT_KEY)) return false;
+      sessionStorage.setItem(HEAL_ATTEMPT_KEY, '1');
+    } catch {
+      // The mounted-instance ref remains the fallback when storage is unavailable.
+    }
+    return true;
+  }, []);
 
   useEffect(() => {
     let active = true;
@@ -74,8 +94,18 @@ export default function PushNotificationBanner() {
         }
 
         if (pushState === 'granted') {
-          const sub = await isSubscribed();
-          if (active) setState(sub ? 'subscribed' : 'prompt');
+          const subscription = await getPushSubscription();
+          if (!active) return;
+          setState(subscription ? 'subscribed' : 'prompt');
+          if (subscription && claimHealAttempt()) {
+            void healPushSubscriptionIfOrphaned(subscription)
+              .then((healed) => {
+                if (healed) {
+                  track('push_subscription_healed', { device_kind: deviceKind });
+                }
+              })
+              .catch(() => {});
+          }
           return;
         }
 
@@ -95,12 +125,17 @@ export default function PushNotificationBanner() {
     return () => {
       active = false;
     };
-  }, [deviceKind]);
+  }, [claimHealAttempt, deviceKind]);
 
   useEffect(() => {
-    if (!shownTracked.current && isShownBannerState(state)) {
-      shownTracked.current = true;
+    if (resolutionTracked.current || state === 'loading') return;
+
+    if (isShownBannerState(state)) {
+      resolutionTracked.current = true;
       track('push_banner_shown', { state, device_kind: deviceKind });
+    } else if (isSuppressedBannerState(state)) {
+      resolutionTracked.current = true;
+      track('push_banner_suppressed', { state, device_kind: deviceKind });
     }
   }, [deviceKind, state]);
 

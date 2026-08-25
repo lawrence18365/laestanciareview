@@ -146,6 +146,23 @@ async function serviceWorkerReadyWithTimeout(): Promise<ServiceWorkerRegistratio
   }
 }
 
+async function postPushSubscription(subscription: PushSubscription): Promise<boolean> {
+  const json = subscription.toJSON();
+  const response = await fetch('/api/push/subscribe', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      endpoint: json.endpoint,
+      keys: json.keys,
+      display_mode: isInstalledPWA() ? 'standalone' : 'browser',
+    }),
+  });
+  if (!response.ok) return false;
+
+  rememberPushEndpoint(subscription.endpoint);
+  return true;
+}
+
 /** Register SW and subscribe to push notifications. Sends subscription to server. */
 export async function subscribeToPush(): Promise<PushSubscribeResult> {
   if (!VAPID_PUBLIC_KEY) {
@@ -185,21 +202,9 @@ export async function subscribeToPush(): Promise<PushSubscribeResult> {
   }
 
   try {
-    const json = subscription.toJSON();
-    const response = await fetch('/api/push/subscribe', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        endpoint: json.endpoint,
-        keys: json.keys,
-        display_mode: isInstalledPWA() ? 'standalone' : 'browser',
-      }),
-    });
-    if (!response.ok) {
+    if (!(await postPushSubscription(subscription))) {
       return { ok: false, reason: 'post_failed' };
     }
-
-    rememberPushEndpoint(subscription.endpoint);
     return { ok: true };
   } catch (err) {
     console.error('[push] Subscription persistence failed:', err);
@@ -265,14 +270,49 @@ export async function unsubscribeFromPush(): Promise<boolean> {
   }
 }
 
+/** Read the browser's current subscription without waiting on SW.ready. */
+export async function getPushSubscription(): Promise<PushSubscription | null> {
+  try {
+    if (!('serviceWorker' in navigator)) return null;
+    const registration = await navigator.serviceWorker.getRegistration();
+    if (!registration) return null;
+    return await registration.pushManager.getSubscription();
+  } catch {
+    return null;
+  }
+}
+
 /** Check if already subscribed. */
 export async function isSubscribed(): Promise<boolean> {
+  return (await getPushSubscription()) !== null;
+}
+
+/**
+ * Restore a missing server row for an existing browser subscription. Returns
+ * true only when an inactive endpoint was successfully re-posted.
+ */
+export async function healPushSubscriptionIfOrphaned(
+  subscription: PushSubscription,
+): Promise<boolean> {
   try {
-    if (!('serviceWorker' in navigator)) return false;
-    const registration = await navigator.serviceWorker.getRegistration();
-    if (!registration) return false;
-    const subscription = await registration.pushManager.getSubscription();
-    return subscription !== null;
+    const query = new URLSearchParams({ endpoint: subscription.endpoint });
+    const response = await fetch(`/api/push/subscribe?${query.toString()}`, {
+      method: 'GET',
+      cache: 'no-store',
+    });
+    if (!response.ok) return false;
+
+    const result: unknown = await response.json();
+    if (
+      !result ||
+      typeof result !== 'object' ||
+      typeof (result as { active?: unknown }).active !== 'boolean'
+    ) {
+      return false;
+    }
+    if ((result as { active: boolean }).active) return false;
+
+    return await postPushSubscription(subscription);
   } catch {
     return false;
   }
