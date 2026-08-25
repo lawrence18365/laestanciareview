@@ -69,6 +69,7 @@ describe('PUBLIC_EVENT_NAMES', () => {
       'push_subscribe_failed',
       'push_permission_revoked_detected',
       'push_subscription_healed',
+      'push_device_conflict',
     ]) {
       expect(publicNames.has(name)).toBe(false);
     }

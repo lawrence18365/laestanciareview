@@ -420,15 +420,15 @@ export async function sendWeeklyDigest({
   const interceptedBanner = lastWeek.intercepted > 0 ? `
     <div style="margin: 0 28px 16px; padding: 14px 18px; background: #fffbeb; border-radius: 10px; border-left: 4px solid #f59e0b;">
       <p style="margin: 0; font-size: 14px; font-weight: 600; color: #92400e;">
-        🛡️ ${lastWeek.intercepted} ${lastWeek.intercepted === 1 ? 'reseña negativa captada' : 'reseñas negativas captadas'} en privado esta semana
+        ${lastWeek.intercepted} ${lastWeek.intercepted === 1 ? 'calificación bajo el umbral sin clic registrado a Google' : 'calificaciones bajo el umbral sin clic registrado a Google'} esta semana
       </p>
       <p style="margin: 6px 0 0;"><a href="${BASE_URL}/inbox" style="font-size: 12px; color: #b45309; text-decoration: underline;">Ver detalle en Buzón →</a></p>
     </div>` : '';
 
   const unresolvedBanner = unresolvedCount > 0 ? `
-    <div style="margin: 0 28px 16px; padding: 14px 18px; background: #fef2f2; border-radius: 10px; border-left: 4px solid #dc2626;">
-      <p style="margin: 0; font-size: 14px; font-weight: 600; color: #991b1b;">
-        ${unresolvedCount} ${unresolvedCount === 1 ? 'comentario sin resolver' : 'comentarios sin resolver'} necesitan atencion
+    <div style="margin: 0 28px 16px; padding: 14px 18px; background: #f5f5f4; border-radius: 10px; border-left: 4px solid #a8a29e;">
+      <p style="margin: 0; font-size: 14px; font-weight: 600; color: #44403c;">
+        ${unresolvedCount} ${unresolvedCount === 1 ? 'comentario privado todavía marcado' : 'comentarios privados todavía marcados'} como Nuevo
       </p>
     </div>` : '';
 
@@ -447,7 +447,7 @@ export async function sendWeeklyDigest({
         <tr>
           ${statCell(String(lastWeek.totalReviews), 'Reseñas', delta(reviewsDelta), 'left')}
           ${statCell(lastWeek.avgRating ? lastWeek.avgRating.toFixed(1) : '--', 'Calif. Prom.', ratingD(ratingDelta), 'mid')}
-          ${statCell(String(lastWeek.googleSends), 'Envios a Google', '', 'right')}
+          ${statCell(String(lastWeek.googleSends), 'Clics a Google', '', 'right')}
         </tr>
       </table>
     </div>
@@ -540,15 +540,15 @@ export async function sendOwnerDigest({ to, locations, dashboardUrl }: OwnerDige
   const interceptedBanner = totalIntercepted > 0 ? `
     <div style="margin: 0 28px 16px; padding: 14px 18px; background: #fffbeb; border-radius: 10px; border-left: 4px solid #f59e0b;">
       <p style="margin: 0; font-size: 14px; font-weight: 600; color: #92400e;">
-        🛡️ ${totalIntercepted} ${totalIntercepted === 1 ? 'reseña negativa captada' : 'reseñas negativas captadas'} en privado en todas las ubicaciones
+        ${totalIntercepted} ${totalIntercepted === 1 ? 'calificación bajo el umbral sin clic registrado a Google' : 'calificaciones bajo el umbral sin clic registrado a Google'} en todas las ubicaciones
       </p>
       <p style="margin: 6px 0 0;"><a href="${BASE_URL}/intercepted" style="font-size: 12px; color: #b45309; text-decoration: underline;">Ver detalle por ubicación →</a></p>
     </div>` : '';
 
   const unresolvedBanner = totalUnresolved > 0 ? `
-    <div style="margin: 0 28px 16px; padding: 14px 18px; background: #fef2f2; border-radius: 10px; border-left: 4px solid #dc2626;">
-      <p style="margin: 0; font-size: 14px; font-weight: 600; color: #991b1b;">
-        ${totalUnresolved} ${totalUnresolved === 1 ? 'comentario sin resolver' : 'comentarios sin resolver'} en todas las ubicaciones
+    <div style="margin: 0 28px 16px; padding: 14px 18px; background: #f5f5f4; border-radius: 10px; border-left: 4px solid #a8a29e;">
+      <p style="margin: 0; font-size: 14px; font-weight: 600; color: #44403c;">
+        ${totalUnresolved} ${totalUnresolved === 1 ? 'comentario privado todavía marcado' : 'comentarios privados todavía marcados'} como Nuevo en todas las ubicaciones
       </p>
     </div>` : '';
 
@@ -557,7 +557,7 @@ export async function sendOwnerDigest({ to, locations, dashboardUrl }: OwnerDige
   const locationRows = sorted.map((l) => {
     const ratingColor = l.avgRating >= 4 ? '#16a34a' : l.avgRating >= 3 ? '#eab308' : '#dc2626';
     const unresolvedBadge = l.unresolved > 0
-      ? `<span style="display:inline-block;padding:2px 7px;border-radius:999px;font-size:11px;font-weight:700;background:#fef2f2;color:#dc2626;margin-left:6px;">${l.unresolved}</span>`
+      ? `<span style="display:inline-block;padding:2px 7px;border-radius:999px;font-size:11px;font-weight:700;background:#f5f5f4;color:#57534e;margin-left:6px;">${l.unresolved} con estado Nuevo</span>`
       : '';
     return `<tr style="border-top: 1px solid #f0ece7;">
       <td style="padding: 10px 14px; font-size: 14px; font-weight: 500; color: #1c1917;">${l.name}${unresolvedBadge}</td>
@@ -607,8 +607,8 @@ export async function sendOwnerDigest({ to, locations, dashboardUrl }: OwnerDige
             <th style="padding: 12px 14px; font-size: 11px; text-align: left; color: #78716c; text-transform: uppercase; letter-spacing: 0.06em;">Ubicacion</th>
             <th style="padding: 12px 14px; font-size: 11px; text-align: right; color: #78716c; text-transform: uppercase;">Reseñas</th>
             <th style="padding: 12px 14px; font-size: 11px; text-align: right; color: #78716c; text-transform: uppercase;">Prom</th>
-            <th style="padding: 12px 14px; font-size: 11px; text-align: right; color: #78716c; text-transform: uppercase;">Google</th>
-            <th style="padding: 12px 14px; font-size: 11px; text-align: right; color: #78716c; text-transform: uppercase;">Captados</th>
+            <th style="padding: 12px 14px; font-size: 11px; text-align: right; color: #78716c; text-transform: uppercase;">Clics a Google</th>
+            <th style="padding: 12px 14px; font-size: 11px; text-align: right; color: #78716c; text-transform: uppercase;">Bajo umbral sin clic</th>
           </tr>
         </thead>
         <tbody>

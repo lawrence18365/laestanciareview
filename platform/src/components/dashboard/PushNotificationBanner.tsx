@@ -44,7 +44,7 @@ function isSuppressedBannerState(state: BannerState): state is SuppressedBannerS
 const DISMISS_KEY = 'ratetap_push_dismissed';
 const HEAL_ATTEMPT_KEY = 'ratetap_push_heal_attempted';
 
-export default function PushNotificationBanner() {
+export default function PushNotificationBanner({ accountKey }: { accountKey: string }) {
   const [state, setState] = useState<BannerState>('loading');
   const [subscribing, setSubscribing] = useState(false);
   const [deviceKind] = useState(getPushDeviceKind);
@@ -55,13 +55,14 @@ export default function PushNotificationBanner() {
     if (healAttempted.current) return false;
     healAttempted.current = true;
     try {
-      if (sessionStorage.getItem(HEAL_ATTEMPT_KEY)) return false;
-      sessionStorage.setItem(HEAL_ATTEMPT_KEY, '1');
+      const storageKey = `${HEAL_ATTEMPT_KEY}:${accountKey}`;
+      if (sessionStorage.getItem(storageKey)) return false;
+      sessionStorage.setItem(storageKey, '1');
     } catch {
       // The mounted-instance ref remains the fallback when storage is unavailable.
     }
     return true;
-  }, []);
+  }, [accountKey]);
 
   useEffect(() => {
     let active = true;
@@ -99,9 +100,11 @@ export default function PushNotificationBanner() {
           setState(subscription ? 'subscribed' : 'prompt');
           if (subscription && claimHealAttempt()) {
             void healPushSubscriptionIfOrphaned(subscription)
-              .then((healed) => {
-                if (healed) {
+              .then((outcome) => {
+                if (outcome === 'healed') {
                   track('push_subscription_healed', { device_kind: deviceKind });
+                } else if (outcome === 'device_conflict') {
+                  track('push_device_conflict', { device_kind: deviceKind });
                 }
               })
               .catch(() => {});

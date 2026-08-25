@@ -20,6 +20,7 @@ export const PRODUCT_EVENT_NAMES = [
   'push_subscribe_failed',
   'push_permission_revoked_detected',
   'push_subscription_healed',
+  'push_device_conflict',
   'review_page_open',
   'guest_capture_page_open',
   'validation_page_open',

@@ -9,7 +9,8 @@ const APP_OPEN_KEY = 'rt_app_open_sent';
 async function hasPushSubscription(): Promise<boolean> {
   try {
     if (!('serviceWorker' in navigator)) return false;
-    const reg = await navigator.serviceWorker.ready;
+    const reg = await navigator.serviceWorker.getRegistration();
+    if (!reg) return false;
     const sub = await reg.pushManager.getSubscription();
     return sub !== null;
   } catch {

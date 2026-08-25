@@ -590,14 +590,14 @@ export default function LiveView({ restaurantName, logoSrc, logoDarkBg, googleRa
           {/* Stats Row with week-over-week */}
           <div className="grid-stats" style={{ gap: fs ? '1.5rem' : '1.25rem', flexShrink: 0 }}>
             <StatBox
-              label="TOTAL ESCANEOS"
+              label="CALIFICACIONES CAPTURADAS"
               weekValue={data.week.totalScans}
               todayValue={data.today.totalScans}
               lastWeekValue={data.lastWeek.totalScans}
               large={fs}
             />
             <StatBox
-              label="ENVIADOS A GOOGLE"
+              label="CLICS A GOOGLE"
               weekValue={data.week.sentToGoogle}
               todayValue={data.today.sentToGoogle}
               lastWeekValue={data.lastWeek.sentToGoogle}
@@ -609,7 +609,7 @@ export default function LiveView({ restaurantName, logoSrc, logoDarkBg, googleRa
               large={fs}
             />
             <StatBox
-              label="ALERTAS PRIVADAS"
+              label="BAJO UMBRAL SIN CLIC"
               weekValue={data.week.intercepted}
               todayValue={data.today.intercepted}
               lastWeekValue={data.lastWeek.intercepted}
@@ -775,7 +775,7 @@ function DailyPodium({ winners, large }: { winners: MergedStaff[]; large: boolea
              </div>
              <div style={{ textAlign: 'right' }}>
                <div className="font-numeric" style={{ fontSize: fs ? '1.5rem' : '1.2rem', fontWeight: 700, color: gold, lineHeight: 1 }}>{first.todayScans}</div>
-               <div style={{ fontSize: '0.55rem', color: '#888', letterSpacing: '0.05em', textTransform: 'uppercase' }}>Escaneos</div>
+               <div style={{ fontSize: '0.55rem', color: '#888', letterSpacing: '0.05em', textTransform: 'uppercase' }}>Calificaciones</div>
              </div>
           </div>
         )}
@@ -907,14 +907,14 @@ function ProtectionRing({
             <div style={{ width: 6, height: 6, background: C.borderDark, flexShrink: 0 }} />
             <span style={{ fontSize: fs ? '0.85rem' : '0.75rem', display: 'flex', alignItems: 'center', gap: 6 }}>
               <strong className="font-numeric" style={{ fontSize: fs ? '1.1rem' : '1rem', color: C.textMain, fontWeight: 500 }}>{googleSends}</strong>
-              <span style={{ color: C.textMuted }}>ENVIADOS A GOOGLE</span>
+              <span style={{ color: C.textMuted }}>CLICS A GOOGLE</span>
             </span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <div style={{ width: 6, height: 6, background: C.textDim, flexShrink: 0 }} />
             <span style={{ fontSize: fs ? '0.85rem' : '0.75rem', display: 'flex', alignItems: 'center', gap: 6 }}>
               <strong className="font-numeric" style={{ fontSize: fs ? '1.1rem' : '1rem', color: C.textMain, fontWeight: 500 }}>{intercepted}</strong>
-              <span style={{ color: C.textMuted }}>ALERTAS PRIVADAS</span>
+              <span style={{ color: C.textMuted }}>BAJO UMBRAL SIN CLIC</span>
             </span>
           </div>
         </div>
@@ -1249,7 +1249,7 @@ function TeamTable({
             <tr>
               <ThCell align="center" large={fs} style={{ width: 50, borderBottom: `2px solid ${C.borderDark}` }}>RANGO</ThCell>
               <ThCell align="left" large={fs} style={{ borderBottom: `2px solid ${C.borderDark}` }}>NOMBRE</ThCell>
-              <ThCell align="right" large={fs} style={{ borderBottom: `2px solid ${C.borderDark}` }}>ESCANEOS</ThCell>
+              <ThCell align="right" large={fs} style={{ borderBottom: `2px solid ${C.borderDark}` }}>CALIFICACIONES</ThCell>
               <ThCell align="right" large={fs} style={{ borderBottom: `2px solid ${C.borderDark}` }}>5 ESTRELLAS</ThCell>
               <ThCell align="right" large={fs} style={{ borderBottom: `2px solid ${C.borderDark}` }}>&lt;4</ThCell>
               <ThCell align="right" large={fs} style={{ borderBottom: `2px solid ${C.borderDark}` }}>PROM</ThCell>

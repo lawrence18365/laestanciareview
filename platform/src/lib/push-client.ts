@@ -20,6 +20,16 @@ export type PushSubscribeResult =
   | { ok: true }
   | { ok: false; reason: PushSubscribeFailureReason };
 
+type PushPersistenceResult =
+  | { ok: true }
+  | { ok: false; reason: 'device_conflict' | 'failed' };
+
+export type PushHealOutcome =
+  | 'not_needed'
+  | 'healed'
+  | 'device_conflict'
+  | 'failed';
+
 function rememberPushEndpoint(endpoint: string): void {
   try {
     window.localStorage.setItem(REMEMBERED_PUSH_ENDPOINT_KEY, endpoint);
@@ -146,7 +156,9 @@ async function serviceWorkerReadyWithTimeout(): Promise<ServiceWorkerRegistratio
   }
 }
 
-async function postPushSubscription(subscription: PushSubscription): Promise<boolean> {
+async function postPushSubscription(
+  subscription: PushSubscription,
+): Promise<PushPersistenceResult> {
   const json = subscription.toJSON();
   const response = await fetch('/api/push/subscribe', {
     method: 'POST',
@@ -157,10 +169,26 @@ async function postPushSubscription(subscription: PushSubscription): Promise<boo
       display_mode: isInstalledPWA() ? 'standalone' : 'browser',
     }),
   });
-  if (!response.ok) return false;
+  if (!response.ok) {
+    if (response.status === 409) {
+      try {
+        const result: unknown = await response.json();
+        if (
+          result &&
+          typeof result === 'object' &&
+          (result as { code?: unknown }).code === 'push_device_conflict'
+        ) {
+          return { ok: false, reason: 'device_conflict' };
+        }
+      } catch {
+        // A malformed conflict response is a normal persistence failure.
+      }
+    }
+    return { ok: false, reason: 'failed' };
+  }
 
   rememberPushEndpoint(subscription.endpoint);
-  return true;
+  return { ok: true };
 }
 
 /** Register SW and subscribe to push notifications. Sends subscription to server. */
@@ -202,7 +230,8 @@ export async function subscribeToPush(): Promise<PushSubscribeResult> {
   }
 
   try {
-    if (!(await postPushSubscription(subscription))) {
+    const persisted = await postPushSubscription(subscription);
+    if (!persisted.ok) {
       return { ok: false, reason: 'post_failed' };
     }
     return { ok: true };
@@ -288,19 +317,20 @@ export async function isSubscribed(): Promise<boolean> {
 }
 
 /**
- * Restore a missing server row for an existing browser subscription. Returns
- * true only when an inactive endpoint was successfully re-posted.
+ * Restore a missing server row for an existing browser subscription. The
+ * result distinguishes account ownership conflicts from ordinary failures so
+ * callers can record the refusal without retrying or changing the UI.
  */
 export async function healPushSubscriptionIfOrphaned(
   subscription: PushSubscription,
-): Promise<boolean> {
+): Promise<PushHealOutcome> {
   try {
     const query = new URLSearchParams({ endpoint: subscription.endpoint });
     const response = await fetch(`/api/push/subscribe?${query.toString()}`, {
       method: 'GET',
       cache: 'no-store',
     });
-    if (!response.ok) return false;
+    if (!response.ok) return 'failed';
 
     const result: unknown = await response.json();
     if (
@@ -308,12 +338,14 @@ export async function healPushSubscriptionIfOrphaned(
       typeof result !== 'object' ||
       typeof (result as { active?: unknown }).active !== 'boolean'
     ) {
-      return false;
+      return 'failed';
     }
-    if ((result as { active: boolean }).active) return false;
+    if ((result as { active: boolean }).active) return 'not_needed';
 
-    return await postPushSubscription(subscription);
+    const persisted = await postPushSubscription(subscription);
+    if (persisted.ok) return 'healed';
+    return persisted.reason === 'device_conflict' ? 'device_conflict' : 'failed';
   } catch {
-    return false;
+    return 'failed';
   }
 }

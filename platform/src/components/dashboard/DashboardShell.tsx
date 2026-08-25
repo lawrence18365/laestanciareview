@@ -45,7 +45,7 @@ export default function DashboardShell({
         onOpenGuide={openGuide}
       />
       <FeatureAnnouncementBanner slug={slug} />
-      <PushNotificationBanner />
+      <PushNotificationBanner accountKey={slug} />
       <ProductAnalytics slug={slug} role={role} />
       <main>{children}</main>
       <OnboardingWizard

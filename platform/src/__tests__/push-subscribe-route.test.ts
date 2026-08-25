@@ -8,8 +8,12 @@ const mocks = vi.hoisted(() => ({
   whereConditions: [] as unknown[],
   selectedRows: [] as Array<{ id: number }>,
   selectWhereConditions: [] as unknown[],
+  insertedValues: [] as Array<Record<string, unknown>>,
+  conflictUpdates: [] as Array<Record<string, unknown>>,
+  insertReturningRows: [] as Array<{ id: number }>,
   dbUpdate: vi.fn(),
   dbSelect: vi.fn(),
+  dbInsert: vi.fn(),
   verifySession: vi.fn(
     async (): Promise<{ slug: string; role: 'gm' } | null> => ({
       slug: 'estancia-leon',
@@ -39,6 +43,19 @@ vi.mock('@/db', () => ({
         };
       }),
     })),
+    insert: mocks.dbInsert.mockImplementation(() => ({
+      values: vi.fn((values: Record<string, unknown>) => {
+        mocks.insertedValues.push(values);
+        return {
+          onConflictDoUpdate: vi.fn((config: Record<string, unknown>) => {
+            mocks.conflictUpdates.push(config);
+            return {
+              returning: vi.fn(async () => [...mocks.insertReturningRows]),
+            };
+          }),
+        };
+      }),
+    })),
   },
 }));
 
@@ -46,7 +63,7 @@ vi.mock('@/lib/session', () => ({ verifySession: mocks.verifySession }));
 vi.mock('@/lib/queries', () => ({ getRestaurantBySlug: mocks.getRestaurantBySlug }));
 vi.mock('@/lib/origin', () => ({ requireSameOrigin: vi.fn(() => null) }));
 
-import { DELETE, GET } from '@/app/api/push/subscribe/route';
+import { DELETE, GET, POST } from '@/app/api/push/subscribe/route';
 
 function getRequest(endpoint: string): NextRequest {
   const query = new URLSearchParams({ endpoint });
@@ -60,6 +77,84 @@ function deleteRequest(body: Record<string, unknown>): NextRequest {
     body: JSON.stringify(body),
   });
 }
+
+function postRequest(endpoint = 'https://push.example/sub-1'): NextRequest {
+  return new NextRequest('https://app.ratetapmx.com/api/push/subscribe', {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json',
+      'user-agent': 'Mozilla/5.0 (Linux; Android 15)',
+    },
+    body: JSON.stringify({
+      endpoint,
+      keys: { p256dh: 'p256dh-key', auth: 'auth-key' },
+      display_mode: 'browser',
+    }),
+  });
+}
+
+function getConflictWhereSql(): string {
+  const condition = mocks.conflictUpdates[0]?.setWhere as SQL;
+  return new PgDialect().sqlToQuery(condition).sql;
+}
+
+describe('POST /api/push/subscribe', () => {
+  beforeEach(() => {
+    mocks.insertedValues.length = 0;
+    mocks.conflictUpdates.length = 0;
+    mocks.insertReturningRows.length = 0;
+    mocks.dbInsert.mockClear();
+    mocks.verifySession.mockClear();
+    mocks.getRestaurantBySlug.mockClear();
+  });
+
+  it('revives an endpoint for the same restaurant', async () => {
+    mocks.insertReturningRows.push({ id: 12 });
+
+    const response = await POST(postRequest());
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual({ ok: true });
+    expect(mocks.insertedValues[0]?.restaurantId).toBe(77);
+    expect(mocks.conflictUpdates[0]?.set).toMatchObject({
+      restaurantId: 77,
+      revokedAt: null,
+      revokedReason: null,
+      role: 'gm',
+    });
+    expect(getConflictWhereSql()).toContain('"push_subscriptions"."restaurant_id" =');
+  });
+
+  it('refuses to move an active endpoint from another restaurant', async () => {
+    const response = await POST(postRequest('https://push.example/owned-elsewhere'));
+
+    expect(response.status).toBe(409);
+    await expect(response.json()).resolves.toEqual({
+      error: 'Este dispositivo ya recibe notificaciones de otra cuenta',
+      code: 'push_device_conflict',
+    });
+    const conflictWhere = getConflictWhereSql();
+    expect(conflictWhere).toContain('"push_subscriptions"."restaurant_id" =');
+    expect(conflictWhere).toContain('"push_subscriptions"."revoked_at" is not null');
+  });
+
+  it('allows a revoked endpoint to move to another restaurant', async () => {
+    mocks.insertReturningRows.push({ id: 12 });
+
+    const response = await POST(postRequest('https://push.example/revoked-elsewhere'));
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual({ ok: true });
+    expect(getConflictWhereSql()).toContain(
+      '"push_subscriptions"."revoked_at" is not null',
+    );
+    expect(mocks.conflictUpdates[0]?.set).toMatchObject({
+      restaurantId: 77,
+      revokedAt: null,
+      revokedReason: null,
+    });
+  });
+});
 
 describe('DELETE /api/push/subscribe', () => {
   beforeEach(() => {

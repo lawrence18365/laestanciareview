@@ -84,8 +84,9 @@ export async function POST(req: NextRequest) {
   const userAgent = rawUserAgent?.slice(0, 400) || null;
   const deviceKind = classifyPushDevice(rawUserAgent, displayMode);
 
-  // Upsert: if this endpoint already exists, update it
-  await db
+  // Keep endpoint ownership stable while active. A revoked endpoint may move
+  // accounts, and the same account may always refresh or revive its own row.
+  const persisted = await db
     .insert(pushSubscriptions)
     .values({
       restaurantId: restaurant.id,
@@ -98,6 +99,7 @@ export async function POST(req: NextRequest) {
     })
     .onConflictDoUpdate({
       target: pushSubscriptions.endpoint,
+      setWhere: sql`${pushSubscriptions.restaurantId} = ${restaurant.id} or ${pushSubscriptions.revokedAt} is not null`,
       set: {
         restaurantId: restaurant.id,
         p256dh: keys.p256dh,
@@ -110,7 +112,18 @@ export async function POST(req: NextRequest) {
         lastSubscribedAt: sql`now()`,
         resubscribeCount: sql`${pushSubscriptions.resubscribeCount} + 1`,
       },
-    });
+    })
+    .returning({ id: pushSubscriptions.id });
+
+  if (persisted.length === 0) {
+    return Response.json(
+      {
+        error: 'Este dispositivo ya recibe notificaciones de otra cuenta',
+        code: 'push_device_conflict',
+      },
+      { status: 409 },
+    );
+  }
 
   return Response.json({ ok: true });
 }

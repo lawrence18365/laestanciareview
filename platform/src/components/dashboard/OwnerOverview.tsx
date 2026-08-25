@@ -583,7 +583,7 @@ export default function OwnerOverview({ stats, unresolvedCounts, roiByLocation, 
                               padding: '2px 6px',
                               fontSize: '0.95rem',
                             }}
-                            title={`${r.restaurantName}: ${r.unresolved} sin resolver`}
+                            title={`${r.restaurantName}: ${r.unresolved} con estado Nuevo`}
                           >
                             {r.unresolved}
                           </span>

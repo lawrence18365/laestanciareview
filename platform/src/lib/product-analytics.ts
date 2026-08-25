@@ -2047,7 +2047,7 @@ export async function getProblemLocations(): Promise<ProblemLocation[]> {
         )
         .groupBy(productEvents.restaurantId),
 
-      // Negative feedback with text still in status 'new' (current backlog).
+      // Negative feedback with text still in status 'new'.
       db
         .select({ restaurantId: reviews.restaurantId, count: countSql`count(*)` })
         .from(reviews)
@@ -2181,7 +2181,7 @@ export async function getProblemLocations(): Promise<ProblemLocation[]> {
     }
     const unresolvedCount = unresolved.get(loc.id) ?? 0;
     if (unresolvedCount > 0) {
-      issues.push(`Feedback negativo sin resolver (${unresolvedCount})`);
+      issues.push(`Feedback negativo con estado Nuevo (${unresolvedCount})`);
     }
     if ((pushSubs.get(loc.id) ?? 0) === 0) {
       issues.push('Sin suscripción push');
