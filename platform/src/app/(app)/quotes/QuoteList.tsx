@@ -14,8 +14,6 @@ type Quote = {
   eventType: string | null;
   guestCount: number;
   pricePerPerson: string;
-  serviceChargePercent: string;
-  ivaPercent: string;
   createdAt: string;
 };
 
@@ -38,12 +36,8 @@ function formatMXN(n: number) {
 }
 
 function quoteTotal(q: Quote): number {
-  const pp = parseFloat(q.pricePerPerson) || 0;
-  const sc = parseFloat(q.serviceChargePercent) || 0;
-  const iva = parseFloat(q.ivaPercent) || 0;
-  const sub = pp * q.guestCount;
-  const withSC = sub * (1 + sc / 100);
-  return Math.round(withSC * (1 + iva / 100));
+  // pricePerPerson is already servicio + IVA inclusive, derived from config_json server-side.
+  return Math.round((parseFloat(q.pricePerPerson) || 0) * q.guestCount);
 }
 
 export default function QuoteList({

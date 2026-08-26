@@ -199,8 +199,9 @@ console.log('\n══════ 11. Safety: malformed inputs ═════�
   const p = computePricing(c);
   console.log(`  carta with unknown dish id: cost=${fmtMXN(p.costoTotal)} subtotal=${fmtMXN(p.subtotalVenta)}`);
   log(Number.isFinite(p.precioTotalFinal), 'survives unknown dish id');
-  // only pa19 counts: 420*2 = 840. *1.40 = 1,176
-  log(Math.abs(p.subtotalVenta - 1176) < 1, 'only valid dishes counted', p.subtotalVenta);
+  // Derived from MENU: only pa19 counts, with a 40% markup.
+  const expectedSubtotal = dishById('pa19')!.precio * 2 * 1.40;
+  log(Math.abs(p.subtotalVenta - expectedSubtotal) < 0.01, 'only valid dishes counted', p.subtotalVenta);
 }
 
 console.log('\n══════ 12. Very large group ══════');

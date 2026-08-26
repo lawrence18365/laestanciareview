@@ -12,55 +12,7 @@ deleting the entry in the same commit that fixes it.
 
 ## Open
 
-### 1. `quote_items` is written but effectively unread
-**Where:** `src/app/api/quotes/route.ts:144`, `src/app/api/quotes/[id]/route.ts:118,132`, table in `src/db/schema.ts`
-**What:** Every quote save deletes and re-inserts `quote_items` rows. The only
-reader left is the GET route that returns them to nobody — the print path that
-used to render them was deleted in `6481e58`.
-**Why it matters:** Write amplification on every save, plus a table that looks
-authoritative in the schema and isn't. Same shape as `price_per_person`.
-**Fix:** Confirm no consumer, stop writing, drop the table.
-
-### 2. `quotes.service_charge_percent` / `quotes.iva_percent` are decorative
-**Where:** `src/db/schema.ts` (quotes), written in `QuoteBuilderV2.tsx:~341`
-**What:** The builder hardcodes both to `'0'` on every save because
-`precioFinalPP` already includes servicio and IVA. The real rates live in
-`servicePct()` (15%) and `ivaPct()` (16%) in `src/lib/quote-data.ts:~636`.
-**Why it matters:** Two columns named after business rates that hold neither.
-A future reader will use them. `QuoteList.quoteTotal()` still multiplies by
-them — harmless only because they are always zero.
-**Fix:** Same treatment as `price_per_person` — remove from schema and payload.
-
-### 3. `PACKAGE_TEMPLATES` is dead code carrying a third price list
-**Where:** `src/lib/quote-defaults.ts:125-180`
-**What:** Nothing imports it. Only `DEFAULT_TERMS` and `CATEGORY_LABELS` are
-consumed from that module. It holds `$650 / $850 / $1100` per-person prices
-that no longer match anything the app charges.
-**Why it matters:** It is the single most likely thing for someone to find and
-"update" while the real prices sit in `PAQUETES_BEBIDAS` / `MENU`.
-**Fix:** Delete the export.
-
-### 4. `computePricing()` silently prices unknown beverage ids at $0
-**Where:** `src/lib/quote-data.ts:~660` — `const bebidaPP = pkg?.precio ?? 0`
-**What:** `computePricing` does NOT call `migrateBebidaId`; only `migrateConfig`
-does. Any caller that hands it a raw legacy id (`'completo'`, `'sin-alcohol'`)
-gets a $0 beverage line with no error.
-**Why it matters:** This already happened. `scripts/stress-quote-builder.ts`
-passed legacy ids for months; four pricing assertions were silently comparing
-against $0 totals and failing unnoticed. Fixed in `f575102` — the swallow that
-allowed it is still there.
-**Fix:** Either migrate inside `computePricing`, or throw on an unknown id
-instead of defaulting to zero.
-
-### 5. `scripts/stress-quote-builder.ts` section 11 expects a stale dish price
-**Where:** `scripts/stress-quote-builder.ts`, section 11
-**What:** Asserts `pa19` (Arrachera Pibe) at `$420`; `MENU` says `$450`. One
-permanent FAIL in the harness.
-**Why it matters:** A harness with a known-failing case trains people to ignore
-its output — which is exactly how #4 survived.
-**Fix:** Derive the expectation from `MENU` at runtime, as section 6 now does.
-
-### 6. Vercel production alias lags the git deploy
+### 1. Vercel production alias lags the git deploy
 **Where:** deploy process, not code
 **What:** `git push origin main` builds a deployment marked `Production`, but
 `app.ratetapmx.com` does not always point at it immediately. On 2026-08-25 the
@@ -77,6 +29,21 @@ deployment containing the schema change, and only then apply the migration.
 ---
 
 ## Closed
+
+### `quote_items` was written but effectively unread
+**Closed:** 2026-08-25, removed its schema, relations, API reads and writes; migration `0022` drops the table.
+
+### `quotes.service_charge_percent` / `quotes.iva_percent` were decorative
+**Closed:** 2026-08-25, removed both fields from the schema, validation, payloads, and total calculation; migration `0022` drops the columns.
+
+### `PACKAGE_TEMPLATES` carried a dead third price list
+**Closed:** 2026-08-25, deleted the unused type and template array while retaining the live defaults and menu exports.
+
+### Beverage package ids could silently price at $0
+**Closed:** 2026-08-25, pricing now migrates legacy ids, warns once for unresolved ids, and has regression coverage for every configured package id.
+
+### The malformed-input stress case expected a stale dish price
+**Closed:** 2026-08-25, the assertion now derives the `pa19` price from `MENU` at runtime.
 
 ### `quotes.price_per_person` — the price lived in two places
 **Closed:** 2026-08-25, commits `65c2425` (stop reading it) and `6481e58`

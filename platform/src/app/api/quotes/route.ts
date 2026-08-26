@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server';
 import { and, desc, eq, inArray, sql } from 'drizzle-orm';
 import { db } from '@/db';
-import { quotes, quoteItems, restaurants, eventLeads } from '@/db/schema';
+import { quotes, restaurants, eventLeads } from '@/db/schema';
 import { verifySession } from '@/lib/session';
 import { DEFAULT_TERMS } from '@/lib/quote-defaults';
 import { quoteCreateSchema } from '@/lib/validations';
@@ -94,8 +94,6 @@ export async function POST(req: NextRequest) {
       eventType: data.eventType ?? null,
       guestCount: data.guestCount,
       eventNotes: data.eventNotes ?? null,
-      serviceChargePercent: data.serviceChargePercent,
-      ivaPercent: data.ivaPercent,
       packageName: data.packageName ?? null,
       terms: data.terms ?? DEFAULT_TERMS,
       configJson: (data.configJson ?? null) as object | null,
@@ -125,23 +123,6 @@ export async function POST(req: NextRequest) {
           inArray(eventLeads.status, ['new', 'claimed']),
         ),
       );
-  }
-
-  // Insert quote items if provided
-  if (data.items) {
-    const rows: { quoteId: number; category: string; name: string; sortOrder: number }[] = [];
-    for (const [category, names] of Object.entries(data.items)) {
-      if (!Array.isArray(names)) continue;
-      names.forEach((name, i) => {
-        const trimmed = typeof name === 'string' ? name.trim() : '';
-        if (trimmed) {
-          rows.push({ quoteId: inserted.id, category, name: trimmed, sortOrder: i });
-        }
-      });
-    }
-    if (rows.length > 0) {
-      await db.insert(quoteItems).values(rows);
-    }
   }
 
   return Response.json({ id: inserted.id, quoteNumber }, { status: 201 });

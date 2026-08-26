@@ -122,69 +122,6 @@ export const MENU_OPTIONS: Record<MenuCategory, string[]> = {
   ],
 };
 
-export type PackageTemplate = {
-  name: string;
-  pricePerPerson: string;
-  items: Partial<Record<MenuCategory, string[]>>;
-};
-
-// Package templates use real menu items. Guarniciones are always included —
-// the price per person covers the selected sides, no extra per-item charge.
-export const PACKAGE_TEMPLATES: PackageTemplate[] = [
-  {
-    name: 'Ejecutivo',
-    pricePerPerson: '650',
-    items: {
-      entrada: ['Queso Provoleta 160g', 'Chorizo Argentino 160g'],
-      ensalada: ['César (preparada en su mesa)'],
-      corte: ['Arrachera 400g'],
-      guarnicion: ['Puré de Papa', 'Papa (cargada, saratoga o a la francesa)'],
-      postre: ['Postre del día'],
-      bebida: ['Refrescos', 'Aguas frescas (Limonada / Naranjada)', 'Café americano'],
-      vino: [],
-      extra: [],
-    },
-  },
-  {
-    name: 'Premium',
-    pricePerPerson: '850',
-    items: {
-      entrada: ['Empanadas Relleno (carne / queso / humita / salmón)', 'Provoleta Estancia 160g', 'Chistorra 200g'],
-      ensalada: ['César (preparada en su mesa)', 'Mixta'],
-      corte: ['Bife de Chorizo 500g'],
-      guarnicion: ['Puré de Papa', 'Papa (cargada, saratoga o a la francesa)', 'Espinacas a la Crema'],
-      postre: ['Flan Napolitano'],
-      bebida: ['Refrescos', 'Aguas frescas (Limonada / Naranjada)', 'Café americano'],
-      vino: ['Vino de la casa (tinto o blanco)'],
-      extra: [],
-    },
-  },
-  {
-    name: 'Elite',
-    pricePerPerson: '1100',
-    items: {
-      entrada: [
-        'Empanadas Relleno (carne / queso / humita / salmón)',
-        'Queso Fundido con Chorizo Argentino 75g',
-        'Provoleta Estancia 160g',
-        'Mollejas de Ternera 350g',
-      ],
-      ensalada: ['César (preparada en su mesa)', 'Evita'],
-      corte: ['Rib-Eye Roll 400g'],
-      guarnicion: [
-        'Puré de Papa',
-        'Papa (cargada, saratoga o a la francesa)',
-        'Espinacas a la Crema',
-        'Verduras a la Parrilla',
-      ],
-      postre: ['Selección de postres'],
-      bebida: ['Refrescos', 'Aguas frescas (Limonada / Naranjada)', 'Café americano', 'Cappuccino'],
-      vino: ['Selección del sommelier'],
-      extra: [],
-    },
-  },
-];
-
 export const DEFAULT_TERMS = `1. Cotización válida por 15 días a partir de la fecha de emisión.
 2. Para confirmar la reservación se requiere un anticipo del 50% del total.
 3. El saldo restante deberá liquidarse antes del evento.
@@ -218,7 +155,9 @@ export function emptyItemsMap(): QuoteItemsMap {
   };
 }
 
-export function itemsMapFromTemplate(tpl: PackageTemplate): QuoteItemsMap {
+export function itemsMapFromTemplate(tpl: {
+  items: Partial<Record<MenuCategory, string[]>>;
+}): QuoteItemsMap {
   return {
     entrada: tpl.items.entrada ?? [],
     ensalada: tpl.items.ensalada ?? [],

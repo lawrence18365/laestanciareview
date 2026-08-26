@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server';
 import { eq, and } from 'drizzle-orm';
 import { db } from '@/db';
-import { quotes, quoteItems, restaurants } from '@/db/schema';
+import { quotes, restaurants } from '@/db/schema';
 import { verifySession } from '@/lib/session';
 import { quoteUpdateSchema } from '@/lib/validations';
 import { requireSameOrigin } from '@/lib/origin';
@@ -40,13 +40,7 @@ export async function GET(
     .limit(1);
   if (!quote) return Response.json({ error: 'Not found' }, { status: 404 });
 
-  const items = await db
-    .select()
-    .from(quoteItems)
-    .where(eq(quoteItems.quoteId, quoteId))
-    .orderBy(quoteItems.sortOrder);
-
-  return Response.json({ quote, items });
+  return Response.json({ quote });
 }
 
 export async function PUT(
@@ -103,8 +97,6 @@ export async function PUT(
       eventType: data.eventType ?? null,
       guestCount: data.guestCount,
       eventNotes: data.eventNotes ?? null,
-      serviceChargePercent: data.serviceChargePercent,
-      ivaPercent: data.ivaPercent,
       packageName: data.packageName ?? null,
       terms: data.terms ?? null,
       configJson:
@@ -112,25 +104,6 @@ export async function PUT(
       updatedAt: new Date(),
     })
     .where(eq(quotes.id, quoteId));
-
-  // Replace items entirely
-  await db.delete(quoteItems).where(eq(quoteItems.quoteId, quoteId));
-
-  if (data.items) {
-    const rows: { quoteId: number; category: string; name: string; sortOrder: number }[] = [];
-    for (const [category, names] of Object.entries(data.items)) {
-      if (!Array.isArray(names)) continue;
-      names.forEach((name, i) => {
-        const trimmed = typeof name === 'string' ? name.trim() : '';
-        if (trimmed) {
-          rows.push({ quoteId, category, name: trimmed, sortOrder: i });
-        }
-      });
-    }
-    if (rows.length > 0) {
-      await db.insert(quoteItems).values(rows);
-    }
-  }
 
   return Response.json({ ok: true });
 }

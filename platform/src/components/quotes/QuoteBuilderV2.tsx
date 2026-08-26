@@ -327,9 +327,6 @@ export default function QuoteBuilderV2({
     setError('');
     setSaving(true);
     try {
-      // Config-derived pricing already includes servicio + IVA. Keep sc/iva at
-      // zero so consumers of these legacy percentage fields do not apply the
-      // charges a second time.
       const payload = {
         clientName: config.evento.cliente,
         clientPhone: config.evento.telefono,
@@ -338,8 +335,6 @@ export default function QuoteBuilderV2({
         guestCount: config.evento.personas,
         eventNotes: '',
         packageName: config.templateId ?? modoLabel,
-        serviceChargePercent: '0',
-        ivaPercent: '0',
         terms: config.terms ?? '',
         configJson: config,
         // Only meaningful on create; the server links it and advances the lead.

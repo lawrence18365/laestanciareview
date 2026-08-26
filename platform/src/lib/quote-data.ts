@@ -607,6 +607,19 @@ export function packageById(id: string): BeveragePackage | undefined {
   return PAQUETES_BEBIDAS.find((p) => p.id === id);
 }
 
+const warnedBeveragePackageIds = new Set<string>();
+
+export function resolveBeveragePackage(
+  id: string | undefined,
+): BeveragePackage | undefined {
+  const pkg = packageById(migrateBebidaId(id));
+  if (id && !pkg && !warnedBeveragePackageIds.has(id)) {
+    warnedBeveragePackageIds.add(id);
+    console.warn(`Unresolved beverage package id "${id}"; it is being priced at $0.`);
+  }
+  return pkg;
+}
+
 // Sum of extra-section per-pp prices. Used in Vista Cliente / PDF to embed
 // the extras into the displayed per-tier price for opciones mode (so the
 // customer sees one final number per option, not "Opción A $1,050 +
@@ -655,7 +668,7 @@ export type PricingResult = {
 
 export function computePricing(config: QuoteConfig): PricingResult {
   const personas = Math.max(1, config.evento.personas || 1);
-  const pkg = packageById(
+  const pkg = resolveBeveragePackage(
     config.modo === 'individual'
       ? config.indiv.bebidas
       : config.modo === 'opciones'
@@ -776,7 +789,7 @@ export type TierPricing = { letra: string; pricePP: number; total: number };
 export function computeTierPricing(config: QuoteConfig): TierPricing[] {
   if (config.modo !== 'opciones') return [];
   const personas = Math.max(1, config.evento.personas || 1);
-  const pkg = packageById(config.opciones.bebidas);
+  const pkg = resolveBeveragePackage(config.opciones.bebidas);
   const bebidaPP = pkg?.precio ?? 0;
   const extraVentaPP = (config.extraSections ?? []).reduce(
     (sum, s) => sum + (s.precioPP || 0),

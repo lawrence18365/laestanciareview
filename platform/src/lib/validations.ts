@@ -159,21 +159,7 @@ export const sessionFeedbackPatchSchema = z.object({
   status: z.enum(['new', 'reviewed', 'resolved']),
 });
 
-// Quote builder — POST/PUT body schema. Numeric strings are bounded so a
-// negative or absurd input cannot produce a malformed quote.
-const percentString = z
-  .union([z.string(), z.number()])
-  .transform((v) => (typeof v === 'number' ? String(v) : v))
-  .refine((v) => /^-?\d+(\.\d+)?$/.test(v), 'Must be a number')
-  .refine((v) => {
-    const n = parseFloat(v);
-    return Number.isFinite(n) && n >= 0 && n <= 100;
-  }, 'Must be between 0 and 100');
-
-const quoteItemsMap = z
-  .record(z.string().min(1).max(50), z.array(z.string().min(1).max(300)).max(50))
-  .optional();
-
+// Quote builder POST/PUT body schema.
 export const quoteCreateSchema = z.object({
   clientName: z.string().min(1).max(200),
   clientPhone: z.string().max(50).optional().nullable(),
@@ -183,12 +169,9 @@ export const quoteCreateSchema = z.object({
   eventType: z.string().max(80).optional().nullable(),
   guestCount: z.coerce.number().int().min(1).max(10000).default(1),
   eventNotes: z.string().max(5000).optional().nullable(),
-  serviceChargePercent: percentString.optional().default('10'),
-  ivaPercent: percentString.optional().default('16'),
   packageName: z.string().max(200).optional().nullable(),
   terms: z.string().max(20000).optional().nullable(),
   configJson: z.record(z.string(), z.unknown()),
-  items: quoteItemsMap,
   // Set when the quote originates from an event lead. Tenant ownership of the
   // lead is re-verified server-side before it is linked (see api/quotes).
   leadId: z.coerce.number().int().positive().optional().nullable(),
