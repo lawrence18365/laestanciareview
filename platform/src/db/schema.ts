@@ -672,7 +672,6 @@ export const quotes = pgTable(
     eventType: text('event_type'),
     guestCount: integer('guest_count').notNull().default(1),
     eventNotes: text('event_notes'),
-    pricePerPerson: text('price_per_person').notNull().default('0'),
     serviceChargePercent: text('service_charge_percent').notNull().default('10'),
     ivaPercent: text('iva_percent').notNull().default('16'),
     packageName: text('package_name'),

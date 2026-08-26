@@ -6,19 +6,16 @@ import { migrateConfig, computePricing, type QuoteConfig } from '@/lib/quote-dat
 import { verifySession } from '@/lib/session';
 import QuoteList from './QuoteList';
 
-// The stored price_per_person is a snapshot written when the quote was
-// last saved. It goes stale whenever a pricing input changes (a menu
-// price, a beverage package). config_json holds the builder state, so
-// recompute from it and let the list agree with what opening the quote
-// shows. Legacy pre-V2 rows have no config_json - keep their snapshot.
-function listPricePerPerson(row: { pricePerPerson: string; configJson: unknown }): string {
+// The snapshot column is gone, so config_json is now the only price source.
+// Recompute from builder state so the list agrees with the opened quote.
+function listPricePerPerson(row: { configJson: unknown }): string {
   const raw = row.configJson;
-  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return row.pricePerPerson;
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return '0';
   try {
     const config = migrateConfig(raw as QuoteConfig);
     return String(Math.round(computePricing(config).precioFinalPP || 0));
   } catch {
-    return row.pricePerPerson;
+    return '0';
   }
 }
 

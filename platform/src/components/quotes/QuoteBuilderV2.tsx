@@ -327,9 +327,9 @@ export default function QuoteBuilderV2({
     setError('');
     setSaving(true);
     try {
-      // precioFinalPP already includes servicio + IVA. Send sc=0 & iva=0 so the
-      // list view's quoteTotal() (pp × guests × (1+sc) × (1+iva)) doesn't
-      // double-count what's already baked in.
+      // Config-derived pricing already includes servicio + IVA. Keep sc/iva at
+      // zero so consumers of these legacy percentage fields do not apply the
+      // charges a second time.
       const payload = {
         clientName: config.evento.cliente,
         clientPhone: config.evento.telefono,
@@ -338,7 +338,6 @@ export default function QuoteBuilderV2({
         guestCount: config.evento.personas,
         eventNotes: '',
         packageName: config.templateId ?? modoLabel,
-        pricePerPerson: String(Math.round(pricing.precioFinalPP || 0)),
         serviceChargePercent: '0',
         ivaPercent: '0',
         terms: config.terms ?? '',

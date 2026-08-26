@@ -103,7 +103,6 @@ export async function PUT(
       eventType: data.eventType ?? null,
       guestCount: data.guestCount,
       eventNotes: data.eventNotes ?? null,
-      pricePerPerson: data.pricePerPerson,
       serviceChargePercent: data.serviceChargePercent,
       ivaPercent: data.ivaPercent,
       packageName: data.packageName ?? null,
