@@ -15,7 +15,7 @@ c.opciones.tiers = [
   { letra: 'C', precio: 1400, platos: 'C', costoPP: 0 },
 ];
 
-console.log('Case 1 — IVA included, no servicio, bebidas Básico ($200/pp), 50 pax:');
+console.log('Case 1 — IVA included, no servicio, bebidas Básico ($300/pp), 50 pax:');
 for (const t of computeTierPricing(c)) {
   console.log(`  Opción ${t.letra}: $${Math.round(t.pricePP)}/pp · total $${Math.round(t.total).toLocaleString('es-MX')}`);
 }

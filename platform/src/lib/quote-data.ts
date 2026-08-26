@@ -194,7 +194,7 @@ export const PAQUETES_BEBIDAS: BeveragePackage[] = [
       'Refresco, naranjada, limonada, agua mineral',
       'Vino tinto de la casa o cerveza nacional',
     ],
-    precio: 200,
+    precio: 300,
   },
   {
     id: 'premium',
@@ -205,7 +205,7 @@ export const PAQUETES_BEBIDAS: BeveragePackage[] = [
       '2 con alcohol: vino de la casa o cerveza nacional',
       '2 sin alcohol: refresco, naranjada, limonada, agua o café',
     ],
-    precio: 300,
+    precio: 400,
   },
   {
     id: 'barra-libre-sin-alcohol',
@@ -215,7 +215,7 @@ export const PAQUETES_BEBIDAS: BeveragePackage[] = [
       'Bebidas sin alcohol ilimitadas',
       'Refresco, naranjada, limonada, agua mineral, café',
     ],
-    precio: 150,
+    precio: 200,
   },
   {
     id: 'mixto-ilimitado',
@@ -225,7 +225,7 @@ export const PAQUETES_BEBIDAS: BeveragePackage[] = [
       '2 bebidas con alcohol: vino de la casa o cerveza nacional',
       'Barra libre sin alcohol ilimitada',
     ],
-    precio: 280,
+    precio: 500,
   },
   {
     id: 'a-la-carta',
@@ -239,7 +239,7 @@ export const PAQUETES_BEBIDAS: BeveragePackage[] = [
 // Legacy bebida ids that lived in saved quotes before the 2026 rename. We
 // resolve them on read in `migrateConfig` so existing quotes don't break.
 // Mapping: 'completo' (old Básico) → 'basico', 'sin-alcohol' (old $159 3-bebida
-// sin-alcohol) → 'barra-libre-sin-alcohol' (new $150 ilimitado, the closest
+// sin-alcohol) → 'barra-libre-sin-alcohol' (new $200 ilimitado, the closest
 // match Leslie agreed to as a price-and-content swap).
 const LEGACY_BEBIDA_IDS: Record<string, string> = {
   completo: 'basico',

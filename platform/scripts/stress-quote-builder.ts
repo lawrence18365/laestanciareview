@@ -46,17 +46,17 @@ console.log('\n══════ 3. Pricing: Individual mode ══════
   c.evento.cliente = 'Boda García';
   c.indiv.precioPP = 1000;
   c.indiv.costoPP = 450;
-  c.indiv.bebidas = 'completo'; // +$200/pp
+  c.indiv.bebidas = 'basico'; // +$300/pp
   c.indiv.incluyeIVA = true;
   c.indiv.incluyeServicio = false;
   const p = computePricing(c);
-  // Expected: subtotalVenta = (1000+200)*50 = 60,000. IVA included, no service.
-  // precioTotalFinal = 60,000. precioFinalPP = 1,200.
-  console.log(`  personas=50 precioPP=1000 +bebidas200 IVA incluido:`);
+  // Expected: subtotalVenta = (1000+300)*50 = 65,000. IVA included, no service.
+  // precioTotalFinal = 65,000. precioFinalPP = 1,300.
+  console.log(`  personas=50 precioPP=1000 +bebidas300 IVA incluido:`);
   console.log(`    subtotalVenta=${fmtMXN(p.subtotalVenta)}   total=${fmtMXN(p.precioTotalFinal)}   pp=${fmtMXN(p.precioFinalPP)}`);
-  log(p.subtotalVenta === 60000, 'subtotalVenta = $60,000', p.subtotalVenta);
-  log(p.precioTotalFinal === 60000, 'total = $60,000 (IVA incluido)', p.precioTotalFinal);
-  log(p.precioFinalPP === 1200, 'precio/pp = $1,200', p.precioFinalPP);
+  log(p.subtotalVenta === 65000, 'subtotalVenta = $65,000', p.subtotalVenta);
+  log(p.precioTotalFinal === 65000, 'total = $65,000 (IVA incluido)', p.precioTotalFinal);
+  log(p.precioFinalPP === 1300, 'precio/pp = $1,300', p.precioFinalPP);
   log(p.gananciaBruta > 0, 'ganancia positiva', p.gananciaBruta);
 }
 
@@ -66,20 +66,20 @@ console.log('\n══════ 4. Pricing: Individual + servicio + IVA not in
   c.evento.personas = 10;
   c.indiv.precioPP = 1000;
   c.indiv.costoPP = 450;
-  c.indiv.bebidas = 'sin-alcohol'; // +$159/pp
+  c.indiv.bebidas = 'barra-libre-sin-alcohol'; // +$200/pp
   c.indiv.incluyeIVA = false;
   c.indiv.incluyeServicio = true;
   const p = computePricing(c);
-  // subtotalVenta = (1000+159)*10 = 11,590
-  // servicio = 11,590 * 0.15 = 1,738.50
-  // conServicio = 13,328.50
-  // iva = 13,328.50 * 0.16 = 2,132.56
-  // total = 15,461.06
-  console.log(`  personas=10 precioPP=1000 +bebida159 +15%serv +16%IVA:`);
+  // subtotalVenta = (1000+200)*10 = 12,000
+  // servicio = 12,000 * 0.15 = 1,800
+  // conServicio = 13,800
+  // iva = 13,800 * 0.16 = 2,208
+  // total = 16,008
+  console.log(`  personas=10 precioPP=1000 +bebida200 +15%serv +16%IVA:`);
   console.log(`    subtotal=${fmtMXN(p.subtotalVenta)}  serv=${fmtMXN(p.servicioAmt)}  iva=${fmtMXN(p.ivaAmt)}  total=${fmtMXN(p.precioTotalFinal)}`);
-  log(Math.abs(p.subtotalVenta - 11590) < 1, 'subtotal $11,590');
-  log(Math.abs(p.servicioAmt - 1738.5) < 1, 'servicio ≈ $1,738');
-  log(Math.abs(p.precioTotalFinal - 15461) < 2, 'total ≈ $15,461');
+  log(Math.abs(p.subtotalVenta - 12000) < 1, 'subtotal $12,000');
+  log(Math.abs(p.servicioAmt - 1800) < 1, 'servicio ≈ $1,800');
+  log(Math.abs(p.precioTotalFinal - 16008) < 2, 'total ≈ $16,008');
 }
 
 console.log('\n══════ 5. Pricing: 3-opciones mode ══════');
@@ -91,16 +91,16 @@ console.log('\n══════ 5. Pricing: 3-opciones mode ══════
     { letra: 'B', precio: 1250, platos: 'NY' },
     { letra: 'C', precio: 1400, platos: 'Rib-Eye' },
   ];
-  c.opciones.bebidas = 'completo'; // +$200/pp
+  c.opciones.bebidas = 'basico'; // +$300/pp
   c.opciones.incluyeIVA = true;
   c.opciones.incluyeServicio = false;
   const p = computePricing(c);
   // avgTier = (1100+1250+1400)/3 = 1250
-  // subtotal = (1250+200)*100 = 145,000
-  console.log(`  personas=100 tiers=[1100,1250,1400] avg=1250 +bebida200:`);
+  // subtotal = (1250+300)*100 = 155,000
+  console.log(`  personas=100 tiers=[1100,1250,1400] avg=1250 +bebida300:`);
   console.log(`    subtotal=${fmtMXN(p.subtotalVenta)}  total=${fmtMXN(p.precioTotalFinal)}  pp=${fmtMXN(p.precioFinalPP)}`);
-  log(p.subtotalVenta === 145000, 'subtotal $145,000');
-  log(p.precioFinalPP === 1450, 'pp $1,450 (avg tier + bebida)');
+  log(p.subtotalVenta === 155000, 'subtotal $155,000');
+  log(p.precioFinalPP === 1550, 'pp $1,550 (avg tier + bebida)');
 }
 
 console.log('\n══════ 6. Pricing: Asado mode ══════');
@@ -113,15 +113,19 @@ console.log('\n══════ 6. Pricing: Asado mode ══════');
     'g1': 5,    // Papas francesa $60 x5 = 300
   };
   c.asado.markup = 40;
-  c.asado.bebidas = 'completo'; // $200 x 20 = 4000
+  c.asado.bebidas = 'basico'; // $300 x 20 = 6000
   c.asado.incluyeIVA = true;
   c.asado.incluyeServicio = false;
   const p = computePricing(c);
-  // cost de platillos = 450 + 1680 + 300 = 2,430
-  // subtotal = 2,430 * 1.40 + 4,000 = 3,402 + 4,000 = 7,402
+  // Expectation is derived from MENU so it survives future menu-price edits.
+  const cost = Object.entries(c.asado.cantidades).reduce(
+    (sum, [id, qty]) => sum + dishById(id)!.precio * qty,
+    0,
+  );
+  const expected = cost * 1.40 + 300 * 20;
   console.log(`  cantidades=[3 chorizo, 4 arrachera, 5 papas] markup=40% +bebida:`);
   console.log(`    cost=${fmtMXN(p.costoTotal)}  subtotal=${fmtMXN(p.subtotalVenta)}  total=${fmtMXN(p.precioTotalFinal)}  pp=${fmtMXN(p.precioFinalPP)}`);
-  log(Math.abs(p.subtotalVenta - 7402) < 1, 'subtotalVenta $7,402', p.subtotalVenta);
+  log(Math.abs(p.subtotalVenta - expected) < 0.01, `subtotalVenta ${fmtMXN(expected)}`, p.subtotalVenta);
 }
 
 console.log('\n══════ 7. Pricing: 0 personas edge case ══════');
@@ -130,7 +134,7 @@ console.log('\n══════ 7. Pricing: 0 personas edge case ════�
   c.evento.personas = 0;  // user clears the field
   c.indiv.precioPP = 1000;
   c.indiv.costoPP = 400;
-  c.indiv.bebidas = 'completo';
+  c.indiv.bebidas = 'basico';
   c.indiv.incluyeIVA = true;
   const p = computePricing(c);
   console.log(`  personas=0 → treated as 1 internally; pp should still compute`);
@@ -205,13 +209,13 @@ console.log('\n══════ 12. Very large group ══════');
   c.evento.personas = 500;
   c.indiv.precioPP = 1500;
   c.indiv.costoPP = 500;
-  c.indiv.bebidas = 'premium'; // +$300
+  c.indiv.bebidas = 'premium'; // +$400
   c.indiv.incluyeIVA = false;
   c.indiv.incluyeServicio = true;
   const p = computePricing(c);
-  console.log(`  500 pax × $1,500 + $300 bebida, +15%serv +16%IVA:`);
+  console.log(`  500 pax × $1,500 + $400 bebida, +15%serv +16%IVA:`);
   console.log(`    subtotal=${fmtMXN(p.subtotalVenta)} total=${fmtMXN(p.precioTotalFinal)}`);
-  log(p.subtotalVenta === 900000, 'subtotal $900k');
+  log(p.subtotalVenta === 950000, 'subtotal $950k');
   log(p.precioTotalFinal > 1_000_000, 'total over $1M (big event)', p.precioTotalFinal);
   log(Number.isFinite(p.precioTotalFinal), 'no overflow');
 }
