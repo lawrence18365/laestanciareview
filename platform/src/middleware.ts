@@ -55,7 +55,11 @@ export async function middleware(req: NextRequest) {
     pathname.startsWith('/leads') ||
     pathname.startsWith('/commercial-leads') ||
     pathname.startsWith('/vip-vino') ||
-    pathname.startsWith('/admin');
+    pathname.startsWith('/admin') ||
+    // Founder prospect board — lists hundreds of prospect phone numbers.
+    // Exact match + trailing slash so the public /prospects-us page stays open.
+    pathname === '/prospects' ||
+    pathname.startsWith('/prospects/');
 
   if (isAppRoute) {
     const cookie = req.cookies.get(COOKIE_NAME)?.value;
