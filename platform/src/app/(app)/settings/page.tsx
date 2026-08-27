@@ -2,7 +2,11 @@ import { verifySession } from '@/lib/session';
 import { redirect } from 'next/navigation';
 import { getRestaurantBySlug, getLatestMercadopagoSubscription } from '@/lib/queries';
 import SettingsView from '@/components/dashboard/SettingsView';
-import { billingHasStarted, getPriceBreakdown } from '@/lib/mercadopago';
+import {
+  computeBillingStartDate,
+  getPriceBreakdown,
+  subscriptionBillingHasStarted,
+} from '@/lib/mercadopago';
 
 export default async function SettingsPage() {
   const session = await verifySession();
@@ -13,6 +17,11 @@ export default async function SettingsPage() {
 
   const mercadopagoSubscription = await getLatestMercadopagoSubscription(restaurant.id);
   const priceBreakdown = getPriceBreakdown();
+  // Per-restaurant trial: prefer the subscription row's billing start; for
+  // restaurants without a row, show when billing would start if they
+  // subscribed today.
+  const billingStartsAt =
+    mercadopagoSubscription?.billingStartsAt ?? computeBillingStartDate();
 
   return (
     <SettingsView
@@ -32,7 +41,8 @@ export default async function SettingsPage() {
         status: restaurant.subscriptionStatus,
         mercadopagoStatus: mercadopagoSubscription?.status ?? null,
         nextPaymentDate: mercadopagoSubscription?.nextPaymentDate?.toISOString() ?? null,
-        billingStarted: billingHasStarted(),
+        billingStartsAt: billingStartsAt.toISOString(),
+        billingStarted: subscriptionBillingHasStarted(billingStartsAt),
         priceBreakdown: {
           base: priceBreakdown.base,
           processingCharge: priceBreakdown.processingCharge,

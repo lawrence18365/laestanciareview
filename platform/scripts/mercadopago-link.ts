@@ -55,8 +55,9 @@ async function main() {
   }
 
   const {
-    BILLING_START_DATE,
     MERCADOPAGO_ACCESS_TOKEN,
+    cancelPreapproval,
+    computeBillingStartDate,
     createPreapproval,
     getMercadoPagoBaseUrl,
     getPriceBreakdown,
@@ -79,6 +80,7 @@ async function main() {
     ]);
 
   let created = 0;
+  let skippedActive = 0;
   let failed = 0;
   const breakdown = getPriceBreakdown();
 
@@ -99,14 +101,7 @@ async function main() {
         throw new Error(`No payer email for restaurant: ${slug}`);
       }
 
-      const preapproval = await createPreapproval({
-        reason: 'RateTap Pro',
-        externalReference: String(restaurant.id),
-        payerEmail,
-        amount: breakdown.total,
-        backUrl: `${getMercadoPagoBaseUrl()}/settings?billing=mercadopago`,
-        startDate: BILLING_START_DATE,
-      });
+      const billingStartsAt = computeBillingStartDate();
 
       const existing = await db
         .select()
@@ -119,6 +114,35 @@ async function main() {
         )
         .limit(1);
 
+      // Never cancel/reissue a live subscription: an authorized row means
+      // the customer already authorized and replacing it would silently kill
+      // their paid plan. Reissue below only applies to not-yet-authorized
+      // (pending) preapprovals.
+      if (existing[0]?.status === 'authorized') {
+        process.stdout.write(
+          `${slug}\tSKIPPED_ACTIVE\tsubscription already authorized (${existing[0].preapprovalId ?? 'no preapproval id'})\n`,
+        );
+        skippedActive += 1;
+        continue;
+      }
+
+      // Reissue safety: cancel the previous preapproval BEFORE creating a
+      // new one, so a stale link can never be charged on the old start
+      // date. Abort this slug if the cancel fails unexpectedly.
+      const previousPreapprovalId = existing[0]?.preapprovalId;
+      if (previousPreapprovalId) {
+        await cancelPreapproval(previousPreapprovalId);
+      }
+
+      const preapproval = await createPreapproval({
+        reason: 'RateTap Pro',
+        externalReference: String(restaurant.id),
+        payerEmail,
+        amount: breakdown.total,
+        backUrl: `${getMercadoPagoBaseUrl()}/settings?billing=mercadopago`,
+        startDate: billingStartsAt,
+      });
+
       if (existing[0]) {
         await db
           .update(mercadopagoSubscriptions)
@@ -130,7 +154,7 @@ async function main() {
             processingChargeAmount: String(breakdown.processingCharge),
             taxAmount: String(breakdown.tax),
             totalAmount: String(breakdown.total),
-            billingStartsAt: BILLING_START_DATE,
+            billingStartsAt,
             payerEmail,
             externalReference: String(restaurant.id),
             updatedAt: new Date(),
@@ -147,7 +171,7 @@ async function main() {
           processingChargeAmount: String(breakdown.processingCharge),
           taxAmount: String(breakdown.tax),
           totalAmount: String(breakdown.total),
-          billingStartsAt: BILLING_START_DATE,
+          billingStartsAt,
           payerEmail,
         });
       }
@@ -166,7 +190,9 @@ async function main() {
     }
   }
 
-  process.stdout.write(`Summary\tcreated=${created}\tfailed=${failed}\n`);
+  process.stdout.write(
+    `Summary\tcreated=${created}\tskipped_active=${skippedActive}\tfailed=${failed}\n`,
+  );
   if (failed > 0) process.exitCode = 1;
 }
 

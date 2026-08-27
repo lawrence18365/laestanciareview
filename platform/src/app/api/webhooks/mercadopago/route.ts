@@ -7,10 +7,10 @@ import {
 } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 import {
-  billingHasStarted,
   getAuthorizedPayment,
   getPreapproval,
   mapPreapprovalStatus,
+  subscriptionBillingHasStarted,
   verifyMercadoPagoSignature,
 } from '@/lib/mercadopago';
 
@@ -61,11 +61,18 @@ function isUniqueViolation(err: unknown): boolean {
 function shouldSkipPreBillingStartDowngrade(
   currentStatus: string,
   nextStatus: string,
+  billingStartsAt: Date | null,
 ): boolean {
   const currentlyHasAccess =
     currentStatus === 'active' || currentStatus === 'trialing';
   const wouldLoseAccess = nextStatus === 'canceled' || nextStatus === 'past_due';
-  return !billingHasStarted() && currentlyHasAccess && wouldLoseAccess;
+  // Per-restaurant trial window: prefer the subscription row's billing start
+  // over the global launch date (rows predate per-restaurant trials may be null).
+  return (
+    !subscriptionBillingHasStarted(billingStartsAt) &&
+    currentlyHasAccess &&
+    wouldLoseAccess
+  );
 }
 
 export async function POST(req: NextRequest) {
@@ -149,27 +156,18 @@ export async function POST(req: NextRequest) {
 
 // ─────────────────────────────────────────────────────────────
 
-async function findSubscriptionByPreapproval(
-  preapprovalId: string,
-  externalReference?: string | null,
-) {
+// Match ONLY by the row's stored preapprovalId — never by
+// external_reference / restaurant id. A delayed cancellation webhook for an
+// OLD (replaced) preapproval must not touch the NEW subscription's row, and
+// external_reference is just the restaurant id, so falling through on it
+// would do exactly that.
+async function findSubscriptionByPreapproval(preapprovalId: string) {
   const byPreapproval = await db
     .select()
     .from(mercadopagoSubscriptions)
     .where(eq(mercadopagoSubscriptions.preapprovalId, preapprovalId))
     .limit(1);
-  if (byPreapproval[0]) return byPreapproval[0];
-
-  if (externalReference) {
-    const byReference = await db
-      .select()
-      .from(mercadopagoSubscriptions)
-      .where(eq(mercadopagoSubscriptions.externalReference, externalReference))
-      .limit(1);
-    if (byReference[0]) return byReference[0];
-  }
-
-  return null;
+  return byPreapproval[0] ?? null;
 }
 
 async function handlePreapproval(dataId: string) {
@@ -180,13 +178,10 @@ async function handlePreapproval(dataId: string) {
 
   const preapproval = await getPreapproval(dataId);
 
-  const subscription = await findSubscriptionByPreapproval(
-    dataId,
-    preapproval.external_reference,
-  );
+  const subscription = await findSubscriptionByPreapproval(dataId);
   if (!subscription) {
     console.warn(
-      `[mercadopago-webhook] no subscription row for preapproval ${dataId}`,
+      `[mercadopago-webhook] event for unknown/stale preapproval ${dataId}, ignoring`,
     );
     return;
   }
@@ -214,7 +209,13 @@ async function handlePreapproval(dataId: string) {
   const restaurant = restaurantRows[0];
   if (!restaurant || restaurant.subscriptionStatus === mapped) return;
 
-  if (shouldSkipPreBillingStartDowngrade(restaurant.subscriptionStatus, mapped)) {
+  if (
+    shouldSkipPreBillingStartDowngrade(
+      restaurant.subscriptionStatus,
+      mapped,
+      subscription.billingStartsAt,
+    )
+  ) {
     console.log(
       `[mercadopago-webhook] pre-billing-start downgrade skipped restaurant=${restaurant.id} current=${restaurant.subscriptionStatus} mapped=${mapped}`,
     );
@@ -243,13 +244,10 @@ async function handleAuthorizedPayment(dataId: string) {
     return;
   }
 
-  const subscription = await findSubscriptionByPreapproval(
-    preapprovalId,
-    authorizedPayment.external_reference,
-  );
+  const subscription = await findSubscriptionByPreapproval(preapprovalId);
   if (!subscription) {
     console.warn(
-      `[mercadopago-webhook] no subscription row for preapproval ${preapprovalId}`,
+      `[mercadopago-webhook] event for unknown/stale preapproval ${preapprovalId}, ignoring`,
     );
     return;
   }
@@ -287,6 +285,7 @@ async function handleAuthorizedPayment(dataId: string) {
     shouldSkipPreBillingStartDowngrade(
       restaurant.subscriptionStatus,
       newStatus,
+      subscription.billingStartsAt,
     )
   ) {
     console.log(

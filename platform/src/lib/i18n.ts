@@ -340,7 +340,7 @@ export const t = {
     serviceCharge: 'Cargo por servicio',
     monthlyTotal: 'Total',
     perMonth: 'MXN/mes',
-    billingStartsNote: 'Tu primer cobro será el 1 de septiembre de 2026. Tu acceso continúa sin interrupciones hasta entonces.',
+    billingStartsNote: (date: string) => `Tu primer cobro será el ${date}. Tu acceso continúa sin interrupciones hasta entonces.`,
     subscribeWithMercadoPago: 'Suscribirme con Mercado Pago',
     subscribing: 'Abriendo Mercado Pago…',
     subscribeError: 'No se pudo iniciar la suscripción con Mercado Pago. Inténtalo de nuevo.',

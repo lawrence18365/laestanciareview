@@ -47,8 +47,48 @@ export function getPriceBreakdown(): {
 
 export const BILLING_START_DATE = new Date('2026-09-01T00:00:00.000-06:00');
 
+// Per-restaurant free-trial window: each subscription's first charge is
+// MERCADOPAGO_TRIAL_DAYS days after it is created, but never before the
+// global BILLING_START_DATE. A value of 0 (or negative/non-finite) would
+// silently kill the trial and could charge immediately after the global
+// date, so only strictly positive finite values are honored.
+export const MERCADOPAGO_TRIAL_DAYS = trialDaysFromEnv();
+
+function trialDaysFromEnv(): number {
+  const parsed = parseFloat(process.env.MERCADOPAGO_TRIAL_DAYS ?? '');
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : 30;
+}
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+
 export function billingHasStarted(now: Date = new Date()): boolean {
   return now.getTime() >= BILLING_START_DATE.getTime();
+}
+
+/**
+ * First billing date for a subscription created at `now`: the later of the
+ * global BILLING_START_DATE and the end of the restaurant's trial window.
+ * Pure (aside from the default `now`) so it is unit-testable.
+ */
+export function computeBillingStartDate(now: Date = new Date()): Date {
+  const trialEnd = new Date(now.getTime() + MERCADOPAGO_TRIAL_DAYS * DAY_MS);
+  return trialEnd.getTime() > BILLING_START_DATE.getTime()
+    ? trialEnd
+    : new Date(BILLING_START_DATE.getTime());
+}
+
+/**
+ * Whether a specific subscription's billing has begun, preferring its
+ * per-restaurant `billingStartsAt` over the global BILLING_START_DATE
+ * (legacy rows may have it null).
+ */
+export function subscriptionBillingHasStarted(
+  billingStartsAt: Date | null | undefined,
+  now: Date = new Date(),
+): boolean {
+  return billingStartsAt
+    ? now.getTime() >= billingStartsAt.getTime()
+    : billingHasStarted(now);
 }
 
 /** Public base URL of the app, stripped of stray `\n` and trailing slash. */
@@ -104,7 +144,10 @@ export async function createPreapproval(params: {
     currency_id: 'MXN',
   };
 
-  if (params.startDate && params.startDate.getTime() > Date.now()) {
+  // Always honor an explicit start_date: computeBillingStartDate() never
+  // returns a past date, and silently dropping it would let Mercado Pago
+  // charge earlier than the trial end we display to the restaurant.
+  if (params.startDate) {
     autoRecurring.start_date = params.startDate.toISOString();
   }
 
@@ -141,6 +184,64 @@ export async function getPreapproval(id: string): Promise<MercadoPagoPreapproval
     throw new Error(`Mercado Pago getPreapproval failed (${res.status}): ${bodyText}`);
   }
   return (await res.json()) as MercadoPagoPreapproval;
+}
+
+/**
+ * Cancel a preapproval so a stale checkout link can never be charged.
+ *
+ * Only two outcomes are tolerated without throwing:
+ *   - 404: the preapproval no longer exists at all, so nothing live remains.
+ *   - a non-ok cancel response whose state is then VERIFIED via a fresh GET
+ *     as `cancelled` (the cancel may have been applied despite the error).
+ * Anything else — including "cannot cancel" style API errors — throws;
+ * callers MUST abort before creating a replacement preapproval so we never
+ * leave two live. No response-body heuristics: only the preapproval's
+ * actual server-side status proves the cancel landed.
+ */
+export async function cancelPreapproval(id: string): Promise<void> {
+  const res = await fetch(`${API_BASE}/preapproval/${encodeURIComponent(id)}`, {
+    method: 'PUT',
+    headers: {
+      Authorization: `Bearer ${MERCADOPAGO_ACCESS_TOKEN}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ status: 'cancelled' }),
+  });
+  if (res.ok) return;
+
+  const bodyText = await res.text().catch(() => '');
+  if (res.status === 404) {
+    console.warn(
+      `[mercadopago] cancelPreapproval(${id}) tolerated (404): ${bodyText}`,
+    );
+    return;
+  }
+
+  // Verify the actual state before trusting that the cancel landed.
+  let verifiedStatus: string | null = null;
+  try {
+    const current = await getPreapproval(id);
+    verifiedStatus = current.status ?? null;
+  } catch (verifyErr) {
+    throw new Error(
+      `Mercado Pago cancelPreapproval failed (${res.status}): ${bodyText} ` +
+        `(verification GET also failed: ${
+          verifyErr instanceof Error ? verifyErr.message : String(verifyErr)
+        })`,
+    );
+  }
+
+  if (verifiedStatus === 'cancelled') {
+    console.warn(
+      `[mercadopago] cancelPreapproval(${id}) tolerated (${res.status}): verified status=cancelled; original error: ${bodyText}`,
+    );
+    return;
+  }
+
+  throw new Error(
+    `Mercado Pago cancelPreapproval failed (${res.status}): ${bodyText} ` +
+      `(verified status: ${verifiedStatus ?? 'unknown'})`,
+  );
 }
 
 export async function getAuthorizedPayment(

@@ -8,6 +8,15 @@ const mocks = vi.hoisted(() => {
   const seenEventIds = new Set<string>();
   const insertErrors: unknown[] = [];
   const updatedRows: Array<{ table: unknown; values: Record<string, unknown> }> = [];
+  const defaultSubscriptionRow = () => ({
+    id: 'sub-row-1',
+    restaurantId: 77,
+    preapprovalId: 'preapproval-123',
+    externalReference: '77',
+    status: 'pending',
+    payerEmail: 'gm@example.com',
+    nextPaymentDate: null,
+  });
   const dbInsert = vi.fn(() => ({
     values: vi.fn((values: { eventId: string }) => {
       if (insertErrors.length > 0) {
@@ -25,6 +34,10 @@ const mocks = vi.hoisted(() => {
     insertErrors,
     updatedRows,
     dbInsert,
+    defaultSubscriptionRow,
+    subscriptionRows: [defaultSubscriptionRow()] as Array<
+      Record<string, unknown>
+    >,
     restaurantStatus: 'canceled',
     getPreapproval: vi.fn(),
     getAuthorizedPayment: vi.fn(),
@@ -39,17 +52,7 @@ vi.mock('@/db', () => ({
         where: vi.fn(() => ({
           limit: vi.fn(async () => {
             if (table === mercadopagoSubscriptions) {
-              return [
-                {
-                  id: 'sub-row-1',
-                  restaurantId: 77,
-                  preapprovalId: 'preapproval-123',
-                  externalReference: '77',
-                  status: 'pending',
-                  payerEmail: 'gm@example.com',
-                  nextPaymentDate: null,
-                },
-              ];
+              return mocks.subscriptionRows;
             }
             if (table === restaurants) {
               return [
@@ -89,6 +92,7 @@ vi.mock('@/lib/mercadopago', async (importOriginal) => {
 import {
   BILLING_START_DATE,
   billingHasStarted,
+  cancelPreapproval,
   createPreapproval,
   getPriceBreakdown,
   mapPreapprovalStatus,
@@ -184,7 +188,10 @@ describe('Mercado Pago deferred pricing', () => {
     expect(body.auto_recurring.start_date).toBe(BILLING_START_DATE.toISOString());
   });
 
-  it('omits auto_recurring.start_date for a past first charge', async () => {
+  it('always sends auto_recurring.start_date when provided, even for a past first charge', async () => {
+    // Dropping a past start_date would let Mercado Pago charge on its own
+    // schedule instead of the trial end we display; the caller is
+    // responsible for never passing a past date.
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2026-09-02T12:00:00.000Z'));
     const fetchMock = vi.fn().mockResolvedValue(
@@ -208,7 +215,7 @@ describe('Mercado Pago deferred pricing', () => {
     const body = JSON.parse(String(request.body)) as {
       auto_recurring: { start_date?: string };
     };
-    expect(body.auto_recurring).not.toHaveProperty('start_date');
+    expect(body.auto_recurring.start_date).toBe(BILLING_START_DATE.toISOString());
   });
 
   it.each([
@@ -286,6 +293,93 @@ describe('verifyMercadoPagoSignature', () => {
   });
 });
 
+describe('cancelPreapproval strict verification', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  function jsonResponse(body: unknown, status = 200): Response {
+    return new Response(JSON.stringify(body), {
+      status,
+      headers: { 'content-type': 'application/json' },
+    });
+  }
+
+  function stubMpApi(opts: {
+    cancel: Response;
+    get?: Response | Error;
+  }): { calls: Array<{ method: string; url: string }> } {
+    const calls: Array<{ method: string; url: string }> = [];
+    const fetchMock = vi.fn(
+      async (input: RequestInfo | URL, init?: RequestInit) => {
+        const method = init?.method ?? 'GET';
+        calls.push({ method, url: String(input) });
+        if (method === 'PUT') return opts.cancel.clone();
+        if (opts.get instanceof Error) throw opts.get;
+        if (!opts.get) throw new Error('unexpected verification GET');
+        return opts.get.clone();
+      },
+    );
+    vi.stubGlobal('fetch', fetchMock);
+    return { calls };
+  }
+
+  it('resolves on an ok cancel response without a verification GET', async () => {
+    const { calls } = stubMpApi({
+      cancel: jsonResponse({ id: 'pre-1', status: 'cancelled' }),
+    });
+
+    await expect(cancelPreapproval('pre-1')).resolves.toBeUndefined();
+    expect(calls).toHaveLength(1);
+    expect(calls[0]?.method).toBe('PUT');
+  });
+
+  it('tolerates a 404 cancel response without a verification GET', async () => {
+    const { calls } = stubMpApi({
+      cancel: jsonResponse({ message: 'not found' }, 404),
+    });
+
+    await expect(cancelPreapproval('pre-gone')).resolves.toBeUndefined();
+    expect(calls).toHaveLength(1);
+  });
+
+  it('tolerates a failed cancel when a GET verifies status=cancelled', async () => {
+    stubMpApi({
+      cancel: jsonResponse({ message: 'internal error' }, 500),
+      get: jsonResponse({ id: 'pre-1', status: 'cancelled' }),
+    });
+
+    await expect(cancelPreapproval('pre-1')).resolves.toBeUndefined();
+  });
+
+  it('throws on a "cannot cancel" style error when the preapproval is still live', async () => {
+    // The body mentions "cancel", which the old /cancel/i heuristic would
+    // have wrongly tolerated; strict verification must reject it.
+    stubMpApi({
+      cancel: jsonResponse(
+        { message: 'cannot cancel preapproval in its current status' },
+        400,
+      ),
+      get: jsonResponse({ id: 'pre-1', status: 'authorized' }),
+    });
+
+    await expect(cancelPreapproval('pre-1')).rejects.toThrow(
+      /cancelPreapproval failed \(400\)/,
+    );
+  });
+
+  it('throws when the verification GET also fails', async () => {
+    stubMpApi({
+      cancel: jsonResponse({ message: 'internal error' }, 500),
+      get: new Error('network down'),
+    });
+
+    await expect(cancelPreapproval('pre-1')).rejects.toThrow(
+      /verification GET also failed/,
+    );
+  });
+});
+
 describe('mapPreapprovalStatus', () => {
   it.each([
     ['authorized', 'active'],
@@ -309,6 +403,7 @@ describe('mercadopago webhook route', () => {
     mocks.seenEventIds.clear();
     mocks.insertErrors.length = 0;
     mocks.updatedRows.length = 0;
+    mocks.subscriptionRows = [mocks.defaultSubscriptionRow()];
     mocks.restaurantStatus = 'canceled';
     mocks.dbInsert.mockClear();
     mocks.getPreapproval.mockReset();
@@ -532,6 +627,75 @@ describe('mercadopago webhook route', () => {
       );
     } finally {
       consoleError.mockRestore();
+    }
+  });
+
+  it('ignores a cancellation event for an unknown/stale preapproval id', async () => {
+    // Simulates a delayed cancellation webhook for an OLD (replaced)
+    // preapproval: no row stores that preapprovalId, so nothing — not even
+    // the restaurant status — may be touched, even though the event's
+    // external_reference matches a restaurant.
+    const consoleWarn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    mocks.restaurantStatus = 'active';
+    mocks.subscriptionRows = [];
+    mocks.getPreapproval.mockResolvedValue({
+      id: 'stale-preapproval-old',
+      status: 'cancelled',
+      external_reference: '77',
+      payer_email: 'gm@example.com',
+      next_payment_date: null,
+    });
+
+    try {
+      const response = await webhookPOST(
+        webhookRequest({
+          id: 'evt-stale-1',
+          type: 'subscription_preapproval',
+          action: 'updated',
+          data: { id: 'stale-preapproval-old' },
+        }),
+      );
+
+      expect(response.status).toBe(200);
+      expect(await response.json()).toEqual({ received: true });
+      expect(mocks.updatedRows).toHaveLength(0);
+      expect(consoleWarn).toHaveBeenCalledWith(
+        '[mercadopago-webhook] event for unknown/stale preapproval stale-preapproval-old, ignoring',
+      );
+    } finally {
+      consoleWarn.mockRestore();
+    }
+  });
+
+  it('ignores an authorized payment for an unknown/stale preapproval id', async () => {
+    const consoleWarn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    mocks.restaurantStatus = 'active';
+    mocks.subscriptionRows = [];
+    mocks.getAuthorizedPayment.mockResolvedValue({
+      id: 'authorized-payment-stale',
+      status: 'approved',
+      preapproval_id: 'stale-preapproval-old',
+      external_reference: '77',
+      payment: { id: 'payment-stale', status: 'approved' },
+    });
+
+    try {
+      const response = await webhookPOST(
+        webhookRequest({
+          id: 'evt-stale-payment-1',
+          type: 'subscription_authorized_payment',
+          action: 'created',
+          data: { id: 'authorized-payment-stale' },
+        }),
+      );
+
+      expect(response.status).toBe(200);
+      expect(mocks.updatedRows).toHaveLength(0);
+      expect(consoleWarn).toHaveBeenCalledWith(
+        '[mercadopago-webhook] event for unknown/stale preapproval stale-preapproval-old, ignoring',
+      );
+    } finally {
+      consoleWarn.mockRestore();
     }
   });
 

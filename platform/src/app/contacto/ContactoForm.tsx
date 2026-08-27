@@ -68,10 +68,16 @@ function readMarketingPayload() {
   };
 }
 
+const WHATSAPP_PILOT_URL = (name: string, business: string) =>
+  `https://wa.me/5212228822360?text=${encodeURIComponent(
+    `Hola, soy ${name} de ${business}. Acabo de dejar mis datos en la página de RateTap y quiero entrar al Piloto Fundador.`,
+  )}`;
+
 export default function ContactoForm({ pilotOffer }: { pilotOffer: boolean }) {
   const [form, setForm] = useState<Form>(EMPTY);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
   const businessRef = useRef<HTMLInputElement | null>(null);
   const autocompleteReady = useRef(false);
 
@@ -137,12 +143,64 @@ export default function ContactoForm({ pilotOffer }: { pilotOffer: boolean }) {
     return () => window.removeEventListener('gmaps:loaded', onLoad);
   }, []);
 
+  // Public funnel (offer=trial_checkout): sales are founder-led and billing
+  // runs on Mercado Pago, so we do NOT send strangers to the Stripe
+  // payment-mode checkout (nothing would be provisioned). Capture the lead
+  // and hand off to WhatsApp instead. The invite-only pilot branch below is
+  // untouched and still provisions via /api/signup/create-checkout.
+  async function handleLeadSubmit() {
+    const marketing = readMarketingPayload();
+    const res = await fetch('/api/leads/create', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: form.contactName,
+        businessName: form.businessName,
+        email: form.email,
+        phone: form.phone,
+        city: form.city,
+        ...marketing,
+        metadata: {
+          ...(marketing.metadata ?? {}),
+          google_place_id: form.googlePlaceId || null,
+          shipping_address: {
+            line1: form.line1,
+            line2: form.line2 || null,
+            city: form.addrCity,
+            state: form.state,
+            postalCode: form.postalCode,
+            notes: form.notes || null,
+          },
+        },
+      }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const friendly =
+        res.status >= 500
+          ? 'No pudimos enviar tus datos en este momento. Inténtalo de nuevo en unos minutos o escríbenos por WhatsApp.'
+          : data.error || 'No pudimos enviar tus datos. Revisa la información e intenta de nuevo.';
+      setError(friendly);
+      setLoading(false);
+      return;
+    }
+    const fbq = (window as unknown as { fbq?: (...args: unknown[]) => void }).fbq;
+    if (fbq) fbq('track', 'Lead');
+    setSubmitted(true);
+    setLoading(false);
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError('');
     setLoading(true);
 
     try {
+      if (!pilotOffer) {
+        await handleLeadSubmit();
+        return;
+      }
+
       const res = await fetch('/api/signup/create-checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -177,7 +235,7 @@ export default function ContactoForm({ pilotOffer }: { pilotOffer: boolean }) {
       }
       const fbq = (window as unknown as { fbq?: (...args: unknown[]) => void }).fbq;
       if (fbq) {
-        fbq('trackCustom', pilotOffer ? 'PilotStarted' : 'CheckoutStarted', {
+        fbq('trackCustom', 'PilotStarted', {
           value: 0,
           currency: 'MXN',
         });
@@ -236,10 +294,61 @@ export default function ContactoForm({ pilotOffer }: { pilotOffer: boolean }) {
             <p style={{ color: 'var(--text-muted, #57534e)', fontSize: '0.95rem', margin: 0 }}>
               {pilotOffer
                 ? 'Piloto fundador: $0 hoy · 30 días gratis · después $700 MXN/mes · la cuota de setup de $1,500 MXN solo se factura si decides continuar'
-                : 'Hoy pagas solo la cuota única de configuración + tus tarjetas NFC ($1,500 MXN). El servicio es gratis los primeros 30 días; cancela cuando quieras antes de que termine la prueba.'}
+                : 'Déjanos tus datos y te contactamos por WhatsApp para activar tu Piloto Fundador: 30 días gratis, sin cargos hoy.'}
             </p>
           </div>
 
+          {submitted ? (
+            <div
+              role="status"
+              style={{
+                background: 'var(--panel-bg, #ffffff)',
+                border: '1px solid var(--border-dark, #1c1917)',
+                padding: '2.5rem 1.75rem',
+                boxShadow: '8px 8px 0px rgba(0,0,0,0.06)',
+                textAlign: 'center',
+              }}
+            >
+              <div style={{ fontSize: '2.5rem', marginBottom: '0.75rem' }} aria-hidden="true">✅</div>
+              <h2 style={{
+                fontSize: '1.35rem',
+                fontWeight: 800,
+                color: 'var(--text-main, #1c1917)',
+                letterSpacing: '-0.02em',
+                margin: '0 0 0.75rem',
+              }}>
+                ¡Recibimos tus datos, {form.contactName.split(' ')[0] || 'gracias'}!
+              </h2>
+              <p style={{
+                color: 'var(--text-muted, #57534e)',
+                fontSize: '0.95rem',
+                lineHeight: 1.6,
+                margin: '0 auto 1.5rem',
+                maxWidth: 420,
+              }}>
+                Un fundador de RateTap te contactará personalmente para activar tu Piloto Fundador
+                de <strong>{form.businessName}</strong>. Para empezar hoy mismo, escríbenos por WhatsApp:
+              </p>
+              <a
+                href={WHATSAPP_PILOT_URL(form.contactName, form.businessName)}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  display: 'inline-block',
+                  padding: '0.9rem 1.75rem',
+                  background: '#25d366',
+                  color: '#ffffff',
+                  fontWeight: 700,
+                  fontSize: '0.85rem',
+                  letterSpacing: '0.1em',
+                  textTransform: 'uppercase',
+                  textDecoration: 'none',
+                }}
+              >
+                Hablar con un fundador por WhatsApp
+              </a>
+            </div>
+          ) : (
           <form
             onSubmit={handleSubmit}
             style={{
@@ -308,24 +417,26 @@ export default function ContactoForm({ pilotOffer }: { pilotOffer: boolean }) {
                 style={inputStyle}
               />
             </Field>
-            <Field label="Contraseña (para tu panel)">
-              <input
-                required
-                type="password"
-                minLength={8}
-                value={form.password}
-                onChange={(e) => update('password', e.target.value)}
-                placeholder="Mínimo 8 caracteres"
-                style={inputStyle}
-              />
-            </Field>
+            {pilotOffer && (
+              <Field label="Contraseña (para tu panel)">
+                <input
+                  required
+                  type="password"
+                  minLength={8}
+                  value={form.password}
+                  onChange={(e) => update('password', e.target.value)}
+                  placeholder="Mínimo 8 caracteres"
+                  style={inputStyle}
+                />
+              </Field>
+            )}
 
             <Divider />
             <SectionTitle>Envío de tarjetas NFC</SectionTitle>
             <p style={{ fontSize: '0.85rem', color: 'var(--text-muted, #57534e)', marginTop: '-0.5rem', marginBottom: '1rem' }}>
               {pilotOffer
                 ? 'Tu QR digital queda activo hoy. Las tarjetas físicas se envían si decides continuar después del piloto.'
-                : 'Te enviamos las tarjetas físicas en cuanto se confirme tu pago de hoy. Tu QR digital queda activo de inmediato.'}
+                : 'Tu QR digital queda activo de inmediato. Coordinamos el envío de las tarjetas físicas contigo por WhatsApp.'}
             </p>
             <Field label="Dirección">
               <input
@@ -405,20 +516,21 @@ export default function ContactoForm({ pilotOffer }: { pilotOffer: boolean }) {
               }}
             >
               {loading
-                ? (pilotOffer ? 'ACTIVANDO TU PILOTO…' : 'REDIRIGIENDO A STRIPE…')
-                : (pilotOffer ? 'ACTIVAR MI PILOTO GRATIS' : 'CONTINUAR AL PAGO SEGURO')}
+                ? (pilotOffer ? 'ACTIVANDO TU PILOTO…' : 'ENVIANDO…')
+                : (pilotOffer ? 'ACTIVAR MI PILOTO GRATIS' : 'SOLICITAR MI PRUEBA GRATIS')}
             </button>
 
             <p style={{ fontSize: '0.75rem', color: 'var(--text-dim, #a8a29e)', textAlign: 'center', marginTop: '1rem', lineHeight: 1.5 }}>
               {pilotOffer
                 ? 'No necesitas tarjeta. Después de 30 días, tú decides si continúas por $700 MXN/mes más la cuota de setup de $1,500 MXN. '
-                : 'Pago seguro con Stripe. Hoy se cobra una cuota única de $1,500 MXN (configuración + tarjetas NFC). Después de tu prueba gratis de 30 días se cobran $700 MXN/mes automáticamente; cancela cuando quieras desde tu panel. '}
+                : 'Sin pagos hoy: un fundador te contacta por WhatsApp para activar tu prueba gratis de 30 días. '}
               Al continuar aceptas la{' '}
               <a href="/privacy" style={{ color: '#1c1917', fontWeight: 700 }}>Política de Privacidad</a>, los{' '}
               <a href="/terms" style={{ color: '#1c1917', fontWeight: 700 }}>Términos</a> y la{' '}
               <a href="/cookies" style={{ color: '#1c1917', fontWeight: 700 }}>Política de Cookies</a>.
             </p>
           </form>
+          )}
         </div>
       </div>
     </>

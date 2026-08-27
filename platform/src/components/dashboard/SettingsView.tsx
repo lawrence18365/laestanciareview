@@ -8,6 +8,7 @@ interface BillingInfo {
   status: string;
   mercadopagoStatus: string | null;
   nextPaymentDate: string | null;
+  billingStartsAt: string | null;
   billingStarted: boolean;
   priceBreakdown: {
     base: number;
@@ -499,12 +500,19 @@ function BillingCard({ billing }: { billing: BillingInfo }) {
         ? t.billing.providerMercadoPago
         : t.billing.providerNone;
 
+  const formatDate = (iso: string) =>
+    new Date(iso).toLocaleDateString('es-MX', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    });
+
   const nextPayment = billing.nextPaymentDate
-    ? new Date(billing.nextPaymentDate).toLocaleDateString('es-MX', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-      })
+    ? formatDate(billing.nextPaymentDate)
+    : null;
+
+  const billingStarts = billing.billingStartsAt
+    ? formatDate(billing.billingStartsAt)
     : null;
 
   return (
@@ -593,7 +601,7 @@ function BillingCard({ billing }: { billing: BillingInfo }) {
         </div>
       </div>
 
-      {!billing.billingStarted && (
+      {!billing.billingStarted && billingStarts && (
         <p
           style={{
             margin: '0 0 1rem',
@@ -605,7 +613,7 @@ function BillingCard({ billing }: { billing: BillingInfo }) {
             lineHeight: 1.5,
           }}
         >
-          {t.billing.billingStartsNote}
+          {t.billing.billingStartsNote(billingStarts)}
         </p>
       )}
 
