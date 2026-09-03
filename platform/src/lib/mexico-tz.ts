@@ -7,13 +7,13 @@ const MEXICO_TZ = 'America/Mexico_City';
  * reflect Mexico City wall-clock time. Used with date-fns functions
  * that operate on local time. Convert back with toUtc() before SQL use.
  */
-function mexicoLocal(): Date {
-  return new Date(new Date().toLocaleString('en-US', { timeZone: MEXICO_TZ }));
+function mexicoLocal(now: Date = new Date()): Date {
+  return new Date(now.toLocaleString('en-US', { timeZone: MEXICO_TZ }));
 }
 
 /** Offset in ms: realUtc - mexicoLocal. Add to a mexicoLocal Date to get real UTC. */
-function utcOffset(): number {
-  return Date.now() - mexicoLocal().getTime();
+function utcOffset(now: Date = new Date()): number {
+  return now.getTime() - mexicoLocal(now).getTime();
 }
 
 /** Start of current week (Monday 00:00) in Mexico City, as real UTC Date. */
@@ -23,10 +23,10 @@ export function startOfWeekMexico(): Date {
 }
 
 /** Start of today (00:00) in Mexico City, as real UTC Date. */
-export function startOfTodayMexico(): Date {
-  const today = mexicoLocal();
+export function startOfTodayMexico(now: Date = new Date()): Date {
+  const today = mexicoLocal(now);
   today.setHours(0, 0, 0, 0);
-  return new Date(today.getTime() + utcOffset());
+  return new Date(today.getTime() + utcOffset(now));
 }
 
 /** Start of yesterday (00:00) in Mexico City, as real UTC Date. */
@@ -48,16 +48,21 @@ export function todayBirthdayKeyMexico(): string {
 }
 
 /** Start of tomorrow (00:00) in Mexico City, as a real UTC Date. */
-export function startOfTomorrowMexico(): Date {
-  const tomorrow = mexicoLocal();
+export function startOfTomorrowMexico(now: Date = new Date()): Date {
+  const tomorrow = mexicoLocal(now);
   tomorrow.setDate(tomorrow.getDate() + 1);
   tomorrow.setHours(0, 0, 0, 0);
-  return new Date(tomorrow.getTime() + utcOffset());
+  return new Date(tomorrow.getTime() + utcOffset(now));
 }
 
 /** Current hour (0-23) in Mexico City. */
 export function currentMexicoHour(): number {
   return mexicoLocal().getHours();
+}
+
+/** Hour (0-23) in Mexico City for a given instant. Defaults to now. */
+export function mexicoHour(now: Date = new Date()): number {
+  return mexicoLocal(now).getHours();
 }
 
 /**

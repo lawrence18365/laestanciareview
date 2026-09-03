@@ -18,8 +18,10 @@
  * SAFETY (same guarantees as seed-prospect-queue.ts):
  *   - status='identified' ONLY on insert — an existing row's status
  *     (replied/booked/won/...) is never downgraded.
- *   - next_action_at='2099-01-01' on insert so the prospect-outreach cron
- *     can never auto-SMS these rows.
+ *   - next_action_at='2099-01-01' on insert AND on conflict so the
+ *     prospect-outreach cron can never auto-SMS these rows.
+ *   - On conflict, phone/rating/city/review_count use COALESCE so an
+ *     existing value is never overwritten with NULL.
  *   - Everything runs in one transaction.
  */
 import { config } from 'dotenv';
@@ -135,17 +137,19 @@ async function main() {
          ) VALUES ($1, $2, $3, NULL, $4, $5, 'group', $6, $7, 'identified', $8::timestamptz, now())
          ON CONFLICT (place_id) DO UPDATE SET
            restaurant_name = EXCLUDED.restaurant_name,
-           rating = EXCLUDED.rating,
-           review_count = EXCLUDED.review_count,
-           phone = EXCLUDED.phone,
-           city = EXCLUDED.city,
+           rating = COALESCE(EXCLUDED.rating, prospect_queue.rating),
+           review_count = COALESCE(EXCLUDED.review_count, prospect_queue.review_count),
+           phone = COALESCE(EXCLUDED.phone, prospect_queue.phone),
+           city = COALESCE(EXCLUDED.city, prospect_queue.city),
            tier = EXCLUDED.tier,
            locations = EXCLUDED.locations,
            owner_name = EXCLUDED.owner_name,
+           next_action_at = '2099-01-01',
            updated_at = now()
            -- status intentionally preserved: never downgrade an existing
            -- row that is already replied/booked/won/lost. next_action_at
-           -- intentionally preserved too.
+           -- is always forced back to the inert date: these rows are
+           -- manual-only and the cron must never pick them up.
          RETURNING (xmax = 0) AS inserted`,
         [
           placeId,

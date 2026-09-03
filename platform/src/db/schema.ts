@@ -1007,6 +1007,11 @@ export const outreachEvents = pgTable(
     index('outreach_events_prospect_idx').on(t.prospectId),
     index('outreach_events_type_idx').on(t.type),
     index('outreach_events_created_idx').on(t.createdAt),
+    // Mirrors src/db/migrations/0024_outreach_sent_unique.sql: one 'sent'
+    // event per (prospect, touch) so retries can never double-count a send.
+    uniqueIndex('outreach_events_sent_once_idx')
+      .on(t.prospectId, t.touchNumber)
+      .where(sql`type = 'sent'`),
   ],
 );
 

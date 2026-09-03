@@ -114,6 +114,11 @@ describe('outreach email templates', () => {
     expect(touch1.subject).toBe('¿Cuál de sus sucursales está pidiendo y cuál no?');
     expect(touch1.html).toContain('sucursales');
     expect(touch1.html).toContain('mesero por mesero');
+    // We measure asking frequency; we never predict resignations.
+    expect(touch1.html).toContain('cuál dejó de pedir opiniones esta semana');
+    expect(touch1.html).toContain('para que usted pueda responder primero');
+    expect(touch1.html).not.toContain('renunciar');
+    expect(touch1.html).not.toContain('antes de hacerse pública');
 
     const touch2 = await buildOutreachEmail(makeProspect({ kind: 'group' }), 2);
     expect(touch2.subject).toBe('Re: ¿Cuál de sus sucursales está pidiendo y cuál no?');
@@ -133,11 +138,22 @@ describe('outreach email templates', () => {
     }
   });
 
+  it('founderWhatsappUrl prefill mentions the board, not an audit or pilot spot', async () => {
+    const { founderWhatsappUrl } = await loadTemplates();
+    const url = founderWhatsappUrl('La Estancia');
+    expect(url.startsWith('https://wa.me/5212228822360?text=')).toBe(true);
+    const text = decodeURIComponent(url.split('?text=')[1]);
+    expect(text).toBe('Hola Lawrence, vi su correo sobre La Estancia. Me interesa ver el tablero.');
+    expect(text).not.toContain('auditoría');
+    expect(text).not.toContain('piloto');
+  });
+
   it('footer contains unsubscribe URL and List-Unsubscribe header', async () => {
     const { buildOutreachEmail } = await loadTemplates();
     const result = await buildOutreachEmail(makeProspect(), 1);
 
     expect(result.headers['List-Unsubscribe']).toContain('/api/outreach/unsubscribe?id=1&token=');
+    expect(result.headers['List-Unsubscribe-Post']).toBe('List-Unsubscribe=One-Click');
     expect(result.html).toContain('/api/outreach/unsubscribe?id=1&amp;token=');
     expect(result.text).toContain('/api/outreach/unsubscribe?id=1&token=');
   });

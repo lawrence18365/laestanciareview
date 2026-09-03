@@ -7,6 +7,9 @@ const mocks = vi.hoisted(() => ({
   //   1. first 'sent' event date, 2. today's sent count,
   //   3. touch1 prospects, 4. touch2 prospects, 5. touch3 prospects.
   selectResults: [] as unknown[][],
+  // FIFO queue of claim results: each db.update().set().where().returning()
+  // shifts one. Default when empty: the claim succeeds.
+  claimResults: [] as Array<Array<{ id: number }>>,
   inserted: [] as Array<Record<string, unknown>>,
   updated: [] as Array<Record<string, unknown>>,
   sendEmail: vi.fn(async () => ({ provider: 'smtp' as const })),
@@ -44,7 +47,12 @@ vi.mock('@/db', () => {
       update: () => ({
         set: (v: Record<string, unknown>) => {
           mocks.updated.push(v);
-          return { where: () => Promise.resolve() };
+          return {
+            where: () => ({
+              returning: async () =>
+                mocks.claimResults.length > 0 ? mocks.claimResults.shift()! : [{ id: 1 }],
+            }),
+          };
         },
       }),
     },
@@ -93,6 +101,7 @@ beforeAll(async () => {
 beforeEach(() => {
   mocks.selectCalls = 0;
   mocks.selectResults = [];
+  mocks.claimResults = [];
   mocks.inserted = [];
   mocks.updated = [];
   mocks.sendEmail.mockClear();
@@ -248,6 +257,7 @@ describe('runOutreachBatch sending', () => {
 
     expect(result.sent).toBe(2);
     expect(result.failed).toBe(0);
+    expect(result.skippedClaimed).toBe(0);
     expect(result.planned.map((p) => p.touchNumber)).toEqual([2, 1]);
     expect(mocks.sendEmail).toHaveBeenCalledTimes(2);
 
@@ -256,6 +266,7 @@ describe('runOutreachBatch sending', () => {
     expect(sentEvents.map((v) => v.touchNumber)).toEqual([2, 1]);
     expect(typeof sentEvents[0].meta).toBe('object');
 
+    // Each prospect was claimed with an atomic UPDATE before sending.
     expect(mocks.updated).toHaveLength(2);
     // Touch 2 prospect stays in_sequence with touchesSent=2.
     expect(mocks.updated[0]).toMatchObject({ status: 'in_sequence', touchesSent: 2 });
@@ -289,5 +300,76 @@ describe('runOutreachBatch sending', () => {
     const sentEvents = mocks.inserted.filter((v) => v.type === 'sent');
     expect(sentEvents).toHaveLength(1);
     expect(sentEvents[0].prospectId).toBe(2);
+  });
+
+  it('skips a prospect whose claim fails: no send, no event', async () => {
+    mocks.selectResults = [
+      [],
+      [{ count: 0 }],
+      [makeProspect(1)],
+      [],
+      [],
+    ];
+    // The atomic UPDATE returns 0 rows: another batch already claimed it.
+    mocks.claimResults = [[]];
+
+    const result = await runOutreachBatch({ send: true });
+
+    expect(result.sent).toBe(0);
+    expect(result.failed).toBe(0);
+    expect(result.skippedClaimed).toBe(1);
+    expect(mocks.sendEmail).not.toHaveBeenCalled();
+    expect(mocks.inserted).toEqual([]);
+    // The claim UPDATE still ran (it just matched 0 rows).
+    expect(mocks.updated).toHaveLength(1);
+    expect(mocks.updated[0]).toMatchObject({ status: 'in_sequence', touchesSent: 1 });
+  });
+
+  it('claims before sending and sends only after a successful claim', async () => {
+    mocks.selectResults = [
+      [],
+      [{ count: 0 }],
+      [makeProspect(1)],
+      [],
+      [],
+    ];
+    mocks.claimResults = [[{ id: 1 }]];
+    mocks.sendEmail.mockImplementation(async () => {
+      // The claim UPDATE must already have run before any send.
+      expect(mocks.updated).toHaveLength(1);
+      expect(mocks.updated[0]).toMatchObject({ touchesSent: 1 });
+      return { provider: 'smtp' as const };
+    });
+
+    const result = await runOutreachBatch({ send: true });
+
+    expect(result.sent).toBe(1);
+    const sentEvents = mocks.inserted.filter((v) => v.type === 'sent');
+    expect(sentEvents).toHaveLength(1);
+  });
+
+  it('on send failure records a failed event and leaves the claim in place', async () => {
+    mocks.selectResults = [
+      [],
+      [{ count: 0 }],
+      [makeProspect(1)],
+      [],
+      [],
+    ];
+    mocks.sendEmail.mockRejectedValueOnce(new Error('SMTP down'));
+
+    const result = await runOutreachBatch({ send: true });
+
+    expect(result.sent).toBe(0);
+    expect(result.failed).toBe(1);
+
+    const failedEvents = mocks.inserted.filter((v) => v.type === 'failed');
+    expect(failedEvents).toHaveLength(1);
+    expect(mocks.inserted.filter((v) => v.type === 'sent')).toHaveLength(0);
+
+    // The claim stays: exactly one UPDATE, setting touchesSent to 1, and
+    // no follow-up update reverts it.
+    expect(mocks.updated).toHaveLength(1);
+    expect(mocks.updated[0]).toMatchObject({ status: 'in_sequence', touchesSent: 1 });
   });
 });

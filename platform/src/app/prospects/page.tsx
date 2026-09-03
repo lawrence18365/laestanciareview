@@ -90,17 +90,20 @@ function buildFilterHref(city: string, status: string, nivel: string): string {
 export default async function ProspectsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ ciudad?: string; estado?: string; nivel?: string }>;
+  searchParams: Promise<{ ciudad?: string; estado?: string; nivel?: string; p?: string }>;
 }) {
   const session = await verifySession();
   if (!session) redirect('/login');
   // Founder/owner-only board — mirrors /overview's role gate.
   if (session.role !== 'owner' && session.role !== 'regional') redirect('/dashboard');
 
-  const { ciudad = '', estado = '', nivel = '' } = await searchParams;
+  const { ciudad = '', estado = '', nivel = '', p = '' } = await searchParams;
   const soloGrupos = nivel === 'grupo';
+  // ?p=<placeId> shows a single prospect (linked from the founder hit list).
+  const soloUno = p !== '';
 
   const conditions: SQL[] = [];
+  if (p) conditions.push(eq(prospectQueue.placeId, p));
   if (ciudad) conditions.push(eq(prospectQueue.city, ciudad));
   if (estado) conditions.push(eq(prospectQueue.status, estado));
   if (soloGrupos) conditions.push(eq(prospectQueue.tier, 'group'));
@@ -169,6 +172,15 @@ export default async function ProspectsPage({
       </div>
 
       <div style={{ maxWidth: '640px', margin: '0 auto', padding: '16px' }}>
+        {soloUno ? (
+          <p style={{ color: '#64748B', fontSize: '13px', margin: '0 0 12px' }}>
+            Mostrando un solo prospecto.{' '}
+            <a href="/prospects" style={{ color: '#FBBF24', fontWeight: 700 }}>
+              Ver todos
+            </a>
+          </p>
+        ) : (
+          <>
         {/* City chips */}
         <nav aria-label="Filtrar por ciudad" style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '10px' }}>
           <a
@@ -200,6 +212,8 @@ export default async function ProspectsPage({
         <p style={{ color: '#64748B', fontSize: '13px', margin: '0 0 12px' }}>
           Mostrando {rows.length} de {filteredTotal} prospectos. Toca WhatsApp → se abre el mensaje → manda. Luego marca el estado con un toque.
         </p>
+          </>
+        )}
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
           {rows.map((p) => {

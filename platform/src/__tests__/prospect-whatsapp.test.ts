@@ -16,7 +16,7 @@ describe('buildProspectWhatsappMessage', () => {
     expect(msg).toBe(
       'Hola, buen día. Le escribo de parte de RateTap, el sistema con el que La Estancia mide a sus meseros en 12 restaurantes.' +
         ' Vi que Taquería El Buen Sabor tiene 4.3★ con 1,234 reseñas en Google.' +
-        ' Le hago una pregunta que casi ningún dueño puede contestar: ¿sabe cuál de sus meseros atiende mejor y cuál está a punto de renunciar? Nosotros lo vemos mesero por mesero y por turno. ¿Le enseño cómo en 10 minutos? Sin compromiso.',
+        ' Le hago una pregunta que casi ningún dueño puede contestar: ¿sabe cuál de sus meseros atiende mejor y cuál dejó de pedir opiniones esta semana? Nosotros lo vemos mesero por mesero y por turno. ¿Le enseño cómo en 10 minutos? Sin compromiso.',
     );
   });
 
@@ -30,7 +30,7 @@ describe('buildProspectWhatsappMessage', () => {
     expect(msg).toBe(
       'Hola, buen día. Le escribo de parte de RateTap, el sistema con el que La Estancia mide a sus meseros en 12 restaurantes.' +
         ' Vi El Fondón en Google.' +
-        ' Le hago una pregunta que casi ningún dueño puede contestar: ¿sabe cuál de sus meseros atiende mejor y cuál está a punto de renunciar? Nosotros lo vemos mesero por mesero y por turno. ¿Le enseño cómo en 10 minutos? Sin compromiso.',
+        ' Le hago una pregunta que casi ningún dueño puede contestar: ¿sabe cuál de sus meseros atiende mejor y cuál dejó de pedir opiniones esta semana? Nosotros lo vemos mesero por mesero y por turno. ¿Le enseño cómo en 10 minutos? Sin compromiso.',
     );
   });
 
@@ -69,7 +69,7 @@ describe('buildProspectWhatsappMessage', () => {
     expect(msg).toBe(
       'Hola, buen día. Le escribo de parte de RateTap, el sistema con el que La Estancia mide a sus meseros en 12 restaurantes.' +
         ' Vi que Taquería El Buen Sabor tiene 4.3★ con 1,234 reseñas en Google.' +
-        ' Le hago una pregunta que casi ningún dueño puede contestar: ¿sabe cuál de sus meseros atiende mejor y cuál está a punto de renunciar? Nosotros lo vemos mesero por mesero y por turno. ¿Le enseño cómo en 10 minutos? Sin compromiso.',
+        ' Le hago una pregunta que casi ningún dueño puede contestar: ¿sabe cuál de sus meseros atiende mejor y cuál dejó de pedir opiniones esta semana? Nosotros lo vemos mesero por mesero y por turno. ¿Le enseño cómo en 10 minutos? Sin compromiso.',
     );
   });
 
@@ -85,7 +85,7 @@ describe('buildProspectWhatsappMessage', () => {
     expect(msg).toBe(
       'Hola, buen día. Le escribo de parte de RateTap, el sistema con el que La Estancia mide a sus meseros en 12 restaurantes.' +
         ' Vi que Grupo Anderson opera 8 sucursales.' +
-        ' Le hago una pregunta que casi ningún dueño puede contestar: ¿cuál de sus sucursales está pidiendo reseñas y cuál no, y cuál de sus meseros está a punto de renunciar? Nosotros lo vemos mesero por mesero, turno por turno y sucursal por sucursal. ¿Le enseño cómo en 15 minutos? Sin compromiso.',
+        ' Le hago una pregunta que casi ningún dueño puede contestar: ¿cuál de sus sucursales está pidiendo reseñas y cuál no, y cuál de sus meseros dejó de pedir esta semana? Nosotros lo vemos mesero por mesero, turno por turno y sucursal por sucursal. ¿Le enseño cómo en 15 minutos? Sin compromiso.',
     );
   });
 

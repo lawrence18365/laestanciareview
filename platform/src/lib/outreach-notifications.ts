@@ -415,9 +415,7 @@ function hitListRowHtml(p: HitListProspect): string {
     ? `<div style="font-size:12px;color:#44403c;margin-top:2px;">Dueño: ${escapeHtml(p.ownerName)}</div>`
     : '';
   const waUrl = p.phone ? buildProspectWhatsappUrl(p, p.phone) : null;
-  const boardUrl = p.city
-    ? `${BASE_URL}/prospects?ciudad=${encodeURIComponent(p.city)}`
-    : `${BASE_URL}/prospects`;
+  const boardUrl = `${BASE_URL}/prospects?p=${encodeURIComponent(p.placeId)}`;
   return `<tr><td style="padding:12px 0;border-bottom:1px solid #f0ece7;">
     <div style="font-size:15px;color:#1c1917;"><strong>${escapeHtml(p.restaurantName)}</strong>${groupBadge}</div>
     ${meta ? `<div style="font-size:13px;color:#78716c;margin-top:2px;">${meta}</div>` : ''}

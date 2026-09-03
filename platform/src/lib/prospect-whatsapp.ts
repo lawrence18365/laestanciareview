@@ -30,7 +30,7 @@ export function buildProspectWhatsappMessage(p: ProspectWhatsappInput): string {
     return (
       'Hola, buen día. Le escribo de parte de RateTap, el sistema con el que La Estancia mide a sus meseros en 12 restaurantes.' +
       hook +
-      ' Le hago una pregunta que casi ningún dueño puede contestar: ¿cuál de sus sucursales está pidiendo reseñas y cuál no, y cuál de sus meseros está a punto de renunciar? Nosotros lo vemos mesero por mesero, turno por turno y sucursal por sucursal. ¿Le enseño cómo en 15 minutos? Sin compromiso.'
+      ' Le hago una pregunta que casi ningún dueño puede contestar: ¿cuál de sus sucursales está pidiendo reseñas y cuál no, y cuál de sus meseros dejó de pedir esta semana? Nosotros lo vemos mesero por mesero, turno por turno y sucursal por sucursal. ¿Le enseño cómo en 15 minutos? Sin compromiso.'
     );
   }
   const hook =
@@ -40,7 +40,7 @@ export function buildProspectWhatsappMessage(p: ProspectWhatsappInput): string {
   return (
     'Hola, buen día. Le escribo de parte de RateTap, el sistema con el que La Estancia mide a sus meseros en 12 restaurantes.' +
     hook +
-    ' Le hago una pregunta que casi ningún dueño puede contestar: ¿sabe cuál de sus meseros atiende mejor y cuál está a punto de renunciar? Nosotros lo vemos mesero por mesero y por turno. ¿Le enseño cómo en 10 minutos? Sin compromiso.'
+    ' Le hago una pregunta que casi ningún dueño puede contestar: ¿sabe cuál de sus meseros atiende mejor y cuál dejó de pedir opiniones esta semana? Nosotros lo vemos mesero por mesero y por turno. ¿Le enseño cómo en 10 minutos? Sin compromiso.'
   );
 }
 

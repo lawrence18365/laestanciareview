@@ -171,6 +171,8 @@ describe('hit-list email rows', () => {
     const html = (mocks.sendEmail.mock.calls[0] as unknown as [{ html: string }])[0].html;
     expect(html).toContain('GRUPO · 8 sucursales');
     expect(html).toContain('Dueño: Carlos Anderson');
+    // The "marcar estado" link jumps straight to this prospect on the board.
+    expect(html).toContain(`/prospects?p=${encodeURIComponent('group:grupo-anderson')}`);
     // Group rows get the sucursales opener in the (URL-encoded) WhatsApp link.
     expect(html).toContain(encodeURIComponent('opera 8 sucursales'));
     expect(html).toContain(encodeURIComponent('15 minutos'));

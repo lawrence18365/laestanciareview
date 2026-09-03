@@ -13,6 +13,7 @@ interface SendEmailOptions {
   subject: string;
   html: string;
   text?: string;
+  from?: string;
   replyTo?: string;
   attachments?: {
     filename?: string;
@@ -86,6 +87,7 @@ export async function sendEmail({
   subject,
   html,
   text: textOverride,
+  from,
   replyTo,
   attachments,
   headers,
@@ -96,7 +98,7 @@ export async function sendEmail({
   }
 
   const options: SendMailOptions = {
-    from: FROM,
+    from: from ?? FROM,
     to,
     subject,
     text: textOverride ?? htmlToText(html),

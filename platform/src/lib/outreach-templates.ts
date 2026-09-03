@@ -73,8 +73,8 @@ function touch1Paragraphs(kind: 'leon' | 'group', prospect: OutreachProspect): s
   if (kind === 'group') {
     return [
       INTRO_PARAGRAPH,
-      `Le escribo porque ${name} opera varias sucursales y hay una pregunta que casi ningún dueño puede contestar: ¿cuál de sus meseros atiende mejor, y cuál está a punto de renunciar? Nosotros lo vemos mesero por mesero, turno por turno y sucursal por sucursal. En La Estancia, el 20% de los meseros genera el 43% de las reseñas de Google. Antes de medir, nadie sabía quiénes eran.`,
-      `Funciona así: cada mesero trae una tarjeta. El comensal la toca al pagar. Si está contento, deja su reseña en Google. Si algo salió mal, la queja le llega a usted por WhatsApp, en privado, antes de hacerse pública.`,
+      `Le escribo porque ${name} opera varias sucursales y hay una pregunta que casi ningún dueño puede contestar: ¿cuál de sus meseros atiende mejor, y cuál dejó de pedir opiniones esta semana? Nosotros lo vemos mesero por mesero, turno por turno y sucursal por sucursal. En La Estancia, el 20% de los meseros genera el 43% de las reseñas de Google. Antes de medir, nadie sabía quiénes eran.`,
+      `Funciona así: cada mesero trae una tarjeta. El comensal la toca al pagar. Si está contento, deja su reseña en Google. Si algo salió mal, la queja le llega a usted por WhatsApp, en privado, para que usted pueda responder primero.`,
       OFFER_PARAGRAPH,
       `¿Le enseño el tablero en una llamada de 15 minutos esta semana?`,
     ];
@@ -240,6 +240,7 @@ export async function buildOutreachEmail(
     attachments: [getWordmarkAttachment()],
     headers: {
       'List-Unsubscribe': `<${unsubscribeUrl}>`,
+      'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
     },
   };
 }
@@ -251,6 +252,8 @@ export async function sendOutreachEmail(
   const { subject, text, html, attachments, headers } = await buildOutreachEmail(prospect, touchNumber);
   await sendEmail({
     to: prospect.email,
+    from: 'Lawrence de RateTap <hello@ratetapmx.com>',
+    replyTo: 'hello@ratetapmx.com',
     subject,
     html,
     text,
@@ -261,7 +264,7 @@ export async function sendOutreachEmail(
 }
 
 export function founderWhatsappUrl(restaurantName: string): string {
-  const message = `Hola Lawrence, vi la auditoría de ${restaurantName} y quiero el lugar piloto.`;
+  const message = `Hola Lawrence, vi su correo sobre ${restaurantName}. Me interesa ver el tablero.`;
   return whatsappUrl(FOUNDER_WHATSAPP, message);
 }
 

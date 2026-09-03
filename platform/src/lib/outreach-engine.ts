@@ -1,9 +1,9 @@
 import { db } from '@/db';
 import { outreachProspects, outreachEvents } from '@/db/schema';
-import { and, eq, gte, lt, lte, sql, asc } from 'drizzle-orm';
+import { and, eq, gte, inArray, lt, lte, sql, asc } from 'drizzle-orm';
 import {
-  currentMexicoHour,
-  currentMexicoDayOfWeek,
+  mexicoHour,
+  weekdayMexico,
   startOfTodayMexico,
   startOfTomorrowMexico,
 } from '@/lib/mexico-tz';
@@ -23,8 +23,8 @@ export function isInSendWindowAt(hour: number, dayOfWeek: number): boolean {
  * Monday–Saturday, Mexico City time, 10:00–12:59 inclusive.
  * Sunday and outside that window are skipped.
  */
-export function isInSendWindow(): boolean {
-  return isInSendWindowAt(currentMexicoHour(), currentMexicoDayOfWeek());
+export function isInSendWindow(now: Date = new Date()): boolean {
+  return isInSendWindowAt(mexicoHour(now), weekdayMexico(now));
 }
 
 /**
@@ -53,9 +53,9 @@ export async function getFirstSentEventDate(): Promise<Date | null> {
   return rows[0]?.createdAt ?? null;
 }
 
-export async function countTodaysSentEvents(): Promise<number> {
-  const start = startOfTodayMexico();
-  const end = startOfTomorrowMexico();
+export async function countTodaysSentEvents(now: Date = new Date()): Promise<number> {
+  const start = startOfTodayMexico(now);
+  const end = startOfTomorrowMexico(now);
   const rows = await db
     .select({ count: sql<number>`count(*)::int` })
     .from(outreachEvents)
@@ -137,6 +137,36 @@ export async function advanceProspectAfterSend(
     .where(eq(outreachProspects.id, prospect.id));
 }
 
+/**
+ * Atomically claim a touch for a prospect. The UPDATE only lands when the
+ * prospect is still at touchNumber - 1 in a sendable status, so a
+ * concurrent batch (or a retried cron) cannot double-send the same touch.
+ * Returns true when this caller won the claim.
+ */
+export async function claimProspectTouch(
+  prospectId: number,
+  touchNumber: 1 | 2 | 3,
+  now: Date,
+): Promise<boolean> {
+  const claimed = await db
+    .update(outreachProspects)
+    .set({
+      touchesSent: touchNumber,
+      status: touchNumber === 3 ? 'finished' : 'in_sequence',
+      lastTouchAt: now,
+      nextTouchAt: computeNextTouchAt(touchNumber, now),
+    })
+    .where(
+      and(
+        eq(outreachProspects.id, prospectId),
+        eq(outreachProspects.touchesSent, touchNumber - 1),
+        inArray(outreachProspects.status, ['queued', 'in_sequence']),
+      ),
+    )
+    .returning({ id: outreachProspects.id });
+  return claimed.length > 0;
+}
+
 export async function recordSentEvent(
   prospectId: number,
   touchNumber: number,
@@ -184,6 +214,7 @@ export interface OutreachBatchResult {
   planned: OutreachBatchPlanItem[];
   sent: number;
   failed: number;
+  skippedClaimed: number;
   skipped?: string;
 }
 
@@ -203,7 +234,7 @@ export async function runOutreachBatch(opts: {
   ignoreWindow?: boolean;
 }): Promise<OutreachBatchResult> {
   const now = opts.now ?? new Date();
-  const inWindow = isInSendWindow();
+  const inWindow = isInSendWindow(now);
 
   if (process.env.OUTREACH_EMAIL_ENABLED !== 'true') {
     return {
@@ -214,6 +245,7 @@ export async function runOutreachBatch(opts: {
       planned: [],
       sent: 0,
       failed: 0,
+      skippedClaimed: 0,
       skipped: 'disabled',
     };
   }
@@ -227,12 +259,13 @@ export async function runOutreachBatch(opts: {
       planned: [],
       sent: 0,
       failed: 0,
+      skippedClaimed: 0,
       skipped: 'outside_window',
     };
   }
 
   const firstSent = await getFirstSentEventDate();
-  const alreadySentToday = await countTodaysSentEvents();
+  const alreadySentToday = await countTodaysSentEvents(now);
   const cap = dailyCap(dayOfOperation(firstSent ?? now, now)) - alreadySentToday;
 
   if (cap <= 0) {
@@ -244,6 +277,7 @@ export async function runOutreachBatch(opts: {
       planned: [],
       sent: 0,
       failed: 0,
+      skippedClaimed: 0,
       skipped: 'cap_reached',
     };
   }
@@ -269,13 +303,21 @@ export async function runOutreachBatch(opts: {
 
   let sent = 0;
   let failed = 0;
+  let skippedClaimed = 0;
 
   if (opts.send) {
+    // CLAIM → SEND → RECORD: claim the touch atomically first so a
+    // concurrent batch cannot send the same touch twice. On send failure
+    // the claim stays in place (one failed touch beats a duplicate).
     for (const { prospect, touchNumber } of queue) {
+      const claimed = await claimProspectTouch(prospect.id, touchNumber, now);
+      if (!claimed) {
+        skippedClaimed++;
+        continue;
+      }
       try {
         const { subject } = await sendOutreachEmail(prospect, touchNumber);
         await recordSentEvent(prospect.id, touchNumber, subject, now);
-        await advanceProspectAfterSend(prospect, touchNumber, now);
         sent++;
       } catch (err) {
         console.error(`[outreach-engine] failed sending touch ${touchNumber} to ${prospect.email}:`, err);
@@ -285,7 +327,7 @@ export async function runOutreachBatch(opts: {
     }
   }
 
-  return { enabled: true, inWindow, cap, alreadySentToday, planned, sent, failed };
+  return { enabled: true, inWindow, cap, alreadySentToday, planned, sent, failed, skippedClaimed };
 }
 
 export async function sendNextTouches(
