@@ -1,14 +1,16 @@
 import { db } from '@/db';
-import { outreachEvents, outreachProspects, restaurants } from '@/db/schema';
-import { and, eq, gte, isNotNull, lt, sql } from 'drizzle-orm';
+import { outreachEvents, outreachProspects, prospectQueue, restaurants } from '@/db/schema';
+import { and, desc, eq, gte, isNotNull, lt, sql } from 'drizzle-orm';
 import { sendEmail, escapeHtml } from '@/lib/email';
 import {
   startOfTodayMexico,
   startOfTomorrowMexico,
   startOfYesterdayMexico,
+  weekdayMexico,
 } from '@/lib/mexico-tz';
 import { hotLeadWhatsappUrl } from '@/lib/outreach-templates';
 import type { OutreachProspect } from '@/lib/outreach-templates';
+import { buildProspectWhatsappUrl } from '@/lib/prospect-whatsapp';
 
 const BASE_URL = (process.env.NEXT_PUBLIC_BASE_URL ?? 'https://app.ratetapmx.com')
   .replace(/\\n/g, '')
@@ -300,4 +302,143 @@ export async function sendDailyDigest(): Promise<DigestResult> {
   });
 
   return { sent: true, skipped: false };
+}
+
+// ── Founder daily hit list (Tus 25 de hoy) ───────────────────────────────
+
+export interface HitListProspect {
+  placeId: string;
+  restaurantName: string;
+  rating: string | null;
+  reviewCount: number | null;
+  phone: string | null;
+  city: string | null;
+}
+
+export interface HitListStats {
+  contacted: number;
+  replied: number;
+  demos: number;
+  won: number;
+  remaining: number;
+}
+
+export type HitListResult =
+  | { sent: true; skipped: false; count: number; recipients: string[] }
+  | { sent: false; skipped: true; reason: 'weekend' | 'no_recipients' | 'empty' };
+
+const HIT_LIST_LIMIT = 25;
+
+function hitListRecipients(): string[] {
+  const raw = (process.env.FOUNDER_HITLIST_EMAILS ?? '').replace(/\\n/g, '').trim();
+  if (raw) {
+    return raw.split(',').map((e) => e.trim()).filter(Boolean);
+  }
+  const owner = ownerEmailOrNull();
+  return owner ? [owner] : [];
+}
+
+/**
+ * The day's prospects: status 'identified', with a phone, biggest accounts
+ * first. Mirrors the /prospects board ordering — the board's leading
+ * CASE-WHEN puts 'identified' first, which is constant under this filter,
+ * so the effective order is review_count DESC.
+ */
+export async function selectDailyHitList(limit: number = HIT_LIST_LIMIT): Promise<HitListProspect[]> {
+  return db
+    .select({
+      placeId: prospectQueue.placeId,
+      restaurantName: prospectQueue.restaurantName,
+      rating: prospectQueue.rating,
+      reviewCount: prospectQueue.reviewCount,
+      phone: prospectQueue.phone,
+      city: prospectQueue.city,
+    })
+    .from(prospectQueue)
+    .where(
+      and(
+        eq(prospectQueue.status, 'identified'),
+        isNotNull(prospectQueue.phone),
+        sql`${prospectQueue.phone} <> ''`,
+      ),
+    )
+    .orderBy(desc(prospectQueue.reviewCount))
+    .limit(limit);
+}
+
+/** Funnel counts over the trailing 7 days, plus remaining 'identified'. */
+export async function getHitListStats(now: Date = new Date()): Promise<HitListStats> {
+  const since = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+  const rows = await db
+    .select({
+      contacted: sql<number>`count(*) filter (where ${prospectQueue.contactedAt} >= ${since})::int`,
+      replied: sql<number>`count(*) filter (where ${prospectQueue.repliedAt} >= ${since})::int`,
+      demos: sql<number>`count(*) filter (where ${prospectQueue.bookedAt} >= ${since})::int`,
+      won: sql<number>`count(*) filter (where ${prospectQueue.wonAt} >= ${since})::int`,
+      remaining: sql<number>`count(*) filter (where ${prospectQueue.status} = 'identified')::int`,
+    })
+    .from(prospectQueue);
+  return rows[0] ?? { contacted: 0, replied: 0, demos: 0, won: 0, remaining: 0 };
+}
+
+/** "DD/MM" in Mexico City for the email subject. */
+function dayMonthMexico(now: Date): string {
+  const local = new Date(now.toLocaleString('en-US', { timeZone: 'America/Mexico_City' }));
+  const dd = String(local.getDate()).padStart(2, '0');
+  const mm = String(local.getMonth() + 1).padStart(2, '0');
+  return `${dd}/${mm}`;
+}
+
+function hitListRowHtml(p: HitListProspect): string {
+  const meta = [
+    p.city ? escapeHtml(p.city) : null,
+    p.rating ? `${escapeHtml(p.rating)}★` : null,
+    p.reviewCount !== null ? `${p.reviewCount.toLocaleString('es-MX')} reseñas` : null,
+  ]
+    .filter(Boolean)
+    .join(' · ');
+  const waUrl = p.phone ? buildProspectWhatsappUrl(p, p.phone) : null;
+  const boardUrl = p.city
+    ? `${BASE_URL}/prospects?ciudad=${encodeURIComponent(p.city)}`
+    : `${BASE_URL}/prospects`;
+  return `<tr><td style="padding:12px 0;border-bottom:1px solid #f0ece7;">
+    <div style="font-size:15px;color:#1c1917;"><strong>${escapeHtml(p.restaurantName)}</strong></div>
+    ${meta ? `<div style="font-size:13px;color:#78716c;margin-top:2px;">${meta}</div>` : ''}
+    ${waUrl ? `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:8px;"><tr><td style="background:#25D366;border-radius:8px;text-align:center;"><a href="${waUrl}" style="display:block;padding:10px 16px;color:#ffffff;text-decoration:none;font-weight:700;font-size:14px;">WhatsApp →</a></td></tr></table>` : ''}
+    <div style="margin-top:6px;"><a href="${boardUrl}" style="color:#2563EB;font-size:12px;">marcar estado</a></div>
+  </td></tr>`;
+}
+
+export async function sendFounderDailyHitList(now: Date = new Date()): Promise<HitListResult> {
+  const weekday = weekdayMexico(now);
+  if (weekday === 0 || weekday === 6) {
+    return { sent: false, skipped: true, reason: 'weekend' };
+  }
+
+  const recipients = hitListRecipients();
+  if (recipients.length === 0) {
+    console.warn('[outreach-notifications] FOUNDER_HITLIST_EMAILS / OWNER_NOTIFICATION_EMAIL not set — skipping hit list');
+    return { sent: false, skipped: true, reason: 'no_recipients' };
+  }
+
+  const [list, stats] = await Promise.all([selectDailyHitList(), getHitListStats(now)]);
+  if (list.length === 0) {
+    return { sent: false, skipped: true, reason: 'empty' };
+  }
+
+  const statsLine = `Esta semana: ${stats.contacted} enviados · ${stats.replied} respuestas · ${stats.demos} demos · ${stats.won} ganados · quedan ${stats.remaining}`;
+  const rows = list.map(hitListRowHtml).join('');
+  const body = `
+    <p style="margin:0 0 16px;font-size:14px;color:#44403c;">${escapeHtml(statsLine)}</p>
+    <table cellpadding="0" cellspacing="0" style="width:100%;">${rows}</table>
+    <p style="margin:20px 0 0;font-size:13px;color:#78716c;">Tablero completo: <a href="${BASE_URL}/prospects" style="color:#2563EB;">${BASE_URL}/prospects</a></p>
+  `;
+
+  await sendEmail({
+    to: recipients.join(', '),
+    subject: `Tus 25 de hoy · ${dayMonthMexico(now)}`,
+    html: emailLayout(`Tus ${list.length} de hoy`, body),
+  });
+
+  return { sent: true, skipped: false, count: list.length, recipients };
 }

@@ -6,6 +6,7 @@ import { and, desc, eq, sql, type SQL } from 'drizzle-orm';
 import { db } from '@/db';
 import { prospectQueue } from '@/db/schema';
 import { verifySession } from '@/lib/session';
+import { buildProspectWhatsappUrl } from '@/lib/prospect-whatsapp';
 import { ProspectActions } from './ProspectActions';
 
 export const metadata: Metadata = {
@@ -28,8 +29,9 @@ interface PainLineEntry {
 /**
  * Fail-soft: the pain-line JSON only exists on the founder's dev machine
  * (../data/leads/ is outside the Vercel deployment). In production this
- * returns {} and WhatsApp messages fall back to a template built from the
- * DB fields (name/rating/review_count), which we always have.
+ * returns {} and the per-card caption simply doesn't render. Pain lines
+ * are display-only; the WhatsApp message copy lives in
+ * src/lib/prospect-whatsapp.ts.
  */
 function loadPainLines(): Record<string, PainLineEntry> {
   try {
@@ -75,23 +77,6 @@ const STATUS_FILTERS: { value: string; label: string }[] = [
   { value: 'won', label: 'Ganados' },
   { value: 'lost', label: 'Perdidos' },
 ];
-
-function waPhone(phone: string): string {
-  return phone.replace(/\D/g, '');
-}
-
-function makeWhatsAppUrl(
-  p: { placeId: string; restaurantName: string; rating: string | null; reviewCount: number | null; city: string | null },
-  phone: string,
-  painLine?: string,
-): string {
-  const rating = p.rating ?? '?';
-  const reviews = (p.reviewCount ?? 0).toLocaleString('es-MX');
-  const hook = painLine
-    ?? `Vi que ${p.restaurantName} tiene ${rating}★ con ${reviews} reseñas en Google.`;
-  const msg = `Hola, buen día! Soy de RateTap — trabajamos con restaurantes${p.city ? ` en ${p.city}` : ''} como La Estancia, ayudándolos a subir su calificación de Google. ${hook} Le preparé un diagnóstico gratuito de su reputación: ${BASE_URL}/audit/${p.placeId} ¿Le puedo platicar 10 minutos? Sin compromiso.`;
-  return `https://wa.me/${waPhone(phone)}?text=${encodeURIComponent(msg)}`;
-}
 
 function buildFilterHref(city: string, status: string): string {
   const params = new URLSearchParams();
@@ -266,7 +251,7 @@ export default async function ProspectsPage({
                 {p.phone && (
                   <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
                     <a
-                      href={makeWhatsAppUrl(p, p.phone, pain?.pain_line_es)}
+                      href={buildProspectWhatsappUrl(p, p.phone)}
                       target="_blank"
                       rel="noopener noreferrer"
                       style={{

@@ -60,6 +60,14 @@ export function currentMexicoHour(): number {
   return mexicoLocal().getHours();
 }
 
+/**
+ * Day of week in Mexico City (0 = Sunday, 6 = Saturday) for a given
+ * instant. Defaults to now.
+ */
+export function weekdayMexico(now: Date = new Date()): number {
+  return new Date(now.toLocaleString('en-US', { timeZone: MEXICO_TZ })).getDay();
+}
+
 /** Current day of week in Mexico City (0 = Sunday, 6 = Saturday). */
 export function currentMexicoDayOfWeek(): number {
   return mexicoLocal().getDay();
