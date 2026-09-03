@@ -40,6 +40,9 @@ describe('outreach email templates', () => {
     };
   }
 
+  const GUARANTEE =
+    'Si en 30 días no tiene 30 reseñas nuevas en Google, le devolvemos la instalación.';
+
   it('touch 1 html body has zero style attributes in typed body divs', async () => {
     const { buildOutreachEmail } = await loadTemplates();
     const result = await buildOutreachEmail(makeProspect(), 1);
@@ -52,7 +55,7 @@ describe('outreach email templates', () => {
     expect(styledBodyDivs).toBeNull();
 
     expect(bodyPart).toContain('<div dir="ltr">');
-    expect(bodyPart).toContain('<div>Soy Lawrence, de RateTap, aquí en León.</div>');
+    expect(bodyPart).toContain('<div>Soy Lawrence, cofundador de RateTap.');
     expect(bodyPart).toContain('<div><br></div>');
   });
 
@@ -70,9 +73,64 @@ describe('outreach email templates', () => {
       expect(line).not.toMatch(/\n/);
     }
 
-    expect(result.text).toContain('Soy Lawrence, de RateTap, aquí en León.');
+    expect(result.text).toContain('Soy Lawrence, cofundador de RateTap.');
     expect(result.text).toContain('Le preparé una auditoría de La Estancia');
     expect(result.text).toContain('30 días gratis');
+  });
+
+  it('no em dash appears in any subject, text, or html for either kind and all touches', async () => {
+    const { buildOutreachEmail } = await loadTemplates();
+    for (const kind of ['leon', 'group'] as const) {
+      for (const touch of [1, 2, 3] as const) {
+        const result = await buildOutreachEmail(makeProspect({ kind }), touch);
+        expect(result.subject).not.toContain('—');
+        expect(result.text).not.toContain('—');
+        expect(result.html).not.toContain('—');
+      }
+    }
+  });
+
+  it('touch 1 includes the 30-day guarantee for both kinds', async () => {
+    const { buildOutreachEmail } = await loadTemplates();
+    for (const kind of ['leon', 'group'] as const) {
+      const result = await buildOutreachEmail(makeProspect({ kind }), 1);
+      expect(result.text).toContain(GUARANTEE);
+      expect(result.html).toContain(GUARANTEE);
+    }
+  });
+
+  it('leon touch 1 asks the waiter question and keeps the audit link', async () => {
+    const { buildOutreachEmail } = await loadTemplates();
+    const result = await buildOutreachEmail(makeProspect(), 1);
+
+    expect(result.subject).toBe('¿Sabe cuál de sus meseros atiende mejor?');
+    expect(result.html).toContain('https://app.ratetapmx.com/audit/ChIJ123');
+  });
+
+  it('group kind uses the multi-location copy and subjects', async () => {
+    const { buildOutreachEmail } = await loadTemplates();
+
+    const touch1 = await buildOutreachEmail(makeProspect({ kind: 'group' }), 1);
+    expect(touch1.subject).toBe('¿Cuál de sus sucursales está pidiendo y cuál no?');
+    expect(touch1.html).toContain('sucursales');
+    expect(touch1.html).toContain('mesero por mesero');
+
+    const touch2 = await buildOutreachEmail(makeProspect({ kind: 'group' }), 2);
+    expect(touch2.subject).toBe('Re: ¿Cuál de sus sucursales está pidiendo y cuál no?');
+    expect(touch2.text).toContain('63.7% de las reseñas');
+
+    const touch3 = await buildOutreachEmail(makeProspect({ kind: 'group' }), 3);
+    expect(touch3.subject).toBe('Último correo sobre La Estancia');
+    expect(touch3.text).toContain('https://wa.me/');
+  });
+
+  it('touch 3 leaves the founder WhatsApp link for both kinds', async () => {
+    const { buildOutreachEmail } = await loadTemplates();
+    for (const kind of ['leon', 'group'] as const) {
+      const result = await buildOutreachEmail(makeProspect({ kind }), 3);
+      expect(result.text).toContain('Este es el último correo que le envío.');
+      expect(result.text).toContain('Le dejo mi WhatsApp: https://wa.me/5212228822360');
+    }
   });
 
   it('footer contains unsubscribe URL and List-Unsubscribe header', async () => {
@@ -82,16 +140,6 @@ describe('outreach email templates', () => {
     expect(result.headers['List-Unsubscribe']).toContain('/api/outreach/unsubscribe?id=1&token=');
     expect(result.html).toContain('/api/outreach/unsubscribe?id=1&amp;token=');
     expect(result.text).toContain('/api/outreach/unsubscribe?id=1&token=');
-  });
-
-  it('group kind adapts copy and keeps audit link', async () => {
-    const { buildOutreachEmail } = await loadTemplates();
-    const result = await buildOutreachEmail(makeProspect({ kind: 'group' }), 1);
-
-    expect(result.subject).toBe('Le preparé una auditoría de La Estancia');
-    expect(result.html).toContain('grupo');
-    expect(result.html).toContain('sucursales');
-    expect(result.html).toContain('https://app.ratetapmx.com/audit/ChIJ123');
   });
 
   it('includes CID wordmark attachment', async () => {

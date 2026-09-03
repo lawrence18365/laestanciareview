@@ -61,48 +61,64 @@ function whatsappUrl(phoneDigits: string, message: string): string {
 
 const FOUNDER_WHATSAPP = '5212228822360';
 
-function bodyParagraphs(kind: 'leon' | 'group', prospect: OutreachProspect): string[] {
+const INTRO_PARAGRAPH =
+  'Soy Lawrence, cofundador de RateTap. Lo usamos en los 12 restaurantes de Grupo La Estancia, en León, Querétaro, Puebla y Veracruz.';
+
+const OFFER_PARAGRAPH =
+  'Nosotros instalamos y capacitamos en persona. $1,500 de instalación, 30 días gratis, y después $700 al mes por sucursal. Si en 30 días no tiene 30 reseñas nuevas en Google, le devolvemos la instalación.';
+
+function touch1Paragraphs(kind: 'leon' | 'group', prospect: OutreachProspect): string[] {
   const name = prospect.name;
-  const ratingLine = prospect.rating ? ` Tiene ${formatRating(prospect.rating)}.` : '';
-  const auditLink = auditUrl(prospect.placeId);
 
   if (kind === 'group') {
-    const auditLine = auditLink
-      ? `Aquí está su auditoría: ${auditLink}`
-      : `Si me confirma el Place ID de su sucursal principal, le armamos el panel en minutos.`;
     return [
-      `Soy Lawrence, de RateTap, aquí en León.`,
-      `Le preparé una auditoría de ${name}.${ratingLine} El grupo ${name} opera varias sucursales; con RateTap puede verlas todas en un solo panel, medir sucursal por sucursal y dar seguimiento tanto al feedback privado como a las reseñas de Google. ${auditLine}`,
-      `Estoy abriendo 3 grupos piloto: 30 días gratis en una de sus sucursales, sin pagar nada hoy y sin tarjeta; si le funciona, después arranca la mensualidad de $700 por ubicación y el setup de las tarjetas NFC.`,
+      INTRO_PARAGRAPH,
+      `Le escribo porque ${name} opera varias sucursales y hay una pregunta que casi ningún dueño puede contestar: ¿cuál de sus meseros atiende mejor, y cuál está a punto de renunciar? Nosotros lo vemos mesero por mesero, turno por turno y sucursal por sucursal. En La Estancia, el 20% de los meseros genera el 43% de las reseñas de Google. Antes de medir, nadie sabía quiénes eran.`,
+      `Funciona así: cada mesero trae una tarjeta. El comensal la toca al pagar. Si está contento, deja su reseña en Google. Si algo salió mal, la queja le llega a usted por WhatsApp, en privado, antes de hacerse pública.`,
+      OFFER_PARAGRAPH,
+      `¿Le enseño el tablero en una llamada de 15 minutos esta semana?`,
     ];
   }
 
+  const ratingLine = prospect.rating ? ` Tiene ${formatRating(prospect.rating)}.` : '';
+  const auditLink = auditUrl(prospect.placeId);
   const auditLine = auditLink
     ? `La puede ver aquí: ${auditLink}`
     : `Si me confirma su Place ID de Google, le armamos la auditoría en minutos.`;
   return [
-    `Soy Lawrence, de RateTap, aquí en León.`,
+    INTRO_PARAGRAPH,
     `Le preparé una auditoría de ${name} con los números reales de Google.${ratingLine} ${auditLine}`,
-    `Estoy abriendo 3 lugares piloto: 30 días gratis, sin pagar nada hoy y sin tarjeta; si le funciona, después arranca la mensualidad de $700 y el setup de las tarjetas NFC.`,
+    OFFER_PARAGRAPH,
   ];
 }
 
 function touch2Paragraphs(kind: 'leon' | 'group', prospect: OutreachProspect): string[] {
-  const name = prospect.name;
+  if (kind === 'group') {
+    return [
+      `Le comparto un dato de La Estancia León: 3 de 12 meseros generan el 63.7% de las reseñas. Un solo mesero, el 38.2%. Esos son los que no puede perder, y hoy casi ningún dueño sabe quiénes son.`,
+      `¿Le muestro cómo se ve esto con los nombres de sus propios meseros? 15 minutos, cuando le acomode.`,
+    ];
+  }
+
   const auditLink = auditUrl(prospect.placeId);
   const auditLine = auditLink
     ? `La dejo aquí de nuevo: ${auditLink}`
     : `Cuando me confirme su Place ID de Google le armamos la auditoría.`;
-
   return [
-    `¿Alcanzó a ver la auditoría de ${name}? ${auditLine}`,
+    `¿Alcanzó a ver la auditoría de ${prospect.name}? ${auditLine}`,
     `Cada comentario crítico es una oportunidad de recuperar al cliente. RateTap ofrece a cada comensal la misma elección entre compartir su experiencia en Google o dejar feedback privado, para que el equipo pueda responder a tiempo.`,
   ];
 }
 
-function touch3Paragraphs(prospect: OutreachProspect): string[] {
+function touch3Paragraphs(kind: 'leon' | 'group', prospect: OutreachProspect): string[] {
+  const whatsapp = founderWhatsappUrl(prospect.name);
+  if (kind === 'group') {
+    return [
+      `Este es el último correo que le envío. Si en algún momento quiere ver qué mesero pide y cuál no en cada una de sus sucursales, aquí estoy. Le dejo mi WhatsApp: ${whatsapp}`,
+    ];
+  }
   return [
-    `Este es el último correo que le envío sobre ${prospect.name}. Los lugares piloto se están llenando, pero la puerta sigue abierta si en algún momento quiere ver la auditoría.`,
+    `Este es el último correo que le envío. Si en algún momento quiere ver cuál de sus meseros pide reseñas y cuál no, aquí estoy. Le dejo mi WhatsApp: ${whatsapp}`,
   ];
 }
 
@@ -197,14 +213,20 @@ export async function buildOutreachEmail(
   let subject: string;
 
   if (touchNumber === 1) {
-    subject = `Le preparé una auditoría de ${prospect.name}`;
-    paragraphs = bodyParagraphs(kind, prospect);
+    subject =
+      kind === 'group'
+        ? '¿Cuál de sus sucursales está pidiendo y cuál no?'
+        : '¿Sabe cuál de sus meseros atiende mejor?';
+    paragraphs = touch1Paragraphs(kind, prospect);
   } else if (touchNumber === 2) {
-    subject = `¿Alcanzó a ver la auditoría de ${prospect.name}?`;
+    subject =
+      kind === 'group'
+        ? 'Re: ¿Cuál de sus sucursales está pidiendo y cuál no?'
+        : `¿Alcanzó a ver la auditoría de ${prospect.name}?`;
     paragraphs = touch2Paragraphs(kind, prospect);
   } else {
-    subject = `Último correo: ${prospect.name}`;
-    paragraphs = touch3Paragraphs(prospect);
+    subject = `Último correo sobre ${prospect.name}`;
+    paragraphs = touch3Paragraphs(kind, prospect);
   }
 
   const htmlBody = typedBodyHtml(paragraphs);

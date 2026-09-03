@@ -7,7 +7,10 @@ import {
   startOfTodayMexico,
   startOfTomorrowMexico,
 } from '@/lib/mexico-tz';
-import { sendOutreachEmail } from '@/lib/outreach-templates';
+import {
+  buildOutreachEmail,
+  sendOutreachEmail,
+} from '@/lib/outreach-templates';
 import type { OutreachProspect } from '@/lib/outreach-templates';
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
@@ -163,6 +166,126 @@ export async function recordFailedEvent(
     meta: { error: message },
     createdAt: now,
   });
+}
+
+export interface OutreachBatchPlanItem {
+  prospectId: number;
+  name: string;
+  email: string;
+  touchNumber: 1 | 2 | 3;
+  subject: string;
+}
+
+export interface OutreachBatchResult {
+  enabled: boolean;
+  inWindow: boolean;
+  cap: number;
+  alreadySentToday: number;
+  planned: OutreachBatchPlanItem[];
+  sent: number;
+  failed: number;
+  skipped?: string;
+}
+
+/**
+ * Single entry point for running the outreach sequence (cron or manual script).
+ *
+ * Safety: nothing is planned or sent unless OUTREACH_EMAIL_ENABLED === 'true'.
+ * With `send: false` it is a pure dry run: it computes the plan and renders
+ * subjects without sending email or writing any events.
+ *
+ * Follow-ups (touch 3, then touch 2) are always planned before new touch 1
+ * sends, and the whole plan is truncated to today's remaining ramped cap.
+ */
+export async function runOutreachBatch(opts: {
+  now?: Date;
+  send: boolean;
+  ignoreWindow?: boolean;
+}): Promise<OutreachBatchResult> {
+  const now = opts.now ?? new Date();
+  const inWindow = isInSendWindow();
+
+  if (process.env.OUTREACH_EMAIL_ENABLED !== 'true') {
+    return {
+      enabled: false,
+      inWindow,
+      cap: 0,
+      alreadySentToday: 0,
+      planned: [],
+      sent: 0,
+      failed: 0,
+      skipped: 'disabled',
+    };
+  }
+
+  if (!inWindow && !opts.ignoreWindow) {
+    return {
+      enabled: true,
+      inWindow,
+      cap: 0,
+      alreadySentToday: 0,
+      planned: [],
+      sent: 0,
+      failed: 0,
+      skipped: 'outside_window',
+    };
+  }
+
+  const firstSent = await getFirstSentEventDate();
+  const alreadySentToday = await countTodaysSentEvents();
+  const cap = dailyCap(dayOfOperation(firstSent ?? now, now)) - alreadySentToday;
+
+  if (cap <= 0) {
+    return {
+      enabled: true,
+      inWindow,
+      cap,
+      alreadySentToday,
+      planned: [],
+      sent: 0,
+      failed: 0,
+      skipped: 'cap_reached',
+    };
+  }
+
+  const { touch1, touch2, touch3 } = await selectProspectsForTouch(now);
+  const queue = [
+    ...touch3.map((prospect) => ({ prospect, touchNumber: 3 as const })),
+    ...touch2.map((prospect) => ({ prospect, touchNumber: 2 as const })),
+    ...touch1.map((prospect) => ({ prospect, touchNumber: 1 as const })),
+  ].slice(0, cap);
+
+  const planned: OutreachBatchPlanItem[] = [];
+  for (const { prospect, touchNumber } of queue) {
+    const { subject } = await buildOutreachEmail(prospect, touchNumber);
+    planned.push({
+      prospectId: prospect.id,
+      name: prospect.name,
+      email: prospect.email,
+      touchNumber,
+      subject,
+    });
+  }
+
+  let sent = 0;
+  let failed = 0;
+
+  if (opts.send) {
+    for (const { prospect, touchNumber } of queue) {
+      try {
+        const { subject } = await sendOutreachEmail(prospect, touchNumber);
+        await recordSentEvent(prospect.id, touchNumber, subject, now);
+        await advanceProspectAfterSend(prospect, touchNumber, now);
+        sent++;
+      } catch (err) {
+        console.error(`[outreach-engine] failed sending touch ${touchNumber} to ${prospect.email}:`, err);
+        await recordFailedEvent(prospect.id, touchNumber, err, now);
+        failed++;
+      }
+    }
+  }
+
+  return { enabled: true, inWindow, cap, alreadySentToday, planned, sent, failed };
 }
 
 export async function sendNextTouches(
