@@ -313,6 +313,9 @@ export interface HitListProspect {
   reviewCount: number | null;
   phone: string | null;
   city: string | null;
+  tier: string | null;
+  locations: number | null;
+  ownerName: string | null;
 }
 
 export interface HitListStats {
@@ -339,10 +342,11 @@ function hitListRecipients(): string[] {
 }
 
 /**
- * The day's prospects: status 'identified', with a phone, biggest accounts
- * first. Mirrors the /prospects board ordering — the board's leading
- * CASE-WHEN puts 'identified' first, which is constant under this filter,
- * so the effective order is review_count DESC.
+ * The day's prospects: status 'identified', with a phone, multi-location
+ * groups first, then biggest accounts first. Mirrors the /prospects board
+ * ordering — the board's leading CASE-WHENs put groups first and then
+ * 'identified', which is constant under this filter, so the effective
+ * order is groups first, then review_count DESC.
  */
 export async function selectDailyHitList(limit: number = HIT_LIST_LIMIT): Promise<HitListProspect[]> {
   return db
@@ -353,6 +357,9 @@ export async function selectDailyHitList(limit: number = HIT_LIST_LIMIT): Promis
       reviewCount: prospectQueue.reviewCount,
       phone: prospectQueue.phone,
       city: prospectQueue.city,
+      tier: prospectQueue.tier,
+      locations: prospectQueue.locations,
+      ownerName: prospectQueue.ownerName,
     })
     .from(prospectQueue)
     .where(
@@ -362,7 +369,10 @@ export async function selectDailyHitList(limit: number = HIT_LIST_LIMIT): Promis
         sql`${prospectQueue.phone} <> ''`,
       ),
     )
-    .orderBy(desc(prospectQueue.reviewCount))
+    .orderBy(
+      sql`CASE WHEN ${prospectQueue.tier} = 'group' THEN 0 ELSE 1 END`,
+      desc(prospectQueue.reviewCount),
+    )
     .limit(limit);
 }
 
@@ -397,13 +407,21 @@ function hitListRowHtml(p: HitListProspect): string {
   ]
     .filter(Boolean)
     .join(' · ');
+  const groupBadge =
+    p.tier === 'group'
+      ? `<span style="display:inline-block;margin-left:6px;color:#B45309;background:#FEF3C7;border:1px solid #FCD34D;font-size:10px;font-weight:700;letter-spacing:0.5px;padding:1px 7px;border-radius:999px;vertical-align:middle;">GRUPO${p.locations ? ` · ${p.locations} sucursales` : ''}</span>`
+      : '';
+  const ownerLine = p.ownerName
+    ? `<div style="font-size:12px;color:#44403c;margin-top:2px;">Dueño: ${escapeHtml(p.ownerName)}</div>`
+    : '';
   const waUrl = p.phone ? buildProspectWhatsappUrl(p, p.phone) : null;
   const boardUrl = p.city
     ? `${BASE_URL}/prospects?ciudad=${encodeURIComponent(p.city)}`
     : `${BASE_URL}/prospects`;
   return `<tr><td style="padding:12px 0;border-bottom:1px solid #f0ece7;">
-    <div style="font-size:15px;color:#1c1917;"><strong>${escapeHtml(p.restaurantName)}</strong></div>
+    <div style="font-size:15px;color:#1c1917;"><strong>${escapeHtml(p.restaurantName)}</strong>${groupBadge}</div>
     ${meta ? `<div style="font-size:13px;color:#78716c;margin-top:2px;">${meta}</div>` : ''}
+    ${ownerLine}
     ${waUrl ? `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:8px;"><tr><td style="background:#25D366;border-radius:8px;text-align:center;"><a href="${waUrl}" style="display:block;padding:10px 16px;color:#ffffff;text-decoration:none;font-weight:700;font-size:14px;">WhatsApp →</a></td></tr></table>` : ''}
     <div style="margin-top:6px;"><a href="${boardUrl}" style="color:#2563EB;font-size:12px;">marcar estado</a></div>
   </td></tr>`;

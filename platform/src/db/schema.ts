@@ -482,6 +482,12 @@ export const prospectQueue = pgTable('prospect_queue', {
   wonAt: timestamp('won_at', { withTimezone: true }),
   lostAt: timestamp('lost_at', { withTimezone: true }),
   lastError: text('last_error'),
+  // 'group' = verified multi-location restaurant group (sorts first, custom
+  // WhatsApp opener). NULL/other = single-restaurant prospect. See
+  // migrations/0023_prospect_queue_group_tier.sql.
+  tier: text('tier'),
+  locations: integer('locations'),
+  ownerName: text('owner_name'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 }, (t) => [
@@ -489,6 +495,7 @@ export const prospectQueue = pgTable('prospect_queue', {
   index('prospect_queue_status_idx').on(t.status),
   index('prospect_queue_next_action_idx').on(t.nextActionAt),
   index('prospect_queue_provider_message_idx').on(t.providerMessageId),
+  index('prospect_queue_tier_idx').on(t.tier),
 ]);
 
 export const prospectOutreachEvents = pgTable(

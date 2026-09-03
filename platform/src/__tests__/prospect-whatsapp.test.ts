@@ -56,6 +56,53 @@ describe('buildProspectWhatsappMessage', () => {
     expect(msg).not.toContain('/audit/');
     expect(msg).not.toContain('subir su calificación');
   });
+
+  it('keeps the single-restaurant message unchanged when tier is null', () => {
+    const msg = buildProspectWhatsappMessage({
+      restaurantName: 'Taquería El Buen Sabor',
+      rating: '4.3',
+      reviewCount: 1234,
+      city: 'León',
+      tier: null,
+      locations: null,
+    });
+    expect(msg).toBe(
+      'Hola, buen día. Le escribo de parte de RateTap, el sistema con el que La Estancia mide a sus meseros en 12 restaurantes.' +
+        ' Vi que Taquería El Buen Sabor tiene 4.3★ con 1,234 reseñas en Google.' +
+        ' Le hago una pregunta que casi ningún dueño puede contestar: ¿sabe cuál de sus meseros atiende mejor y cuál está a punto de renunciar? Nosotros lo vemos mesero por mesero y por turno. ¿Le enseño cómo en 10 minutos? Sin compromiso.',
+    );
+  });
+
+  it('builds the group opener with the locations count', () => {
+    const msg = buildProspectWhatsappMessage({
+      restaurantName: 'Grupo Anderson',
+      rating: null,
+      reviewCount: null,
+      city: 'CDMX',
+      tier: 'group',
+      locations: 8,
+    });
+    expect(msg).toBe(
+      'Hola, buen día. Le escribo de parte de RateTap, el sistema con el que La Estancia mide a sus meseros en 12 restaurantes.' +
+        ' Vi que Grupo Anderson opera 8 sucursales.' +
+        ' Le hago una pregunta que casi ningún dueño puede contestar: ¿cuál de sus sucursales está pidiendo reseñas y cuál no, y cuál de sus meseros está a punto de renunciar? Nosotros lo vemos mesero por mesero, turno por turno y sucursal por sucursal. ¿Le enseño cómo en 15 minutos? Sin compromiso.',
+    );
+  });
+
+  it('builds the group opener without a locations count', () => {
+    const msg = buildProspectWhatsappMessage({
+      restaurantName: 'Grupo Anderson',
+      rating: '4.9',
+      reviewCount: 5000,
+      city: null,
+      tier: 'group',
+      locations: null,
+    });
+    expect(msg).toContain(' Vi que Grupo Anderson opera varias sucursales.');
+    expect(msg).not.toContain('4.9★');
+    expect(msg).not.toContain('—');
+    expect(msg).toContain('15 minutos');
+  });
 });
 
 describe('waPhone', () => {

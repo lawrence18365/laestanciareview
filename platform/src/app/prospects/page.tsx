@@ -78,10 +78,11 @@ const STATUS_FILTERS: { value: string; label: string }[] = [
   { value: 'lost', label: 'Perdidos' },
 ];
 
-function buildFilterHref(city: string, status: string): string {
+function buildFilterHref(city: string, status: string, nivel: string): string {
   const params = new URLSearchParams();
   if (city) params.set('ciudad', city);
   if (status) params.set('estado', status);
+  if (nivel) params.set('nivel', nivel);
   const qs = params.toString();
   return qs ? `/prospects?${qs}` : '/prospects';
 }
@@ -89,26 +90,30 @@ function buildFilterHref(city: string, status: string): string {
 export default async function ProspectsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ ciudad?: string; estado?: string }>;
+  searchParams: Promise<{ ciudad?: string; estado?: string; nivel?: string }>;
 }) {
   const session = await verifySession();
   if (!session) redirect('/login');
   // Founder/owner-only board — mirrors /overview's role gate.
   if (session.role !== 'owner' && session.role !== 'regional') redirect('/dashboard');
 
-  const { ciudad = '', estado = '' } = await searchParams;
+  const { ciudad = '', estado = '', nivel = '' } = await searchParams;
+  const soloGrupos = nivel === 'grupo';
 
   const conditions: SQL[] = [];
   if (ciudad) conditions.push(eq(prospectQueue.city, ciudad));
   if (estado) conditions.push(eq(prospectQueue.status, estado));
+  if (soloGrupos) conditions.push(eq(prospectQueue.tier, 'group'));
 
   const [rows, cityRows, statusCounts, totalRows] = await Promise.all([
     db
       .select()
       .from(prospectQueue)
       .where(conditions.length ? and(...conditions) : undefined)
-      // 'identified' (por contactar) first, then biggest accounts first.
+      // Grupos first, then 'identified' (por contactar), then biggest
+      // accounts first.
       .orderBy(
+        sql`CASE WHEN ${prospectQueue.tier} = 'group' THEN 0 ELSE 1 END`,
         sql`CASE WHEN ${prospectQueue.status} = 'identified' THEN 0 ELSE 1 END`,
         desc(prospectQueue.reviewCount),
       )
@@ -167,22 +172,26 @@ export default async function ProspectsPage({
         {/* City chips */}
         <nav aria-label="Filtrar por ciudad" style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '10px' }}>
           <a
-            href={buildFilterHref('', estado)}
-            style={chipStyle(ciudad === '')}
+            href={buildFilterHref('', estado, nivel)}
+            style={chipStyle(ciudad === '' && !soloGrupos)}
           >
             Todas
           </a>
           {cities.map((c) => (
-            <a key={c} href={buildFilterHref(c, estado)} style={chipStyle(ciudad === c)}>
+            <a key={c} href={buildFilterHref(c, estado, nivel)} style={chipStyle(ciudad === c && !soloGrupos)}>
               {c}
             </a>
           ))}
+          {/* Status-independent: shows every multi-location group. */}
+          <a href={buildFilterHref('', '', 'grupo')} style={chipStyle(soloGrupos)}>
+            Grupos
+          </a>
         </nav>
 
         {/* Status chips */}
         <nav aria-label="Filtrar por estado" style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '16px' }}>
           {STATUS_FILTERS.map((f) => (
-            <a key={f.value} href={buildFilterHref(ciudad, f.value)} style={chipStyle(estado === f.value)}>
+            <a key={f.value} href={buildFilterHref(ciudad, f.value, nivel)} style={chipStyle(estado === f.value)}>
               {f.label}
             </a>
           ))}
@@ -212,6 +221,26 @@ export default async function ProspectsPage({
                   <div style={{ minWidth: 0 }}>
                     <h2 style={{ color: '#F8FAFC', fontSize: '16px', fontWeight: 600, margin: 0 }}>
                       {p.restaurantName}
+                      {p.tier === 'group' && (
+                        <span
+                          style={{
+                            display: 'inline-block',
+                            marginLeft: '8px',
+                            verticalAlign: 'middle',
+                            color: '#FBBF24',
+                            background: 'rgba(251,191,36,0.12)',
+                            border: '1px solid rgba(251,191,36,0.4)',
+                            fontSize: '10px',
+                            fontWeight: 700,
+                            letterSpacing: '0.5px',
+                            padding: '2px 8px',
+                            borderRadius: '999px',
+                            whiteSpace: 'nowrap',
+                          }}
+                        >
+                          GRUPO{p.locations ? ` · ${p.locations} sucursales` : ''}
+                        </span>
+                      )}
                     </h2>
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center', marginTop: '4px', fontSize: '13px' }}>
                       {rating !== null && (
@@ -226,6 +255,11 @@ export default async function ProspectsPage({
                       )}
                       {p.city && <span style={{ color: '#64748B' }}>{p.city}</span>}
                     </div>
+                    {p.ownerName && (
+                      <div style={{ color: '#CBD5E1', fontSize: '12px', marginTop: '4px' }}>
+                        Dueño: {p.ownerName}
+                      </div>
+                    )}
                     {pain?.pain_line_es && (
                       <div style={{ color: '#94A3B8', fontSize: '12px', marginTop: '6px', fontStyle: 'italic' }}>
                         {pain.pain_line_es}

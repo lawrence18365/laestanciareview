@@ -115,6 +115,9 @@ describe('selectDailyHitList', () => {
         reviewCount: 57,
         phone: '4771234567',
         city: 'León',
+        tier: null,
+        locations: null,
+        ownerName: null,
       },
     ];
 
@@ -128,5 +131,83 @@ describe('selectDailyHitList', () => {
   it('passes a custom limit through', async () => {
     await selectDailyHitList(5);
     expect(mocks.limit).toHaveBeenCalledWith(5);
+  });
+
+  it('orders groups before single restaurants', async () => {
+    await selectDailyHitList();
+    const orderArgs = mocks.orderBy.mock.calls[0] as unknown[];
+    expect(orderArgs).toHaveLength(2);
+    // First key must be the CASE-WHEN tier expression (string chunks only;
+    // column chunks carry the table reference and are not JSON-safe).
+    const first = orderArgs[0] as { queryChunks: Array<{ value?: unknown }> };
+    const text = first.queryChunks
+      .map((c) => (Array.isArray(c.value) ? (c.value as string[]).join('') : ''))
+      .join('');
+    expect(text).toContain('CASE WHEN');
+    expect(text).toContain("'group'");
+  });
+});
+
+describe('hit-list email rows', () => {
+  it('renders the GRUPO badge and owner line for a tier=group prospect', async () => {
+    vi.stubEnv('FOUNDER_HITLIST_EMAILS', 'founder@example.com');
+    mocks.hitListRows = [
+      {
+        placeId: 'group:grupo-anderson',
+        restaurantName: 'Grupo Anderson',
+        rating: null,
+        reviewCount: null,
+        phone: '524771234567',
+        city: 'CDMX',
+        tier: 'group',
+        locations: 8,
+        ownerName: 'Carlos Anderson',
+      },
+    ];
+
+    const result = await sendFounderDailyHitList(MONDAY);
+    expect(result).toMatchObject({ sent: true, count: 1 });
+    expect(mocks.sendEmail).toHaveBeenCalledTimes(1);
+    const html = (mocks.sendEmail.mock.calls[0] as unknown as [{ html: string }])[0].html;
+    expect(html).toContain('GRUPO · 8 sucursales');
+    expect(html).toContain('Dueño: Carlos Anderson');
+    // Group rows get the sucursales opener in the (URL-encoded) WhatsApp link.
+    expect(html).toContain(encodeURIComponent('opera 8 sucursales'));
+    expect(html).toContain(encodeURIComponent('15 minutos'));
+  });
+
+  it('omits the locations count when null and never badges non-group rows', async () => {
+    vi.stubEnv('FOUNDER_HITLIST_EMAILS', 'founder@example.com');
+    mocks.hitListRows = [
+      {
+        placeId: 'group:no-count',
+        restaurantName: 'Grupo Sin Cifra',
+        rating: null,
+        reviewCount: null,
+        phone: '4771234567',
+        city: 'León',
+        tier: 'group',
+        locations: null,
+        ownerName: null,
+      },
+      {
+        placeId: 'p2',
+        restaurantName: 'El Fondón',
+        rating: '4.2',
+        reviewCount: 57,
+        phone: '4771234567',
+        city: 'León',
+        tier: null,
+        locations: null,
+        ownerName: null,
+      },
+    ];
+
+    await sendFounderDailyHitList(MONDAY);
+    const html = (mocks.sendEmail.mock.calls[0] as unknown as [{ html: string }])[0].html;
+    expect(html).toContain('>GRUPO</span>');
+    expect(html).not.toContain('sucursales</span>');
+    expect(html).not.toContain('Dueño:');
+    expect(html.match(/GRUPO/g)).toHaveLength(1);
   });
 });

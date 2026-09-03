@@ -9,6 +9,8 @@ export interface ProspectWhatsappInput {
   rating: string | null;
   reviewCount: number | null;
   city: string | null;
+  tier?: string | null;
+  locations?: number | null;
 }
 
 /**
@@ -21,6 +23,16 @@ export function waPhone(phone: string): string {
 }
 
 export function buildProspectWhatsappMessage(p: ProspectWhatsappInput): string {
+  if (p.tier === 'group') {
+    const hook = p.locations
+      ? ` Vi que ${p.restaurantName} opera ${p.locations} sucursales.`
+      : ` Vi que ${p.restaurantName} opera varias sucursales.`;
+    return (
+      'Hola, buen día. Le escribo de parte de RateTap, el sistema con el que La Estancia mide a sus meseros en 12 restaurantes.' +
+      hook +
+      ' Le hago una pregunta que casi ningún dueño puede contestar: ¿cuál de sus sucursales está pidiendo reseñas y cuál no, y cuál de sus meseros está a punto de renunciar? Nosotros lo vemos mesero por mesero, turno por turno y sucursal por sucursal. ¿Le enseño cómo en 15 minutos? Sin compromiso.'
+    );
+  }
   const hook =
     p.rating && p.reviewCount !== null
       ? ` Vi que ${p.restaurantName} tiene ${p.rating}★ con ${p.reviewCount.toLocaleString('es-MX')} reseñas en Google.`
