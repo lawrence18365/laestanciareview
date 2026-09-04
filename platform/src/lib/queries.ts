@@ -455,6 +455,8 @@ export interface QuietStaffEntry {
 /**
  * Staff whose attributed opinion volume fell sharply during the trailing
  * seven days after averaging at least five per week over the prior 21 days.
+ *
+ * @deprecated Use getStaffAnomalies from '@/lib/anomalies'.
  */
 export async function getQuietStaff(
   restaurantId: number,

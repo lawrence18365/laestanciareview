@@ -1,4 +1,5 @@
 import { sendMail } from '@/lib/mailer';
+import { formatStaffAnomaly, type StaffAnomaly } from '@/lib/anomalies';
 import { createTransport, type SendMailOptions, type Transporter } from 'nodemailer';
 
 /** Strip stray whitespace/newlines from env vars (Vercel CLI sometimes injects \\n). */
@@ -337,18 +338,6 @@ interface DigestStaffEntry {
   reviewCount: number;
 }
 
-interface QuietStaffDigestEntry {
-  staffId: number;
-  staffName: string | null;
-  staffCode: string | null;
-  priorWeeklyAvg: number;
-  lastWeekCount: number;
-}
-
-function formatOpinionCount(value: number): string {
-  return Number.isInteger(value) ? String(value) : value.toFixed(1);
-}
-
 interface GoogleTrendDigest {
   baselineRating: number;
   currentRating: number;
@@ -363,7 +352,7 @@ interface WeeklyDigestParams {
   weekBefore: { totalReviews: number; avgRating: number; googleSends: number; intercepted: number };
   unresolvedCount: number;
   topPerformers: DigestStaffEntry[];
-  quietStaff?: QuietStaffDigestEntry[];
+  staffAnomalies?: StaffAnomaly[];
   dashboardUrl: string;
   googleTrend?: GoogleTrendDigest | null;
 }
@@ -375,7 +364,7 @@ export async function sendWeeklyDigest({
   weekBefore,
   unresolvedCount,
   topPerformers,
-  quietStaff = [],
+  staffAnomalies = [],
   dashboardUrl,
   googleTrend,
 }: WeeklyDigestParams) {
@@ -420,14 +409,14 @@ export async function sendWeeklyDigest({
     }).join('')
     : `<tr><td colspan="3" style="padding: 16px; color: #a8a29e; font-style: italic; font-size: 14px; text-align: center;">Sin opiniones capturadas la semana pasada</td></tr>`;
 
-  const quietStaffSection = quietStaff.length > 0 ? `
+  const staffAnomalySection = staffAnomalies.length > 0 ? `
     <div style="margin: 0 28px 24px; padding: 16px; background: #fff7ed; border-radius: 12px; border-left: 4px solid #f97316;">
-      <p style="margin: 0 0 10px; font-size: 13px; font-weight: 700; color: #9a3412;">Dejaron de pedir opiniones esta semana</p>
-      ${quietStaff.map((person) => `
+      <p style="margin: 0 0 10px; font-size: 13px; font-weight: 700; color: #9a3412;">Cambios anormales esta semana</p>
+      ${staffAnomalies.map((person) => `
         <p style="margin: 5px 0; font-size: 14px; color: #44403c;">
-          <strong>${escapeHtml(person.staffName ?? 'Desconocido')}</strong>, promedio anterior ${formatOpinionCount(person.priorWeeklyAvg)}/sem a ${person.lastWeekCount} esta semana
+          ${escapeHtml(formatStaffAnomaly(person))}
         </p>`).join('')}
-      <p style="margin: 12px 0 0; font-size: 13px; color: #7c2d12;">Pregúntale qué pasó y entrégale tarjeta nueva si la perdió.</p>
+      <p style="margin: 12px 0 0; font-size: 13px; color: #7c2d12;">Confirme con el gerente si hubo cambio de turno, vacaciones o tarjeta perdida.</p>
     </div>` : '';
 
   const googleBanner = googleTrend && googleTrend.ratingChange !== 0 ? `
@@ -482,7 +471,7 @@ export async function sendWeeklyDigest({
 
     ${interceptedBanner}
     ${unresolvedBanner}
-    ${quietStaffSection}
+    ${staffAnomalySection}
 
     <!-- Leaderboard -->
     <div style="margin: 0 28px 24px; background: #faf8f6; border-radius: 12px; overflow: hidden;">
@@ -531,7 +520,7 @@ interface OwnerLocationSummary {
   ratingChange: number | null;
   currentRating: number | null;
   topStaff: { name: string; avgRating: number; reviewCount: number }[];
-  quietStaff: QuietStaffDigestEntry[];
+  staffAnomalies: StaffAnomaly[];
   complaints: {
     received: number;
     resolvedWithin24h: number;
@@ -603,8 +592,8 @@ export async function sendOwnerDigest({ to, locations, dashboardUrl }: OwnerDige
     const topStaffLine = l.topStaff.length > 0
       ? `<div style="margin-top:4px;font-size:11px;font-weight:400;color:#57534e;">Top: ${l.topStaff.map((person) => `${escapeHtml(person.name)} (${person.avgRating.toFixed(1)}★, ${person.reviewCount})`).join(', ')}</div>`
       : '';
-    const quietStaffLine = l.quietStaff.length > 0
-      ? `<div style="margin-top:3px;font-size:11px;font-weight:600;color:#9a3412;">Dejaron de pedir: ${l.quietStaff.map((person) => `${escapeHtml(person.staffName ?? 'Desconocido')} (${formatOpinionCount(person.priorWeeklyAvg)} a ${person.lastWeekCount})`).join(', ')}</div>`
+    const staffAnomalyLine = l.staffAnomalies.length > 0
+      ? `<div style="margin-top:3px;font-size:11px;font-weight:600;color:#9a3412;">Cambios anormales: ${l.staffAnomalies.map((person) => escapeHtml(formatStaffAnomaly(person))).join(' ')}</div>`
       : '';
     const resolvedPercent = l.complaints.received > 0
       ? Math.round((l.complaints.resolvedWithin24h / l.complaints.received) * 100)
@@ -614,7 +603,7 @@ export async function sendOwnerDigest({ to, locations, dashboardUrl }: OwnerDige
       ? `<div style="margin-top:4px;font-size:11px;font-weight:400;color:#92400e;">${l.complaints.overdue.slice(0, 3).map((complaint) => `${complaint.rating} ${complaint.rating === 1 ? 'estrella' : 'estrellas'}, ${complaint.hoursOpen} h abierta: &ldquo;${escapeHtml(complaint.feedbackPreview)}&rdquo;`).join('<br/>')}</div>`
       : '';
     return `<tr style="border-top: 1px solid #f0ece7;">
-      <td style="padding: 10px 14px; font-size: 14px; font-weight: 500; color: #1c1917;">${escapeHtml(l.name)}${unresolvedBadge}${topStaffLine}${quietStaffLine}${complaintLine}${overdueLines}</td>
+      <td style="padding: 10px 14px; font-size: 14px; font-weight: 500; color: #1c1917;">${escapeHtml(l.name)}${unresolvedBadge}${topStaffLine}${staffAnomalyLine}${complaintLine}${overdueLines}</td>
       <td style="padding: 10px 14px; font-size: 14px; text-align: right; color: #44403c;">${l.reviews}</td>
       <td style="padding: 10px 14px; font-size: 14px; text-align: right; color: ${ratingColor}; font-weight: 700;">${l.avgRating ? l.avgRating.toFixed(1) + ' ★' : '--'}</td>
       <td style="padding: 10px 14px; font-size: 14px; text-align: right; color: #78716c;">${l.googleSends}</td>

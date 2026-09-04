@@ -115,7 +115,7 @@ describe('outreach email templates', () => {
     expect(touch1.html).toContain('sucursales');
     expect(touch1.html).toContain('mesero por mesero');
     // We measure asking frequency; we never predict resignations.
-    expect(touch1.html).toContain('cuál dejó de pedir opiniones esta semana');
+    expect(touch1.html).toContain('cuál tuvo una caída anormal en respuestas esta semana');
     expect(touch1.html).toContain('para que usted pueda responder primero');
     expect(touch1.html).not.toContain('renunciar');
     expect(touch1.html).not.toContain('antes de hacerse pública');

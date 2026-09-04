@@ -16,7 +16,7 @@ const mocks = vi.hoisted(() => ({
   getLastWeekLeaderboard: vi.fn(),
   getNewFeedbackCount: vi.fn(),
   getOverviewStats: vi.fn(),
-  getQuietStaff: vi.fn(),
+  getStaffAnomalies: vi.fn(),
   getGoogleRatingTrend: vi.fn(),
   getComplaintSlaStats: vi.fn(),
   getOverdueComplaintPreviews: vi.fn(),
@@ -51,8 +51,15 @@ vi.mock('@/lib/queries', () => ({
   getLastWeekLeaderboard: mocks.getLastWeekLeaderboard,
   getNewFeedbackCount: mocks.getNewFeedbackCount,
   getOverviewStats: mocks.getOverviewStats,
-  getQuietStaff: mocks.getQuietStaff,
 }));
+
+vi.mock('@/lib/anomalies', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/lib/anomalies')>();
+  return {
+    ...actual,
+    getStaffAnomalies: mocks.getStaffAnomalies,
+  };
+});
 
 vi.mock('@/lib/google-places', () => ({
   getGoogleRatingTrend: mocks.getGoogleRatingTrend,
@@ -89,12 +96,13 @@ const weekStats = {
   intercepted: 1,
 };
 
-const quietAna = {
+const anomalyAna = {
   staffId: 11,
   staffName: 'Ana',
   staffCode: 'ANA',
-  priorWeeklyAvg: 12,
+  baselineWeekly: 12,
   lastWeekCount: 0,
+  dropPct: 1,
 };
 
 function visibleText(html: string): string {
@@ -106,14 +114,14 @@ function visibleText(html: string): string {
     .trim();
 }
 
-describe('quiet staff weekly digest rendering', () => {
+describe('staff anomaly weekly digest rendering', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.useEmailMocks = false;
     mocks.sendMail.mockResolvedValue(mailSuccess);
   });
 
-  it('renders the quiet-staff section with compliant wording', async () => {
+  it('renders the staff anomaly section with factual wording', async () => {
     await sendWeeklyDigest({
       to: 'gm@example.com',
       restaurantName: 'Centro',
@@ -121,21 +129,21 @@ describe('quiet staff weekly digest rendering', () => {
       weekBefore: weekStats,
       unresolvedCount: 0,
       topPerformers: [],
-      quietStaff: [quietAna],
+      staffAnomalies: [anomalyAna],
       dashboardUrl: 'https://example.com/dashboard',
     });
 
     const html = mocks.sendMail.mock.calls[0][0].html as string;
     const text = visibleText(html);
-    expect(text).toContain('Dejaron de pedir opiniones esta semana');
-    expect(text).toContain('Ana, promedio anterior 12/sem a 0 esta semana');
-    expect(text).toContain('Pregúntale qué pasó y entrégale tarjeta nueva si la perdió.');
+    expect(text).toContain('Cambios anormales esta semana');
+    expect(text).toContain('Ana recibió 0 respuestas esta semana vs 12 normalmente (-100%).');
+    expect(text).toContain('Confirme con el gerente si hubo cambio de turno, vacaciones o tarjeta perdida.');
     expect(text).toContain('Top meseros por experiencia del cliente');
     expect(text).not.toContain('\u2014');
     expect(text).not.toMatch(/\b(meta|objetivo|cuota)\b/i);
   });
 
-  it('omits the quiet-staff section when the list is empty', async () => {
+  it('omits the staff anomaly section when the list is empty', async () => {
     await sendWeeklyDigest({
       to: 'gm@example.com',
       restaurantName: 'Centro',
@@ -143,15 +151,15 @@ describe('quiet staff weekly digest rendering', () => {
       weekBefore: weekStats,
       unresolvedCount: 0,
       topPerformers: [],
-      quietStaff: [],
+      staffAnomalies: [],
       dashboardUrl: 'https://example.com/dashboard',
     });
 
     const html = mocks.sendMail.mock.calls[0][0].html as string;
-    expect(visibleText(html)).not.toContain('Dejaron de pedir opiniones esta semana');
+    expect(visibleText(html)).not.toContain('Cambios anormales esta semana');
   });
 
-  it('renders compact top and quiet staff lines in the owner digest', async () => {
+  it('renders compact top and staff anomaly lines in the owner digest', async () => {
     await sendOwnerDigest({
       to: 'owner@example.com',
       dashboardUrl: 'https://example.com/overview',
@@ -165,7 +173,7 @@ describe('quiet staff weekly digest rendering', () => {
         ratingChange: null,
         currentRating: null,
         topStaff: [{ name: 'Ana', avgRating: 4.9, reviewCount: 41 }],
-        quietStaff: [quietAna],
+        staffAnomalies: [anomalyAna],
         complaints: {
           received: 3,
           resolvedWithin24h: 2,
@@ -178,7 +186,7 @@ describe('quiet staff weekly digest rendering', () => {
     const html = mocks.sendMail.mock.calls[0][0].html as string;
     const text = visibleText(html);
     expect(text).toContain('Top: Ana (4.9★, 41)');
-    expect(text).toContain('Dejaron de pedir: Ana (12 a 0)');
+    expect(text).toContain('Cambios anormales: Ana recibió 0 respuestas esta semana vs 12 normalmente (-100%).');
     expect(text).toContain('Quejas: 3 recibidas, 67% atendidas en menos de 24 h, 1 vencidas');
     expect(text).toContain('1 estrella, 30 h abierta: &ldquo;Servicio muy lento&rdquo;');
     expect(text).toContain('Opiniones capturadas');
@@ -186,11 +194,11 @@ describe('quiet staff weekly digest rendering', () => {
   });
 });
 
-describe('weekly digest quiet push wiring', () => {
+describe('weekly digest staff anomaly push wiring', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.useEmailMocks = true;
-    process.env.CRON_SECRET = 'quiet-test-secret';
+    process.env.CRON_SECRET = 'anomaly-test-secret';
 
     const north = {
       id: 1,
@@ -238,12 +246,12 @@ describe('weekly digest quiet push wiring', () => {
       { restaurantId: 1, restaurantName: 'Norte', weeklyReviews: 20, weeklyAvg: 4.8, weeklyGoogle: 12, weeklyIntercepted: 1 },
       { restaurantId: 2, restaurantName: 'Sur', weeklyReviews: 10, weeklyAvg: 4.5, weeklyGoogle: 6, weeklyIntercepted: 0 },
     ]);
-    mocks.getQuietStaff.mockImplementation(async (restaurantId: number) => (
+    mocks.getStaffAnomalies.mockImplementation(async (restaurantId: number) => (
       restaurantId === 1
-        ? [quietAna]
+        ? [anomalyAna]
         : [
-          { staffId: 21, staffName: 'Beto', staffCode: 'BETO', priorWeeklyAvg: 8, lastWeekCount: 1 },
-          { staffId: 22, staffName: 'Carla', staffCode: 'CARLA', priorWeeklyAvg: 7, lastWeekCount: 0 },
+          { staffId: 21, staffName: 'Beto', staffCode: 'BETO', baselineWeekly: 8, lastWeekCount: 1, dropPct: 0.875 },
+          { staffId: 22, staffName: 'Carla', staffCode: 'CARLA', baselineWeekly: 7, lastWeekCount: 0, dropPct: 1 },
         ]
     ));
     mocks.getLastWeekStats.mockResolvedValue(weekStats);
@@ -273,44 +281,52 @@ describe('weekly digest quiet push wiring', () => {
     delete process.env.CRON_SECRET;
   });
 
-  it('pushes to each quiet location and sends scoped account aggregates', async () => {
+  it('pushes to each anomalous location and sends scoped account aggregates', async () => {
     const response = await GET(new NextRequest(
       'http://localhost/api/cron/weekly-digest',
-      { headers: { authorization: 'Bearer quiet-test-secret' } },
+      { headers: { authorization: 'Bearer anomaly-test-secret' } },
     ));
     const body = await response.json();
 
     expect(response.status).toBe(200);
-    expect(body.quietPush).toEqual({ sent: 4, targeted: 8 });
+    expect(body.staffAnomalyPush).toEqual({ sent: 4, targeted: 8 });
     expect(mocks.sendPushToRestaurant).toHaveBeenCalledTimes(4);
     expect(mocks.sendPushToRestaurant).toHaveBeenCalledWith(
       1,
       expect.objectContaining({
-        title: '1 mesero dejaron de pedir opiniones',
-        body: 'Ana',
+        title: '1 cambio anormal en el equipo',
+        body: 'Ana recibió 0 respuestas esta semana vs 12 normalmente (-100%).',
         url: '/staff',
-        tag: 'quiet-staff-1-2026-W36',
+        tag: 'staff-anomaly-1-2026-W36',
       }),
-      { kind: 'quiet_staff' },
+      { kind: 'staff_anomaly' },
     );
     expect(mocks.sendPushToRestaurant).toHaveBeenCalledWith(
       90,
-      expect.objectContaining({ body: '3 meseros en 2 sucursales', url: '/overview' }),
-      { kind: 'quiet_staff' },
+      expect.objectContaining({
+        title: '3 cambios anormales en el equipo',
+        body: 'Ana recibió 0 respuestas esta semana vs 12 normalmente (-100%).',
+        url: '/overview',
+      }),
+      { kind: 'staff_anomaly' },
     );
     expect(mocks.sendPushToRestaurant).toHaveBeenCalledWith(
       91,
-      expect.objectContaining({ body: '1 meseros en 1 sucursales', url: '/overview' }),
-      { kind: 'quiet_staff' },
+      expect.objectContaining({
+        title: '1 cambio anormal en el equipo',
+        body: 'Ana recibió 0 respuestas esta semana vs 12 normalmente (-100%).',
+        url: '/overview',
+      }),
+      { kind: 'staff_anomaly' },
     );
     expect(mocks.sendWeeklyDigest).toHaveBeenCalledWith(
-      expect.objectContaining({ restaurantName: 'Norte', quietStaff: [quietAna] }),
+      expect.objectContaining({ restaurantName: 'Norte', staffAnomalies: [anomalyAna] }),
     );
     expect(mocks.sendOwnerDigest).toHaveBeenCalledWith(expect.objectContaining({
       locations: expect.arrayContaining([
         expect.objectContaining({
           name: 'Norte',
-          quietStaff: [quietAna],
+          staffAnomalies: [anomalyAna],
           topStaff: [{ name: 'Luz', avgRating: 4.9, reviewCount: 41 }],
         }),
       ]),

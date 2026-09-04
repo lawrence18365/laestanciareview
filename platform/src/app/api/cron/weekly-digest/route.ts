@@ -7,10 +7,13 @@ import {
   getLastWeekLeaderboard,
   getNewFeedbackCount,
   getOverviewStats,
-  getQuietStaff,
   getOperationalRestaurants,
   getRegionalAccounts,
 } from '@/lib/queries';
+import {
+  formatStaffAnomaly,
+  getStaffAnomalies,
+} from '@/lib/anomalies';
 import { getGoogleRatingTrend } from '@/lib/google-places';
 import { sendWeeklyDigest, sendOwnerDigest } from '@/lib/email';
 import { sendPushToRestaurant } from '@/lib/push';
@@ -20,8 +23,8 @@ import {
   getOverdueComplaintPreviews,
 } from '@/lib/complaint-sla';
 
-function quietStaffTitle(count: number): string {
-  return `${count} ${count === 1 ? 'mesero' : 'meseros'} dejaron de pedir opiniones`;
+function staffAnomalyTitle(count: number): string {
+  return `${count} ${count === 1 ? 'cambio anormal' : 'cambios anormales'} en el equipo`;
 }
 
 export async function GET(req: NextRequest) {
@@ -41,8 +44,8 @@ export async function GET(req: NextRequest) {
   let gmFailed = 0;
   let ownerSent = 0;
   let ownerFailed = 0;
-  let quietPushSent = 0;
-  let quietPushTargeted = 0;
+  let staffAnomalyPushSent = 0;
+  let staffAnomalyPushTargeted = 0;
   const gmSkippedNoEmail: string[] = [];
   const ownerSkippedNoEmail: string[] = [];
 
@@ -54,36 +57,33 @@ export async function GET(req: NextRequest) {
     getOverviewStats(),
   ]);
 
-  const quietLocations = await Promise.all(
+  const digestNow = new Date();
+  const anomalousLocations = await Promise.all(
     operational.map(async (restaurant) => ({
       restaurant,
-      quietStaff: await getQuietStaff(restaurant.id),
+      staffAnomalies: await getStaffAnomalies(restaurant.id, digestNow),
     })),
   );
-  const quietByRestaurant = new Map(
-    quietLocations.map(({ restaurant, quietStaff }) => [restaurant.id, quietStaff]),
+  const anomaliesByRestaurant = new Map(
+    anomalousLocations.map(({ restaurant, staffAnomalies }) => [restaurant.id, staffAnomalies]),
   );
-  const isoWeek = isoWeekMexico();
-  const digestNow = new Date();
+  const isoWeek = isoWeekMexico(digestNow);
 
-  // --- Monday quiet-staff push for operational restaurants ---
-  for (const { restaurant, quietStaff } of quietLocations) {
-    if (quietStaff.length === 0) continue;
+  // Monday staff anomaly push for operational restaurants.
+  for (const { restaurant, staffAnomalies } of anomalousLocations) {
+    if (staffAnomalies.length === 0) continue;
 
     try {
       const result = await sendPushToRestaurant(restaurant.id, {
-        title: quietStaffTitle(quietStaff.length),
-        body: quietStaff
-          .slice(0, 3)
-          .map((person) => person.staffName ?? person.staffCode ?? 'Desconocido')
-          .join(', '),
+        title: staffAnomalyTitle(staffAnomalies.length),
+        body: formatStaffAnomaly(staffAnomalies[0]),
         url: '/staff',
-        tag: `quiet-staff-${restaurant.id}-${isoWeek}`,
-      }, { kind: 'quiet_staff' });
-      quietPushSent += result.sent;
-      quietPushTargeted += result.targeted;
+        tag: `staff-anomaly-${restaurant.id}-${isoWeek}`,
+      }, { kind: 'staff_anomaly' });
+      staffAnomalyPushSent += result.sent;
+      staffAnomalyPushTargeted += result.targeted;
     } catch (err) {
-      console.error(`[digest] quiet-staff push failed for ${restaurant.name}:`, err);
+      console.error(`[digest] staff anomaly push failed for ${restaurant.name}:`, err);
     }
   }
 
@@ -114,7 +114,7 @@ export async function GET(req: NextRequest) {
         weekBefore,
         unresolvedCount,
         topPerformers,
-        quietStaff: quietByRestaurant.get(r.id) ?? [],
+        staffAnomalies: anomaliesByRestaurant.get(r.id) ?? [],
         dashboardUrl: `${baseUrl}/dashboard`,
         googleTrend,
       });
@@ -163,7 +163,7 @@ export async function GET(req: NextRequest) {
               avgRating: person.avgRating,
               reviewCount: person.reviewCount,
             })),
-            quietStaff: quietByRestaurant.get(s.restaurantId) ?? [],
+            staffAnomalies: anomaliesByRestaurant.get(s.restaurantId) ?? [],
             complaints: {
               received: complaintStats.received,
               resolvedWithin24h: complaintStats.resolvedWithin24h,
@@ -191,35 +191,43 @@ export async function GET(req: NextRequest) {
     }
   }
 
-  // --- Aggregate owner and regional quiet-staff push ---
+  // Aggregate owner and regional staff anomaly push.
   const escalationAccounts = new Map(
     [...owners, ...regionalAccounts].map((account) => [account.id, account]),
   ).values();
   for (const account of escalationAccounts) {
     const scopedLocations = account.isOwner
-      ? quietLocations
-      : quietLocations.filter(({ restaurant }) => restaurant.region === account.region);
-    const locationsWithQuiet = scopedLocations.filter(({ quietStaff }) => quietStaff.length > 0);
-    const totalQuiet = locationsWithQuiet.reduce((sum, location) => sum + location.quietStaff.length, 0);
-    if (totalQuiet === 0) continue;
+      ? anomalousLocations
+      : anomalousLocations.filter(({ restaurant }) => restaurant.region === account.region);
+    const locationsWithAnomalies = scopedLocations.filter(
+      ({ staffAnomalies }) => staffAnomalies.length > 0,
+    );
+    const totalAnomalies = locationsWithAnomalies.reduce(
+      (sum, location) => sum + location.staffAnomalies.length,
+      0,
+    );
+    if (totalAnomalies === 0) continue;
 
     try {
       const result = await sendPushToRestaurant(account.id, {
-        title: quietStaffTitle(totalQuiet),
-        body: `${totalQuiet} meseros en ${locationsWithQuiet.length} sucursales`,
+        title: staffAnomalyTitle(totalAnomalies),
+        body: formatStaffAnomaly(locationsWithAnomalies[0].staffAnomalies[0]),
         url: '/overview',
-        tag: `quiet-staff-${account.id}-${isoWeek}`,
-      }, { kind: 'quiet_staff' });
-      quietPushSent += result.sent;
-      quietPushTargeted += result.targeted;
+        tag: `staff-anomaly-${account.id}-${isoWeek}`,
+      }, { kind: 'staff_anomaly' });
+      staffAnomalyPushSent += result.sent;
+      staffAnomalyPushTargeted += result.targeted;
     } catch (err) {
-      console.error(`[digest] quiet-staff push failed for ${account.name}:`, err);
+      console.error(`[digest] staff anomaly push failed for ${account.name}:`, err);
     }
   }
 
   return Response.json({
     gm: { sent: gmSent, failed: gmFailed, skippedNoEmail: gmSkippedNoEmail },
     owner: { sent: ownerSent, failed: ownerFailed, skippedNoEmail: ownerSkippedNoEmail },
-    quietPush: { sent: quietPushSent, targeted: quietPushTargeted },
+    staffAnomalyPush: {
+      sent: staffAnomalyPushSent,
+      targeted: staffAnomalyPushTargeted,
+    },
   });
 }

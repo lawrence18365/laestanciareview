@@ -9,7 +9,7 @@ const mocks = vi.hoisted(() => ({
   getLastWeekLeaderboard: vi.fn(),
   getNewFeedbackCount: vi.fn(),
   getOverviewStats: vi.fn(),
-  getQuietStaff: vi.fn(),
+  getStaffAnomalies: vi.fn(),
   getOperationalRestaurants: vi.fn(),
   getRegionalAccounts: vi.fn(),
   getGoogleRatingTrend: vi.fn(),
@@ -28,9 +28,18 @@ vi.mock('@/lib/queries', () => ({
   getLastWeekLeaderboard: mocks.getLastWeekLeaderboard,
   getNewFeedbackCount: mocks.getNewFeedbackCount,
   getOverviewStats: mocks.getOverviewStats,
-  getQuietStaff: mocks.getQuietStaff,
   getOperationalRestaurants: mocks.getOperationalRestaurants,
   getRegionalAccounts: mocks.getRegionalAccounts,
+}));
+
+vi.mock('@/lib/anomalies', () => ({
+  getStaffAnomalies: mocks.getStaffAnomalies,
+  formatStaffAnomaly: (anomaly: {
+    staffName: string;
+    lastWeekCount: number;
+    baselineWeekly: number;
+    dropPct: number;
+  }) => `${anomaly.staffName} recibió ${anomaly.lastWeekCount} respuestas esta semana vs ${Math.round(anomaly.baselineWeekly)} normalmente (-${Math.round(anomaly.dropPct * 100)}%).`,
 }));
 
 vi.mock('@/lib/google-places', () => ({
@@ -72,7 +81,7 @@ describe('weekly digest skippedNoEmail reporting', () => {
       { id: 2, name: 'Con Correo', region: 'centro' },
     ]);
     mocks.getRegionalAccounts.mockResolvedValue([]);
-    mocks.getQuietStaff.mockResolvedValue([]);
+    mocks.getStaffAnomalies.mockResolvedValue([]);
     mocks.getLastWeekStats.mockResolvedValue(weekStats);
     mocks.getWeekBeforeLastStats.mockResolvedValue(weekStats);
     mocks.getLastWeekLeaderboard.mockResolvedValue([]);

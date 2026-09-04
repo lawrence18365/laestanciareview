@@ -73,7 +73,7 @@ function touch1Paragraphs(kind: 'leon' | 'group', prospect: OutreachProspect): s
   if (kind === 'group') {
     return [
       INTRO_PARAGRAPH,
-      `Le escribo porque ${name} opera varias sucursales y hay una pregunta que casi ningún dueño puede contestar: ¿cuál de sus meseros atiende mejor, y cuál dejó de pedir opiniones esta semana? Nosotros lo vemos mesero por mesero, turno por turno y sucursal por sucursal. En La Estancia, el 20% de los meseros genera el 43% de las reseñas de Google. Antes de medir, nadie sabía quiénes eran.`,
+      `Le escribo porque ${name} opera varias sucursales y hay una pregunta que casi ningún dueño puede contestar: ¿cuál de sus meseros atiende mejor y cuál tuvo una caída anormal en respuestas esta semana? Nosotros lo vemos mesero por mesero, turno por turno y sucursal por sucursal. En La Estancia, el 20% de los meseros genera el 43% de las reseñas de Google. Antes de medir, nadie sabía quiénes eran.`,
       `Funciona así: cada mesero trae una tarjeta. El comensal la toca al pagar. Si está contento, deja su reseña en Google. Si algo salió mal, la queja le llega a usted por WhatsApp, en privado, para que usted pueda responder primero.`,
       OFFER_PARAGRAPH,
       `¿Le enseño el tablero en una llamada de 15 minutos esta semana?`,
