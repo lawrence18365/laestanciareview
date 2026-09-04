@@ -34,6 +34,16 @@ function daysBefore(now: Date, days: number): Date {
   return new Date(now.getTime() - days * DAY_MS);
 }
 
+function mexicoCalendarDaysBefore(dayStart: Date, days: number): Date {
+  const date = new Date(dayStart);
+  date.setUTCDate(date.getUTCDate() - days);
+  return date;
+}
+
+function mexicoDateDaysBefore(dayStart: Date, days: number): string {
+  return mexicoCalendarDaysBefore(dayStart, days).toISOString().slice(0, 10);
+}
+
 function finiteNumber(value: unknown): number {
   const parsed = Number(value ?? 0);
   return Number.isFinite(parsed) ? parsed : 0;
@@ -121,8 +131,10 @@ export async function getStaffAnomalies(
 export async function getLocationAnomalies(
   now = new Date(),
 ): Promise<LocationAnomaly[]> {
-  const baselineStart = daysBefore(now, 28);
-  const actualStart = daysBefore(now, 3);
+  const windowEnd = startOfTodayMexico(now);
+  const windowStart = mexicoCalendarDaysBefore(windowEnd, 31);
+  const actualDayOffsets = [3, 2, 1];
+  const baselineWeekOffsets = [7, 14, 21, 28];
   const { db } = await import('@/db');
 
   const rows = await db
@@ -130,22 +142,16 @@ export async function getLocationAnomalies(
       restaurantId: restaurants.id,
       name: restaurants.name,
       region: restaurants.region,
-      baselineCount: countSql`count(${reviews.id}) filter (
-        where ${reviews.createdAt} >= ${baselineStart}
-          and ${reviews.createdAt} < ${actualStart}
-      )`,
-      actual3d: countSql`count(${reviews.id}) filter (
-        where ${reviews.createdAt} >= ${actualStart}
-          and ${reviews.createdAt} < ${now}
-      )`,
+      reviewDate: sql<string | null>`(${reviews.createdAt} at time zone 'America/Mexico_City')::date::text`,
+      reviewCount: countSql`count(${reviews.id})`,
     })
     .from(restaurants)
     .leftJoin(
       reviews,
       and(
         eq(reviews.restaurantId, restaurants.id),
-        gte(reviews.createdAt, baselineStart),
-        lt(reviews.createdAt, now),
+        gte(reviews.createdAt, windowStart),
+        lt(reviews.createdAt, windowEnd),
       ),
     )
     .where(
@@ -154,18 +160,63 @@ export async function getLocationAnomalies(
         eq(restaurants.isRegional, false),
       ),
     )
-    .groupBy(restaurants.id, restaurants.name, restaurants.region);
+    .groupBy(
+      restaurants.id,
+      restaurants.name,
+      restaurants.region,
+      sql`(${reviews.createdAt} at time zone 'America/Mexico_City')::date`,
+    );
 
-  return rows
-    .map((row): LocationAnomaly | null => {
-      const expected3d = 3 * (finiteNumber(row.baselineCount) / 25);
-      const actual3d = finiteNumber(row.actual3d);
-      if (expected3d < 6 || actual3d > 0.25 * expected3d) return null;
+  const locations = new Map<number, {
+    restaurantId: number;
+    name: string;
+    region: string | null;
+    countsByDate: Map<string, number>;
+  }>();
 
-      return {
+  for (const row of rows) {
+    let location = locations.get(row.restaurantId);
+    if (!location) {
+      location = {
         restaurantId: row.restaurantId,
         name: row.name,
         region: row.region,
+        countsByDate: new Map(),
+      };
+      locations.set(row.restaurantId, location);
+    }
+
+    if (row.reviewDate !== null) {
+      location.countsByDate.set(row.reviewDate, finiteNumber(row.reviewCount));
+    }
+  }
+
+  return [...locations.values()]
+    .map((location): LocationAnomaly | null => {
+      const actual3d = actualDayOffsets.reduce(
+        (total, dayOffset) => total + (
+          location.countsByDate.get(mexicoDateDaysBefore(windowEnd, dayOffset)) ?? 0
+        ),
+        0,
+      );
+      const expected3d = actualDayOffsets.reduce((threeDayTotal, dayOffset) => {
+        const sameWeekdayTotal = baselineWeekOffsets.reduce(
+          (weekdayTotal, weekOffset) => weekdayTotal + (
+            location.countsByDate.get(
+              mexicoDateDaysBefore(windowEnd, dayOffset + weekOffset),
+            ) ?? 0
+          ),
+          0,
+        );
+        return threeDayTotal + sameWeekdayTotal / baselineWeekOffsets.length;
+      }, 0);
+
+      if (expected3d < 6 || actual3d > 0.25 * expected3d) return null;
+
+      return {
+        restaurantId: location.restaurantId,
+        name: location.name,
+        region: location.region,
         expected3d,
         actual3d,
         dropPct: 1 - actual3d / expected3d,

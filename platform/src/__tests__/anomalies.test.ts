@@ -56,6 +56,21 @@ import {
 
 const now = new Date('2026-09-04T16:00:00.000Z');
 
+function locationDayRows(
+  restaurantId: number,
+  name: string,
+  region: string,
+  counts: Record<string, number>,
+) {
+  return Object.entries(counts).map(([reviewDate, reviewCount]) => ({
+    restaurantId,
+    name,
+    region,
+    reviewDate,
+    reviewCount,
+  }));
+}
+
 describe('baseline anomaly detection', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -150,10 +165,34 @@ describe('baseline anomaly detection', () => {
 
   it('requires six expected responses and allows actual volume at exactly 25 percent', async () => {
     mocks.selectRows.push([
-      { restaurantId: 1, name: 'Centro', region: 'centro', baselineCount: 50, actual3d: 1 },
-      { restaurantId: 2, name: 'Sur', region: 'sur', baselineCount: 100, actual3d: 3 },
-      { restaurantId: 3, name: 'Norte', region: 'norte', baselineCount: 49, actual3d: 0 },
-      { restaurantId: 4, name: 'Oeste', region: 'oeste', baselineCount: 50, actual3d: 2 },
+      ...locationDayRows(1, 'Centro', 'centro', {
+        '2026-08-04': 2, '2026-08-05': 2, '2026-08-06': 2,
+        '2026-08-11': 2, '2026-08-12': 2, '2026-08-13': 2,
+        '2026-08-18': 2, '2026-08-19': 2, '2026-08-20': 2,
+        '2026-08-25': 2, '2026-08-26': 2, '2026-08-27': 2,
+        '2026-09-01': 1,
+      }),
+      ...locationDayRows(2, 'Sur', 'sur', {
+        '2026-08-04': 4, '2026-08-05': 4, '2026-08-06': 4,
+        '2026-08-11': 4, '2026-08-12': 4, '2026-08-13': 4,
+        '2026-08-18': 4, '2026-08-19': 4, '2026-08-20': 4,
+        '2026-08-25': 4, '2026-08-26': 4, '2026-08-27': 4,
+        '2026-09-01': 1, '2026-09-02': 1, '2026-09-03': 1,
+      }),
+      ...locationDayRows(3, 'Norte', 'norte', {
+        '2026-08-04': 2, '2026-08-05': 2, '2026-08-06': 2,
+        '2026-08-11': 2, '2026-08-12': 2, '2026-08-13': 2,
+        '2026-08-18': 2, '2026-08-19': 2, '2026-08-20': 2,
+        '2026-08-25': 2, '2026-08-26': 2,
+        '2026-08-27': 1,
+      }),
+      ...locationDayRows(4, 'Oeste', 'oeste', {
+        '2026-08-04': 2, '2026-08-05': 2, '2026-08-06': 2,
+        '2026-08-11': 2, '2026-08-12': 2, '2026-08-13': 2,
+        '2026-08-18': 2, '2026-08-19': 2, '2026-08-20': 2,
+        '2026-08-25': 2, '2026-08-26': 2, '2026-08-27': 2,
+        '2026-09-01': 1, '2026-09-02': 1,
+      }),
     ]);
 
     const result = await getLocationAnomalies(now);
@@ -163,11 +202,57 @@ describe('baseline anomaly detection', () => {
     expect(result[1].expected3d).toBe(6);
   });
 
+  it('matches weekday baselines for low weekdays and high weekends', async () => {
+    mocks.selectRows.push([
+      ...locationDayRows(5, 'Ritmo semanal', 'centro', {
+        '2026-08-04': 5, '2026-08-05': 5, '2026-08-06': 5,
+        '2026-08-11': 5, '2026-08-12': 5, '2026-08-13': 5,
+        '2026-08-18': 5, '2026-08-19': 5, '2026-08-20': 5,
+        '2026-08-25': 5, '2026-08-26': 5, '2026-08-27': 5,
+        '2026-09-01': 4, '2026-09-02': 4, '2026-09-03': 4,
+      }),
+    ]);
+
+    await expect(getLocationAnomalies(now)).resolves.toEqual([]);
+
+    mocks.selectRows.push([
+      ...locationDayRows(5, 'Ritmo semanal', 'centro', {
+        '2026-08-07': 5, '2026-08-08': 80, '2026-08-09': 80,
+        '2026-08-14': 5, '2026-08-15': 80, '2026-08-16': 80,
+        '2026-08-21': 5, '2026-08-22': 80, '2026-08-23': 80,
+        '2026-08-28': 5, '2026-08-29': 80, '2026-08-30': 80,
+        '2026-09-04': 4, '2026-09-05': 3, '2026-09-06': 3,
+      }),
+    ]);
+
+    const weekendResult = await getLocationAnomalies(
+      new Date('2026-09-07T16:00:00.000Z'),
+    );
+
+    expect(weekendResult).toHaveLength(1);
+    expect(weekendResult[0]).toMatchObject({
+      name: 'Ritmo semanal',
+      expected3d: 165,
+      actual3d: 10,
+    });
+  });
+
   it('skips recent locations and pushes to owners plus only matching regional accounts', async () => {
     mocks.selectRows.push(
       [
-        { restaurantId: 1, name: 'Reciente', region: 'centro', baselineCount: 100, actual3d: 0 },
-        { restaurantId: 2, name: 'Centro', region: 'centro', baselineCount: 75, actual3d: 2 },
+        ...locationDayRows(1, 'Reciente', 'centro', {
+          '2026-08-04': 4, '2026-08-05': 4, '2026-08-06': 4,
+          '2026-08-11': 4, '2026-08-12': 4, '2026-08-13': 4,
+          '2026-08-18': 4, '2026-08-19': 4, '2026-08-20': 4,
+          '2026-08-25': 4, '2026-08-26': 4, '2026-08-27': 4,
+        }),
+        ...locationDayRows(2, 'Centro', 'centro', {
+          '2026-08-04': 3, '2026-08-05': 3, '2026-08-06': 3,
+          '2026-08-11': 3, '2026-08-12': 3, '2026-08-13': 3,
+          '2026-08-18': 3, '2026-08-19': 3, '2026-08-20': 3,
+          '2026-08-25': 3, '2026-08-26': 3, '2026-08-27': 3,
+          '2026-09-01': 1, '2026-09-02': 1,
+        }),
       ],
       [{ id: 44 }],
       [],
