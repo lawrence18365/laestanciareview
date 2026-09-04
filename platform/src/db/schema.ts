@@ -288,6 +288,7 @@ export const reviews = pgTable(
     staffName: text('staff_name'),
     rating: integer('rating').notNull(),
     feedbackTokenHash: text('feedback_token_hash'),
+    deviceHash: text('device_hash'),
     customerName: text('customer_name'),
     customerEmail: text('customer_email'),
     feedback: text('feedback'),
@@ -308,6 +309,7 @@ export const reviews = pgTable(
     index('reviews_staff_id_idx').on(t.staffId),
     index('reviews_created_at_idx').on(t.createdAt),
     index('reviews_restaurant_created_idx').on(t.restaurantId, t.createdAt),
+    index('reviews_device_hash_created_idx').on(t.deviceHash, t.createdAt),
     index('reviews_status_idx').on(t.status),
   ],
 );

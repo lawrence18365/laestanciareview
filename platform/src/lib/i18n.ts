@@ -383,32 +383,34 @@ export const t = {
 
   // ── Customer-facing: Star Rating ──
   starRating: {
-    howWasYourExperience: '¿Cómo fue tu experiencia con',
-    submittingRating: 'Enviando tu calificación\u2026',
-    tapToRate: 'Toca una estrella para calificar',
+    howWasYourExperience: (restaurantName: string) =>
+      `¿Cómo fue su experiencia en ${restaurantName}?`,
+    submittingRating: 'Enviando su calificación\u2026',
+    tapToRate: 'Toque una estrella para calificar',
     rateStars: (n: number) => `Calificar ${n} ${n === 1 ? 'estrella' : 'estrellas'}`,
-    somethingWrong: 'Algo salió mal. Por favor intenta de nuevo.',
+    somethingWrong: 'Algo salió mal. Por favor, intente de nuevo.',
     tryAgain: 'Intentar de nuevo',
+    alreadyReceived: 'Gracias, ya recibimos su opinión.',
   },
 
   // ── Customer-facing: Feedback Form ──
   feedbackForm: {
     thankYou: 'Gracias',
-    feedbackShared: (name: string) =>
-      `Tu comentario ha sido compartido con ${name}. Agradecemos que nos ayudes a mejorar.`,
-    howToImprove: 'Nos encantaría saber cómo podemos mejorar tu experiencia.',
+    feedbackShared: (restaurantName: string) =>
+      `Su comentario ha sido compartido con ${restaurantName}. Agradecemos que nos ayude a mejorar.`,
+    howToImprove: 'Nos encantaría saber cómo podemos mejorar su experiencia.',
     name: 'Nombre',
     email: 'Email',
     optional: '(opcional)',
-    yourName: 'Tu nombre',
-    yourEmail: 'tu@email.com',
+    yourName: 'Su nombre',
+    yourEmail: 'correo@ejemplo.com',
     whatCouldWeDoBetter: '¿Qué podríamos hacer mejor?',
-    tellUsAboutExperience: 'Cuéntanos sobre tu experiencia...',
+    tellUsAboutExperience: 'Cuéntenos sobre su experiencia...',
     submitting: 'Enviando\u2026',
     shareFeedback: 'Compartir Comentario',
-    submitReminder: 'No olvides tocar "Compartir Comentario" para enviar tu opinión.',
-    somethingWrong: 'Algo salió mal. Por favor intenta de nuevo.',
-    invalidLink: 'Enlace inválido. Por favor escanea tu código de nuevo.',
+    submitReminder: 'No olvide tocar "Compartir Comentario" para enviar su opinión.',
+    somethingWrong: 'Algo salió mal. Por favor, intente de nuevo.',
+    invalidLink: 'Enlace inválido. Por favor, escanee su código de nuevo.',
   },
 
   // ── Onboarding Wizard ──

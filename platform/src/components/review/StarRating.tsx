@@ -1,15 +1,16 @@
 'use client';
 
-import { useState, useCallback, type CSSProperties } from 'react';
+import { useState, useCallback, useEffect, type CSSProperties } from 'react';
 import { useRouter } from 'next/navigation';
 import { t } from '@/lib/i18n';
 
 interface StarRatingProps {
   restaurantSlug: string;
   staffCode: string;
-  staffName: string;
   restaurantName: string;
 }
+
+const RATED_STORAGE_WINDOW = 12 * 60 * 60 * 1000;
 
 function StarIcon({ filled, size = 44 }: { filled: boolean; size?: number }) {
   return (
@@ -31,7 +32,6 @@ function StarIcon({ filled, size = 44 }: { filled: boolean; size?: number }) {
 export default function StarRating({
   restaurantSlug,
   staffCode,
-  staffName,
   restaurantName,
 }: StarRatingProps) {
   const router = useRouter();
@@ -41,11 +41,42 @@ export default function StarRating({
   const [popStar, setPopStar] = useState(0);
   const [error, setError] = useState(false);
   const [redirecting, setRedirecting] = useState(false);
+  const [storageChecked, setStorageChecked] = useState(false);
+  const [showAlreadyReceived, setShowAlreadyReceived] = useState(false);
   const [choice, setChoice] = useState<{
     reviewId: number;
     feedbackToken: string;
     googleReviewUrl: string | null;
   } | null>(null);
+
+  const ratedStorageKey = `ratetap_rated_${restaurantSlug}`;
+
+  useEffect(() => {
+    try {
+      const storedAt = Number(window.localStorage.getItem(ratedStorageKey));
+      const age = Date.now() - storedAt;
+      if (
+        Number.isFinite(storedAt) &&
+        storedAt > 0 &&
+        age >= 0 &&
+        age < RATED_STORAGE_WINDOW
+      ) {
+        setShowAlreadyReceived(true);
+      }
+    } catch {
+      // Storage can be unavailable in private browsing or restricted contexts.
+    } finally {
+      setStorageChecked(true);
+    }
+  }, [ratedStorageKey]);
+
+  const rememberSuccessfulSubmit = useCallback(() => {
+    try {
+      window.localStorage.setItem(ratedStorageKey, Date.now().toString());
+    } catch {
+      // The server-side limit still applies when storage is unavailable.
+    }
+  }, [ratedStorageKey]);
 
   const handleSubmit = useCallback(
     async (rating: number) => {
@@ -64,7 +95,16 @@ export default function StarRating({
         if (!res.ok) throw new Error('Submit failed');
 
         const data = await res.json();
+
+        if (data.limited === true) {
+          rememberSuccessfulSubmit();
+          setShowAlreadyReceived(true);
+          setSubmitting(false);
+          return;
+        }
+
         if (!data.feedbackToken) throw new Error('Missing feedback token');
+        rememberSuccessfulSubmit();
 
         // No rating-based routing: offer every guest the same two options and
         // let them choose (see chooseGoogle / chooseFeedback).
@@ -81,7 +121,7 @@ export default function StarRating({
         setError(true);
       }
     },
-    [restaurantSlug, staffCode, router],
+    [rememberSuccessfulSubmit, restaurantSlug, staffCode],
   );
 
   function chooseFeedback() {
@@ -162,6 +202,60 @@ export default function StarRating({
     fontFamily: 'var(--font-sans)',
   };
 
+  if (!storageChecked) {
+    return null;
+  }
+
+  if (showAlreadyReceived) {
+    return (
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          padding: '0 1.5rem',
+          width: '100%',
+          maxWidth: 440,
+          margin: '0 auto',
+          textAlign: 'center',
+          animation: 'reviewFadeIn 0.4s ease-out both',
+        }}
+      >
+        <h1
+          style={{
+            fontFamily: 'var(--font-serif)',
+            fontSize: 'clamp(28px, 7vw, 40px)',
+            fontWeight: 600,
+            lineHeight: 1.1,
+            letterSpacing: '-0.02em',
+            color: '#111',
+            margin: '0 0 1rem',
+          }}
+        >
+          {restaurantName}
+        </h1>
+        <div style={{ width: 40, height: 1, background: '#D97706', marginBottom: '1.25rem' }} />
+        <p
+          style={{
+            fontFamily: 'var(--font-serif)',
+            fontSize: '1.25rem',
+            fontWeight: 600,
+            color: '#111',
+            margin: 0,
+          }}
+        >
+          {t.starRating.alreadyReceived}
+        </p>
+        <style>{`
+          @keyframes reviewFadeIn {
+            from { opacity: 0; transform: translateY(12px); }
+            to { opacity: 1; transform: translateY(0); }
+          }
+        `}</style>
+      </div>
+    );
+  }
+
   return (
     <div
       style={{
@@ -208,11 +302,7 @@ export default function StarRating({
         margin: '0 0 2rem',
         fontFamily: 'var(--font-sans)',
       }}>
-        {t.starRating.howWasYourExperience}{' '}
-        <span style={{ fontWeight: 600, color: '#111' }}>
-          {staffName}
-        </span>
-        ?
+        {t.starRating.howWasYourExperience(restaurantName)}
       </p>
 
       {/* Stars */}
@@ -313,7 +403,7 @@ export default function StarRating({
               letterSpacing: '-0.01em',
             }}
           >
-            ¡Gracias por tu reseña!
+            ¡Gracias por su reseña!
           </p>
           <p
             style={{
@@ -323,7 +413,7 @@ export default function StarRating({
               fontFamily: 'var(--font-sans)',
             }}
           >
-            Te llevamos a Google…
+            Abriendo Google…
           </p>
           <div
             style={{
@@ -348,12 +438,12 @@ export default function StarRating({
       ) : choice ? (
         <div style={{ textAlign: 'center', width: '100%', animation: 'reviewFadeIn 0.4s ease-out both' }}>
           <p style={{ fontFamily: 'var(--font-serif)', fontSize: '1.25rem', fontWeight: 600, color: '#111', margin: '0 0 0.35rem', letterSpacing: '-0.01em' }}>
-            {selectedStar >= 4 ? '¡Qué gusto!' : '¡Gracias por tu calificación!'}
+            {selectedStar >= 4 ? '¡Qué gusto!' : '¡Gracias por su calificación!'}
           </p>
           <p style={{ fontSize: '0.85rem', color: '#666', margin: '0 0 1.1rem', fontFamily: 'var(--font-sans)' }}>
             {selectedStar >= 4
-              ? 'Tu reseña en Google le ayuda a otros a encontrarnos.'
-              : '¿Cómo te gustaría compartir tu experiencia?'}
+              ? 'Su reseña en Google ayuda a otros comensales a encontrarnos.'
+              : '¿Cómo le gustaría compartir su experiencia?'}
           </p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.7rem' }}>
             {choice.googleReviewUrl && (

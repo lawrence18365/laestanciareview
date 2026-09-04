@@ -42,6 +42,7 @@ function makeReview(overrides: Partial<FeedbackAlertReview> = {}): FeedbackAlert
     staffName: 'Ana',
     rating: 2,
     feedbackTokenHash: 'hash',
+    deviceHash: null,
     customerName: 'Cliente',
     customerEmail: 'cliente@example.com',
     feedback: 'La comida llegó fría',

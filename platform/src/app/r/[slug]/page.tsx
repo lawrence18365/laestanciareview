@@ -19,10 +19,9 @@ export default async function ReviewPage({ params, searchParams }: PageProps) {
 
   const staffCode = normalizeStaffCode(card ?? '');
   const staffMember = staffCode ? await getStaffByCode(restaurant.id, staffCode) : null;
-  const staffName = staffMember?.name ?? 'Tu mesero';
   const brand = getBrandForSlug(slug);
 
-  // Fire-and-forget — analytics must never block the render path.
+  // Fire-and-forget: analytics must never block the render path.
   void recordProductEvent({
     name: 'review_page_open',
     restaurantId: restaurant.id,
@@ -56,7 +55,7 @@ export default async function ReviewPage({ params, searchParams }: PageProps) {
         zIndex: 10,
       }} />
 
-      {/* Hero Logo — large and dominant */}
+      {/* Hero Logo: large and dominant */}
       <div
         style={{
           width: 160,
@@ -88,7 +87,6 @@ export default async function ReviewPage({ params, searchParams }: PageProps) {
       <StarRating
         restaurantSlug={slug}
         staffCode={staffCode}
-        staffName={staffName}
         restaurantName={restaurant.name}
       />
 
