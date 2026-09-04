@@ -1,3 +1,8 @@
+/**
+ * Complaint SLA tracking and escalation. The escalation check runs daily at
+ * 10:00 Mexico City, so an overdue urgent complaint is escalated within 24 to
+ * 48 hours of being filed.
+ */
 import {
   and,
   asc,
