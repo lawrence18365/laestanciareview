@@ -297,6 +297,7 @@ export const reviews = pgTable(
     sentToGoogle: boolean('sent_to_google').notNull().default(false),
     alertSentAt: timestamp('alert_sent_at', { withTimezone: true }),
     alertError: text('alert_error'),
+    alertChannels: jsonb('alert_channels'),
     createdAt: timestamp('created_at', { withTimezone: true })
       .notNull()
       .defaultNow(),

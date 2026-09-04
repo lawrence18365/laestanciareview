@@ -28,12 +28,19 @@ export async function GET(req: NextRequest) {
   let gmFailed = 0;
   let ownerSent = 0;
   let ownerFailed = 0;
+  const gmSkippedNoEmail: string[] = [];
+  const ownerSkippedNoEmail: string[] = [];
 
   // --- GM digests ---
   const restaurants = await getRestaurantsWithEmail();
 
   for (const r of restaurants) {
-    if (!r.managerEmail || r.isOwner) continue;
+    if (r.isOwner) continue;
+    if (!r.managerEmail) {
+      console.warn(`[digest] no email for ${r.slug}`);
+      gmSkippedNoEmail.push(r.slug);
+      continue;
+    }
 
     try {
       const [lastWeek, weekBefore, topPerformers, unresolvedCount, googleTrend] =
@@ -72,7 +79,11 @@ export async function GET(req: NextRequest) {
   const overviewStats = owners.length > 0 ? await getOverviewStats() : [];
 
   for (const owner of owners) {
-    if (!owner.managerEmail) continue;
+    if (!owner.managerEmail) {
+      console.warn(`[digest] no email for ${owner.slug}`);
+      ownerSkippedNoEmail.push(owner.slug);
+      continue;
+    }
 
     try {
       // Get unresolved counts and Google trends for each location
@@ -113,7 +124,7 @@ export async function GET(req: NextRequest) {
   }
 
   return Response.json({
-    gm: { sent: gmSent, failed: gmFailed },
-    owner: { sent: ownerSent, failed: ownerFailed },
+    gm: { sent: gmSent, failed: gmFailed, skippedNoEmail: gmSkippedNoEmail },
+    owner: { sent: ownerSent, failed: ownerFailed, skippedNoEmail: ownerSkippedNoEmail },
   });
 }

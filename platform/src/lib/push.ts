@@ -63,14 +63,17 @@ export function withPushTracking(url: string, nid: number): string {
  * notification with subscriptions_targeted and, after the fan-out,
  * accepted_count / failed_count. "accepted" honestly means the push SERVICE
  * returned 2xx — it is NOT confirmation the device displayed the notification.
+ *
+ * Returns { targeted, sent, failed } so callers can distinguish "no devices
+ * subscribed" from "devices targeted but deliveries failed".
  */
 export async function sendPushToRestaurant(
   restaurantId: number,
   payload: PushPayload,
   meta?: PushMeta,
-): Promise<{ sent: number; failed: number }> {
+): Promise<{ targeted: number; sent: number; failed: number }> {
   if (!ensurePushConfigured()) {
-    return { sent: 0, failed: 0 };
+    return { targeted: 0, sent: 0, failed: 0 };
   }
 
   const subs = await db
@@ -106,7 +109,7 @@ export async function sendPushToRestaurant(
     console.warn('[push] analytics insert failed, sending without tracking:', err);
   }
 
-  if (subs.length === 0) return { sent: 0, failed: 0 };
+  if (subs.length === 0) return { targeted: 0, sent: 0, failed: 0 };
 
   const body = JSON.stringify({
     ...payload,
@@ -156,5 +159,5 @@ export async function sendPushToRestaurant(
     }
   }
 
-  return { sent, failed };
+  return { targeted: subs.length, sent, failed };
 }
