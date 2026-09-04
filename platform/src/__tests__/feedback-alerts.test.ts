@@ -48,6 +48,7 @@ function makeReview(overrides: Partial<FeedbackAlertReview> = {}): FeedbackAlert
     status: 'new',
     reviewedAt: null,
     resolvedAt: null,
+    escalatedAt: null,
     sentToGoogle: false,
     alertSentAt: null,
     alertError: null,

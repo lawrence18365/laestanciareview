@@ -233,6 +233,7 @@ interface FeedbackAlertParams {
   rating: number;
   staffName: string | null;
   feedback: string;
+  subjectPrefix?: string;
 }
 
 export async function sendFeedbackAlert({
@@ -243,6 +244,7 @@ export async function sendFeedbackAlert({
   rating,
   staffName,
   feedback,
+  subjectPrefix,
 }: FeedbackAlertParams) {
   const filledStars = '★'.repeat(rating);
   const emptyStars = '☆'.repeat(5 - rating);
@@ -309,7 +311,7 @@ export async function sendFeedbackAlert({
   const result = await sendMail({
     from: FROM,
     to,
-    subject: `${rating <= 2 ? '🔴' : rating <= 3 ? '🟡' : '🟢'} Nuevo comentario de ${rating} estrellas: ${restaurantName}`,
+    subject: `${subjectPrefix ? `${subjectPrefix} ` : ''}${rating <= 2 ? '🔴' : rating <= 3 ? '🟡' : '🟢'} Nuevo comentario de ${rating} estrellas: ${restaurantName}`,
     html: emailLayout(content),
   });
 
@@ -530,6 +532,16 @@ interface OwnerLocationSummary {
   currentRating: number | null;
   topStaff: { name: string; avgRating: number; reviewCount: number }[];
   quietStaff: QuietStaffDigestEntry[];
+  complaints: {
+    received: number;
+    resolvedWithin24h: number;
+    overdueOpen: number;
+    overdue: {
+      rating: number;
+      hoursOpen: number;
+      feedbackPreview: string;
+    }[];
+  };
 }
 
 interface OwnerDigestParams {
@@ -594,8 +606,15 @@ export async function sendOwnerDigest({ to, locations, dashboardUrl }: OwnerDige
     const quietStaffLine = l.quietStaff.length > 0
       ? `<div style="margin-top:3px;font-size:11px;font-weight:600;color:#9a3412;">Dejaron de pedir: ${l.quietStaff.map((person) => `${escapeHtml(person.staffName ?? 'Desconocido')} (${formatOpinionCount(person.priorWeeklyAvg)} a ${person.lastWeekCount})`).join(', ')}</div>`
       : '';
+    const resolvedPercent = l.complaints.received > 0
+      ? Math.round((l.complaints.resolvedWithin24h / l.complaints.received) * 100)
+      : 0;
+    const complaintLine = `<div style="margin-top:5px;font-size:11px;font-weight:600;color:${l.complaints.overdueOpen > 0 ? '#92400e' : '#57534e'};">Quejas: ${l.complaints.received} recibidas, ${resolvedPercent}% atendidas en menos de 24 h, ${l.complaints.overdueOpen} vencidas</div>`;
+    const overdueLines = l.complaints.overdue.length > 0
+      ? `<div style="margin-top:4px;font-size:11px;font-weight:400;color:#92400e;">${l.complaints.overdue.slice(0, 3).map((complaint) => `${complaint.rating} ${complaint.rating === 1 ? 'estrella' : 'estrellas'}, ${complaint.hoursOpen} h abierta: &ldquo;${escapeHtml(complaint.feedbackPreview)}&rdquo;`).join('<br/>')}</div>`
+      : '';
     return `<tr style="border-top: 1px solid #f0ece7;">
-      <td style="padding: 10px 14px; font-size: 14px; font-weight: 500; color: #1c1917;">${escapeHtml(l.name)}${unresolvedBadge}${topStaffLine}${quietStaffLine}</td>
+      <td style="padding: 10px 14px; font-size: 14px; font-weight: 500; color: #1c1917;">${escapeHtml(l.name)}${unresolvedBadge}${topStaffLine}${quietStaffLine}${complaintLine}${overdueLines}</td>
       <td style="padding: 10px 14px; font-size: 14px; text-align: right; color: #44403c;">${l.reviews}</td>
       <td style="padding: 10px 14px; font-size: 14px; text-align: right; color: ${ratingColor}; font-weight: 700;">${l.avgRating ? l.avgRating.toFixed(1) + ' ★' : '--'}</td>
       <td style="padding: 10px 14px; font-size: 14px; text-align: right; color: #78716c;">${l.googleSends}</td>

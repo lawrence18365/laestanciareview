@@ -294,6 +294,7 @@ export const reviews = pgTable(
     status: reviewStatusEnum('status').notNull().default('new'),
     reviewedAt: timestamp('reviewed_at', { withTimezone: true }),
     resolvedAt: timestamp('resolved_at', { withTimezone: true }),
+    escalatedAt: timestamp('escalated_at', { withTimezone: true }),
     sentToGoogle: boolean('sent_to_google').notNull().default(false),
     alertSentAt: timestamp('alert_sent_at', { withTimezone: true }),
     alertError: text('alert_error'),

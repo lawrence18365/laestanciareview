@@ -16,6 +16,8 @@ const mocks = vi.hoisted(() => ({
   sendWeeklyDigest: vi.fn(),
   sendOwnerDigest: vi.fn(),
   sendPushToRestaurant: vi.fn(),
+  getComplaintSlaStats: vi.fn(),
+  getOverdueComplaintPreviews: vi.fn(),
 }));
 
 vi.mock('@/lib/queries', () => ({
@@ -42,6 +44,11 @@ vi.mock('@/lib/email', () => ({
 
 vi.mock('@/lib/push', () => ({
   sendPushToRestaurant: mocks.sendPushToRestaurant,
+}));
+
+vi.mock('@/lib/complaint-sla', () => ({
+  getComplaintSlaStats: mocks.getComplaintSlaStats,
+  getOverdueComplaintPreviews: mocks.getOverdueComplaintPreviews,
 }));
 
 import { GET } from '@/app/api/cron/weekly-digest/route';
@@ -75,6 +82,15 @@ describe('weekly digest skippedNoEmail reporting', () => {
     mocks.sendWeeklyDigest.mockResolvedValue({ success: true });
     mocks.sendOwnerDigest.mockResolvedValue({ success: true });
     mocks.sendPushToRestaurant.mockResolvedValue({ targeted: 0, sent: 0, failed: 0 });
+    mocks.getComplaintSlaStats.mockResolvedValue({
+      received: 0,
+      reviewedWithin2h: 0,
+      resolvedWithin24h: 0,
+      overdueOpen: 0,
+      avgHoursToReview: null,
+      avgHoursToResolve: null,
+    });
+    mocks.getOverdueComplaintPreviews.mockResolvedValue([]);
   });
 
   afterEach(() => {

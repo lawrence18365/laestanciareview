@@ -18,6 +18,8 @@ const mocks = vi.hoisted(() => ({
   getOverviewStats: vi.fn(),
   getQuietStaff: vi.fn(),
   getGoogleRatingTrend: vi.fn(),
+  getComplaintSlaStats: vi.fn(),
+  getOverdueComplaintPreviews: vi.fn(),
 }));
 
 vi.mock('@/lib/mailer', () => ({ sendMail: mocks.sendMail }));
@@ -58,6 +60,11 @@ vi.mock('@/lib/google-places', () => ({
 
 vi.mock('@/lib/push', () => ({
   sendPushToRestaurant: mocks.sendPushToRestaurant,
+}));
+
+vi.mock('@/lib/complaint-sla', () => ({
+  getComplaintSlaStats: mocks.getComplaintSlaStats,
+  getOverdueComplaintPreviews: mocks.getOverdueComplaintPreviews,
 }));
 
 vi.mock('@/lib/mexico-tz', () => ({
@@ -159,6 +166,12 @@ describe('quiet staff weekly digest rendering', () => {
         currentRating: null,
         topStaff: [{ name: 'Ana', avgRating: 4.9, reviewCount: 41 }],
         quietStaff: [quietAna],
+        complaints: {
+          received: 3,
+          resolvedWithin24h: 2,
+          overdueOpen: 1,
+          overdue: [{ rating: 1, hoursOpen: 30, feedbackPreview: 'Servicio muy lento' }],
+        },
       }],
     });
 
@@ -166,6 +179,8 @@ describe('quiet staff weekly digest rendering', () => {
     const text = visibleText(html);
     expect(text).toContain('Top: Ana (4.9★, 41)');
     expect(text).toContain('Dejaron de pedir: Ana (12 a 0)');
+    expect(text).toContain('Quejas: 3 recibidas, 67% atendidas en menos de 24 h, 1 vencidas');
+    expect(text).toContain('1 estrella, 30 h abierta: &ldquo;Servicio muy lento&rdquo;');
     expect(text).toContain('Opiniones capturadas');
     expect(text).not.toContain('reseñas por mesero');
   });
@@ -240,6 +255,15 @@ describe('weekly digest quiet push wiring', () => {
     ));
     mocks.getNewFeedbackCount.mockResolvedValue(0);
     mocks.getGoogleRatingTrend.mockResolvedValue(null);
+    mocks.getComplaintSlaStats.mockResolvedValue({
+      received: 0,
+      reviewedWithin2h: 0,
+      resolvedWithin24h: 0,
+      overdueOpen: 0,
+      avgHoursToReview: null,
+      avgHoursToResolve: null,
+    });
+    mocks.getOverdueComplaintPreviews.mockResolvedValue([]);
     mocks.sendWeeklyDigest.mockResolvedValue({ success: true });
     mocks.sendOwnerDigest.mockResolvedValue({ success: true });
     mocks.sendPushToRestaurant.mockResolvedValue({ targeted: 2, sent: 1, failed: 1 });

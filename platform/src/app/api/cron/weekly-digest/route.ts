@@ -15,6 +15,10 @@ import { getGoogleRatingTrend } from '@/lib/google-places';
 import { sendWeeklyDigest, sendOwnerDigest } from '@/lib/email';
 import { sendPushToRestaurant } from '@/lib/push';
 import { isoWeekMexico } from '@/lib/mexico-tz';
+import {
+  getComplaintSlaStats,
+  getOverdueComplaintPreviews,
+} from '@/lib/complaint-sla';
 
 function quietStaffTitle(count: number): string {
   return `${count} ${count === 1 ? 'mesero' : 'meseros'} dejaron de pedir opiniones`;
@@ -60,6 +64,7 @@ export async function GET(req: NextRequest) {
     quietLocations.map(({ restaurant, quietStaff }) => [restaurant.id, quietStaff]),
   );
   const isoWeek = isoWeekMexico();
+  const digestNow = new Date();
 
   // --- Monday quiet-staff push for operational restaurants ---
   for (const { restaurant, quietStaff } of quietLocations) {
@@ -137,10 +142,12 @@ export async function GET(req: NextRequest) {
       // Get unresolved counts and Google trends for each location
       const locations = await Promise.all(
         overviewStats.map(async (s) => {
-          const [unresolved, googleTrend, topStaff] = await Promise.all([
+          const [unresolved, googleTrend, topStaff, complaintStats, overdueComplaints] = await Promise.all([
             getNewFeedbackCount(s.restaurantId),
             getGoogleRatingTrend(s.restaurantId),
             getLastWeekLeaderboard(s.restaurantId, 3),
+            getComplaintSlaStats(s.restaurantId, digestNow, 7),
+            getOverdueComplaintPreviews(s.restaurantId, digestNow, 3),
           ]);
           return {
             name: s.restaurantName,
@@ -157,6 +164,12 @@ export async function GET(req: NextRequest) {
               reviewCount: person.reviewCount,
             })),
             quietStaff: quietByRestaurant.get(s.restaurantId) ?? [],
+            complaints: {
+              received: complaintStats.received,
+              resolvedWithin24h: complaintStats.resolvedWithin24h,
+              overdueOpen: complaintStats.overdueOpen,
+              overdue: overdueComplaints,
+            },
           };
         }),
       );
