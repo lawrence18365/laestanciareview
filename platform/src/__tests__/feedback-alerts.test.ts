@@ -85,6 +85,7 @@ describe('dispatchFeedbackAlerts', () => {
     mocks.updatedValues.length = 0;
     mocks.escalationAccounts = [];
     delete process.env.SMS_ALERTS_ENABLED;
+    delete process.env.WHATSAPP_ALERTS_ENABLED;
     mocks.sendFeedbackAlert.mockResolvedValue(emailSuccess);
     mocks.sendSMSAlert.mockResolvedValue(undefined);
     mocks.sendWhatsAppAlert.mockResolvedValue(undefined);
@@ -129,6 +130,27 @@ describe('dispatchFeedbackAlerts', () => {
     expect(written.alertError).toContain('email');
     expect(written.alertError).toContain('SMTP down');
     expect(written.alertError).not.toContain('push');
+  });
+
+  it('never calls WhatsApp by default even when the account flag is enabled', async () => {
+    mocks.escalationAccounts = [{
+      id: 99,
+      isOwner: true,
+      managerEmail: null,
+      managerPhone: '+525500000099',
+      alertPreference: 'all',
+      whatsappAlerts: true,
+      googleThreshold: 4,
+    }];
+
+    const result = await dispatchFeedbackAlerts(
+      makeReview(),
+      makeRestaurant({ whatsappAlerts: true }),
+    );
+
+    expect(mocks.sendWhatsAppAlert).not.toHaveBeenCalled();
+    expect(result.channels.whatsapp).toEqual({ ok: false, skipped: 'disabled' });
+    expect(result.channels.owner_whatsapp).toEqual({ ok: false, skipped: 'disabled' });
   });
 
   it('escalates a 2★ review to an owner on threshold preference and skips a 5★ review', async () => {
@@ -178,5 +200,55 @@ describe('dispatchFeedbackAlerts', () => {
     expect(mocks.sendFeedbackAlert).not.toHaveBeenCalled();
     expect(mocks.sendWhatsAppAlert).not.toHaveBeenCalled();
     expect(result.channels.owner_email).toEqual({ ok: false, skipped: 'no_channel' });
+  });
+
+  it('records owner_push success when at least one owner device is targeted', async () => {
+    mocks.escalationAccounts = [{
+      id: 99,
+      isOwner: true,
+      managerEmail: null,
+      managerPhone: null,
+      alertPreference: 'all',
+      whatsappAlerts: false,
+      googleThreshold: 4,
+    }];
+
+    const result = await dispatchFeedbackAlerts(
+      makeReview({ feedback: 'x'.repeat(150) }),
+      makeRestaurant({ alertPreference: 'off' }),
+    );
+
+    expect(result.channels.owner_push).toEqual({ ok: true });
+    expect(mocks.sendPushToRestaurant).toHaveBeenCalledWith(
+      99,
+      {
+        title: '⚠️ La Estancia Centro: 2 estrellas',
+        body: `${'x'.repeat(99)}…`,
+        url: '/overview',
+        tag: 'review-42',
+      },
+      { kind: 'low_review', subjectType: 'review', subjectId: 42 },
+    );
+  });
+
+  it('records owner_push no_devices when no owner device is targeted', async () => {
+    mocks.sendPushToRestaurant.mockResolvedValue({ targeted: 0, sent: 0, failed: 0 });
+    mocks.escalationAccounts = [{
+      id: 99,
+      isOwner: true,
+      managerEmail: 'owner@example.com',
+      managerPhone: null,
+      alertPreference: 'all',
+      whatsappAlerts: false,
+      googleThreshold: 4,
+    }];
+
+    const result = await dispatchFeedbackAlerts(
+      makeReview(),
+      makeRestaurant({ alertPreference: 'off' }),
+    );
+
+    expect(result.channels.owner_push).toEqual({ ok: false, skipped: 'no_devices' });
+    expect(result.channels.owner_email).toEqual({ ok: true });
   });
 });

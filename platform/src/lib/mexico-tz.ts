@@ -1,4 +1,4 @@
-import { startOfWeek as _startOfWeek } from 'date-fns';
+import { getISOWeek, getISOWeekYear, startOfWeek as _startOfWeek } from 'date-fns';
 
 const MEXICO_TZ = 'America/Mexico_City';
 
@@ -20,6 +20,12 @@ function utcOffset(now: Date = new Date()): number {
 export function startOfWeekMexico(): Date {
   const monday = _startOfWeek(mexicoLocal(), { weekStartsOn: 1 });
   return new Date(monday.getTime() + utcOffset());
+}
+
+/** ISO week tag for the current Mexico City calendar week. */
+export function isoWeekMexico(now: Date = new Date()): string {
+  const local = mexicoLocal(now);
+  return `${getISOWeekYear(local)}-W${String(getISOWeek(local)).padStart(2, '0')}`;
 }
 
 /** Start of today (00:00) in Mexico City, as real UTC Date. */

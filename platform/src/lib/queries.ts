@@ -1,6 +1,6 @@
 import { db } from '@/db';
 import { reviews, staff, restaurants, mercadopagoSubscriptions } from '@/db/schema';
-import { eq, and, gte, sql, desc, count, avg, asc } from 'drizzle-orm';
+import { eq, and, gte, lt, sql, desc, count, avg, asc } from 'drizzle-orm';
 import { startOfWeek } from 'date-fns';
 import { startOfWeekMexico, startOfTodayMexico } from '@/lib/mexico-tz';
 import { POSITIVE_RATING_MIN } from '@/lib/feedback';
@@ -444,6 +444,59 @@ export async function getLastWeekLeaderboard(restaurantId: number, limit = 5) {
     .limit(limit);
 }
 
+export interface QuietStaffEntry {
+  staffId: number;
+  staffName: string | null;
+  staffCode: string | null;
+  priorWeeklyAvg: number;
+  lastWeekCount: number;
+}
+
+/**
+ * Staff whose attributed opinion volume fell sharply during the trailing
+ * seven days after averaging at least five per week over the prior 21 days.
+ */
+export async function getQuietStaff(
+  restaurantId: number,
+  now = new Date(),
+): Promise<QuietStaffEntry[]> {
+  const priorStart = new Date(now.getTime() - 28 * 86_400_000);
+  const lastWeekStart = new Date(now.getTime() - 7 * 86_400_000);
+  const priorWindow = and(
+    gte(reviews.createdAt, priorStart),
+    lt(reviews.createdAt, lastWeekStart),
+  );
+  const lastWeekWindow = and(
+    gte(reviews.createdAt, lastWeekStart),
+    lt(reviews.createdAt, now),
+  );
+  const priorCount = countSql`count(*) filter (where ${priorWindow})`;
+  const lastWeekCount = countSql`count(*) filter (where ${lastWeekWindow})`;
+  const priorWeeklyAvg = sql<number>`(${priorCount})::float / 3`.mapWith(Number);
+
+  return db
+    .select({
+      staffId: staff.id,
+      staffName: staff.name,
+      staffCode: staff.code,
+      priorWeeklyAvg,
+      lastWeekCount,
+    })
+    .from(reviews)
+    .innerJoin(staff, eq(reviews.staffId, staff.id))
+    .where(
+      and(
+        eq(reviews.restaurantId, restaurantId),
+        sql`${reviews.staffId} is not null`,
+        gte(reviews.createdAt, priorStart),
+        lt(reviews.createdAt, now),
+      ),
+    )
+    .groupBy(staff.id, staff.name, staff.code)
+    .having(sql`${priorCount} >= 15 and ${lastWeekCount} <= 1`)
+    .orderBy(desc(priorWeeklyAvg));
+}
+
 /** All restaurants that have a manager email set (for digest sends). */
 export async function getRestaurantsWithEmail() {
   return db
@@ -458,6 +511,27 @@ export async function getOwnerAccounts() {
     .select()
     .from(restaurants)
     .where(eq(restaurants.isOwner, true));
+}
+
+/** All regional account rows. */
+export async function getRegionalAccounts() {
+  return db
+    .select()
+    .from(restaurants)
+    .where(eq(restaurants.isRegional, true));
+}
+
+/** All operational restaurant rows, excluding owner and regional accounts. */
+export async function getOperationalRestaurants() {
+  return db
+    .select()
+    .from(restaurants)
+    .where(
+      and(
+        eq(restaurants.isOwner, false),
+        eq(restaurants.isRegional, false),
+      ),
+    );
 }
 
 /** Live view stats: real-time team data for the fullscreen tablet display. */

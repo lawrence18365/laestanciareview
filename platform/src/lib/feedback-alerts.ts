@@ -71,6 +71,7 @@ export async function dispatchFeedbackAlerts(
 ): Promise<FeedbackAlertDispatchResult> {
   const channels: AlertChannelMap = {};
   const feedback = review.feedback ?? '';
+  const feedbackPreview = feedback.length > 100 ? `${feedback.slice(0, 99)}…` : feedback;
 
   // ── GM channels (location account) ──────────────────────────────────────
   const pref = restaurant.alertPreference ?? 'all';
@@ -133,7 +134,7 @@ export async function dispatchFeedbackAlerts(
       );
     }
 
-    if (!restaurant.whatsappAlerts) {
+    if (!restaurant.whatsappAlerts || process.env.WHATSAPP_ALERTS_ENABLED !== 'true') {
       record(channels, 'whatsapp', { ok: false, skipped: 'disabled' });
     } else if (!restaurant.managerPhone) {
       record(channels, 'whatsapp', { ok: false, skipped: 'no_phone' });
@@ -159,7 +160,7 @@ export async function dispatchFeedbackAlerts(
         title: isPositiveRating(review.rating)
           ? `⭐ Comentario positivo de ${review.rating} estrellas`
           : `⚠️ Reseña de ${review.rating} estrella${review.rating === 1 ? '' : 's'}`,
-        body: feedback.length > 100 ? feedback.slice(0, 100) + '…' : feedback,
+        body: feedbackPreview,
         url: '/inbox',
         tag: `review-${review.id}`,
       }, {
@@ -231,12 +232,29 @@ export async function dispatchFeedbackAlerts(
     const accountPref = account.alertPreference ?? 'threshold';
     if (!shouldSendFor(accountPref, review.rating, account.googleThreshold)) {
       record(channels, `${prefix}_email`, { ok: false, skipped: 'preference' });
+      record(channels, `${prefix}_whatsapp`, { ok: false, skipped: 'preference' });
+      record(channels, `${prefix}_push`, { ok: false, skipped: 'preference' });
       continue;
     }
 
-    if (!account.managerEmail && !account.managerPhone) {
-      record(channels, `${prefix}_email`, { ok: false, skipped: 'no_channel' });
-      continue;
+    try {
+      const result = await sendPushToRestaurant(account.id, {
+        title: `⚠️ ${restaurant.name}: ${review.rating} estrella${review.rating === 1 ? '' : 's'}`,
+        body: feedbackPreview,
+        url: '/overview',
+        tag: `review-${review.id}`,
+      }, {
+        kind: 'low_review',
+        subjectType: 'review',
+        subjectId: review.id,
+      });
+      if (result.targeted > 0) {
+        record(channels, `${prefix}_push`, { ok: true });
+      } else {
+        record(channels, `${prefix}_push`, { ok: false, skipped: 'no_devices' });
+      }
+    } catch (err) {
+      record(channels, `${prefix}_push`, { ok: false, error: errorMessage(err) });
     }
 
     if (account.managerEmail) {
@@ -261,9 +279,15 @@ export async function dispatchFeedbackAlerts(
       } catch (err) {
         record(channels, `${prefix}_email`, { ok: false, error: errorMessage(err) });
       }
+    } else if (!account.managerPhone) {
+      record(channels, `${prefix}_email`, { ok: false, skipped: 'no_channel' });
     }
 
-    if (account.managerPhone && account.whatsappAlerts) {
+    if (!account.whatsappAlerts || process.env.WHATSAPP_ALERTS_ENABLED !== 'true') {
+      record(channels, `${prefix}_whatsapp`, { ok: false, skipped: 'disabled' });
+    } else if (!account.managerPhone) {
+      record(channels, `${prefix}_whatsapp`, { ok: false, skipped: 'no_phone' });
+    } else {
       try {
         await sendWhatsAppAlert({
           to: account.managerPhone,

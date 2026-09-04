@@ -335,6 +335,18 @@ interface DigestStaffEntry {
   reviewCount: number;
 }
 
+interface QuietStaffDigestEntry {
+  staffId: number;
+  staffName: string | null;
+  staffCode: string | null;
+  priorWeeklyAvg: number;
+  lastWeekCount: number;
+}
+
+function formatOpinionCount(value: number): string {
+  return Number.isInteger(value) ? String(value) : value.toFixed(1);
+}
+
 interface GoogleTrendDigest {
   baselineRating: number;
   currentRating: number;
@@ -349,6 +361,7 @@ interface WeeklyDigestParams {
   weekBefore: { totalReviews: number; avgRating: number; googleSends: number; intercepted: number };
   unresolvedCount: number;
   topPerformers: DigestStaffEntry[];
+  quietStaff?: QuietStaffDigestEntry[];
   dashboardUrl: string;
   googleTrend?: GoogleTrendDigest | null;
 }
@@ -360,6 +373,7 @@ export async function sendWeeklyDigest({
   weekBefore,
   unresolvedCount,
   topPerformers,
+  quietStaff = [],
   dashboardUrl,
   googleTrend,
 }: WeeklyDigestParams) {
@@ -398,11 +412,21 @@ export async function sendWeeklyDigest({
           ${p.avgRating.toFixed(1)} ★
         </td>
         <td style="padding: 10px 16px; border-top: 1px solid #f0ece7; font-size: 13px; text-align: right; color: #78716c;">
-          ${p.reviewCount} reseñas
+          ${p.reviewCount} opiniones capturadas
         </td>
       </tr>`;
     }).join('')
-    : `<tr><td colspan="3" style="padding: 16px; color: #a8a29e; font-style: italic; font-size: 14px; text-align: center;">Sin reseñas la semana pasada</td></tr>`;
+    : `<tr><td colspan="3" style="padding: 16px; color: #a8a29e; font-style: italic; font-size: 14px; text-align: center;">Sin opiniones capturadas la semana pasada</td></tr>`;
+
+  const quietStaffSection = quietStaff.length > 0 ? `
+    <div style="margin: 0 28px 24px; padding: 16px; background: #fff7ed; border-radius: 12px; border-left: 4px solid #f97316;">
+      <p style="margin: 0 0 10px; font-size: 13px; font-weight: 700; color: #9a3412;">Dejaron de pedir opiniones esta semana</p>
+      ${quietStaff.map((person) => `
+        <p style="margin: 5px 0; font-size: 14px; color: #44403c;">
+          <strong>${escapeHtml(person.staffName ?? 'Desconocido')}</strong>, promedio anterior ${formatOpinionCount(person.priorWeeklyAvg)}/sem a ${person.lastWeekCount} esta semana
+        </p>`).join('')}
+      <p style="margin: 12px 0 0; font-size: 13px; color: #7c2d12;">Pregúntale qué pasó y entrégale tarjeta nueva si la perdió.</p>
+    </div>` : '';
 
   const googleBanner = googleTrend && googleTrend.ratingChange !== 0 ? `
     <div style="margin: 0 28px 20px; padding: 20px; background: #faf8f6; border-radius: 12px; text-align: center;">
@@ -447,7 +471,7 @@ export async function sendWeeklyDigest({
     <div style="padding: 20px 28px;">
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse: separate; border-spacing: 0;">
         <tr>
-          ${statCell(String(lastWeek.totalReviews), 'Reseñas', delta(reviewsDelta), 'left')}
+          ${statCell(String(lastWeek.totalReviews), 'Opiniones capturadas', delta(reviewsDelta), 'left')}
           ${statCell(lastWeek.avgRating ? lastWeek.avgRating.toFixed(1) : '--', 'Calif. Prom.', ratingD(ratingDelta), 'mid')}
           ${statCell(String(lastWeek.googleSends), 'Clics a Google', '', 'right')}
         </tr>
@@ -456,10 +480,11 @@ export async function sendWeeklyDigest({
 
     ${interceptedBanner}
     ${unresolvedBanner}
+    ${quietStaffSection}
 
     <!-- Leaderboard -->
     <div style="margin: 0 28px 24px; background: #faf8f6; border-radius: 12px; overflow: hidden;">
-      <p style="margin: 0; padding: 14px 16px 10px; font-size: 12px; font-weight: 700; color: #78716c; text-transform: uppercase; letter-spacing: 0.06em;">Mejores Desempeños</p>
+      <p style="margin: 0; padding: 14px 16px 10px; font-size: 12px; font-weight: 700; color: #78716c; text-transform: uppercase; letter-spacing: 0.06em;">Top meseros por experiencia del cliente</p>
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
         ${leaderboardRows}
       </table>
@@ -475,7 +500,7 @@ export async function sendWeeklyDigest({
   const result = await sendMail({
     from: FROM,
     to,
-    subject: `📊 Resumen Semanal: ${restaurantName}, ${lastWeek.totalReviews} reseñas, ${lastWeek.avgRating ? lastWeek.avgRating.toFixed(1) : '--'} prom`,
+    subject: `📊 Resumen Semanal: ${restaurantName}, ${lastWeek.totalReviews} opiniones capturadas, ${lastWeek.avgRating ? lastWeek.avgRating.toFixed(1) : '--'} prom`,
     html: emailLayout(content, 'Enviado cada lunes por RateTap'),
   });
 
@@ -503,6 +528,8 @@ interface OwnerLocationSummary {
   unresolved: number;
   ratingChange: number | null;
   currentRating: number | null;
+  topStaff: { name: string; avgRating: number; reviewCount: number }[];
+  quietStaff: QuietStaffDigestEntry[];
 }
 
 interface OwnerDigestParams {
@@ -561,8 +588,14 @@ export async function sendOwnerDigest({ to, locations, dashboardUrl }: OwnerDige
     const unresolvedBadge = l.unresolved > 0
       ? `<span style="display:inline-block;padding:2px 7px;border-radius:999px;font-size:11px;font-weight:700;background:#f5f5f4;color:#57534e;margin-left:6px;">${l.unresolved} con estado Nuevo</span>`
       : '';
+    const topStaffLine = l.topStaff.length > 0
+      ? `<div style="margin-top:4px;font-size:11px;font-weight:400;color:#57534e;">Top: ${l.topStaff.map((person) => `${escapeHtml(person.name)} (${person.avgRating.toFixed(1)}★, ${person.reviewCount})`).join(', ')}</div>`
+      : '';
+    const quietStaffLine = l.quietStaff.length > 0
+      ? `<div style="margin-top:3px;font-size:11px;font-weight:600;color:#9a3412;">Dejaron de pedir: ${l.quietStaff.map((person) => `${escapeHtml(person.staffName ?? 'Desconocido')} (${formatOpinionCount(person.priorWeeklyAvg)} a ${person.lastWeekCount})`).join(', ')}</div>`
+      : '';
     return `<tr style="border-top: 1px solid #f0ece7;">
-      <td style="padding: 10px 14px; font-size: 14px; font-weight: 500; color: #1c1917;">${l.name}${unresolvedBadge}</td>
+      <td style="padding: 10px 14px; font-size: 14px; font-weight: 500; color: #1c1917;">${escapeHtml(l.name)}${unresolvedBadge}${topStaffLine}${quietStaffLine}</td>
       <td style="padding: 10px 14px; font-size: 14px; text-align: right; color: #44403c;">${l.reviews}</td>
       <td style="padding: 10px 14px; font-size: 14px; text-align: right; color: ${ratingColor}; font-weight: 700;">${l.avgRating ? l.avgRating.toFixed(1) + ' ★' : '--'}</td>
       <td style="padding: 10px 14px; font-size: 14px; text-align: right; color: #78716c;">${l.googleSends}</td>
@@ -583,7 +616,7 @@ export async function sendOwnerDigest({ to, locations, dashboardUrl }: OwnerDige
         <tr>
           <td style="padding: 18px 12px; background: #faf8f6; border-radius: 12px 0 0 12px; text-align: center; width: 33%; border-right: 1px solid #f0ece7;">
             <p style="margin: 0; font-size: 28px; font-weight: 700; color: #1c1917;">${totalReviews}</p>
-            <p style="margin: 4px 0 0; font-size: 11px; color: #78716c; text-transform: uppercase; letter-spacing: 0.06em;">Total Reseñas</p>
+            <p style="margin: 4px 0 0; font-size: 11px; color: #78716c; text-transform: uppercase; letter-spacing: 0.06em;">Opiniones capturadas</p>
           </td>
           <td style="padding: 18px 12px; background: #faf8f6; text-align: center; width: 33%; border-right: 1px solid #f0ece7;">
             <p style="margin: 0; font-size: 28px; font-weight: 700; color: #1c1917;">${overallAvg}</p>
@@ -607,7 +640,7 @@ export async function sendOwnerDigest({ to, locations, dashboardUrl }: OwnerDige
         <thead>
           <tr>
             <th style="padding: 12px 14px; font-size: 11px; text-align: left; color: #78716c; text-transform: uppercase; letter-spacing: 0.06em;">Ubicacion</th>
-            <th style="padding: 12px 14px; font-size: 11px; text-align: right; color: #78716c; text-transform: uppercase;">Reseñas</th>
+            <th style="padding: 12px 14px; font-size: 11px; text-align: right; color: #78716c; text-transform: uppercase;">Opiniones capturadas</th>
             <th style="padding: 12px 14px; font-size: 11px; text-align: right; color: #78716c; text-transform: uppercase;">Prom</th>
             <th style="padding: 12px 14px; font-size: 11px; text-align: right; color: #78716c; text-transform: uppercase;">Clics a Google</th>
             <th style="padding: 12px 14px; font-size: 11px; text-align: right; color: #78716c; text-transform: uppercase;">Bajo umbral sin clic</th>
@@ -629,7 +662,7 @@ export async function sendOwnerDigest({ to, locations, dashboardUrl }: OwnerDige
   const result = await sendMail({
     from: FROM,
     to,
-    subject: `📊 Resumen Semanal: ${totalReviews} reseñas, ${overallAvg} prom en ${locations.length} ubicaciones`,
+    subject: `📊 Resumen Semanal: ${totalReviews} opiniones capturadas, ${overallAvg} prom en ${locations.length} ubicaciones`,
     html: emailLayout(content, 'Enviado cada lunes por RateTap'),
   });
 

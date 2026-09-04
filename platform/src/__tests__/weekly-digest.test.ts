@@ -9,9 +9,13 @@ const mocks = vi.hoisted(() => ({
   getLastWeekLeaderboard: vi.fn(),
   getNewFeedbackCount: vi.fn(),
   getOverviewStats: vi.fn(),
+  getQuietStaff: vi.fn(),
+  getOperationalRestaurants: vi.fn(),
+  getRegionalAccounts: vi.fn(),
   getGoogleRatingTrend: vi.fn(),
   sendWeeklyDigest: vi.fn(),
   sendOwnerDigest: vi.fn(),
+  sendPushToRestaurant: vi.fn(),
 }));
 
 vi.mock('@/lib/queries', () => ({
@@ -22,6 +26,9 @@ vi.mock('@/lib/queries', () => ({
   getLastWeekLeaderboard: mocks.getLastWeekLeaderboard,
   getNewFeedbackCount: mocks.getNewFeedbackCount,
   getOverviewStats: mocks.getOverviewStats,
+  getQuietStaff: mocks.getQuietStaff,
+  getOperationalRestaurants: mocks.getOperationalRestaurants,
+  getRegionalAccounts: mocks.getRegionalAccounts,
 }));
 
 vi.mock('@/lib/google-places', () => ({
@@ -31,6 +38,10 @@ vi.mock('@/lib/google-places', () => ({
 vi.mock('@/lib/email', () => ({
   sendWeeklyDigest: mocks.sendWeeklyDigest,
   sendOwnerDigest: mocks.sendOwnerDigest,
+}));
+
+vi.mock('@/lib/push', () => ({
+  sendPushToRestaurant: mocks.sendPushToRestaurant,
 }));
 
 import { GET } from '@/app/api/cron/weekly-digest/route';
@@ -49,6 +60,12 @@ describe('weekly digest skippedNoEmail reporting', () => {
       { id: 3, slug: 'owner-no-email', name: 'Dueño Sin Correo', managerEmail: null, isOwner: true },
       { id: 4, slug: 'owner-ok', name: 'Dueño OK', managerEmail: 'owner@example.com', isOwner: true },
     ]);
+    mocks.getOperationalRestaurants.mockResolvedValue([
+      { id: 1, name: 'Sin Correo', region: 'centro' },
+      { id: 2, name: 'Con Correo', region: 'centro' },
+    ]);
+    mocks.getRegionalAccounts.mockResolvedValue([]);
+    mocks.getQuietStaff.mockResolvedValue([]);
     mocks.getLastWeekStats.mockResolvedValue(weekStats);
     mocks.getWeekBeforeLastStats.mockResolvedValue(weekStats);
     mocks.getLastWeekLeaderboard.mockResolvedValue([]);
@@ -57,6 +74,7 @@ describe('weekly digest skippedNoEmail reporting', () => {
     mocks.getGoogleRatingTrend.mockResolvedValue(null);
     mocks.sendWeeklyDigest.mockResolvedValue({ success: true });
     mocks.sendOwnerDigest.mockResolvedValue({ success: true });
+    mocks.sendPushToRestaurant.mockResolvedValue({ targeted: 0, sent: 0, failed: 0 });
   });
 
   afterEach(() => {

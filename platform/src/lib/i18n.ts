@@ -97,7 +97,7 @@ export const t = {
     exportCsv: 'Exportar CSV',
     dailyReviews: 'Reseñas Diarias (Últimos 30 Días)',
     noReviewsLast30: 'Sin reseñas en los últimos 30 días.',
-    topPerformers: 'Mejores Desempeños Esta Semana',
+    topPerformers: 'Top meseros por experiencia del cliente',
     noReviewsThisWeek: 'Sin reseñas esta semana aún.',
     reviews: 'reseñas',
   },
