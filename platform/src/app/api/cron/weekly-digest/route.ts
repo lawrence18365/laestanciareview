@@ -6,7 +6,6 @@ import {
   getWeekBeforeLastStats,
   getLastWeekLeaderboard,
   getNewFeedbackCount,
-  getOverviewStats,
   getOperationalRestaurants,
   getRegionalAccounts,
 } from '@/lib/queries';
@@ -15,7 +14,15 @@ import {
   getStaffAnomalies,
 } from '@/lib/anomalies';
 import { getGoogleRatingTrend } from '@/lib/google-places';
-import { sendWeeklyDigest, sendOwnerDigest } from '@/lib/email';
+import { sendWeeklyDigest, sendOwnerBriefing, sendRegionalBriefing, type BriefingLocation } from '@/lib/email';
+import {
+  getWeeklySignals,
+  getGuestSignals,
+  getUpcomingBirthdays,
+  lastCompleteWeekStart,
+} from '@/lib/weekly-signal';
+import { signalLabel } from '@/lib/location-signal';
+import { getGoogleRatingTrendBatch } from '@/lib/google-places';
 import { sendPushToRestaurant } from '@/lib/push';
 import { isoWeekMexico } from '@/lib/mexico-tz';
 import {
@@ -46,15 +53,17 @@ export async function GET(req: NextRequest) {
   let ownerFailed = 0;
   let staffAnomalyPushSent = 0;
   let staffAnomalyPushTargeted = 0;
+  let regionalSent = 0;
+  let regionalFailed = 0;
+  const regionalSkippedNoEmail: string[] = [];
   const gmSkippedNoEmail: string[] = [];
   const ownerSkippedNoEmail: string[] = [];
 
-  const [restaurants, operational, owners, regionalAccounts, overviewStats] = await Promise.all([
+  const [restaurants, operational, owners, regionalAccounts] = await Promise.all([
     getRestaurantsWithEmail(),
     getOperationalRestaurants(),
     getOwnerAccounts(),
     getRegionalAccounts(),
-    getOverviewStats(),
   ]);
 
   const digestNow = new Date();
@@ -130,64 +139,94 @@ export async function GET(req: NextRequest) {
     }
   }
 
-  // --- Owner digests ---
+  // --- Owner & regional briefings ---
+  //
+  // Framed on guests, not reviews, and scoped by region for the regionals.
+  // Reports the last COMPLETE week: on a Wednesday the in-progress week holds
+  // three days, which made every location look collapsed against a full prior
+  // week (verified 2026-09-10, all twelve showed double-digit falls).
+  const briefingWeekStart = lastCompleteWeekStart(digestNow);
+
+  const [allSignals, allGuestSignals] = await Promise.all([
+    getWeeklySignals(briefingWeekStart),
+    getGuestSignals(briefingWeekStart),
+  ]);
+  const ratingTrends = await getGoogleRatingTrendBatch(allSignals.map((s) => s.restaurantId));
+
+  const toBriefingLocation = (sig: (typeof allSignals)[number]): BriefingLocation => {
+    const guestStats = allGuestSignals.get(sig.restaurantId);
+    const trend = ratingTrends[sig.restaurantId] ?? null;
+    return {
+      name: sig.name,
+      totalGuests: guestStats?.totalGuests ?? 0,
+      newGuestsThisWeek: guestStats?.newThisWeek ?? 0,
+      returningGuests: guestStats?.returningGuests ?? 0,
+      courtesiesThisWeek: guestStats?.courtesiesThisWeek ?? 0,
+      scansThisWeek: sig.scansThisWeek,
+      scansLastWeek: sig.scansLastWeek,
+      staffAskingThisWeek: sig.staffAskingThisWeek,
+      staffAskingLastWeek: sig.staffAskingLastWeek,
+      gmActiveDays: sig.gmActiveDays,
+      currentRating: trend?.currentRating ?? null,
+      baselineRating: trend?.baselineRating ?? null,
+      signalSummary: sig.signal.summary,
+      signalLabel: signalLabel(sig.signal.signal),
+      actionable: sig.signal.actionable,
+    };
+  };
+
   for (const owner of owners) {
     if (!owner.managerEmail) {
       console.warn(`[digest] no email for ${owner.slug}`);
       ownerSkippedNoEmail.push(owner.slug);
       continue;
     }
-
     try {
-      // Get unresolved counts and Google trends for each location
-      const locations = await Promise.all(
-        overviewStats.map(async (s) => {
-          const [unresolved, googleTrend, topStaff, complaintStats, overdueComplaints] = await Promise.all([
-            getNewFeedbackCount(s.restaurantId),
-            getGoogleRatingTrend(s.restaurantId),
-            getLastWeekLeaderboard(s.restaurantId, 3),
-            getComplaintSlaStats(s.restaurantId, digestNow, 7),
-            getOverdueComplaintPreviews(s.restaurantId, digestNow, 3),
-          ]);
-          return {
-            name: s.restaurantName,
-            reviews: s.weeklyReviews,
-            avgRating: s.weeklyAvg ?? 0,
-            googleSends: s.weeklyGoogle,
-            intercepted: s.weeklyIntercepted,
-            unresolved,
-            ratingChange: googleTrend?.ratingChange ?? null,
-            currentRating: googleTrend?.currentRating ?? null,
-            topStaff: topStaff.map((person) => ({
-              name: person.staffName ?? 'Desconocido',
-              avgRating: person.avgRating,
-              reviewCount: person.reviewCount,
-            })),
-            staffAnomalies: anomaliesByRestaurant.get(s.restaurantId) ?? [],
-            complaints: {
-              received: complaintStats.received,
-              resolvedWithin24h: complaintStats.resolvedWithin24h,
-              overdueOpen: complaintStats.overdueOpen,
-              overdue: overdueComplaints,
-            },
-          };
-        }),
-      );
-
-      const result = await sendOwnerDigest({
+      const result = await sendOwnerBriefing({
         to: owner.managerEmail,
-        locations,
+        weekStart: briefingWeekStart,
+        locations: allSignals.map(toBriefingLocation),
         dashboardUrl: `${baseUrl}/overview`,
       });
-
-      if (result.success) {
-        ownerSent++;
-      } else {
-        ownerFailed++;
-      }
+      if (result.success === false || result.skipped) ownerFailed++;
+      else ownerSent++;
     } catch (err) {
-      console.error(`[digest] Owner failed for ${owner.name}:`, err);
+      console.error(`[digest] Owner briefing failed for ${owner.name}:`, err);
       ownerFailed++;
+    }
+  }
+
+  for (const account of regionalAccounts) {
+    if (!account.managerEmail) {
+      console.warn(`[digest] no email for ${account.slug}`);
+      regionalSkippedNoEmail.push(account.slug);
+      continue;
+    }
+    if (!account.region) {
+      console.warn(`[digest] ${account.slug} has no region; skipping briefing`);
+      regionalSkippedNoEmail.push(account.slug);
+      continue;
+    }
+    try {
+      const scoped = allSignals.filter((s) => s.region === account.region);
+      const birthdays = await getUpcomingBirthdays(digestNow, account.region);
+      const result = await sendRegionalBriefing({
+        to: account.managerEmail,
+        regionName: account.name,
+        weekStart: briefingWeekStart,
+        locations: scoped.map(toBriefingLocation),
+        birthdays: birthdays.map((b) => ({
+          locationName: b.locationName,
+          guestName: b.guestName,
+          birthday: b.birthday,
+        })),
+        dashboardUrl: `${baseUrl}/overview`,
+      });
+      if (result.success === false || result.skipped) regionalFailed++;
+      else regionalSent++;
+    } catch (err) {
+      console.error(`[digest] Regional briefing failed for ${account.name}:`, err);
+      regionalFailed++;
     }
   }
 
@@ -225,6 +264,7 @@ export async function GET(req: NextRequest) {
   return Response.json({
     gm: { sent: gmSent, failed: gmFailed, skippedNoEmail: gmSkippedNoEmail },
     owner: { sent: ownerSent, failed: ownerFailed, skippedNoEmail: ownerSkippedNoEmail },
+    regional: { sent: regionalSent, failed: regionalFailed, skippedNoEmail: regionalSkippedNoEmail },
     staffAnomalyPush: {
       sent: staffAnomalyPushSent,
       targeted: staffAnomalyPushTargeted,

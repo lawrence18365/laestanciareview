@@ -2,7 +2,14 @@
 
 import { useMemo, useState, useEffect, useRef, useCallback, useSyncExternalStore } from 'react';
 import { useRouter } from 'next/navigation';
+import { getGuestFacingName } from '@/lib/brands';
 import { track } from '@/lib/analytics-client';
+import {
+  birthdayMessage,
+  birthdayWindowKeys,
+  daysUntilBirthday,
+  BIRTHDAY_WINDOW_DAYS,
+} from '@/lib/guest-messages';
 
 interface GuestRow {
   id: number;
@@ -38,14 +45,14 @@ export type Filter = 'all' | 'today' | 'birthdays' | 'absent60' | 'vip';
 const FILTER_LABELS: Record<Filter, string> = {
   today: 'Cumple hoy',
   all: 'Todos',
-  birthdays: 'Cumple este mes',
+  birthdays: `Cumple en ${BIRTHDAY_WINDOW_DAYS} días`,
   absent60: 'Sin venir 60 días',
   vip: 'VIP (5+ visitas)',
 };
 
 export default function GuestsTable({
   guests,
-  restaurantName,
+  restaurantName: operationalName,
   brand,
   slug,
   metrics: initialMetrics,
@@ -61,6 +68,9 @@ export default function GuestsTable({
   initialFilter?: Filter;
 }) {
   const router = useRouter();
+  // Guests read this name in a WhatsApp message, so use the full brand name
+  // ("La Estancia Argentina León"), not the operational label ("Estancia Leon").
+  const restaurantName = getGuestFacingName(slug, operationalName);
   const [filter, setFilter] = useState<Filter>(initialFilter ?? 'all');
 
   // Wrap setFilter so every filter change is a product event.
@@ -156,16 +166,17 @@ export default function GuestsTable({
 
   const filtered = useMemo(() => {
     const now = new Date();
-    const thisMonth = String(now.getMonth() + 1).padStart(2, '0');
     const cutoff60 = new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000);
     const q = search.trim().toLowerCase();
+    // Upcoming birthdays, not "somewhere this calendar month". Messaging on the
+    // 1st about a birthday on the 28th wastes the one WhatsApp touch we get.
+    const upcoming = new Set(birthdayWindowKeys(now));
 
-    return guests.filter((g) => {
+    const rows = guests.filter((g) => {
       if (filter === 'today') {
         if (g.birthdayMmdd !== todayMmdd) return false;
       } else if (filter === 'birthdays') {
-        const mm = g.birthdayMmdd?.split('/')[1];
-        if (mm !== thisMonth) return false;
+        if (!g.birthdayMmdd || !upcoming.has(g.birthdayMmdd)) return false;
       } else if (filter === 'absent60') {
         if (!g.lastVisit) return false;
         if (new Date(g.lastVisit) > cutoff60) return false;
@@ -178,6 +189,16 @@ export default function GuestsTable({
       }
       return true;
     });
+
+    // Soonest birthday first, so the person to message next is at the top.
+    if (filter === 'birthdays') {
+      return [...rows].sort((a, b) => {
+        const da = daysUntilBirthday(a.birthdayMmdd, now) ?? Number.MAX_SAFE_INTEGER;
+        const db = daysUntilBirthday(b.birthdayMmdd, now) ?? Number.MAX_SAFE_INTEGER;
+        return da - db;
+      });
+    }
+    return rows;
   }, [guests, filter, search, todayMmdd]);
 
   const captureUrl = `/g/${slug}`;
@@ -1174,12 +1195,12 @@ function firstName(value: string): string {
   return first.charAt(0).toUpperCase() + first.slice(1).toLowerCase();
 }
 
-// Birthday-of-the-day guests get the copa-de-vino invitation; everyone else
-// gets a plain greeting. Names are stored in caps ("QUINTIN Morgado"), so the
-// first token is Title-cased before going into the message.
+// Birthday-of-the-day guests get the birthday invitation; everyone else gets a
+// plain greeting. The birthday copy lives in lib/guest-messages so /vip-vino
+// and /guests can never drift into two different offers again.
 function messageFor(g: GuestRow, todayMmdd: string, restaurantName: string): string {
   if (g.birthdayMmdd === todayMmdd) {
-    return `¡Feliz cumpleaños, ${firstName(g.name)}! 🎂 De parte de todo el equipo de ${restaurantName}. Si quieres celebrarlo con nosotros esta semana, la copa de vino va por nuestra cuenta — solo menciona este mensaje al llegar.`;
+    return birthdayMessage(g.name, restaurantName);
   }
   return `¡Hola ${firstName(g.name)}! Te escribimos de ${restaurantName}.`;
 }

@@ -674,7 +674,10 @@ export const quotes = pgTable(
       .notNull()
       .references(() => restaurants.id, { onDelete: 'cascade' }),
     quoteNumber: text('quote_number'),
-    status: text('status').notNull().default('draft'), // draft | sent | accepted | expired
+    // draft | sent | won | declined | expired. See migrations/0028.
+    // The active list shows draft + sent; the rest are history, never deleted —
+    // they are the denominator for the conversion readout.
+    status: text('status').notNull().default('draft'),
     clientName: text('client_name').notNull(),
     clientPhone: text('client_phone'),
     clientEmail: text('client_email'),
@@ -699,6 +702,12 @@ export const quotes = pgTable(
     // See migrations/0012_quote_public_token.sql.
     publicToken: text('public_token'),
     sentAt: timestamp('sent_at', { withTimezone: true }),
+    // Outcome, recorded by hand when a quote closes. The amount is what was
+    // actually collected, not the builder's estimate from configJson — this
+    // number goes in front of the owner and outside prospects.
+    outcomeAmountMxn: integer('outcome_amount_mxn'),
+    outcomeAt: timestamp('outcome_at', { withTimezone: true }),
+    outcomeNote: text('outcome_note'),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },

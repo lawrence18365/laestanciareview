@@ -1358,3 +1358,314 @@ export async function sendOwnerTrialLapsedNotification(p: OwnerLapsedParams) {
     console.error(`[sendOwnerTrialLapsedNotification] failed to ${OWNER_NOTIFICATION_EMAIL}: ${reason}`);
   }
 }
+
+// ────────────────────────────────────────────────────────────
+// Weekly briefings — owner and regional
+// ────────────────────────────────────────────────────────────
+//
+// Framed on guests, not reviews. The owner evaluates the business on real
+// growth, growth vs Proforma, and guest growth; a review counter speaks to none
+// of those, while guest capture and return rate speak to all three.
+//
+// Three rules hold in both emails, and they are load-bearing:
+//   1. A location is never called inactive from scan volume alone. The signal
+//      comes from lib/location-signal.ts, which crosses volume with how many
+//      waiters actually captured anything.
+//   2. No complaint-resolution counts. That metric measures an event that
+//      essentially never happens, and it does not go in front of the owner
+//      until the workflow fix lands.
+//   3. Nothing here that we cannot defend in a room. Every number is a direct
+//      count; where there is no baseline, the email says so instead of
+//      inventing a comparison.
+
+export interface BriefingLocation {
+  name: string;
+  /** Club VIP members on file, all time. */
+  totalGuests: number;
+  newGuestsThisWeek: number;
+  /** Members with 2+ recorded visits. */
+  returningGuests: number;
+  courtesiesThisWeek: number;
+  scansThisWeek: number;
+  scansLastWeek: number;
+  staffAskingThisWeek: number;
+  staffAskingLastWeek: number;
+  gmActiveDays: number;
+  currentRating: number | null;
+  baselineRating: number | null;
+  /** From classifyLocation(): plain sentence, safe to show the owner. */
+  signalSummary: string;
+  signalLabel: string;
+  /** True only when the numbers genuinely warrant a call. */
+  actionable: boolean;
+}
+
+export interface BirthdayEntry {
+  locationName: string;
+  guestName: string;
+  /** "DD/MM" */
+  birthday: string;
+}
+
+function briefingWeekLabel(weekStart: Date): string {
+  const end = new Date(weekStart.getTime() + 6 * 24 * 60 * 60 * 1000);
+  const f = (d: Date) => `${d.getDate()} ${['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'][d.getMonth()]}`;
+  return `${f(weekStart)} – ${f(end)}`;
+}
+
+function statTile(label: string, value: string, note?: string): string {
+  return `
+    <td style="padding: 14px 10px; text-align: center; vertical-align: top;">
+      <div class="stat-value" style="font-size: 26px; font-weight: 700; color: #1c1917; line-height: 1.1;">${value}</div>
+      <div style="margin-top: 4px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: #78716c;">${escapeHtml(label)}</div>
+      ${note ? `<div style="margin-top: 3px; font-size: 11px; color: #a8a29e;">${escapeHtml(note)}</div>` : ''}
+    </td>`;
+}
+
+/**
+ * Owner briefing. Four blocks, one screen: guests on file, guests who came
+ * back, reputation by location, and anything needing a decision.
+ */
+export async function sendOwnerBriefing({
+  to,
+  weekStart,
+  locations,
+  dashboardUrl,
+}: {
+  to: string;
+  weekStart: Date;
+  locations: BriefingLocation[];
+  dashboardUrl: string;
+}) {
+  const totalGuests = locations.reduce((s, l) => s + l.totalGuests, 0);
+  const newGuests = locations.reduce((s, l) => s + l.newGuestsThisWeek, 0);
+  const returning = locations.reduce((s, l) => s + l.returningGuests, 0);
+  const courtesies = locations.reduce((s, l) => s + l.courtesiesThisWeek, 0);
+
+  // Block 1 — guests in the database.
+  const capturing = locations.filter((l) => l.totalGuests > 0);
+  const guestRows = capturing.length === 0
+    ? `<tr><td style="padding: 12px 0; font-size: 14px; color: #78716c;">Ninguna ubicación tiene captura de invitados activa todavía.</td></tr>`
+    : [...capturing]
+        .sort((a, b) => b.totalGuests - a.totalGuests)
+        .map((l) => `
+          <tr style="border-top: 1px solid #ebe7e2;">
+            <td style="padding: 9px 0; font-size: 14px; color: #1c1917;">${escapeHtml(l.name)}</td>
+            <td style="padding: 9px 0; font-size: 14px; text-align: right; font-weight: 600; color: #1c1917;">${l.totalGuests}</td>
+            <td style="padding: 9px 0; font-size: 14px; text-align: right; color: ${l.newGuestsThisWeek > 0 ? '#16a34a' : '#a8a29e'};">${l.newGuestsThisWeek > 0 ? '+' + l.newGuestsThisWeek : '—'}</td>
+          </tr>`).join('');
+
+  // Block 3 — reputation. Only locations with a real baseline to compare.
+  const rated = locations.filter((l) => l.currentRating != null && l.baselineRating != null);
+  const ratingRows = rated.length === 0
+    ? `<tr><td style="padding: 12px 0; font-size: 14px; color: #78716c;">Sin historial de Google suficiente para comparar todavía.</td></tr>`
+    : rated.map((l) => {
+        const delta = (l.currentRating ?? 0) - (l.baselineRating ?? 0);
+        const color = delta > 0 ? '#16a34a' : delta < 0 ? '#dc2626' : '#78716c';
+        const sign = delta > 0 ? '+' : '';
+        return `
+          <tr style="border-top: 1px solid #ebe7e2;">
+            <td style="padding: 9px 0; font-size: 14px; color: #1c1917;">${escapeHtml(l.name)}</td>
+            <td style="padding: 9px 0; font-size: 14px; text-align: right; color: #78716c;">${(l.baselineRating ?? 0).toFixed(2)}</td>
+            <td style="padding: 9px 0; font-size: 14px; text-align: right; font-weight: 600; color: #1c1917;">${(l.currentRating ?? 0).toFixed(2)}</td>
+            <td style="padding: 9px 0; font-size: 13px; text-align: right; font-weight: 700; color: ${color};">${delta === 0 ? '—' : sign + delta.toFixed(2)}</td>
+          </tr>`;
+      }).join('');
+
+  // Block 4 — exceptions only.
+  const decisions = locations.filter((l) => l.actionable);
+  const decisionBlock = decisions.length === 0
+    ? `<div style="margin: 0 28px 8px; padding: 16px 18px; background: #f0fdf4; border-radius: 10px; border-left: 4px solid #16a34a;">
+         <p style="margin: 0; font-size: 14px; color: #166534;">Nada que decidir esta semana. Ninguna ubicación muestra caída de uso.</p>
+       </div>`
+    : decisions.map((l) => `
+        <div style="margin: 0 28px 10px; padding: 16px 18px; background: #fffbeb; border-radius: 10px; border-left: 4px solid #f59e0b;">
+          <p style="margin: 0 0 4px; font-size: 14px; font-weight: 700; color: #92400e;">${escapeHtml(l.name)}</p>
+          <p style="margin: 0; font-size: 13px; line-height: 1.5; color: #78350f;">${escapeHtml(l.signalSummary)}</p>
+        </div>`).join('');
+
+  const content = `
+    <div style="padding: 28px 28px 8px;">
+      <p style="margin: 0 0 2px; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: #b45309;">Resumen semanal · ${escapeHtml(briefingWeekLabel(weekStart))}</p>
+      <h1 style="margin: 0 0 4px; font-size: 22px; font-weight: 700; color: #1c1917;">Grupo Estancia</h1>
+      <p style="margin: 0; font-size: 14px; color: #78716c;">${locations.length} ubicaciones</p>
+    </div>
+
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin: 8px 0 20px;">
+      <tr>
+        ${statTile('Invitados en base', String(totalGuests))}
+        ${statTile('Nuevos esta semana', newGuests > 0 ? '+' + newGuests : '0')}
+        ${statTile('Han regresado', String(returning), '2+ visitas')}
+        ${statTile('Cortesías', String(courtesies))}
+      </tr>
+    </table>
+
+    <div style="margin: 0 28px 22px; padding: 18px; background: #faf8f6; border-radius: 12px;">
+      <p style="margin: 0 0 10px; font-size: 12px; font-weight: 700; color: #78716c; text-transform: uppercase; letter-spacing: 0.06em;">1 · Invitados en base de datos</p>
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+        <tr>
+          <td style="padding: 0 0 6px; font-size: 11px; color: #a8a29e;">Ubicación</td>
+          <td style="padding: 0 0 6px; font-size: 11px; color: #a8a29e; text-align: right;">Total</td>
+          <td style="padding: 0 0 6px; font-size: 11px; color: #a8a29e; text-align: right;">Esta semana</td>
+        </tr>
+        ${guestRows}
+      </table>
+    </div>
+
+    <div style="margin: 0 28px 22px; padding: 18px; background: #f0fdf4; border-radius: 12px;">
+      <p style="margin: 0 0 6px; font-size: 12px; font-weight: 700; color: #166534; text-transform: uppercase; letter-spacing: 0.06em;">2 · Invitados que regresaron</p>
+      <p style="margin: 0 0 4px; font-size: 30px; font-weight: 700; color: #166534; line-height: 1;">${returning}</p>
+      <p style="margin: 0; font-size: 13px; line-height: 1.5; color: #15803d;">
+        Socios del Club VIP con dos o más visitas registradas. Es tráfico recuperado de invitados que ya eran suyos, no clientes nuevos comprados.
+      </p>
+    </div>
+
+    <div style="margin: 0 28px 22px; padding: 18px; background: #faf8f6; border-radius: 12px;">
+      <p style="margin: 0 0 10px; font-size: 12px; font-weight: 700; color: #78716c; text-transform: uppercase; letter-spacing: 0.06em;">3 · Reputación por ubicación</p>
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+        <tr>
+          <td style="padding: 0 0 6px; font-size: 11px; color: #a8a29e;">Ubicación</td>
+          <td style="padding: 0 0 6px; font-size: 11px; color: #a8a29e; text-align: right;">Inicio</td>
+          <td style="padding: 0 0 6px; font-size: 11px; color: #a8a29e; text-align: right;">Hoy</td>
+          <td style="padding: 0 0 6px; font-size: 11px; color: #a8a29e; text-align: right;">Δ</td>
+        </tr>
+        ${ratingRows}
+      </table>
+    </div>
+
+    <div style="margin: 0 0 6px;">
+      <p style="margin: 0 28px 10px; font-size: 12px; font-weight: 700; color: #78716c; text-transform: uppercase; letter-spacing: 0.06em;">4 · Requiere decisión</p>
+      ${decisionBlock}
+    </div>
+
+    <div style="text-align: center; margin: 24px 0 30px;">
+      <a href="${dashboardUrl}" style="display: inline-block; padding: 13px 32px; background: #1c1917; color: #ffffff; border-radius: 10px; text-decoration: none; font-size: 15px; font-weight: 600;">Abrir panel</a>
+    </div>`;
+
+  return sendMail({
+    from: FROM,
+    to,
+    subject: `Grupo Estancia · ${totalGuests} invitados en base, ${returning} han regresado`,
+    html: emailLayout(content),
+  });
+}
+
+/**
+ * Regional briefing. Same discipline, scoped to one region, plus the week's
+ * birthdays so the manager can push the Club VIP courtesy.
+ */
+export async function sendRegionalBriefing({
+  to,
+  regionName,
+  weekStart,
+  locations,
+  birthdays,
+  dashboardUrl,
+}: {
+  to: string;
+  regionName: string;
+  weekStart: Date;
+  locations: BriefingLocation[];
+  birthdays: BirthdayEntry[];
+  dashboardUrl: string;
+}) {
+  const newGuests = locations.reduce((s, l) => s + l.newGuestsThisWeek, 0);
+  const courtesies = locations.reduce((s, l) => s + l.courtesiesThisWeek, 0);
+  const scans = locations.reduce((s, l) => s + l.scansThisWeek, 0);
+
+  const locationRows = locations.map((l) => {
+    const delta = l.scansLastWeek > 0
+      ? Math.round(((l.scansThisWeek - l.scansLastWeek) / l.scansLastWeek) * 100)
+      : null;
+    const deltaColor = delta == null ? '#a8a29e' : delta >= 0 ? '#16a34a' : delta <= -25 ? '#dc2626' : '#b45309';
+    const deltaText = delta == null ? '—' : `${delta >= 0 ? '+' : ''}${delta}%`;
+    return `
+      <tr style="border-top: 1px solid #ebe7e2;">
+        <td style="padding: 10px 0; font-size: 14px; color: #1c1917;">
+          ${escapeHtml(l.name)}
+          <div style="margin-top: 2px; font-size: 11px; color: #a8a29e;">${escapeHtml(l.signalLabel)}</div>
+        </td>
+        <td style="padding: 10px 0; font-size: 14px; text-align: right; color: #1c1917;">${l.scansThisWeek}</td>
+        <td style="padding: 10px 0; font-size: 13px; text-align: right; font-weight: 600; color: ${deltaColor};">${deltaText}</td>
+        <td style="padding: 10px 0; font-size: 13px; text-align: right; color: #57534e;">${l.currentRating != null ? l.currentRating.toFixed(2) : '—'}</td>
+        <td style="padding: 10px 0; font-size: 13px; text-align: right; color: #57534e;">${l.newGuestsThisWeek}</td>
+        <td style="padding: 10px 0; font-size: 13px; text-align: right; color: #57534e;">${l.courtesiesThisWeek}</td>
+        <td style="padding: 10px 0; font-size: 13px; text-align: right; color: ${l.gmActiveDays > 1 ? '#16a34a' : '#a8a29e'};">${l.gmActiveDays}d</td>
+      </tr>`;
+  }).join('');
+
+  const pushBlock = locations
+    .filter((l) => l.actionable || l.signalLabel === 'Menos afluencia')
+    .map((l) => `
+      <div style="margin: 0 28px 10px; padding: 14px 18px; background: ${l.actionable ? '#fffbeb' : '#faf8f6'}; border-radius: 10px; border-left: 4px solid ${l.actionable ? '#f59e0b' : '#d6d3d1'};">
+        <p style="margin: 0 0 3px; font-size: 14px; font-weight: 700; color: ${l.actionable ? '#92400e' : '#44403c'};">${escapeHtml(l.name)}</p>
+        <p style="margin: 0; font-size: 13px; line-height: 1.5; color: ${l.actionable ? '#78350f' : '#57534e'};">${escapeHtml(l.signalSummary)}</p>
+      </div>`).join('');
+
+  const noPush = `
+    <div style="margin: 0 28px 10px; padding: 14px 18px; background: #f0fdf4; border-radius: 10px; border-left: 4px solid #16a34a;">
+      <p style="margin: 0; font-size: 14px; color: #166534;">Sin focos esta semana en tus ubicaciones.</p>
+    </div>`;
+
+  const birthdayBlock = birthdays.length === 0
+    ? `<p style="margin: 0 28px 8px; font-size: 14px; color: #78716c;">Sin cumpleaños en los próximos días.</p>`
+    : `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin: 0 28px; width: calc(100% - 56px);">
+        ${birthdays.map((b) => `
+          <tr style="border-top: 1px solid #ebe7e2;">
+            <td style="padding: 8px 0; font-size: 14px; color: #1c1917;">${escapeHtml(b.guestName)}</td>
+            <td style="padding: 8px 0; font-size: 13px; color: #78716c;">${escapeHtml(b.locationName)}</td>
+            <td style="padding: 8px 0; font-size: 13px; text-align: right; font-weight: 600; color: #b45309;">${escapeHtml(b.birthday)}</td>
+          </tr>`).join('')}
+      </table>`;
+
+  const content = `
+    <div style="padding: 28px 28px 8px;">
+      <p style="margin: 0 0 2px; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: #b45309;">Resumen semanal · ${escapeHtml(briefingWeekLabel(weekStart))}</p>
+      <h1 style="margin: 0 0 4px; font-size: 22px; font-weight: 700; color: #1c1917;">${escapeHtml(regionName)}</h1>
+      <p style="margin: 0; font-size: 14px; color: #78716c;">${locations.length} ${locations.length === 1 ? 'ubicación' : 'ubicaciones'}</p>
+    </div>
+
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin: 8px 0 20px;">
+      <tr>
+        ${statTile('Escaneos', String(scans))}
+        ${statTile('Socios nuevos', newGuests > 0 ? '+' + newGuests : '0')}
+        ${statTile('Cortesías', String(courtesies))}
+      </tr>
+    </table>
+
+    <div style="margin: 0 28px 22px; padding: 18px; background: #faf8f6; border-radius: 12px;">
+      <p style="margin: 0 0 10px; font-size: 12px; font-weight: 700; color: #78716c; text-transform: uppercase; letter-spacing: 0.06em;">Tus ubicaciones</p>
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+        <tr>
+          <td style="padding: 0 0 6px; font-size: 11px; color: #a8a29e;">Ubicación</td>
+          <td style="padding: 0 0 6px; font-size: 11px; color: #a8a29e; text-align: right;">Escaneos</td>
+          <td style="padding: 0 0 6px; font-size: 11px; color: #a8a29e; text-align: right;">vs sem.</td>
+          <td style="padding: 0 0 6px; font-size: 11px; color: #a8a29e; text-align: right;">Google</td>
+          <td style="padding: 0 0 6px; font-size: 11px; color: #a8a29e; text-align: right;">Socios</td>
+          <td style="padding: 0 0 6px; font-size: 11px; color: #a8a29e; text-align: right;">Cort.</td>
+          <td style="padding: 0 0 6px; font-size: 11px; color: #a8a29e; text-align: right;">Gte.</td>
+        </tr>
+        ${locationRows}
+      </table>
+      <p style="margin: 12px 0 0; font-size: 11px; line-height: 1.5; color: #a8a29e;">
+        "Gte." son los días que el gerente abrió la app. Es contexto, no calificación: un gerente puede estar entrenando al piso todos los días sin abrirla.
+      </p>
+    </div>
+
+    <p style="margin: 0 28px 10px; font-size: 12px; font-weight: 700; color: #78716c; text-transform: uppercase; letter-spacing: 0.06em;">Dónde empujar y por qué</p>
+    ${pushBlock || noPush}
+
+    <p style="margin: 22px 28px 10px; font-size: 12px; font-weight: 700; color: #78716c; text-transform: uppercase; letter-spacing: 0.06em;">Cumpleaños de la semana</p>
+    ${birthdayBlock}
+
+    <div style="text-align: center; margin: 24px 0 30px;">
+      <a href="${dashboardUrl}" style="display: inline-block; padding: 13px 32px; background: #1c1917; color: #ffffff; border-radius: 10px; text-decoration: none; font-size: 15px; font-weight: 600;">Abrir panel</a>
+    </div>`;
+
+  return sendMail({
+    from: FROM,
+    to,
+    subject: `${regionName} · ${scans} escaneos, ${birthdays.length} cumpleaños esta semana`,
+    html: emailLayout(content),
+  });
+}

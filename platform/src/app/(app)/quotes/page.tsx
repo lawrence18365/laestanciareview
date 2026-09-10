@@ -4,6 +4,7 @@ import { db } from '@/db';
 import { quotes, restaurants } from '@/db/schema';
 import { migrateConfig, computePricing, type QuoteConfig } from '@/lib/quote-data';
 import { verifySession } from '@/lib/session';
+import { getQuoteConversion } from '@/lib/quote-lifecycle';
 import QuoteList from './QuoteList';
 
 // The snapshot column is gone, so config_json is now the only price source.
@@ -31,6 +32,9 @@ export default async function QuotesPage() {
     .limit(1);
   if (!restaurant[0]) redirect('/login');
 
+  // Every quote is loaded, including closed ones — they are the denominator for
+  // the conversion readout and are never deleted. QuoteList hides the closed
+  // ones behind a filter and shows the active list by default.
   const rows = await db
     .select()
     .from(quotes)
@@ -42,7 +46,21 @@ export default async function QuotesPage() {
     pricePerPerson: listPricePerPerson(q),
     createdAt: q.createdAt.toISOString(),
     updatedAt: q.updatedAt.toISOString(),
+    outcomeAt: q.outcomeAt ? q.outcomeAt.toISOString() : null,
   }));
 
-  return <QuoteList quotes={serialized} restaurantName={restaurant[0].name} />;
+  // Rolling 12 months: long enough that a seasonal events business has
+  // something to show, short enough to still describe the business today.
+  const periodEnd = new Date();
+  const periodStart = new Date(periodEnd);
+  periodStart.setFullYear(periodStart.getFullYear() - 1);
+  const conversion = await getQuoteConversion(restaurant[0].id, periodStart, periodEnd);
+
+  return (
+    <QuoteList
+      quotes={serialized}
+      restaurantName={restaurant[0].name}
+      conversion={conversion}
+    />
+  );
 }

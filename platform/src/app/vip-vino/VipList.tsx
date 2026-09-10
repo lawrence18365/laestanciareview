@@ -1,6 +1,11 @@
 'use client';
 
 import { useMemo, useState, useSyncExternalStore } from 'react';
+import { birthdayMessage } from '@/lib/guest-messages';
+import { getGuestFacingName } from '@/lib/brands';
+
+/** /vip-vino is a León-only page. */
+const RESTAURANT_NAME = getGuestFacingName('estancia-leon', 'La Estancia Argentina León');
 
 interface VipGuest {
   id: number;
@@ -109,7 +114,7 @@ function firstName(value: string): string {
 // already carries the name). Everyone else receives MESSAGE exactly as written.
 function messageFor(g: VipGuest, currentMonthMm: string): string {
   if (g.birthdayMmdd?.slice(3) === currentMonthMm) {
-    return `¡Hola ${firstName(g.name)}! Vi que cumples este mes 🎂 y pensé que esto podría ser una forma bonita de celebrarlo:\n\n${MESSAGE}`;
+    return birthdayMessage(g.name, RESTAURANT_NAME);
   }
   if (tierOf(g) === 'copa') {
     return `¡Hola ${firstName(g.name)}! 🍷\n\n${MESSAGE}`;

@@ -3,6 +3,14 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { t } from '@/lib/i18n';
+import {
+  ACTIVE_STATUSES,
+  STATUS_LABELS as LIFECYCLE_LABELS,
+  STATUS_COLORS as LIFECYCLE_COLORS,
+  formatPesos,
+  type QuoteConversion,
+  type QuoteStatus,
+} from '@/lib/quote-lifecycle';
 
 type Quote = {
   id: number;
@@ -15,21 +23,17 @@ type Quote = {
   guestCount: number;
   pricePerPerson: string;
   createdAt: string;
+  outcomeAt?: string | null;
+  outcomeAmountMxn?: number | null;
 };
 
-const STATUS_LABELS: Record<string, string> = {
-  draft: t.quotes.draft,
-  sent: t.quotes.sent,
-  accepted: t.quotes.accepted,
-  expired: t.quotes.expired,
-};
+// Labels/colours come from lib/quote-lifecycle so the list, the readout and the
+// API can never disagree about what a status is called.
+const STATUS_LABELS: Record<string, string> = LIFECYCLE_LABELS;
 
-const STATUS_COLORS: Record<string, string> = {
-  draft: '#888',
-  sent: '#2196f3',
-  accepted: '#43a047',
-  expired: '#e53935',
-};
+const STATUS_COLORS: Record<string, string> = Object.fromEntries(
+  Object.entries(LIFECYCLE_COLORS).map(([status, c]) => [status, c.text]),
+);
 
 function formatMXN(n: number) {
   return n.toLocaleString('es-MX', { style: 'currency', currency: 'MXN', maximumFractionDigits: 0 });
@@ -43,12 +47,23 @@ function quoteTotal(q: Quote): number {
 export default function QuoteList({
   quotes: initialQuotes,
   restaurantName,
+  conversion,
 }: {
   quotes: Quote[];
   restaurantName: string;
+  conversion: QuoteConversion;
 }) {
   const router = useRouter();
   const [quotes, setQuotes] = useState(initialQuotes);
+  // Active by default. Closed quotes stay in the database and stay countable;
+  // they are just not what you are working on today.
+  const [showClosed, setShowClosed] = useState(false);
+
+  const isActive = (q: Quote) =>
+    (ACTIVE_STATUSES as string[]).includes(q.status);
+  const activeCount = quotes.filter(isActive).length;
+  const closedCount = quotes.length - activeCount;
+  const visibleQuotes = quotes.filter((q) => (showClosed ? !isActive(q) : isActive(q)));
   const [deleting, setDeleting] = useState<number | null>(null);
   const [sending, setSending] = useState<number | null>(null);
 
@@ -119,14 +134,56 @@ export default function QuoteList({
         </button>
       </div>
 
-      {quotes.length === 0 ? (
+      {/* Conversion readout: the one line to take to the owner or a prospect.
+          Sent counts by send date and won counts by close date, so these are
+          not two views of the same rows — never shown as a percentage. */}
+      <div className="ql-conversion">
+        <div>
+          <span className="ql-conv-value">{conversion.sent}</span>
+          <span className="ql-conv-label">Cotizaciones enviadas</span>
+        </div>
+        <div>
+          <span className="ql-conv-value">{conversion.won}</span>
+          <span className="ql-conv-label">Eventos ganados</span>
+        </div>
+        <div>
+          <span className="ql-conv-value">{formatPesos(conversion.pesosCollected)}</span>
+          <span className="ql-conv-label">Pesos cobrados</span>
+        </div>
+        <div>
+          <span className="ql-conv-value">{conversion.open}</span>
+          <span className="ql-conv-label">Abiertas hoy</span>
+        </div>
+      </div>
+      <p className="ql-conv-note">Últimos 12 meses. Enviadas por fecha de envío, ganadas por fecha de cierre.</p>
+
+      <div className="ql-filterbar">
+        <button
+          className={`ql-filter-btn${!showClosed ? ' active' : ''}`}
+          onClick={() => setShowClosed(false)}
+        >
+          Activas ({activeCount})
+        </button>
+        <button
+          className={`ql-filter-btn${showClosed ? ' active' : ''}`}
+          onClick={() => setShowClosed(true)}
+        >
+          Historial ({closedCount})
+        </button>
+      </div>
+
+      {visibleQuotes.length === 0 ? (
         <div className="ql-empty">
-          <p style={{ margin: 0, fontSize: '0.9rem' }}>{t.quotes.noQuotes}</p>
-          <p style={{ margin: '0.5rem 0 0', fontSize: '0.78rem' }}>{t.quotes.createFirst}</p>
+          <p style={{ margin: 0, fontSize: '0.9rem' }}>
+            {showClosed ? 'Sin cotizaciones cerradas todavía.' : t.quotes.noQuotes}
+          </p>
+          {!showClosed && (
+            <p style={{ margin: '0.5rem 0 0', fontSize: '0.78rem' }}>{t.quotes.createFirst}</p>
+          )}
         </div>
       ) : (
         <div className="ql-list">
-          {quotes.map((q) => (
+          {visibleQuotes.map((q) => (
             <div key={q.id} className="ql-card">
               <div className="ql-card-info">
                 <div className="ql-card-meta">
@@ -250,6 +307,61 @@ const QL_CSS = `
 .ql-card-info { min-width: 0; }
 .ql-card-meta { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
 .ql-folio { font-size: 0.65rem; font-family: var(--font-mono); color: var(--text-dim); }
+.ql-conversion {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.5rem;
+  padding: 1rem;
+  margin-bottom: 0.4rem;
+  background: #fafaf9;
+  border: 1px solid #ebe7e2;
+  border-radius: 12px;
+}
+.ql-conversion > div { text-align: center; }
+.ql-conv-value {
+  display: block;
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: #1c1917;
+  line-height: 1.15;
+}
+.ql-conv-label {
+  display: block;
+  margin-top: 0.2rem;
+  font-size: 0.66rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #78716c;
+}
+.ql-conv-note {
+  margin: 0 0 1rem;
+  font-size: 0.7rem;
+  color: #a8a29e;
+}
+.ql-filterbar {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.9rem;
+}
+.ql-filter-btn {
+  padding: 0.45rem 0.9rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #57534e;
+  background: #fff;
+  border: 1px solid #e7e5e4;
+  border-radius: 999px;
+  cursor: pointer;
+}
+.ql-filter-btn.active {
+  color: #fff;
+  background: #1c1917;
+  border-color: #1c1917;
+}
+@media (max-width: 560px) {
+  .ql-conversion { grid-template-columns: repeat(2, 1fr); row-gap: 0.9rem; }
+}
 .ql-status {
   font-size: 0.6rem;
   font-weight: 700;
