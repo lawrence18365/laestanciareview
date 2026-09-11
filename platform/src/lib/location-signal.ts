@@ -142,7 +142,7 @@ export function classifyLocation(input: LocationSignalInput): LocationSignalResu
       scanChange,
       breadthChange,
       gmPresent,
-      summary: `Escaneos ${pct(scanChange)} abajo. Sin base de participación previa para saber si el equipo dejó de pedir o hubo menos afluencia.${gmNote}`,
+      summary: `Escaneos ${pct(scanChange)} abajo. Sin base de participación previa para saber si bajó la participación del equipo o hubo menos afluencia.${gmNote}`,
       actionable: false,
     };
   }

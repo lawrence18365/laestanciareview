@@ -6,6 +6,8 @@ const mocks = vi.hoisted(() => ({
   sendMail: vi.fn(),
   sendWeeklyDigest: vi.fn(),
   sendOwnerDigest: vi.fn(),
+  sendOwnerBriefing: vi.fn(),
+  sendRegionalBriefing: vi.fn(),
   sendPushToRestaurant: vi.fn(),
   getRestaurantsWithEmail: vi.fn(),
   getOperationalRestaurants: vi.fn(),
@@ -38,6 +40,16 @@ vi.mock('@/lib/email', async (importOriginal) => {
         ? mocks.sendOwnerDigest(...args)
         : actual.sendOwnerDigest(...args)
     ),
+    sendOwnerBriefing: (...args: Parameters<typeof actual.sendOwnerBriefing>) => (
+      mocks.useEmailMocks
+        ? mocks.sendOwnerBriefing(...args)
+        : actual.sendOwnerBriefing(...args)
+    ),
+    sendRegionalBriefing: (...args: Parameters<typeof actual.sendRegionalBriefing>) => (
+      mocks.useEmailMocks
+        ? mocks.sendRegionalBriefing(...args)
+        : actual.sendRegionalBriefing(...args)
+    ),
   };
 });
 
@@ -63,6 +75,7 @@ vi.mock('@/lib/anomalies', async (importOriginal) => {
 
 vi.mock('@/lib/google-places', () => ({
   getGoogleRatingTrend: mocks.getGoogleRatingTrend,
+  getGoogleRatingTrendBatch: async () => ({}),
 }));
 
 vi.mock('@/lib/push', () => ({
@@ -76,6 +89,14 @@ vi.mock('@/lib/complaint-sla', () => ({
 
 vi.mock('@/lib/mexico-tz', () => ({
   isoWeekMexico: () => '2026-W36',
+}));
+
+vi.mock('@/lib/weekly-signal', () => ({
+  TELEMETRY_START: new Date('2026-08-21T00:00:00.000Z'),
+  lastCompleteWeekStart: () => new Date('2026-08-31T00:00:00.000Z'),
+  getWeeklySignals: async () => [],
+  getGuestSignals: async () => new Map(),
+  getUpcomingBirthdays: async () => [],
 }));
 
 import { sendOwnerDigest, sendWeeklyDigest } from '@/lib/email';
@@ -274,6 +295,8 @@ describe('weekly digest staff anomaly push wiring', () => {
     mocks.getOverdueComplaintPreviews.mockResolvedValue([]);
     mocks.sendWeeklyDigest.mockResolvedValue({ success: true });
     mocks.sendOwnerDigest.mockResolvedValue({ success: true });
+    mocks.sendOwnerBriefing.mockResolvedValue({ success: true });
+    mocks.sendRegionalBriefing.mockResolvedValue({ success: true });
     mocks.sendPushToRestaurant.mockResolvedValue({ targeted: 2, sent: 1, failed: 1 });
   });
 
@@ -322,14 +345,10 @@ describe('weekly digest staff anomaly push wiring', () => {
     expect(mocks.sendWeeklyDigest).toHaveBeenCalledWith(
       expect.objectContaining({ restaurantName: 'Norte', staffAnomalies: [anomalyAna] }),
     );
-    expect(mocks.sendOwnerDigest).toHaveBeenCalledWith(expect.objectContaining({
-      locations: expect.arrayContaining([
-        expect.objectContaining({
-          name: 'Norte',
-          staffAnomalies: [anomalyAna],
-          topStaff: [{ name: 'Luz', avgRating: 4.9, reviewCount: 41 }],
-        }),
-      ]),
+    expect(mocks.sendOwnerBriefing).toHaveBeenCalledWith(expect.objectContaining({
+      to: 'owner@example.com',
+      weekStart: new Date('2026-08-31T00:00:00.000Z'),
+      dashboardUrl: expect.stringContaining('/overview'),
     }));
   });
 });

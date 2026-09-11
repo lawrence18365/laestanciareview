@@ -15,6 +15,8 @@ const mocks = vi.hoisted(() => ({
   getGoogleRatingTrend: vi.fn(),
   sendWeeklyDigest: vi.fn(),
   sendOwnerDigest: vi.fn(),
+  sendOwnerBriefing: vi.fn(() => Promise.resolve({ success: true })),
+  sendRegionalBriefing: vi.fn(() => Promise.resolve({ success: true })),
   sendPushToRestaurant: vi.fn(),
   getComplaintSlaStats: vi.fn(),
   getOverdueComplaintPreviews: vi.fn(),
@@ -44,11 +46,14 @@ vi.mock('@/lib/anomalies', () => ({
 
 vi.mock('@/lib/google-places', () => ({
   getGoogleRatingTrend: mocks.getGoogleRatingTrend,
+  getGoogleRatingTrendBatch: async () => ({}),
 }));
 
 vi.mock('@/lib/email', () => ({
   sendWeeklyDigest: mocks.sendWeeklyDigest,
   sendOwnerDigest: mocks.sendOwnerDigest,
+  sendOwnerBriefing: mocks.sendOwnerBriefing,
+  sendRegionalBriefing: mocks.sendRegionalBriefing,
 }));
 
 vi.mock('@/lib/push', () => ({
@@ -58,6 +63,14 @@ vi.mock('@/lib/push', () => ({
 vi.mock('@/lib/complaint-sla', () => ({
   getComplaintSlaStats: mocks.getComplaintSlaStats,
   getOverdueComplaintPreviews: mocks.getOverdueComplaintPreviews,
+}));
+
+vi.mock('@/lib/weekly-signal', () => ({
+  TELEMETRY_START: new Date('2026-08-21T00:00:00.000Z'),
+  lastCompleteWeekStart: () => new Date('2026-08-31T00:00:00.000Z'),
+  getWeeklySignals: async () => [],
+  getGuestSignals: async () => new Map(),
+  getUpcomingBirthdays: async () => [],
 }));
 
 import { GET } from '@/app/api/cron/weekly-digest/route';
@@ -125,6 +138,6 @@ describe('weekly digest skippedNoEmail reporting', () => {
     expect(warn).toHaveBeenCalledWith('[digest] no email for gm-no-email');
     expect(warn).toHaveBeenCalledWith('[digest] no email for owner-no-email');
     expect(mocks.sendWeeklyDigest).toHaveBeenCalledTimes(1);
-    expect(mocks.sendOwnerDigest).toHaveBeenCalledTimes(1);
+    expect(mocks.sendOwnerBriefing).toHaveBeenCalledTimes(1);
   });
 });

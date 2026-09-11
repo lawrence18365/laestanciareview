@@ -1609,7 +1609,9 @@ export async function sendRegionalBriefing({
 
   const birthdayBlock = birthdays.length === 0
     ? `<p style="margin: 0 28px 8px; font-size: 14px; color: #78716c;">Sin cumpleaños en los próximos días.</p>`
-    : `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin: 0 28px; width: calc(100% - 56px);">
+    // Outlook renders with Word, which does not support calc(). Inset with a
+    // wrapper table's padding instead of a computed width.
+    : `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="padding: 0 28px;">
         ${birthdays.map((b) => `
           <tr style="border-top: 1px solid #ebe7e2;">
             <td style="padding: 8px 0; font-size: 14px; color: #1c1917;">${escapeHtml(b.guestName)}</td>
