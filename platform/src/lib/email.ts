@@ -168,6 +168,28 @@ export function escapeHtml(str: string): string {
     .replace(/'/g, '&#39;');
 }
 
+/** Editorial system face for every figure: counts, amounts, ratings, deltas. */
+const FIGURE_STYLE = "font-variant-numeric: tabular-nums; font-family: 'SFMono-Regular', Consolas, Menlo, monospace;";
+
+/**
+ * Wrap a figure in the mono face so columns of numbers line up. This is for
+ * figures embedded in a line of text — KPI values and table cells carry the
+ * face on the element itself. Pass internal numbers or already-escaped
+ * strings, never raw user input.
+ */
+function figure(value: string): string {
+  return `<span style="${FIGURE_STYLE}">${value}</span>`;
+}
+
+/** Large display figure: Playfair, tabular numerals. */
+const DISPLAY_FIGURE_STYLE = "font-variant-numeric: tabular-nums; font-family: 'Playfair Display', Georgia, 'Times New Roman', serif; font-weight: 700;";
+
+/** Section label: 11px, 700, letterspaced uppercase, muted. */
+const SECTION_LABEL_STYLE = 'font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: #666666;';
+
+/** The one CTA shape in the system. */
+const CTA_STYLE = 'display: inline-block; padding: 14px 36px; background: #111111; color: #ffffff; border-radius: 0; text-decoration: none; font-size: 15px; font-weight: 600; letter-spacing: 0.02em;';
+
 /** Branded email wrapper — header with logo, content area, footer. */
 function emailLayout(content: string, footerNote?: string): string {
   return `
@@ -180,39 +202,65 @@ function emailLayout(content: string, footerNote?: string): string {
   <meta name="color-scheme" content="light dark">
   <meta name="supported-color-schemes" content="light dark">
   <meta name="format-detection" content="telephone=no,address=no,email=no,date=no">
+  <!-- Playfair Display is the display face for headings and KPI numerals.
+       Apple Mail and Gmail read this link tag. The import rule at the top of
+       the style block below is the fallback other clients need. Outlook
+       renders with Word and drops both, falling back to Georgia, which is
+       correct and fine. -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&display=swap">
   <style>
+    @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&display=swap');
     :root { color-scheme: light dark; }
     body, table, td { -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
+    /* Inner rules between KPI tiles. */
+    .stat-tile { border-left: 1px solid #E2E2E2; }
+    .stat-tile:first-child { border-left: 0; }
     @media only screen and (max-width: 480px) {
       .email-container { width: 100% !important; padding: 16px 12px !important; }
-      .content-card { border-radius: 12px !important; }
       .content-pad { padding-left: 20px !important; padding-right: 20px !important; }
+      /* Pre-existing weekly-digest stat cells keep their mobile size. */
       .stat-value { font-size: 22px !important; }
+      /* Tiles go 2x2 rather than shrinking into one squeezed row. */
+      .stat-tile { display: inline-block !important; width: 50% !important; border-left: 0 !important; }
+      /* Regional metric grids go 4-across to 2-across. */
+      .metric-cell { display: inline-block !important; width: 50% !important; }
+      /* The parents have to stop being a table too, or the engine rebuilds
+         each cell as its own row and the two-across rules above do nothing. */
+      .stack-table { display: block !important; width: 100% !important; }
+      .stack-row   { display: block !important; width: 100% !important; }
+      /* Two cells are exactly 50% wide, and the markup's whitespace between
+         them adds a space on top of that, which pushes the pair past 100% and
+         wraps it back to one per line. Collapsing the row's own text is
+         invisible here: every string inside those cells sets its own px size. */
+      .stack-row { font-size: 0 !important; }
+      /* Owner briefing activity table keeps 4 of its 5 columns on phones;
+         the waiter count goes, the scan delta stays. */
+      .col-meseros { display: none !important; }
     }
   </style>
 </head>
-<body class="body" style="margin: 0; padding: 0; background: #f5f0eb; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; -webkit-font-smoothing: antialiased;">
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" class="email-body" style="background: #f5f0eb;">
+<body class="body" style="margin: 0; padding: 0; background: #F9F9F8; font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; -webkit-font-smoothing: antialiased;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" class="email-body" style="background: #F9F9F8;">
     <tr><td align="center" class="email-container" style="padding: 32px 16px;">
-      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width: 520px;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width: 640px;">
 
         <!-- Logo Header -->
         <tr><td style="padding: 0 0 28px; text-align: center;">
           <a href="${BASE_URL}" style="text-decoration: none;">
-            <img src="${LOGO_URL}" alt="RateTap" width="160" style="display: inline-block; width: 160px; height: auto; background: #ffffff; padding: 12px 16px; border-radius: 12px;" />
+            <img src="${LOGO_URL}" alt="RateTap" width="160" style="display: inline-block; width: 160px; height: auto; background: #ffffff; padding: 12px 16px; border-radius: 0;" />
           </a>
         </td></tr>
 
         <!-- Content Card -->
-        <tr><td class="content-card" style="background: #ffffff; border-radius: 16px; box-shadow: 0 1px 4px rgba(28,25,23,0.04), 0 4px 16px rgba(28,25,23,0.06);">
+        <tr><td class="content-card" style="background: #ffffff; border: 1px solid #111111; border-radius: 0;">
           ${content}
         </td></tr>
 
         <!-- Footer -->
         <tr><td style="padding: 28px 16px 0; text-align: center;">
-          ${footerNote ? `<p style="margin: 0 0 8px; font-size: 12px; color: #a8a29e;">${footerNote}</p>` : ''}
-          <p style="margin: 0; font-size: 11px; color: #c4c0bb;">
-            <a href="${BASE_URL}" style="color: #c4c0bb; text-decoration: none;">RateTap</a> &middot; Califica. Conecta. Crece.
+          ${footerNote ? `<p style="margin: 0 0 8px; font-size: 12px; color: #A3A3A3;">${footerNote}</p>` : ''}
+          <p style="margin: 0; font-size: 11px; color: #A3A3A3;">
+            <a href="${BASE_URL}" style="color: #A3A3A3; text-decoration: none;">RateTap</a> &middot; Califica. Conecta. Crece.
           </p>
         </td></tr>
 
@@ -250,30 +298,30 @@ export async function sendFeedbackAlert({
 }: FeedbackAlertParams) {
   const filledStars = '★'.repeat(rating);
   const emptyStars = '☆'.repeat(5 - rating);
-  const accentColor = rating >= 4 ? '#16a34a' : rating >= 3 ? '#ca8a04' : '#dc2626';
-  const accentBg = rating >= 4 ? '#f0fdf4' : rating >= 3 ? '#fefce8' : '#fef2f2';
+  const accentColor = rating >= 4 ? '#059669' : rating >= 3 ? '#D97706' : '#DC2626';
+  const accentBg = rating >= 4 ? 'rgba(5,150,105,0.08)' : rating >= 3 ? 'rgba(217,119,6,0.08)' : 'rgba(220,38,38,0.08)';
   const urgencyLabel = rating <= 2 ? 'Urgente' : rating <= 3 ? 'Atención' : 'Positivo';
 
   const content = `
     <!-- Colored accent bar -->
-    <div style="height: 4px; background: ${accentColor}; border-radius: 16px 16px 0 0;"></div>
+    <div style="height: 4px; background: ${accentColor}; border-radius: 0;"></div>
 
     <div class="content-pad" style="padding: 28px 32px 32px;">
       <!-- Rating badge -->
       <div style="text-align: center; margin-bottom: 24px;">
-        <div style="display: inline-block; padding: 10px 24px; background: ${accentBg}; border-radius: 12px;">
-          <span style="font-size: 24px; letter-spacing: 3px; color: ${accentColor};">${filledStars}</span><span style="font-size: 24px; letter-spacing: 3px; color: #d6d3d1;">${emptyStars}</span>
+        <div style="display: inline-block; padding: 10px 24px; background: ${accentBg}; border: 1px solid #111111; border-radius: 0;">
+          <span style="font-size: 24px; letter-spacing: 3px; color: ${accentColor};">${filledStars}</span><span style="font-size: 24px; letter-spacing: 3px; color: #E2E2E2;">${emptyStars}</span>
         </div>
-        <p style="margin: 8px 0 0; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: ${accentColor};">${urgencyLabel}</p>
+        <p style="margin: 8px 0 0; font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: ${accentColor};">${urgencyLabel}</p>
       </div>
 
       <!-- Restaurant name -->
-      <h1 style="margin: 0 0 4px; font-size: 20px; font-weight: 700; color: #1c1917; text-align: center;">${escapeHtml(restaurantName)}</h1>
-      <p style="margin: 0 0 24px; font-size: 13px; color: #a8a29e; text-align: center;">Nuevo comentario de cliente</p>
+      <h1 style="margin: 0 0 4px; font-family: 'Playfair Display', Georgia, 'Times New Roman', serif; font-size: 20px; font-weight: 700; color: #111111; text-align: center;">${escapeHtml(restaurantName)}</h1>
+      <p style="margin: 0 0 24px; font-size: 13px; color: #A3A3A3; text-align: center;">Nuevo comentario de cliente</p>
 
       <!-- Feedback quote -->
-      <div style="margin: 0 0 24px; padding: 20px 24px; background: #faf8f6; border-radius: 12px; border-left: 4px solid ${accentColor};">
-        <p style="margin: 0; font-size: 15px; line-height: 1.7; color: #1c1917; font-style: italic;">&ldquo;${escapeHtml(feedback)}&rdquo;</p>
+      <div style="margin: 0 0 24px; padding: 20px 24px; background: #FFFFFF; border: 1px solid #111111; border-left: 6px solid ${accentColor}; border-radius: 0;">
+        <p style="margin: 0; font-size: 15px; line-height: 1.7; color: #111111; font-style: italic;">&ldquo;${escapeHtml(feedback)}&rdquo;</p>
       </div>
 
       <!-- Details cards -->
@@ -281,30 +329,30 @@ export async function sendFeedbackAlert({
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 24px;">
         ${customerName ? `
         <tr>
-          <td style="padding: 10px 0; border-bottom: 1px solid #f5f0eb;">
-            <span style="font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; color: #a8a29e;">Cliente</span><br/>
-            <span style="font-size: 15px; font-weight: 500; color: #1c1917;">${escapeHtml(customerName)}</span>
+          <td style="padding: 10px 0; border-bottom: 1px solid #E2E2E2;">
+            <span style="${SECTION_LABEL_STYLE}">Cliente</span><br/>
+            <span style="font-size: 15px; font-weight: 500; color: #111111;">${escapeHtml(customerName)}</span>
           </td>
         </tr>` : ''}
         ${customerEmail ? `
         <tr>
-          <td style="padding: 10px 0; border-bottom: 1px solid #f5f0eb;">
-            <span style="font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; color: #a8a29e;">Email</span><br/>
-            <a href="mailto:${encodeURIComponent(customerEmail)}" style="font-size: 15px; color: #b45309; text-decoration: none; font-weight: 500;">${escapeHtml(customerEmail)}</a>
+          <td style="padding: 10px 0; border-bottom: 1px solid #E2E2E2;">
+            <span style="${SECTION_LABEL_STYLE}">Email</span><br/>
+            <a href="mailto:${encodeURIComponent(customerEmail)}" style="font-size: 15px; color: #D97706; text-decoration: none; font-weight: 500;">${escapeHtml(customerEmail)}</a>
           </td>
         </tr>` : ''}
         ${staffName ? `
         <tr>
           <td style="padding: 10px 0;">
-            <span style="font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; color: #a8a29e;">Mesero</span><br/>
-            <span style="font-size: 15px; font-weight: 500; color: #1c1917;">${escapeHtml(staffName)}</span>
+            <span style="${SECTION_LABEL_STYLE}">Mesero</span><br/>
+            <span style="font-size: 15px; font-weight: 500; color: #111111;">${escapeHtml(staffName)}</span>
           </td>
         </tr>` : ''}
       </table>` : ''}
 
       <!-- CTA -->
       <div style="text-align: center;">
-        <a href="${BASE_URL}/inbox" style="display: inline-block; padding: 14px 36px; background: #1c1917; color: #ffffff; border-radius: 10px; text-decoration: none; font-size: 15px; font-weight: 600; letter-spacing: 0.02em;">
+        <a href="${BASE_URL}/inbox" style="${CTA_STYLE}">
           Ver en Buzón
         </a>
       </div>
@@ -374,99 +422,97 @@ export async function sendWeeklyDigest({
     ? (lastWeek.avgRating - weekBefore.avgRating).toFixed(1)
     : null;
 
-  const delta = (d: number) => d > 0 ? `<span style="color:#16a34a;font-size:12px;">+${d}</span>` : d < 0 ? `<span style="color:#dc2626;font-size:12px;">${d}</span>` : '';
+  const delta = (d: number) => d > 0 ? `<span style="color:#059669;font-size:12px;${FIGURE_STYLE}">+${d}</span>` : d < 0 ? `<span style="color:#DC2626;font-size:12px;${FIGURE_STYLE}">${d}</span>` : '';
   const ratingD = (d: string | null) => {
     if (!d) return '';
     const n = parseFloat(d);
-    if (n > 0) return `<span style="color:#16a34a;font-size:12px;">+${d}</span>`;
-    if (n < 0) return `<span style="color:#dc2626;font-size:12px;">${d}</span>`;
+    if (n > 0) return `<span style="color:#059669;font-size:12px;${FIGURE_STYLE}">+${d}</span>`;
+    if (n < 0) return `<span style="color:#DC2626;font-size:12px;${FIGURE_STYLE}">${d}</span>`;
     return '';
   };
 
-  const statCell = (value: string, label: string, extra: string, position: 'left' | 'mid' | 'right') => {
-    const radius = position === 'left' ? '12px 0 0 12px' : position === 'right' ? '0 12px 12px 0' : '0';
-    const border = position !== 'right' ? 'border-right: 1px solid #f0ece7;' : '';
-    return `<td style="padding: 16px 8px; background: #faf8f6; border-radius: ${radius}; text-align: center; width: 33%; ${border}">
-      <p class="stat-value" style="margin: 0; font-size: 26px; font-weight: 700; color: #1c1917;">${value}</p>
-      <p style="margin: 4px 0 0; font-size: 10px; color: #78716c; text-transform: uppercase; letter-spacing: 0.06em;">${label}</p>
+  // One bordered panel with hairlines between the tiles, the same shape the
+  // briefings use, rather than three tinted cells sharing rounded corners.
+  const statCell = (value: string, label: string, extra: string) => `<td class="stat-tile" valign="top" style="box-sizing: border-box; padding: 16px 10px; text-align: center; width: 33%;">
+      <p class="stat-value" style="margin: 0; font-size: 30px; line-height: 1; color: #111111; ${DISPLAY_FIGURE_STYLE}">${value}</p>
+      <p style="margin: 6px 0 0; ${SECTION_LABEL_STYLE}">${label}</p>
       ${extra ? `<p style="margin: 4px 0 0;">${extra}</p>` : ''}
     </td>`;
-  };
 
   const leaderboardRows = topPerformers.length > 0
     ? topPerformers.map((p, i) => {
       const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i + 1}.`;
       return `<tr>
-        <td style="padding: 10px 16px; border-top: 1px solid #f0ece7; font-size: 14px;">
+        <td style="padding: 10px 16px; border-top: 1px solid #E2E2E2; font-size: 14px;">
           ${medal} <strong>${p.staffName ?? 'Desconocido'}</strong>
         </td>
-        <td style="padding: 10px 16px; border-top: 1px solid #f0ece7; font-size: 14px; text-align: right; color: #b45309; font-weight: 600;">
+        <td style="padding: 10px 16px; border-top: 1px solid #E2E2E2; font-size: 14px; text-align: right; color: #D97706; font-weight: 600; ${FIGURE_STYLE}">
           ${p.avgRating.toFixed(1)} ★
         </td>
-        <td style="padding: 10px 16px; border-top: 1px solid #f0ece7; font-size: 13px; text-align: right; color: #78716c;">
-          ${p.reviewCount} opiniones capturadas
+        <td style="padding: 10px 16px; border-top: 1px solid #E2E2E2; font-size: 13px; text-align: right; color: #666666;">
+          ${figure(String(p.reviewCount))} opiniones capturadas
         </td>
       </tr>`;
     }).join('')
-    : `<tr><td colspan="3" style="padding: 16px; color: #a8a29e; font-style: italic; font-size: 14px; text-align: center;">Sin opiniones capturadas la semana pasada</td></tr>`;
+    : `<tr><td colspan="3" style="padding: 16px; color: #A3A3A3; font-style: italic; font-size: 14px; text-align: center;">Sin opiniones capturadas la semana pasada</td></tr>`;
 
   const staffAnomalySection = staffAnomalies.length > 0 ? `
-    <div style="margin: 0 28px 24px; padding: 16px; background: #fff7ed; border-radius: 12px; border-left: 4px solid #f97316;">
-      <p style="margin: 0 0 10px; font-size: 13px; font-weight: 700; color: #9a3412;">Cambios anormales esta semana</p>
+    <div style="margin: 0 28px 24px; padding: 16px; background: rgba(217,119,6,0.08); border: 1px solid #111111; border-left: 6px solid #D97706; border-radius: 0;">
+      <p style="margin: 0 0 10px; font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: #D97706;">Cambios anormales esta semana</p>
       ${staffAnomalies.map((person) => `
-        <p style="margin: 5px 0; font-size: 14px; color: #44403c;">
+        <p style="margin: 5px 0; font-size: 14px; color: #111111;">
           ${escapeHtml(formatStaffAnomaly(person))}
         </p>`).join('')}
-      <p style="margin: 12px 0 0; font-size: 13px; color: #7c2d12;">Confirme con el gerente si hubo cambio de turno, vacaciones o tarjeta perdida.</p>
+      <p style="margin: 12px 0 0; font-size: 13px; color: #666666;">Confirme con el gerente si hubo cambio de turno, vacaciones o tarjeta perdida.</p>
     </div>` : '';
 
   const googleBanner = googleTrend && googleTrend.ratingChange !== 0 ? `
-    <div style="margin: 0 28px 20px; padding: 20px; background: #faf8f6; border-radius: 12px; text-align: center;">
-      <p style="margin: 0 0 8px; font-size: 11px; color: #78716c; text-transform: uppercase; letter-spacing: 0.06em;">Calificacion de Google</p>
+    <div style="margin: 0 28px 20px; padding: 20px; background: #FFFFFF; border: 1px solid #111111; border-radius: 0; text-align: center;">
+      <p style="margin: 0 0 8px; ${SECTION_LABEL_STYLE}">Calificacion de Google</p>
       <p style="margin: 0;">
-        <span style="color: #a8a29e; font-size: 18px;">${googleTrend.baselineRating.toFixed(1)}</span>
-        <span style="color: #d6d3d1; padding: 0 8px;">→</span>
-        <span style="font-size: 32px; font-weight: 800; color: #1c1917;">${googleTrend.currentRating.toFixed(1)}</span>
-        <span style="font-size: 20px; color: #b45309;"> ★</span>
-        <span style="font-size: 16px; font-weight: 700; color: ${googleTrend.ratingChange > 0 ? '#16a34a' : '#dc2626'}; padding-left: 6px;">
+        <span style="color: #A3A3A3; font-size: 18px; ${FIGURE_STYLE}">${googleTrend.baselineRating.toFixed(1)}</span>
+        <span style="color: #E2E2E2; padding: 0 8px;">→</span>
+        <span style="font-size: 32px; color: #111111; ${DISPLAY_FIGURE_STYLE}">${googleTrend.currentRating.toFixed(1)}</span>
+        <span style="font-size: 20px; color: #D97706;"> ★</span>
+        <span style="font-size: 16px; font-weight: 700; color: ${googleTrend.ratingChange > 0 ? '#059669' : '#DC2626'}; padding-left: 6px; ${FIGURE_STYLE}">
           ${googleTrend.ratingChange > 0 ? '+' : ''}${googleTrend.ratingChange.toFixed(1)}
         </span>
       </p>
-      ${googleTrend.reviewsGained > 0 ? `<p style="margin: 6px 0 0; font-size: 12px; color: #78716c;">+${googleTrend.reviewsGained} nuevas reseñas en Google</p>` : ''}
-      <p style="margin: 8px 0 0; font-size: 11px; line-height: 1.5; color: #a8a29e;">${RATING_BASELINE_NOTE}</p>
+      ${googleTrend.reviewsGained > 0 ? `<p style="margin: 6px 0 0; font-size: 12px; color: #666666;">${figure('+' + googleTrend.reviewsGained)} nuevas reseñas en Google</p>` : ''}
+      <p style="margin: 8px 0 0; font-size: 11px; line-height: 1.5; color: #A3A3A3;">${RATING_BASELINE_NOTE}</p>
     </div>` : '';
 
   const interceptedBanner = lastWeek.intercepted > 0 ? `
-    <div style="margin: 0 28px 16px; padding: 14px 18px; background: #fffbeb; border-radius: 10px; border-left: 4px solid #f59e0b;">
-      <p style="margin: 0; font-size: 14px; font-weight: 600; color: #92400e;">
-        ${lastWeek.intercepted} ${lastWeek.intercepted === 1 ? 'calificación bajo el umbral sin clic registrado a Google' : 'calificaciones bajo el umbral sin clic registrado a Google'} esta semana
+    <div style="margin: 0 28px 16px; padding: 14px 18px; background: rgba(217,119,6,0.08); border: 1px solid #111111; border-left: 6px solid #D97706; border-radius: 0;">
+      <p style="margin: 0; font-size: 14px; font-weight: 600; color: #D97706;">
+        ${figure(String(lastWeek.intercepted))} ${lastWeek.intercepted === 1 ? 'calificación bajo el umbral sin clic registrado a Google' : 'calificaciones bajo el umbral sin clic registrado a Google'} esta semana
       </p>
-      <p style="margin: 6px 0 0;"><a href="${BASE_URL}/inbox" style="font-size: 12px; color: #b45309; text-decoration: underline;">Ver detalle en Buzón →</a></p>
+      <p style="margin: 6px 0 0;"><a href="${BASE_URL}/inbox" style="font-size: 12px; color: #D97706; text-decoration: underline;">Ver detalle en Buzón →</a></p>
     </div>` : '';
 
   const unresolvedBanner = unresolvedCount > 0 ? `
-    <div style="margin: 0 28px 16px; padding: 14px 18px; background: #f5f5f4; border-radius: 10px; border-left: 4px solid #a8a29e;">
-      <p style="margin: 0; font-size: 14px; font-weight: 600; color: #44403c;">
-        ${unresolvedCount} ${unresolvedCount === 1 ? 'comentario privado todavía marcado' : 'comentarios privados todavía marcados'} como Nuevo
+    <div style="margin: 0 28px 16px; padding: 14px 18px; background: rgba(102,102,102,0.08); border: 1px solid #111111; border-left: 6px solid #A3A3A3; border-radius: 0;">
+      <p style="margin: 0; font-size: 14px; font-weight: 600; color: #111111;">
+        ${figure(String(unresolvedCount))} ${unresolvedCount === 1 ? 'comentario privado todavía marcado' : 'comentarios privados todavía marcados'} como Nuevo
       </p>
     </div>` : '';
 
   const content = `
     <!-- Header -->
     <div style="padding: 28px 28px 4px;">
-      <p style="margin: 0 0 2px; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: #b45309;">Resumen Semanal</p>
-      <h1 style="margin: 0; font-size: 22px; font-weight: 700; color: #1c1917;">${escapeHtml(restaurantName)}</h1>
+      <p style="margin: 0 0 4px; font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: #D97706;">Resumen Semanal</p>
+      <h1 style="margin: 0; font-family: 'Playfair Display', Georgia, 'Times New Roman', serif; font-size: 22px; font-weight: 700; color: #111111;">${escapeHtml(restaurantName)}</h1>
     </div>
 
     ${googleBanner}
 
     <!-- Stats -->
     <div style="padding: 20px 28px;">
-      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse: separate; border-spacing: 0;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background: #ffffff; border: 1px solid #111111; border-radius: 0;">
         <tr>
-          ${statCell(String(lastWeek.totalReviews), 'Opiniones capturadas', delta(reviewsDelta), 'left')}
-          ${statCell(lastWeek.avgRating ? lastWeek.avgRating.toFixed(1) : '--', 'Calif. Prom.', ratingD(ratingDelta), 'mid')}
-          ${statCell(String(lastWeek.googleSends), 'Clics a Google', '', 'right')}
+          ${statCell(String(lastWeek.totalReviews), 'Opiniones capturadas', delta(reviewsDelta))}
+          ${statCell(lastWeek.avgRating ? lastWeek.avgRating.toFixed(1) : '--', 'Calif. Prom.', ratingD(ratingDelta))}
+          ${statCell(String(lastWeek.googleSends), 'Clics a Google', '')}
         </tr>
       </table>
     </div>
@@ -476,8 +522,8 @@ export async function sendWeeklyDigest({
     ${staffAnomalySection}
 
     <!-- Leaderboard -->
-    <div style="margin: 0 28px 24px; background: #faf8f6; border-radius: 12px; overflow: hidden;">
-      <p style="margin: 0; padding: 14px 16px 10px; font-size: 12px; font-weight: 700; color: #78716c; text-transform: uppercase; letter-spacing: 0.06em;">Top meseros por experiencia del cliente</p>
+    <div style="margin: 0 28px 24px; background: #FFFFFF; border: 1px solid #111111; border-radius: 0;">
+      <p style="margin: 0; padding: 14px 16px 10px; ${SECTION_LABEL_STYLE}">Top meseros por experiencia del cliente</p>
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
         ${leaderboardRows}
       </table>
@@ -485,7 +531,7 @@ export async function sendWeeklyDigest({
 
     <!-- CTA -->
     <div style="padding: 0 28px 32px; text-align: center;">
-      <a href="${dashboardUrl}" style="display: inline-block; padding: 14px 32px; background: #1c1917; color: #ffffff; border-radius: 10px; text-decoration: none; font-size: 15px; font-weight: 600;">
+      <a href="${dashboardUrl}" style="${CTA_STYLE}">
         Abrir Panel
       </a>
     </div>`;
@@ -554,88 +600,79 @@ export async function sendOwnerDigest({ to, locations, dashboardUrl }: OwnerDige
     .sort((a, b) => (b.ratingChange ?? 0) - (a.ratingChange ?? 0));
 
   const googleMoversBanner = movers.length > 0 ? `
-    <div style="margin: 0 28px 20px; padding: 20px; background: #faf8f6; border-radius: 12px;">
-      <p style="margin: 0 0 12px; font-size: 12px; font-weight: 700; color: #78716c; text-transform: uppercase; letter-spacing: 0.06em;">Cambios en Google</p>
+    <div style="margin: 0 28px 20px; padding: 20px; background: #FFFFFF; border: 1px solid #111111; border-radius: 0;">
+      <p style="margin: 0 0 12px; ${SECTION_LABEL_STYLE}">Cambios en Google</p>
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
         ${movers.map((l) => {
-          const color = (l.ratingChange ?? 0) > 0 ? '#16a34a' : '#dc2626';
+          const color = (l.ratingChange ?? 0) > 0 ? '#059669' : '#DC2626';
           const sign = (l.ratingChange ?? 0) > 0 ? '+' : '';
-          return `<tr style="border-top: 1px solid #ebe7e2;">
-            <td style="padding: 8px 0; font-size: 14px; color: #1c1917;">${l.name}</td>
-            <td style="padding: 8px 0; font-size: 14px; text-align: right; font-weight: 600; color: #b45309;">${l.currentRating != null ? l.currentRating.toFixed(1) + ' ★' : '--'}</td>
-            <td style="padding: 8px 0; font-size: 14px; text-align: right; font-weight: 700; color: ${color};">${sign}${(l.ratingChange ?? 0).toFixed(1)}</td>
+          return `<tr style="border-top: 1px solid #E2E2E2;">
+            <td style="padding: 8px 0; font-size: 14px; color: #111111;">${l.name}</td>
+            <td style="padding: 8px 0; font-size: 14px; text-align: right; font-weight: 600; color: #D97706; ${FIGURE_STYLE}">${l.currentRating != null ? l.currentRating.toFixed(1) + ' ★' : '--'}</td>
+            <td style="padding: 8px 0; font-size: 14px; text-align: right; font-weight: 700; color: ${color}; ${FIGURE_STYLE}">${sign}${(l.ratingChange ?? 0).toFixed(1)}</td>
           </tr>`;
         }).join('')}
       </table>
     </div>` : '';
 
   const interceptedBanner = totalIntercepted > 0 ? `
-    <div style="margin: 0 28px 16px; padding: 14px 18px; background: #fffbeb; border-radius: 10px; border-left: 4px solid #f59e0b;">
-      <p style="margin: 0; font-size: 14px; font-weight: 600; color: #92400e;">
-        ${totalIntercepted} ${totalIntercepted === 1 ? 'calificación bajo el umbral sin clic registrado a Google' : 'calificaciones bajo el umbral sin clic registrado a Google'} en todas las ubicaciones
+    <div style="margin: 0 28px 16px; padding: 14px 18px; background: rgba(217,119,6,0.08); border: 1px solid #111111; border-left: 6px solid #D97706; border-radius: 0;">
+      <p style="margin: 0; font-size: 14px; font-weight: 600; color: #D97706;">
+        ${figure(String(totalIntercepted))} ${totalIntercepted === 1 ? 'calificación bajo el umbral sin clic registrado a Google' : 'calificaciones bajo el umbral sin clic registrado a Google'} en todas las ubicaciones
       </p>
-      <p style="margin: 6px 0 0;"><a href="${BASE_URL}/intercepted" style="font-size: 12px; color: #b45309; text-decoration: underline;">Ver detalle por ubicación →</a></p>
+      <p style="margin: 6px 0 0;"><a href="${BASE_URL}/intercepted" style="font-size: 12px; color: #D97706; text-decoration: underline;">Ver detalle por ubicación →</a></p>
     </div>` : '';
 
   const unresolvedBanner = totalUnresolved > 0 ? `
-    <div style="margin: 0 28px 16px; padding: 14px 18px; background: #f5f5f4; border-radius: 10px; border-left: 4px solid #a8a29e;">
-      <p style="margin: 0; font-size: 14px; font-weight: 600; color: #44403c;">
-        ${totalUnresolved} ${totalUnresolved === 1 ? 'comentario privado todavía marcado' : 'comentarios privados todavía marcados'} como Nuevo en todas las ubicaciones
+    <div style="margin: 0 28px 16px; padding: 14px 18px; background: rgba(102,102,102,0.08); border: 1px solid #111111; border-left: 6px solid #A3A3A3; border-radius: 0;">
+      <p style="margin: 0; font-size: 14px; font-weight: 600; color: #111111;">
+        ${figure(String(totalUnresolved))} ${totalUnresolved === 1 ? 'comentario privado todavía marcado' : 'comentarios privados todavía marcados'} como Nuevo en todas las ubicaciones
       </p>
     </div>` : '';
 
   const sorted = [...locations].sort((a, b) => (a.avgRating || 99) - (b.avgRating || 99));
 
   const locationRows = sorted.map((l) => {
-    const ratingColor = l.avgRating >= 4 ? '#16a34a' : l.avgRating >= 3 ? '#eab308' : '#dc2626';
+    const ratingColor = l.avgRating >= 4 ? '#059669' : l.avgRating >= 3 ? '#D97706' : '#DC2626';
     const unresolvedBadge = l.unresolved > 0
-      ? `<span style="display:inline-block;padding:2px 7px;border-radius:999px;font-size:11px;font-weight:700;background:#f5f5f4;color:#57534e;margin-left:6px;">${l.unresolved} con estado Nuevo</span>`
+      ? `<span style="display:inline-block;padding:2px 7px;border:1px solid #111111;border-radius:0;font-size:11px;font-weight:700;background:rgba(102,102,102,0.08);color:#666666;margin-left:6px;">${figure(String(l.unresolved))} con estado Nuevo</span>`
       : '';
     const topStaffLine = l.topStaff.length > 0
-      ? `<div style="margin-top:4px;font-size:11px;font-weight:400;color:#57534e;">Top: ${l.topStaff.map((person) => `${escapeHtml(person.name)} (${person.avgRating.toFixed(1)}★, ${person.reviewCount})`).join(', ')}</div>`
+      ? `<div style="margin-top:4px;font-size:11px;font-weight:400;color:#666666;">Top: ${l.topStaff.map((person) => `${escapeHtml(person.name)} (${person.avgRating.toFixed(1)}★, ${person.reviewCount})`).join(', ')}</div>`
       : '';
     const staffAnomalyLine = l.staffAnomalies.length > 0
-      ? `<div style="margin-top:3px;font-size:11px;font-weight:600;color:#9a3412;">Cambios anormales: ${l.staffAnomalies.map((person) => escapeHtml(formatStaffAnomaly(person))).join(' ')}</div>`
+      ? `<div style="margin-top:3px;font-size:11px;font-weight:600;color:#D97706;">Cambios anormales: ${l.staffAnomalies.map((person) => escapeHtml(formatStaffAnomaly(person))).join(' ')}</div>`
       : '';
     const resolvedPercent = l.complaints.received > 0
       ? Math.round((l.complaints.resolvedWithin24h / l.complaints.received) * 100)
       : 0;
-    const complaintLine = `<div style="margin-top:5px;font-size:11px;font-weight:600;color:${l.complaints.overdueOpen > 0 ? '#92400e' : '#57534e'};">Quejas: ${l.complaints.received} recibidas, ${resolvedPercent}% atendidas en menos de 24 h, ${l.complaints.overdueOpen} vencidas</div>`;
+    const complaintLine = `<div style="margin-top:5px;font-size:11px;font-weight:600;color:${l.complaints.overdueOpen > 0 ? '#D97706' : '#666666'};">Quejas: ${figure(String(l.complaints.received))} recibidas, ${figure(String(resolvedPercent) + '%')} atendidas en menos de 24 h, ${figure(String(l.complaints.overdueOpen))} vencidas</div>`;
     const overdueLines = l.complaints.overdue.length > 0
-      ? `<div style="margin-top:4px;font-size:11px;font-weight:400;color:#92400e;">${l.complaints.overdue.slice(0, 3).map((complaint) => `${complaint.rating} ${complaint.rating === 1 ? 'estrella' : 'estrellas'}, ${complaint.hoursOpen} h abierta: &ldquo;${escapeHtml(complaint.feedbackPreview)}&rdquo;`).join('<br/>')}</div>`
+      ? `<div style="margin-top:4px;font-size:11px;font-weight:400;color:#D97706;">${l.complaints.overdue.slice(0, 3).map((complaint) => `${figure(String(complaint.rating))} ${complaint.rating === 1 ? 'estrella' : 'estrellas'}, ${figure(String(complaint.hoursOpen))} h abierta: &ldquo;${escapeHtml(complaint.feedbackPreview)}&rdquo;`).join('<br/>')}</div>`
       : '';
-    return `<tr style="border-top: 1px solid #f0ece7;">
-      <td style="padding: 10px 14px; font-size: 14px; font-weight: 500; color: #1c1917;">${escapeHtml(l.name)}${unresolvedBadge}${topStaffLine}${staffAnomalyLine}${complaintLine}${overdueLines}</td>
-      <td style="padding: 10px 14px; font-size: 14px; text-align: right; color: #44403c;">${l.reviews}</td>
-      <td style="padding: 10px 14px; font-size: 14px; text-align: right; color: ${ratingColor}; font-weight: 700;">${l.avgRating ? l.avgRating.toFixed(1) + ' ★' : '--'}</td>
-      <td style="padding: 10px 14px; font-size: 14px; text-align: right; color: #78716c;">${l.googleSends}</td>
-      <td style="padding: 10px 14px; font-size: 14px; text-align: right; color: #92400e; font-weight: 600;">${l.intercepted > 0 ? l.intercepted : '-'}</td>
+    return `<tr style="border-top: 1px solid #E2E2E2;">
+      <td style="padding: 10px 14px; font-size: 14px; font-weight: 500; color: #111111;">${escapeHtml(l.name)}${unresolvedBadge}${topStaffLine}${staffAnomalyLine}${complaintLine}${overdueLines}</td>
+      <td style="padding: 10px 14px; font-size: 14px; text-align: right; color: #111111; ${FIGURE_STYLE}">${l.reviews}</td>
+      <td style="padding: 10px 14px; font-size: 14px; text-align: right; color: ${ratingColor}; font-weight: 700; ${FIGURE_STYLE}">${l.avgRating ? l.avgRating.toFixed(1) + ' ★' : '--'}</td>
+      <td style="padding: 10px 14px; font-size: 14px; text-align: right; color: #666666; ${FIGURE_STYLE}">${l.googleSends}</td>
+      <td style="padding: 10px 14px; font-size: 14px; text-align: right; color: #D97706; font-weight: 600; ${FIGURE_STYLE}">${l.intercepted > 0 ? l.intercepted : '-'}</td>
     </tr>`;
   }).join('');
 
   const content = `
     <!-- Header -->
     <div style="padding: 28px 28px 4px;">
-      <p style="margin: 0 0 2px; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: #b45309;">Resumen del Propietario</p>
-      <h1 style="margin: 0; font-size: 22px; font-weight: 700; color: #1c1917;">${locations.length} Ubicaciones</h1>
+      <p style="margin: 0 0 4px; font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: #D97706;">Resumen del Propietario</p>
+      <h1 style="margin: 0; font-family: 'Playfair Display', Georgia, 'Times New Roman', serif; font-size: 22px; font-weight: 700; color: #111111;">${locations.length} Ubicaciones</h1>
     </div>
 
     <!-- Totals -->
     <div style="padding: 20px 28px;">
-      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse: separate; border-spacing: 0;">
-        <tr>
-          <td style="padding: 18px 12px; background: #faf8f6; border-radius: 12px 0 0 12px; text-align: center; width: 33%; border-right: 1px solid #f0ece7;">
-            <p style="margin: 0; font-size: 28px; font-weight: 700; color: #1c1917;">${totalReviews}</p>
-            <p style="margin: 4px 0 0; font-size: 11px; color: #78716c; text-transform: uppercase; letter-spacing: 0.06em;">Opiniones capturadas</p>
-          </td>
-          <td style="padding: 18px 12px; background: #faf8f6; text-align: center; width: 33%; border-right: 1px solid #f0ece7;">
-            <p style="margin: 0; font-size: 28px; font-weight: 700; color: #1c1917;">${overallAvg}</p>
-            <p style="margin: 4px 0 0; font-size: 11px; color: #78716c; text-transform: uppercase; letter-spacing: 0.06em;">Calif. Prom.</p>
-          </td>
-          <td style="padding: 18px 12px; background: #faf8f6; border-radius: 0 12px 12px 0; text-align: center; width: 33%;">
-            <p style="margin: 0; font-size: 28px; font-weight: 700; color: #1c1917;">${locations.length}</p>
-            <p style="margin: 4px 0 0; font-size: 11px; color: #78716c; text-transform: uppercase; letter-spacing: 0.06em;">Ubicaciones</p>
-          </td>
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" class="stack-table" style="background: #ffffff; border: 1px solid #111111; border-radius: 0;">
+        <tr class="stack-row">
+          ${statTile('Opiniones capturadas', String(totalReviews))}
+          ${statTile('Calif. Prom.', overallAvg)}
+          ${statTile('Ubicaciones', String(locations.length))}
         </tr>
       </table>
     </div>
@@ -645,15 +682,15 @@ export async function sendOwnerDigest({ to, locations, dashboardUrl }: OwnerDige
     ${unresolvedBanner}
 
     <!-- Locations Table -->
-    <div style="margin: 0 28px 24px; background: #faf8f6; border-radius: 12px; overflow: hidden;">
+    <div style="margin: 0 28px 24px; background: #FFFFFF; border: 1px solid #111111; border-radius: 0;">
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
         <thead>
           <tr>
-            <th style="padding: 12px 14px; font-size: 11px; text-align: left; color: #78716c; text-transform: uppercase; letter-spacing: 0.06em;">Ubicacion</th>
-            <th style="padding: 12px 14px; font-size: 11px; text-align: right; color: #78716c; text-transform: uppercase;">Opiniones capturadas</th>
-            <th style="padding: 12px 14px; font-size: 11px; text-align: right; color: #78716c; text-transform: uppercase;">Prom</th>
-            <th style="padding: 12px 14px; font-size: 11px; text-align: right; color: #78716c; text-transform: uppercase;">Clics a Google</th>
-            <th style="padding: 12px 14px; font-size: 11px; text-align: right; color: #78716c; text-transform: uppercase;">Bajo umbral sin clic</th>
+            <th style="padding: 12px 14px; text-align: left; ${SECTION_LABEL_STYLE}">Ubicacion</th>
+            <th style="padding: 12px 14px; text-align: right; ${SECTION_LABEL_STYLE}">Opiniones capturadas</th>
+            <th style="padding: 12px 14px; text-align: right; ${SECTION_LABEL_STYLE}">Prom</th>
+            <th style="padding: 12px 14px; text-align: right; ${SECTION_LABEL_STYLE}">Clics a Google</th>
+            <th style="padding: 12px 14px; text-align: right; ${SECTION_LABEL_STYLE}">Bajo umbral sin clic</th>
           </tr>
         </thead>
         <tbody>
@@ -664,7 +701,7 @@ export async function sendOwnerDigest({ to, locations, dashboardUrl }: OwnerDige
 
     <!-- CTA -->
     <div style="padding: 0 28px 32px; text-align: center;">
-      <a href="${dashboardUrl}" style="display: inline-block; padding: 14px 32px; background: #1c1917; color: #ffffff; border-radius: 10px; text-decoration: none; font-size: 15px; font-weight: 600;">
+      <a href="${dashboardUrl}" style="${CTA_STYLE}">
         Abrir Resumen
       </a>
     </div>`;
@@ -704,24 +741,24 @@ export async function sendPasswordResetEmail({
 }: PasswordResetParams) {
   const content = `
     <div style="padding: 32px 28px;">
-      <p style="margin: 0 0 2px; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: #b45309;">Seguridad</p>
-      <h1 style="margin: 0 0 20px; font-size: 22px; font-weight: 700; color: #1c1917;">Restablecer Contraseña</h1>
+      <p style="margin: 0 0 4px; font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: #D97706;">Seguridad</p>
+      <h1 style="margin: 0 0 20px; font-family: 'Playfair Display', Georgia, 'Times New Roman', serif; font-size: 22px; font-weight: 700; color: #111111;">Restablecer Contraseña</h1>
 
-      <p style="margin: 0 0 6px; font-size: 15px; line-height: 1.6; color: #44403c;">
+      <p style="margin: 0 0 6px; font-size: 15px; line-height: 1.6; color: #111111;">
         Recibimos una solicitud para restablecer la contraseña de <strong>${escapeHtml(restaurantName)}</strong>.
       </p>
-      <p style="margin: 0 0 28px; font-size: 15px; line-height: 1.6; color: #44403c;">
+      <p style="margin: 0 0 28px; font-size: 15px; line-height: 1.6; color: #111111;">
         Haz clic en el boton de abajo para crear una nueva contraseña.
       </p>
 
       <div style="text-align: center; margin: 0 0 28px;">
-        <a href="${resetUrl}" style="display: inline-block; padding: 14px 36px; background: #1c1917; color: #ffffff; border-radius: 10px; text-decoration: none; font-size: 15px; font-weight: 600;">
+        <a href="${resetUrl}" style="${CTA_STYLE}">
           Restablecer Contraseña
         </a>
       </div>
 
-      <div style="padding: 16px; background: #faf8f6; border-radius: 10px;">
-        <p style="margin: 0; font-size: 13px; color: #78716c; line-height: 1.5;">
+      <div style="padding: 16px; background: #FFFFFF; border: 1px solid #111111; border-radius: 0;">
+        <p style="margin: 0; font-size: 13px; color: #666666; line-height: 1.5;">
           Este enlace expira en <strong>1 hora</strong>. Si no solicitaste esto, puedes ignorar este correo. Tu contraseña no sera modificada.
         </p>
       </div>
@@ -751,11 +788,11 @@ export async function sendPasswordResetEmail({
 export async function sendTestEmail(to: string) {
   const content = `
     <div style="padding: 32px 28px; text-align: center;">
-      <div style="width: 56px; height: 56px; margin: 0 auto 20px; background: #f0fdf4; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
-        <span style="font-size: 28px;">✓</span>
+      <div style="width: 56px; height: 56px; margin: 0 auto 20px; background: rgba(5,150,105,0.08); border: 1px solid #111111; border-radius: 0; display: flex; align-items: center; justify-content: center;">
+        <span style="font-size: 28px; color: #059669;">✓</span>
       </div>
-      <h1 style="margin: 0 0 8px; font-size: 22px; font-weight: 700; color: #1c1917;">Email Configurado</h1>
-      <p style="margin: 0; font-size: 15px; color: #44403c; line-height: 1.5;">
+      <h1 style="margin: 0 0 8px; font-family: 'Playfair Display', Georgia, 'Times New Roman', serif; font-size: 22px; font-weight: 700; color: #111111;">Email Configurado</h1>
+      <p style="margin: 0; font-size: 15px; color: #111111; line-height: 1.5;">
         La integracion con SMTP esta funcionando correctamente. Los emails de RateTap se enviaran desde esta direccion.
       </p>
     </div>`;
@@ -796,43 +833,43 @@ export async function sendFeatureAnnouncement({
   const content = `
     <div style="padding: 32px 28px;">
       <div style="margin-bottom: 16px;">
-        <span style="display: inline-block; padding: 4px 12px; border-radius: 999px; font-size: 12px; font-weight: 700; background: #eff6ff; color: #2563eb;">
+        <span style="display: inline-block; padding: 4px 12px; border: 1px solid #111111; border-radius: 0; font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; background: rgba(37,99,235,0.08); color: #2563EB;">
           Nueva Funcion
         </span>
       </div>
 
-      <h1 style="margin: 0 0 8px; font-size: 22px; font-weight: 700; color: #1c1917;">
+      <h1 style="margin: 0 0 8px; font-family: 'Playfair Display', Georgia, 'Times New Roman', serif; font-size: 22px; font-weight: 700; color: #111111;">
         Notificaciones Push en tu Celular
       </h1>
-      <p style="margin: 0 0 24px; font-size: 15px; line-height: 1.6; color: #44403c;">
+      <p style="margin: 0 0 24px; font-size: 15px; line-height: 1.6; color: #111111;">
         Hola! Ahora <strong>${escapeHtml(restaurantName)}</strong> puede recibir alertas instantaneas cuando un cliente deje una resena negativa, directo en tu iPhone, como un mensaje de WhatsApp.
       </p>
 
-      <div style="padding: 20px; background: #faf8f6; border-radius: 12px; margin-bottom: 24px;">
-        <p style="margin: 0 0 12px; font-size: 13px; font-weight: 700; color: #78716c; text-transform: uppercase; letter-spacing: 0.06em;">Como funciona</p>
+      <div style="padding: 20px; background: #FFFFFF; border: 1px solid #111111; border-radius: 0; margin-bottom: 24px;">
+        <p style="margin: 0 0 12px; ${SECTION_LABEL_STYLE}">Como funciona</p>
 
         <div style="display: flex; align-items: flex-start; gap: 12px; margin-bottom: 14px;">
-          <span style="display: inline-block; width: 24px; height: 24px; border-radius: 50%; background: #2563eb; color: white; text-align: center; line-height: 24px; font-size: 13px; font-weight: 700; flex-shrink: 0;">1</span>
-          <p style="margin: 0; font-size: 14px; color: #44403c; line-height: 1.5;">Abre tu panel de RateTap en Safari en tu iPhone</p>
+          <span style="display: inline-block; width: 24px; height: 24px; border-radius: 0; background: #111111; color: #ffffff; text-align: center; line-height: 24px; font-size: 13px; font-weight: 700; flex-shrink: 0; ${FIGURE_STYLE}">1</span>
+          <p style="margin: 0; font-size: 14px; color: #111111; line-height: 1.5;">Abre tu panel de RateTap en Safari en tu iPhone</p>
         </div>
         <div style="display: flex; align-items: flex-start; gap: 12px; margin-bottom: 14px;">
-          <span style="display: inline-block; width: 24px; height: 24px; border-radius: 50%; background: #2563eb; color: white; text-align: center; line-height: 24px; font-size: 13px; font-weight: 700; flex-shrink: 0;">2</span>
-          <p style="margin: 0; font-size: 14px; color: #44403c; line-height: 1.5;">Agrega RateTap a tu pantalla de inicio (Compartir → Agregar a pantalla de inicio)</p>
+          <span style="display: inline-block; width: 24px; height: 24px; border-radius: 0; background: #111111; color: #ffffff; text-align: center; line-height: 24px; font-size: 13px; font-weight: 700; flex-shrink: 0; ${FIGURE_STYLE}">2</span>
+          <p style="margin: 0; font-size: 14px; color: #111111; line-height: 1.5;">Agrega RateTap a tu pantalla de inicio (Compartir → Agregar a pantalla de inicio)</p>
         </div>
         <div style="display: flex; align-items: flex-start; gap: 12px;">
-          <span style="display: inline-block; width: 24px; height: 24px; border-radius: 50%; background: #2563eb; color: white; text-align: center; line-height: 24px; font-size: 13px; font-weight: 700; flex-shrink: 0;">3</span>
-          <p style="margin: 0; font-size: 14px; color: #44403c; line-height: 1.5;">Abre RateTap desde la pantalla de inicio y toca <strong>"Activar Notificaciones"</strong></p>
+          <span style="display: inline-block; width: 24px; height: 24px; border-radius: 0; background: #111111; color: #ffffff; text-align: center; line-height: 24px; font-size: 13px; font-weight: 700; flex-shrink: 0; ${FIGURE_STYLE}">3</span>
+          <p style="margin: 0; font-size: 14px; color: #111111; line-height: 1.5;">Abre RateTap desde la pantalla de inicio y toca <strong>"Activar Notificaciones"</strong></p>
         </div>
       </div>
 
-      <div style="padding: 16px 20px; background: #fffbeb; border-radius: 10px; border-left: 4px solid #f59e0b; margin-bottom: 28px;">
-        <p style="margin: 0; font-size: 14px; color: #92400e; line-height: 1.5;">
+      <div style="padding: 16px 20px; background: rgba(217,119,6,0.08); border: 1px solid #111111; border-left: 6px solid #D97706; border-radius: 0; margin-bottom: 28px;">
+        <p style="margin: 0; font-size: 14px; color: #D97706; line-height: 1.5;">
           Cuando un cliente deje una resena de 3 estrellas o menos, recibiras una notificacion al instante en tu celular, para que puedas actuar de inmediato.
         </p>
       </div>
 
       <div style="text-align: center;">
-        <a href="${BASE_URL}/dashboard" style="display: inline-block; padding: 14px 36px; background: #1c1917; color: #ffffff; border-radius: 10px; text-decoration: none; font-size: 15px; font-weight: 600;">
+        <a href="${BASE_URL}/dashboard" style="${CTA_STYLE}">
           Abrir Mi Panel
         </a>
       </div>
@@ -868,10 +905,10 @@ const categoryLabels: Record<string, string> = {
 };
 
 const categoryColors: Record<string, { bg: string; text: string; border: string }> = {
-  bug: { bg: '#fef2f2', text: '#dc2626', border: '#dc2626' },
-  feature: { bg: '#fefce8', text: '#ca8a04', border: '#ca8a04' },
-  feedback: { bg: '#f0fdf4', text: '#16a34a', border: '#16a34a' },
-  question: { bg: '#eff6ff', text: '#2563eb', border: '#2563eb' },
+  bug: { bg: 'rgba(220,38,38,0.08)', text: '#DC2626', border: '#DC2626' },
+  feature: { bg: 'rgba(217,119,6,0.08)', text: '#D97706', border: '#D97706' },
+  feedback: { bg: 'rgba(5,150,105,0.08)', text: '#059669', border: '#059669' },
+  question: { bg: 'rgba(37,99,235,0.08)', text: '#2563EB', border: '#2563EB' },
 };
 
 interface GMFeedbackParams {
@@ -900,18 +937,18 @@ export async function sendGMFeedback({
   const content = `
     <div style="padding: 32px 28px;">
       <div style="margin-bottom: 20px;">
-        <span style="display: inline-block; padding: 4px 12px; border-radius: 999px; font-size: 12px; font-weight: 700; background: ${colors.bg}; color: ${colors.text};">
+        <span style="display: inline-block; padding: 4px 12px; border: 1px solid #111111; border-radius: 0; font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; background: ${colors.bg}; color: ${colors.text};">
           ${label}
         </span>
       </div>
 
-      <h1 style="margin: 0 0 6px; font-size: 20px; font-weight: 700; color: #1c1917;">${escapeHtml(subject || 'Sin asunto')}</h1>
-      <p style="margin: 0 0 20px; color: #78716c; font-size: 13px;">
+      <h1 style="margin: 0 0 6px; font-family: 'Playfair Display', Georgia, 'Times New Roman', serif; font-size: 20px; font-weight: 700; color: #111111;">${escapeHtml(subject || 'Sin asunto')}</h1>
+      <p style="margin: 0 0 20px; color: #666666; font-size: 13px;">
         De <strong>${escapeHtml(restaurantName)}</strong> (${escapeHtml(restaurantSlug)})
       </p>
 
-      <div style="padding: 20px; background: #faf8f6; border-radius: 12px; border-left: 4px solid ${colors.border};">
-        <p style="margin: 0; font-size: 15px; line-height: 1.6; color: #1c1917; white-space: pre-wrap;">${escapeHtml(message)}</p>
+      <div style="padding: 20px; background: #FFFFFF; border: 1px solid #111111; border-left: 6px solid ${colors.border}; border-radius: 0;">
+        <p style="margin: 0; font-size: 15px; line-height: 1.6; color: #111111; white-space: pre-wrap;">${escapeHtml(message)}</p>
       </div>
     </div>`;
 
@@ -969,35 +1006,35 @@ export async function sendWelcomeEmail({
 
   const content = `
     <div class="content-pad" style="padding: 32px 28px;">
-      <h1 style="margin: 0 0 12px; font-size: 24px; font-weight: 700; color: #1c1917;">¡Bienvenido a RateTap! 🎉</h1>
-      <p style="margin: 0 0 20px; font-size: 15px; line-height: 1.6; color: #57534e;">
+      <h1 style="margin: 0 0 12px; font-family: 'Playfair Display', Georgia, 'Times New Roman', serif; font-size: 24px; font-weight: 700; color: #111111;">¡Bienvenido a RateTap! 🎉</h1>
+      <p style="margin: 0 0 20px; font-size: 15px; line-height: 1.6; color: #666666;">
         Hola <strong>${escapeHtml(restaurantName)}</strong>, tu prueba gratis de ${trialDays} días ya está activa hasta el <strong>${escapeHtml(trialEndStr)}</strong>.
       </p>
 
-      <div style="text-align: center; padding: 24px; background: #faf8f6; border-radius: 12px; margin: 0 0 20px;">
-        <img src="${qrDataUrl}" alt="QR de ${escapeHtml(restaurantName)}" width="220" style="display: block; margin: 0 auto 12px; width: 220px; height: 220px; background: #fff; border-radius: 12px; padding: 8px;" />
-        <p style="margin: 0 0 6px; font-size: 13px; color: #78716c;">Tu enlace personalizado:</p>
-        <p style="margin: 0; font-size: 13px; font-weight: 600; color: #1c1917; word-break: break-all;">
-          <a href="${reviewUrl}" style="color: #1c1917;">${escapeHtml(reviewUrl)}</a>
+      <div style="text-align: center; padding: 24px; background: #FFFFFF; border: 1px solid #111111; border-radius: 0; margin: 0 0 20px;">
+        <img src="${qrDataUrl}" alt="QR de ${escapeHtml(restaurantName)}" width="220" style="display: block; margin: 0 auto 12px; width: 220px; height: 220px; background: #fff; border: 1px solid #111111; border-radius: 0; padding: 8px;" />
+        <p style="margin: 0 0 6px; ${SECTION_LABEL_STYLE}">Tu enlace personalizado:</p>
+        <p style="margin: 0; font-size: 13px; font-weight: 600; color: #111111; word-break: break-all;">
+          <a href="${reviewUrl}" style="color: #111111;">${escapeHtml(reviewUrl)}</a>
         </p>
       </div>
 
-      <p style="margin: 0 0 20px; font-size: 15px; line-height: 1.6; color: #57534e;">
+      <p style="margin: 0 0 20px; font-size: 15px; line-height: 1.6; color: #666666;">
         ${pilot
           ? 'Imprime este QR y colócalo en tus mesas hoy mismo. Si decides continuar después del piloto, te enviaremos tus tarjetas NFC físicas.'
           : 'Imprime este QR y colócalo en tus mesas hoy mismo. En cuanto confirmes tu pago el día 15, te enviaremos tus tarjetas NFC físicas.'}
       </p>
 
       <table role="presentation" cellpadding="0" cellspacing="0" style="margin: 0 auto;">
-        <tr><td style="background: #1c1917; border-radius: 10px;">
-          <a href="${BASE_URL}/dashboard" style="display: inline-block; padding: 13px 28px; color: #ffffff; text-decoration: none; font-weight: 600; font-size: 15px;">
+        <tr><td style="background: #111111; border-radius: 0;">
+          <a href="${BASE_URL}/dashboard" style="display: inline-block; padding: 14px 36px; color: #ffffff; text-decoration: none; font-weight: 600; font-size: 15px; letter-spacing: 0.02em;">
             Entrar a mi panel
           </a>
         </td></tr>
       </table>
 
-      <p style="margin: 24px 0 0; font-size: 13px; color: #a8a29e; text-align: center; line-height: 1.5;">
-        Tu página de reseñas: <a href="${reviewUrl}" style="color: #78716c;">${escapeHtml(reviewUrl)}</a>
+      <p style="margin: 24px 0 0; font-size: 13px; color: #A3A3A3; text-align: center; line-height: 1.5;">
+        Tu página de reseñas: <a href="${reviewUrl}" style="color: #666666;">${escapeHtml(reviewUrl)}</a>
       </p>
     </div>`;
 
@@ -1028,16 +1065,16 @@ interface TrialEndingEmailParams {
 export async function sendTrialEndingEmail({ to, restaurantName, daysLeft, amountMxn }: TrialEndingEmailParams) {
   const content = `
     <div class="content-pad" style="padding: 32px 28px;">
-      <h1 style="margin: 0 0 12px; font-size: 22px; font-weight: 700; color: #1c1917;">Tu prueba termina en ${daysLeft} días</h1>
-      <p style="margin: 0 0 20px; font-size: 15px; line-height: 1.6; color: #57534e;">
-        Hola <strong>${escapeHtml(restaurantName)}</strong>, en ${daysLeft} días cobraremos <strong>${mxnFmt(amountMxn)}</strong> a la tarjeta que registraste y seguirás usando RateTap sin interrupciones.
+      <h1 style="margin: 0 0 12px; font-family: 'Playfair Display', Georgia, 'Times New Roman', serif; font-size: 22px; font-weight: 700; color: #111111;">Tu prueba termina en ${daysLeft} días</h1>
+      <p style="margin: 0 0 20px; font-size: 15px; line-height: 1.6; color: #666666;">
+        Hola <strong>${escapeHtml(restaurantName)}</strong>, en ${daysLeft} días cobraremos <strong style="${FIGURE_STYLE}">${mxnFmt(amountMxn)}</strong> a la tarjeta que registraste y seguirás usando RateTap sin interrupciones.
       </p>
-      <p style="margin: 0 0 20px; font-size: 15px; line-height: 1.6; color: #57534e;">
+      <p style="margin: 0 0 20px; font-size: 15px; line-height: 1.6; color: #666666;">
         Si no quieres continuar, puedes cancelar desde tu panel antes de esa fecha y no se cobrará nada.
       </p>
       <table role="presentation" cellpadding="0" cellspacing="0" style="margin: 0 auto;">
-        <tr><td style="background: #1c1917; border-radius: 10px;">
-          <a href="${BASE_URL}/dashboard" style="display: inline-block; padding: 13px 28px; color: #ffffff; text-decoration: none; font-weight: 600; font-size: 15px;">
+        <tr><td style="background: #111111; border-radius: 0;">
+          <a href="${BASE_URL}/dashboard" style="display: inline-block; padding: 14px 36px; color: #ffffff; text-decoration: none; font-weight: 600; font-size: 15px; letter-spacing: 0.02em;">
             Ir a mi panel
           </a>
         </td></tr>
@@ -1074,17 +1111,17 @@ export async function sendReceiptEmail({ to, restaurantName, amountMxn, periodEn
 
   const content = `
     <div class="content-pad" style="padding: 32px 28px;">
-      <h1 style="margin: 0 0 12px; font-size: 22px; font-weight: 700; color: #1c1917;">Pago confirmado ✓</h1>
-      <p style="margin: 0 0 20px; font-size: 15px; line-height: 1.6; color: #57534e;">
-        Gracias, <strong>${escapeHtml(restaurantName)}</strong>. Recibimos tu pago de <strong>${mxnFmt(amountMxn)}</strong>.
+      <h1 style="margin: 0 0 12px; font-family: 'Playfair Display', Georgia, 'Times New Roman', serif; font-size: 22px; font-weight: 700; color: #111111;">Pago confirmado ✓</h1>
+      <p style="margin: 0 0 20px; font-size: 15px; line-height: 1.6; color: #666666;">
+        Gracias, <strong>${escapeHtml(restaurantName)}</strong>. Recibimos tu pago de <strong style="${FIGURE_STYLE}">${mxnFmt(amountMxn)}</strong>.
       </p>
-      <div style="padding: 16px; background: #faf8f6; border-radius: 12px; margin: 0 0 20px;">
-        <p style="margin: 0; font-size: 14px; color: #57534e;">Próximo cobro: <strong style="color: #1c1917;">${escapeHtml(nextStr)}</strong></p>
+      <div style="padding: 16px; background: #FFFFFF; border: 1px solid #111111; border-radius: 0; margin: 0 0 20px;">
+        <p style="margin: 0; font-size: 14px; color: #666666;">Próximo cobro: <strong style="color: #111111;">${escapeHtml(nextStr)}</strong></p>
       </div>
       ${invoiceUrl ? `
       <table role="presentation" cellpadding="0" cellspacing="0" style="margin: 0 auto;">
-        <tr><td style="border: 1px solid #1c1917; border-radius: 10px;">
-          <a href="${invoiceUrl}" style="display: inline-block; padding: 12px 24px; color: #1c1917; text-decoration: none; font-weight: 600; font-size: 14px;">
+        <tr><td style="background: #111111; border-radius: 0;">
+          <a href="${invoiceUrl}" style="display: inline-block; padding: 14px 36px; color: #ffffff; text-decoration: none; font-weight: 600; font-size: 14px; letter-spacing: 0.02em;">
             Ver recibo
           </a>
         </td></tr>
@@ -1118,13 +1155,13 @@ interface PaymentFailedEmailParams {
 export async function sendPaymentFailedEmail({ to, restaurantName, amountMxn, updatePaymentUrl }: PaymentFailedEmailParams) {
   const content = `
     <div class="content-pad" style="padding: 32px 28px;">
-      <h1 style="margin: 0 0 12px; font-size: 22px; font-weight: 700; color: #b91c1c;">No pudimos procesar tu pago</h1>
-      <p style="margin: 0 0 20px; font-size: 15px; line-height: 1.6; color: #57534e;">
-        Hola <strong>${escapeHtml(restaurantName)}</strong>, intentamos cobrar <strong>${mxnFmt(amountMxn)}</strong> a tu tarjeta pero fue rechazada. Actualiza tu método de pago para seguir usando RateTap.
+      <h1 style="margin: 0 0 12px; font-family: 'Playfair Display', Georgia, 'Times New Roman', serif; font-size: 22px; font-weight: 700; color: #DC2626;">No pudimos procesar tu pago</h1>
+      <p style="margin: 0 0 20px; font-size: 15px; line-height: 1.6; color: #666666;">
+        Hola <strong>${escapeHtml(restaurantName)}</strong>, intentamos cobrar <strong style="${FIGURE_STYLE}">${mxnFmt(amountMxn)}</strong> a tu tarjeta pero fue rechazada. Actualiza tu método de pago para seguir usando RateTap.
       </p>
       <table role="presentation" cellpadding="0" cellspacing="0" style="margin: 0 auto;">
-        <tr><td style="background: #1c1917; border-radius: 10px;">
-          <a href="${updatePaymentUrl}" style="display: inline-block; padding: 13px 28px; color: #ffffff; text-decoration: none; font-weight: 600; font-size: 15px;">
+        <tr><td style="background: #111111; border-radius: 0;">
+          <a href="${updatePaymentUrl}" style="display: inline-block; padding: 14px 36px; color: #ffffff; text-decoration: none; font-weight: 600; font-size: 15px; letter-spacing: 0.02em;">
             Actualizar tarjeta
           </a>
         </td></tr>
@@ -1188,20 +1225,20 @@ export async function sendOwnerLeadNotification(p: OwnerLeadParams) {
 
   const content = `
     <div class="content-pad" style="padding: 28px 24px;">
-      <h1 style="margin: 0 0 12px; font-size: 20px; font-weight: 700; color: #1c1917;">Nuevo lead comercial</h1>
-      <p style="margin: 0 0 18px; color: #57534e; line-height: 1.5;">
+      <h1 style="margin: 0 0 12px; font-family: 'Playfair Display', Georgia, 'Times New Roman', serif; font-size: 20px; font-weight: 700; color: #111111;">Nuevo lead comercial</h1>
+      <p style="margin: 0 0 18px; color: #666666; line-height: 1.5;">
         ${p.nextAction ? escapeHtml(p.nextAction) : 'Contactar este lead hoy.'}
       </p>
-      <table cellpadding="6" cellspacing="0" style="width: 100%; font-size: 14px; color: #1c1917;">
-        <tr><td style="color: #78716c;">Negocio</td><td><strong>${escapeHtml(p.businessName)}</strong></td></tr>
-        <tr><td style="color: #78716c;">Contacto</td><td>${contactLine}</td></tr>
-        <tr><td style="color: #78716c;">Ciudad</td><td>${escapeHtml(p.city ?? 'Sin ciudad')}</td></tr>
-        <tr><td style="color: #78716c;">Fuente</td><td>${escapeHtml(sourceLine)}</td></tr>
-        <tr><td style="color: #78716c;">Landing</td><td><code>${escapeHtml(p.landingPath ?? 'unknown')}</code></td></tr>
-        <tr><td style="color: #78716c;">Lead</td><td>#${p.leadId}</td></tr>
+      <table cellpadding="6" cellspacing="0" style="width: 100%; font-size: 14px; color: #111111;">
+        <tr><td style="${SECTION_LABEL_STYLE}">Negocio</td><td><strong>${escapeHtml(p.businessName)}</strong></td></tr>
+        <tr><td style="${SECTION_LABEL_STYLE}">Contacto</td><td>${contactLine}</td></tr>
+        <tr><td style="${SECTION_LABEL_STYLE}">Ciudad</td><td>${escapeHtml(p.city ?? 'Sin ciudad')}</td></tr>
+        <tr><td style="${SECTION_LABEL_STYLE}">Fuente</td><td>${escapeHtml(sourceLine)}</td></tr>
+        <tr><td style="${SECTION_LABEL_STYLE}">Landing</td><td><code>${escapeHtml(p.landingPath ?? 'unknown')}</code></td></tr>
+        <tr><td style="${SECTION_LABEL_STYLE}">Lead</td><td>${figure('#' + p.leadId)}</td></tr>
       </table>
       <p style="margin: 20px 0 0;">
-        <a href="${BASE_URL}/commercial-leads" style="display: inline-block; background: #1c1917; color: #ffffff; text-decoration: none; font-weight: 700; padding: 12px 16px; border-radius: 8px;">
+        <a href="${BASE_URL}/commercial-leads" style="${CTA_STYLE}">
           Abrir pipeline comercial
         </a>
       </p>
@@ -1232,15 +1269,15 @@ export async function sendOwnerSignupNotification(p: OwnerSignupParams) {
 
   const content = `
     <div class="content-pad" style="padding: 28px 24px;">
-      <h1 style="margin: 0 0 12px; font-size: 20px; font-weight: 700; color: #1c1917;">🎉 Nuevo signup</h1>
-      <table cellpadding="6" cellspacing="0" style="width: 100%; font-size: 14px; color: #1c1917;">
-        <tr><td style="color: #78716c;">Negocio</td><td><strong>${escapeHtml(p.restaurantName)}</strong></td></tr>
-        <tr><td style="color: #78716c;">Contacto</td><td>${escapeHtml(p.contactName)}</td></tr>
-        <tr><td style="color: #78716c;">Email</td><td><a href="mailto:${escapeHtml(p.email)}">${escapeHtml(p.email)}</a></td></tr>
-        <tr><td style="color: #78716c;">Teléfono</td><td>${escapeHtml(p.phone)}</td></tr>
-        <tr><td style="color: #78716c;">Ciudad</td><td>${escapeHtml(p.city)}</td></tr>
-        <tr><td style="color: #78716c;">Slug</td><td><code>${escapeHtml(p.slug)}</code></td></tr>
-        ${p.googlePlaceId ? `<tr><td style="color: #78716c;">Place ID</td><td><code>${escapeHtml(p.googlePlaceId)}</code></td></tr>` : ''}
+      <h1 style="margin: 0 0 12px; font-family: 'Playfair Display', Georgia, 'Times New Roman', serif; font-size: 20px; font-weight: 700; color: #111111;">🎉 Nuevo signup</h1>
+      <table cellpadding="6" cellspacing="0" style="width: 100%; font-size: 14px; color: #111111;">
+        <tr><td style="${SECTION_LABEL_STYLE}">Negocio</td><td><strong>${escapeHtml(p.restaurantName)}</strong></td></tr>
+        <tr><td style="${SECTION_LABEL_STYLE}">Contacto</td><td>${escapeHtml(p.contactName)}</td></tr>
+        <tr><td style="${SECTION_LABEL_STYLE}">Email</td><td><a href="mailto:${escapeHtml(p.email)}">${escapeHtml(p.email)}</a></td></tr>
+        <tr><td style="${SECTION_LABEL_STYLE}">Teléfono</td><td>${escapeHtml(p.phone)}</td></tr>
+        <tr><td style="${SECTION_LABEL_STYLE}">Ciudad</td><td>${escapeHtml(p.city)}</td></tr>
+        <tr><td style="${SECTION_LABEL_STYLE}">Slug</td><td><code>${escapeHtml(p.slug)}</code></td></tr>
+        ${p.googlePlaceId ? `<tr><td style="${SECTION_LABEL_STYLE}">Place ID</td><td><code>${escapeHtml(p.googlePlaceId)}</code></td></tr>` : ''}
       </table>
     </div>`;
 
@@ -1293,15 +1330,15 @@ export async function sendOwnerConversionNotification(p: OwnerConversionParams) 
 
   const content = `
     <div class="content-pad" style="padding: 28px 24px;">
-      <h1 style="margin: 0 0 12px; font-size: 20px; font-weight: 700; color: #16a34a;">💰 Conversión: enviar tarjetas NFC</h1>
-      <p style="margin: 0 0 16px; font-size: 15px; color: #1c1917;">
-        <strong>${escapeHtml(p.restaurantName)}</strong> pagó ${mxnFmt(p.amountMxn)}. Enviar tarjetas NFC físicas a:
+      <h1 style="margin: 0 0 12px; font-family: 'Playfair Display', Georgia, 'Times New Roman', serif; font-size: 20px; font-weight: 700; color: #059669;">💰 Conversión: enviar tarjetas NFC</h1>
+      <p style="margin: 0 0 16px; font-size: 15px; color: #111111;">
+        <strong>${escapeHtml(p.restaurantName)}</strong> pagó <strong style="${FIGURE_STYLE}">${mxnFmt(p.amountMxn)}</strong>. Enviar tarjetas NFC físicas a:
       </p>
-      <div style="padding: 16px; background: #faf8f6; border-radius: 10px; margin: 0 0 16px; font-size: 14px; line-height: 1.6; color: #1c1917;">
+      <div style="padding: 16px; background: #FFFFFF; border: 1px solid #111111; border-radius: 0; margin: 0 0 16px; font-size: 14px; line-height: 1.6; color: #111111;">
         <strong>${escapeHtml(p.contactName)}</strong><br>
         ${addressLines}
       </div>
-      <p style="margin: 0; font-size: 13px; color: #78716c;">
+      <p style="margin: 0; font-size: 13px; color: #666666;">
         Contacto: <a href="mailto:${escapeHtml(p.email)}">${escapeHtml(p.email)}</a> · ${escapeHtml(p.phone)}
       </p>
     </div>`;
@@ -1337,11 +1374,11 @@ export async function sendOwnerTrialLapsedNotification(p: OwnerLapsedParams) {
 
   const content = `
     <div class="content-pad" style="padding: 28px 24px;">
-      <h1 style="margin: 0 0 12px; font-size: 20px; font-weight: 700; color: #78716c;">😞 Prueba expirada sin pago</h1>
-      <p style="margin: 0 0 8px; font-size: 15px; color: #1c1917;">
+      <h1 style="margin: 0 0 12px; font-family: 'Playfair Display', Georgia, 'Times New Roman', serif; font-size: 20px; font-weight: 700; color: #666666;">😞 Prueba expirada sin pago</h1>
+      <p style="margin: 0 0 8px; font-size: 15px; color: #111111;">
         <strong>${escapeHtml(p.restaurantName)}</strong> no convirtió. Cuenta desactivada.
       </p>
-      ${p.contactName ? `<p style="margin: 0; font-size: 13px; color: #78716c;">Contacto: ${escapeHtml(p.contactName)}${p.email ? ` · <a href="mailto:${escapeHtml(p.email)}">${escapeHtml(p.email)}</a>` : ''}</p>` : ''}
+      ${p.contactName ? `<p style="margin: 0; font-size: 13px; color: #666666;">Contacto: ${escapeHtml(p.contactName)}${p.email ? ` · <a href="mailto:${escapeHtml(p.email)}">${escapeHtml(p.email)}</a>` : ''}</p>` : ''}
     </div>`;
 
   const result = await sendMail({
@@ -1421,11 +1458,25 @@ function briefingWeekLabel(weekStart: Date): string {
 
 function statTile(label: string, value: string, note?: string): string {
   return `
-    <td style="padding: 14px 10px; text-align: center; vertical-align: top;">
-      <div class="stat-value" style="font-size: 26px; font-weight: 700; color: #1c1917; line-height: 1.1;">${value}</div>
-      <div style="margin-top: 4px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: #78716c;">${escapeHtml(label)}</div>
-      ${note ? `<div style="margin-top: 3px; font-size: 11px; color: #a8a29e;">${escapeHtml(note)}</div>` : ''}
+    <td class="stat-tile" valign="top" style="box-sizing: border-box; padding: 18px 12px; text-align: center; vertical-align: top;">
+      <div style="font-family: 'Playfair Display', Georgia, 'Times New Roman', serif; font-size: 30px; font-weight: 700; color: #111111; line-height: 1; font-variant-numeric: tabular-nums;">${value}</div>
+      <div style="margin-top: 8px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: #666666;">${escapeHtml(label)}</div>
+      ${note ? `<div style="margin-top: 5px; font-family: 'SFMono-Regular', Consolas, Menlo, monospace; font-variant-numeric: tabular-nums; font-size: 11px; color: #A3A3A3;">${escapeHtml(note)}</div>` : ''}
     </td>`;
+}
+
+/**
+ * Numbered section heading: a large gold ordinal sitting to the left of the
+ * uppercase section label, so the four blocks read as countable.
+ */
+function sectionHeading(ordinal: string, label: string): string {
+  return `
+    <table role="presentation" cellpadding="0" cellspacing="0" style="margin: 0 0 12px;">
+      <tr>
+        <td valign="bottom" style="padding: 0 10px 0 0; font-family: 'Playfair Display', Georgia, 'Times New Roman', serif; font-size: 28px; font-weight: 700; line-height: 0.9; color: #D97706;">${ordinal}</td>
+        <td valign="bottom" style="padding-bottom: 2px; font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: #666666;">${label}</td>
+      </tr>
+    </table>`;
 }
 
 /**
@@ -1453,19 +1504,19 @@ export async function sendOwnerBriefing({
   const inactive = locations.filter((l) => l.signalLabel === 'Sin actividad');
   const otherDecisions = locations.filter((l) => l.actionable && l.signalLabel !== 'Sin actividad');
   const decisionBlock = decisions.length === 0
-    ? `<div style="margin: 0 28px 10px; padding: 16px 18px; background: #f0fdf4; border-radius: 10px; border-left: 4px solid #16a34a;">
-         <p style="margin: 0; font-size: 14px; color: #166534;">Las ${locations.length} ubicaciones registraron actividad esta semana.</p>
+    ? `<div style="margin: 0 28px 10px; padding: 16px 18px; background: #ffffff; border: 1px solid #111111; border-left: 6px solid #059669; border-radius: 0;">
+         <p style="margin: 0; font-size: 14px; color: #059669;">Las ${locations.length} ubicaciones registraron actividad esta semana.</p>
        </div>`
     : `
       ${inactive.length > 0 ? `
-        <div style="margin: 0 28px 10px; padding: 16px 18px; background: #fef2f2; border-radius: 10px; border-left: 4px solid #dc2626;">
-          <p style="margin: 0 0 4px; font-size: 14px; font-weight: 700; color: #991b1b;">${inactive.length} ${inactive.length === 1 ? 'ubicación' : 'ubicaciones'} sin actividad registrada en 14 días</p>
-          <p style="margin: 0; font-size: 13px; line-height: 1.5; color: #7f1d1d;">${inactive.map((l) => escapeHtml(l.name)).join(', ')}</p>
+        <div style="margin: 0 28px 10px; padding: 16px 18px; background: #ffffff; border: 1px solid #111111; border-left: 6px solid #DC2626; border-radius: 0;">
+          <p style="margin: 0 0 4px; font-size: 14px; font-weight: 700; color: #DC2626;">${inactive.length} ${inactive.length === 1 ? 'ubicación' : 'ubicaciones'} sin actividad registrada en 14 días</p>
+          <p style="margin: 0; font-size: 13px; line-height: 1.5; color: #111111;">${inactive.map((l) => escapeHtml(l.name)).join(', ')}</p>
         </div>` : ''}
       ${otherDecisions.map((l) => `
-        <div style="margin: 0 28px 10px; padding: 16px 18px; background: #fffbeb; border-radius: 10px; border-left: 4px solid #f59e0b;">
-          <p style="margin: 0 0 4px; font-size: 14px; font-weight: 700; color: #92400e;">${escapeHtml(l.name)}</p>
-          <p style="margin: 0; font-size: 13px; line-height: 1.5; color: #78350f;">${escapeHtml(l.signalSummary)}</p>
+        <div style="margin: 0 28px 10px; padding: 16px 18px; background: #ffffff; border: 1px solid #111111; border-left: 6px solid #D97706; border-radius: 0;">
+          <p style="margin: 0 0 4px; font-size: 14px; font-weight: 700; color: #111111;">${escapeHtml(l.name)}</p>
+          <p style="margin: 0; font-size: 13px; line-height: 1.5; color: #666666;">${escapeHtml(l.signalSummary)}</p>
         </div>`).join('')}`;
 
   // Block 1 — activity per location. Silent locations first, then alerts, then volume.
@@ -1477,140 +1528,142 @@ export async function sendOwnerBriefing({
       const delta = l.scansLastWeek > 0
         ? Math.round(((l.scansThisWeek - l.scansLastWeek) / l.scansLastWeek) * 100)
         : null;
-      const deltaColor = delta == null ? '#a8a29e' : delta >= 0 ? '#16a34a' : delta <= -25 ? '#dc2626' : '#b45309';
+      const deltaColor = delta == null ? '#A3A3A3' : delta >= 0 ? '#059669' : delta <= -25 ? '#DC2626' : '#D97706';
       const deltaText = delta == null ? '—' : `${delta >= 0 ? '+' : ''}${delta}%`;
       return `
-        <tr style="border-top: 1px solid #ebe7e2;">
-          <td style="padding: 9px 0; font-size: 14px; color: ${l.signalLabel === 'Sin actividad' ? '#dc2626' : '#1c1917'};">${escapeHtml(l.name)}</td>
-          <td style="padding: 9px 0; font-size: 14px; text-align: right; color: #1c1917;">${l.scansThisWeek}</td>
-          <td style="padding: 9px 0; font-size: 13px; text-align: right; font-weight: 600; color: ${deltaColor};">${deltaText}</td>
-          <td style="padding: 9px 0; font-size: 13px; text-align: right; color: #57534e;">${l.staffAskingThisWeek}</td>
-          <td style="padding: 9px 0; font-size: 13px; text-align: right; color: #78716c;">${escapeHtml(l.signalLabel)}</td>
+        <tr style="border-top: 1px solid #E2E2E2;">
+          <td style="padding: 9px 0; font-size: 14px; color: #111111;">${escapeHtml(l.name)}</td>
+          <td style="padding: 9px 0; font-size: 14px; text-align: right; color: #111111; font-family: 'SFMono-Regular', Consolas, Menlo, monospace; font-variant-numeric: tabular-nums;">${l.scansThisWeek}</td>
+          <td style="padding: 9px 0; font-size: 13px; text-align: right; font-weight: 600; color: ${deltaColor}; font-family: 'SFMono-Regular', Consolas, Menlo, monospace; font-variant-numeric: tabular-nums;">${deltaText}</td>
+          <td class="col-meseros" style="padding: 9px 0; font-size: 13px; text-align: right; color: #666666; font-family: 'SFMono-Regular', Consolas, Menlo, monospace; font-variant-numeric: tabular-nums;">${l.staffAskingThisWeek}</td>
+          <td style="padding: 9px 0; font-size: 13px; text-align: right; font-weight: 600; color: ${l.signalLabel === 'Sin actividad' ? '#DC2626' : '#666666'};">${escapeHtml(l.signalLabel)}</td>
         </tr>`;
     }).join('');
 
   // Block 2 — service load. Only locations with something to show.
   const service = locations.filter((l) => l.complaintsThisWeek > 0 || l.overdueComplaints > 0);
   const serviceBlock = service.length === 0
-    ? `<p style="margin: 0; font-size: 14px; color: #78716c;">Sin quejas registradas esta semana.</p>`
+    ? `<p style="margin: 0; font-size: 14px; color: #666666;">Sin quejas registradas esta semana.</p>`
     : `<table role="presentation" width="100%" cellpadding="0" cellspacing="0">
         <tr>
-          <td style="padding: 0 0 6px; font-size: 11px; color: #a8a29e;">Ubicación</td>
-          <td style="padding: 0 0 6px; font-size: 11px; color: #a8a29e; text-align: right;">Quejas (semana)</td>
-          <td style="padding: 0 0 6px; font-size: 11px; color: #a8a29e; text-align: right;">Sin resolver +24h</td>
+          <td style="padding: 0 0 6px; font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: #666666;">Ubicación</td>
+          <td style="padding: 0 0 6px; font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: #666666; text-align: right;">Quejas (semana)</td>
+          <td style="padding: 0 0 6px; font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: #666666; text-align: right;">Sin resolver +24h</td>
         </tr>
         ${service.map((l) => `
-          <tr style="border-top: 1px solid #ebe7e2;">
-            <td style="padding: 9px 0; font-size: 14px; color: #1c1917;">${escapeHtml(l.name)}</td>
-            <td style="padding: 9px 0; font-size: 14px; text-align: right; color: #1c1917;">${l.complaintsThisWeek}</td>
-            <td style="padding: 9px 0; font-size: 13px; text-align: right; ${l.overdueComplaints > 0 ? 'font-weight: 700; color: #dc2626;' : 'color: #57534e;'}">${l.overdueComplaints}</td>
+          <tr style="border-top: 1px solid #E2E2E2;">
+            <td style="padding: 9px 0; font-size: 14px; color: #111111;">${escapeHtml(l.name)}</td>
+            <td style="padding: 9px 0; font-size: 14px; text-align: right; color: #111111; font-family: 'SFMono-Regular', Consolas, Menlo, monospace; font-variant-numeric: tabular-nums;">${l.complaintsThisWeek}</td>
+            <td style="padding: 9px 0; font-size: 13px; text-align: right; font-family: 'SFMono-Regular', Consolas, Menlo, monospace; font-variant-numeric: tabular-nums; ${l.overdueComplaints > 0 ? 'font-weight: 700; color: #DC2626;' : 'color: #666666;'}">${l.overdueComplaints}</td>
           </tr>`).join('')}
       </table>`;
 
   // Block 3 — Club VIP guest book.
   const capturing = locations.filter((l) => l.totalGuests > 0);
   const guestRows = capturing.length === 0
-    ? `<tr><td style="padding: 12px 0; font-size: 14px; color: #78716c;">Ninguna ubicación tiene captura de invitados activa todavía.</td></tr>`
+    ? `<tr><td colspan="3" style="padding: 12px 0; font-size: 14px; color: #666666;">Ninguna ubicación tiene captura de invitados activa todavía.</td></tr>`
     : [...capturing]
         .sort((a, b) => b.totalGuests - a.totalGuests)
         .map((l) => `
-          <tr style="border-top: 1px solid #ebe7e2;">
-            <td style="padding: 9px 0; font-size: 14px; color: #1c1917;">${escapeHtml(l.name)}</td>
-            <td style="padding: 9px 0; font-size: 14px; text-align: right; font-weight: 600; color: #1c1917;">${l.totalGuests}</td>
-            <td style="padding: 9px 0; font-size: 14px; text-align: right; color: ${l.newGuestsThisWeek > 0 ? '#16a34a' : '#a8a29e'};">${l.newGuestsThisWeek > 0 ? '+' + l.newGuestsThisWeek : '—'}</td>
+          <tr style="border-top: 1px solid #E2E2E2;">
+            <td style="padding: 9px 0; font-size: 14px; color: #111111;">${escapeHtml(l.name)}</td>
+            <td style="padding: 9px 0; font-size: 14px; text-align: right; font-weight: 600; color: #111111; font-family: 'SFMono-Regular', Consolas, Menlo, monospace; font-variant-numeric: tabular-nums;">${l.totalGuests}</td>
+            <td style="padding: 9px 0; font-size: 14px; text-align: right; font-family: 'SFMono-Regular', Consolas, Menlo, monospace; font-variant-numeric: tabular-nums; color: ${l.newGuestsThisWeek > 0 ? '#059669' : '#A3A3A3'};">${l.newGuestsThisWeek > 0 ? '+' + l.newGuestsThisWeek : '—'}</td>
           </tr>`).join('');
 
   // Block 4 — reputation. Only locations with a real baseline to compare.
   const rated = locations.filter((l) => l.currentRating != null && l.baselineRating != null);
   const ratingRows = rated.length === 0
-    ? `<tr><td style="padding: 12px 0; font-size: 14px; color: #78716c;">Sin historial de Google suficiente para comparar todavía.</td></tr>`
+    ? `<tr><td colspan="4" style="padding: 12px 0; font-size: 14px; color: #666666;">Sin historial de Google suficiente para comparar todavía.</td></tr>`
     : rated.map((l) => {
         const delta = (l.currentRating ?? 0) - (l.baselineRating ?? 0);
-        const color = delta > 0 ? '#16a34a' : delta < 0 ? '#dc2626' : '#78716c';
+        const color = delta > 0 ? '#059669' : delta < 0 ? '#DC2626' : '#666666';
         const sign = delta > 0 ? '+' : '';
         return `
-          <tr style="border-top: 1px solid #ebe7e2;">
-            <td style="padding: 9px 0; font-size: 14px; color: #1c1917;">${escapeHtml(l.name)}</td>
-            <td style="padding: 9px 0; font-size: 14px; text-align: right; color: #78716c;">${(l.baselineRating ?? 0).toFixed(2)}</td>
-            <td style="padding: 9px 0; font-size: 14px; text-align: right; font-weight: 600; color: #1c1917;">${(l.currentRating ?? 0).toFixed(2)}</td>
-            <td style="padding: 9px 0; font-size: 13px; text-align: right; font-weight: 700; color: ${color};">${delta === 0 ? '—' : sign + delta.toFixed(2)}</td>
+          <tr style="border-top: 1px solid #E2E2E2;">
+            <td style="padding: 9px 0; font-size: 14px; color: #111111;">${escapeHtml(l.name)}</td>
+            <td style="padding: 9px 0; font-size: 14px; text-align: right; color: #666666; font-family: 'SFMono-Regular', Consolas, Menlo, monospace; font-variant-numeric: tabular-nums;">${(l.baselineRating ?? 0).toFixed(2)}</td>
+            <td style="padding: 9px 0; font-size: 14px; text-align: right; font-weight: 600; color: #111111; font-family: 'SFMono-Regular', Consolas, Menlo, monospace; font-variant-numeric: tabular-nums;">${(l.currentRating ?? 0).toFixed(2)}</td>
+            <td style="padding: 9px 0; font-size: 13px; text-align: right; font-weight: 700; color: ${color}; font-family: 'SFMono-Regular', Consolas, Menlo, monospace; font-variant-numeric: tabular-nums;">${delta === 0 ? '—' : sign + delta.toFixed(2)}</td>
           </tr>`;
       }).join('');
 
   const content = `
     <div style="padding: 28px 28px 8px;">
-      <p style="margin: 0 0 2px; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: #b45309;">Resumen semanal · ${escapeHtml(briefingWeekLabel(weekStart))}</p>
-      <h1 style="margin: 0 0 4px; font-size: 22px; font-weight: 700; color: #1c1917;">Grupo Estancia</h1>
-      <p style="margin: 0; font-size: 14px; color: #78716c;">${locations.length} ubicaciones</p>
+      <p style="margin: 0 0 4px; font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: #D97706;">Resumen semanal · ${escapeHtml(briefingWeekLabel(weekStart))}</p>
+      <h1 style="margin: 0 0 4px; font-family: 'Playfair Display', Georgia, 'Times New Roman', serif; font-size: 28px; font-weight: 700; color: #111111;">Grupo Estancia</h1>
+      <p style="margin: 0; font-size: 14px; color: #666666;">${locations.length} ubicaciones</p>
     </div>
 
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin: 8px 0 20px;">
-      <tr>
-        ${statTile('Ubicaciones activas', `${activeCount} de ${locations.length}`)}
-        ${statTile('Escaneos', String(scans))}
-        ${statTile('Quejas', String(complaints))}
-        ${statTile('Socios VIP que regresaron', String(returning))}
-      </tr>
-    </table>
+    <div style="padding: 0 28px;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" class="stack-table" style="margin: 8px 0 20px; background: #ffffff; border: 1px solid #111111; border-radius: 0;">
+        <tr class="stack-row">
+          ${statTile('Ubicaciones activas', `${activeCount} de ${locations.length}`)}
+          ${statTile('Escaneos', String(scans))}
+          ${statTile('Quejas', String(complaints))}
+          ${statTile('Socios VIP que regresaron', String(returning))}
+        </tr>
+      </table>
+    </div>
 
     <div style="margin: 0 0 6px;">
-      <p style="margin: 0 28px 10px; font-size: 12px; font-weight: 700; color: #78716c; text-transform: uppercase; letter-spacing: 0.06em;">Requiere decisión</p>
+      <p style="margin: 0 28px 10px; font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: #666666;">Requiere decisión</p>
       ${decisionBlock}
     </div>
 
-    <div style="margin: 0 28px 22px; padding: 18px; background: #faf8f6; border-radius: 12px;">
-      <p style="margin: 0 0 10px; font-size: 12px; font-weight: 700; color: #78716c; text-transform: uppercase; letter-spacing: 0.06em;">1 · Actividad por ubicación</p>
+    <div style="margin: 0 28px 22px; padding: 18px; background: #ffffff; border: 1px solid #111111; border-radius: 0;">
+      ${sectionHeading('1', 'Actividad por ubicación')}
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
         <tr>
-          <td style="padding: 0 0 6px; font-size: 11px; color: #a8a29e;">Ubicación</td>
-          <td style="padding: 0 0 6px; font-size: 11px; color: #a8a29e; text-align: right;">Escaneos</td>
-          <td style="padding: 0 0 6px; font-size: 11px; color: #a8a29e; text-align: right;">vs sem.</td>
-          <td style="padding: 0 0 6px; font-size: 11px; color: #a8a29e; text-align: right;">Meseros</td>
-          <td style="padding: 0 0 6px; font-size: 11px; color: #a8a29e; text-align: right;">Estado</td>
+          <td style="padding: 0 0 6px; font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: #666666;">Ubicación</td>
+          <td style="padding: 0 0 6px; font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: #666666; text-align: right;">Escaneos</td>
+          <td style="padding: 0 0 6px; font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: #666666; text-align: right;">vs sem.</td>
+          <td class="col-meseros" style="padding: 0 0 6px; font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: #666666; text-align: right;">Meseros</td>
+          <td style="padding: 0 0 6px; font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: #666666; text-align: right;">Estado</td>
         </tr>
         ${activityRows}
       </table>
     </div>
 
-    <div style="margin: 0 28px 22px; padding: 18px; background: #faf8f6; border-radius: 12px;">
-      <p style="margin: 0 0 10px; font-size: 12px; font-weight: 700; color: #78716c; text-transform: uppercase; letter-spacing: 0.06em;">2 · Quejas y servicio</p>
+    <div style="margin: 0 28px 22px; padding: 18px; background: #ffffff; border: 1px solid #111111; border-radius: 0;">
+      ${sectionHeading('2', 'Quejas y servicio')}
       ${serviceBlock}
     </div>
 
-    <div style="margin: 0 28px 22px; padding: 18px; background: #faf8f6; border-radius: 12px;">
-      <p style="margin: 0 0 10px; font-size: 12px; font-weight: 700; color: #78716c; text-transform: uppercase; letter-spacing: 0.06em;">3 · Socios del Club VIP</p>
+    <div style="margin: 0 28px 22px; padding: 18px; background: #ffffff; border: 1px solid #111111; border-radius: 0;">
+      ${sectionHeading('3', 'Socios del Club VIP')}
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
         <tr>
-          <td style="padding: 0 0 6px; font-size: 11px; color: #a8a29e;">Ubicación</td>
-          <td style="padding: 0 0 6px; font-size: 11px; color: #a8a29e; text-align: right;">Total</td>
-          <td style="padding: 0 0 6px; font-size: 11px; color: #a8a29e; text-align: right;">Esta semana</td>
+          <td style="padding: 0 0 6px; font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: #666666;">Ubicación</td>
+          <td style="padding: 0 0 6px; font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: #666666; text-align: right;">Total</td>
+          <td style="padding: 0 0 6px; font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: #666666; text-align: right;">Esta semana</td>
         </tr>
         ${guestRows}
       </table>
-      <div style="margin-top: 14px; padding: 14px 16px; background: #f0fdf4; border-radius: 10px;">
-        <p style="margin: 0 0 4px; font-size: 30px; font-weight: 700; color: #166534; line-height: 1;">${returning}</p>
-        <p style="margin: 0; font-size: 13px; line-height: 1.5; color: #15803d;">
+      <div style="margin-top: 14px; padding: 14px 16px; background: rgba(5,150,105,0.08); border-left: 6px solid #059669; border-radius: 0;">
+        <p style="margin: 0 0 4px; font-family: 'Playfair Display', Georgia, 'Times New Roman', serif; font-size: 30px; font-weight: 700; color: #059669; line-height: 1; font-variant-numeric: tabular-nums;">${returning}</p>
+        <p style="margin: 0; font-size: 13px; line-height: 1.5; color: #059669;">
           Socios del Club VIP identificados con visitas en dos o más días distintos. Es la parte identificada del tráfico que regresa, no el total de comensales que vuelven.
         </p>
       </div>
     </div>
 
-    <div style="margin: 0 28px 22px; padding: 18px; background: #faf8f6; border-radius: 12px;">
-      <p style="margin: 0 0 10px; font-size: 12px; font-weight: 700; color: #78716c; text-transform: uppercase; letter-spacing: 0.06em;">4 · Reputación en Google</p>
+    <div style="margin: 0 28px 22px; padding: 18px; background: #ffffff; border: 1px solid #111111; border-radius: 0;">
+      ${sectionHeading('4', 'Reputación en Google')}
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
         <tr>
-          <td style="padding: 0 0 6px; font-size: 11px; color: #a8a29e;">Ubicación</td>
-          <td style="padding: 0 0 6px; font-size: 11px; color: #a8a29e; text-align: right;">Inicio</td>
-          <td style="padding: 0 0 6px; font-size: 11px; color: #a8a29e; text-align: right;">Hoy</td>
-          <td style="padding: 0 0 6px; font-size: 11px; color: #a8a29e; text-align: right;">Δ</td>
+          <td style="padding: 0 0 6px; font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: #666666;">Ubicación</td>
+          <td style="padding: 0 0 6px; font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: #666666; text-align: right;">Inicio</td>
+          <td style="padding: 0 0 6px; font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: #666666; text-align: right;">Hoy</td>
+          <td style="padding: 0 0 6px; font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: #666666; text-align: right;">Δ</td>
         </tr>
         ${ratingRows}
       </table>
-      <p style="margin: 12px 0 0; font-size: 11px; line-height: 1.5; color: #a8a29e;">${RATING_BASELINE_NOTE}</p>
+      <p style="margin: 12px 0 0; font-size: 11px; line-height: 1.5; color: #A3A3A3;">${RATING_BASELINE_NOTE}</p>
     </div>
 
     <div style="text-align: center; margin: 24px 0 30px;">
-      <a href="${dashboardUrl}" style="display: inline-block; padding: 13px 32px; background: #1c1917; color: #ffffff; border-radius: 10px; text-decoration: none; font-size: 15px; font-weight: 600;">Abrir panel</a>
+      <a href="${dashboardUrl}" style="display: inline-block; padding: 14px 36px; background: #111111; color: #ffffff; border-radius: 0; text-decoration: none; font-size: 15px; font-weight: 600; letter-spacing: 0.02em;">Abrir panel</a>
     </div>`;
 
   return sendMail({
@@ -1644,97 +1697,100 @@ export async function sendRegionalBriefing({
   const courtesies = locations.reduce((s, l) => s + l.courtesiesThisWeek, 0);
   const scans = locations.reduce((s, l) => s + l.scansThisWeek, 0);
 
+  // Each location is a stacked block: Playfair name, its signal label under it,
+  // then the seven metrics as label/value pairs, four across on desktop and two
+  // across under the 480px media query. No table here exceeds four columns.
   const locationRows = locations.map((l) => {
     const delta = l.scansLastWeek > 0
       ? Math.round(((l.scansThisWeek - l.scansLastWeek) / l.scansLastWeek) * 100)
       : null;
-    const deltaColor = delta == null ? '#a8a29e' : delta >= 0 ? '#16a34a' : delta <= -25 ? '#dc2626' : '#b45309';
+    const deltaColor = delta == null ? '#A3A3A3' : delta >= 0 ? '#059669' : delta <= -25 ? '#DC2626' : '#D97706';
     const deltaText = delta == null ? '—' : `${delta >= 0 ? '+' : ''}${delta}%`;
+    const metric = (label: string, value: string, color = '#111111') => `
+            <td class="metric-cell" width="25%" valign="top" style="box-sizing: border-box; padding: 10px 12px 10px 0; border-top: 1px solid #E2E2E2; vertical-align: top;">
+              <div style="font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: #666666;">${label}</div>
+              <div style="margin-top: 3px; font-size: 14px; color: ${color}; font-family: 'SFMono-Regular', Consolas, Menlo, monospace; font-variant-numeric: tabular-nums;">${value}</div>
+            </td>`;
     return `
-      <tr style="border-top: 1px solid #ebe7e2;">
-        <td style="padding: 10px 0; font-size: 14px; color: #1c1917;">
-          ${escapeHtml(l.name)}
-          <div style="margin-top: 2px; font-size: 11px; color: #a8a29e;">${escapeHtml(l.signalLabel)}</div>
-        </td>
-        <td style="padding: 10px 0; font-size: 14px; text-align: right; color: #1c1917;">${l.scansThisWeek}</td>
-        <td style="padding: 10px 0; font-size: 13px; text-align: right; font-weight: 600; color: ${deltaColor};">${deltaText}</td>
-        <td style="padding: 10px 0; font-size: 13px; text-align: right; color: #57534e;">${l.currentRating != null ? l.currentRating.toFixed(2) : '—'}</td>
-        <td style="padding: 10px 0; font-size: 13px; text-align: right; color: #57534e;">${l.newGuestsThisWeek}</td>
-        <td style="padding: 10px 0; font-size: 13px; text-align: right; color: #57534e;">${l.courtesiesThisWeek}</td>
-        <td style="padding: 10px 0; font-size: 13px; text-align: right; color: #57534e;">${l.complaintsThisWeek}</td>
-        <td style="padding: 10px 0; font-size: 13px; text-align: right; color: ${l.gmActiveDays > 1 ? '#16a34a' : '#a8a29e'};">${l.gmActiveDays}d</td>
-      </tr>`;
+      <div style="padding: 16px 0 6px; border-top: 1px solid #E2E2E2;">
+        <div style="font-family: 'Playfair Display', Georgia, 'Times New Roman', serif; font-size: 16px; font-weight: 700; color: #111111;">${escapeHtml(l.name)}</div>
+        <div style="margin-top: 3px; font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: ${l.signalLabel === 'Sin actividad' ? '#DC2626' : '#666666'};">${escapeHtml(l.signalLabel)}</div>
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" class="stack-table" style="margin-top: 8px;">
+          <tr class="stack-row">
+            ${metric('Escaneos', String(l.scansThisWeek))}
+            ${metric('vs sem.', deltaText, deltaColor)}
+            ${metric('Google', l.currentRating != null ? l.currentRating.toFixed(2) : '—', l.currentRating != null ? '#111111' : '#A3A3A3')}
+            ${metric('Socios', String(l.newGuestsThisWeek))}
+          </tr>
+          <tr class="stack-row">
+            ${metric('Cort.', String(l.courtesiesThisWeek))}
+            ${metric('Quejas', String(l.complaintsThisWeek))}
+            ${metric('Gte.', `${l.gmActiveDays}d`, l.gmActiveDays > 1 ? '#059669' : '#A3A3A3')}
+            <td class="metric-cell" width="25%" style="box-sizing: border-box; border-top: 1px solid #E2E2E2;"></td>
+          </tr>
+        </table>
+      </div>`;
   }).join('');
 
   const pushBlock = locations
     .filter((l) => l.actionable || l.signalLabel === 'Menos volumen')
     .map((l) => `
-      <div style="margin: 0 28px 10px; padding: 14px 18px; background: ${l.actionable ? '#fffbeb' : '#faf8f6'}; border-radius: 10px; border-left: 4px solid ${l.actionable ? '#f59e0b' : '#d6d3d1'};">
-        <p style="margin: 0 0 3px; font-size: 14px; font-weight: 700; color: ${l.actionable ? '#92400e' : '#44403c'};">${escapeHtml(l.name)}</p>
-        <p style="margin: 0; font-size: 13px; line-height: 1.5; color: ${l.actionable ? '#78350f' : '#57534e'};">${escapeHtml(l.signalSummary)}</p>
+      <div style="margin: 0 28px 10px; padding: 14px 18px; background: ${l.actionable ? 'rgba(217,119,6,0.08)' : '#ffffff'}; border: 1px solid #111111; border-left: 6px solid ${l.actionable ? '#D97706' : '#A3A3A3'}; border-radius: 0;">
+        <p style="margin: 0 0 3px; font-size: 14px; font-weight: 700; color: #111111;">${escapeHtml(l.name)}</p>
+        <p style="margin: 0; font-size: 13px; line-height: 1.5; color: #666666;">${escapeHtml(l.signalSummary)}</p>
       </div>`).join('');
 
   const noPush = `
-    <div style="margin: 0 28px 10px; padding: 14px 18px; background: #f0fdf4; border-radius: 10px; border-left: 4px solid #16a34a;">
-      <p style="margin: 0; font-size: 14px; color: #166534;">Sin focos esta semana en tus ubicaciones.</p>
+    <div style="margin: 0 28px 10px; padding: 14px 18px; background: rgba(5,150,105,0.08); border: 1px solid #111111; border-left: 6px solid #059669; border-radius: 0;">
+      <p style="margin: 0; font-size: 14px; color: #059669;">Sin focos esta semana en tus ubicaciones.</p>
     </div>`;
 
   const birthdayBlock = birthdays.length === 0
-    ? `<p style="margin: 0 28px 8px; font-size: 14px; color: #78716c;">Sin cumpleaños en los próximos días.</p>`
+    ? `<p style="margin: 0 28px 8px; font-size: 14px; color: #666666;">Sin cumpleaños en los próximos días.</p>`
     // Outlook renders with Word, which does not support calc(). Inset with a
     // wrapper table's padding instead of a computed width.
     : `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="padding: 0 28px;">
         ${birthdays.map((b) => `
-          <tr style="border-top: 1px solid #ebe7e2;">
-            <td style="padding: 8px 0; font-size: 14px; color: #1c1917;">${escapeHtml(b.guestName)}</td>
-            <td style="padding: 8px 0; font-size: 13px; color: #78716c;">${escapeHtml(b.locationName)}</td>
-            <td style="padding: 8px 0; font-size: 13px; text-align: right; font-weight: 600; color: #b45309;">${escapeHtml(b.birthday)}</td>
+          <tr style="border-top: 1px solid #E2E2E2;">
+            <td style="padding: 8px 0; font-size: 14px; color: #111111;">${escapeHtml(b.guestName)}</td>
+            <td style="padding: 8px 0; font-size: 13px; color: #666666;">${escapeHtml(b.locationName)}</td>
+            <td style="padding: 8px 0; font-size: 13px; text-align: right; font-weight: 600; color: #D97706; font-family: 'SFMono-Regular', Consolas, Menlo, monospace; font-variant-numeric: tabular-nums;">${escapeHtml(b.birthday)}</td>
           </tr>`).join('')}
       </table>`;
 
   const content = `
     <div style="padding: 28px 28px 8px;">
-      <p style="margin: 0 0 2px; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: #b45309;">Resumen semanal · ${escapeHtml(briefingWeekLabel(weekStart))}</p>
-      <h1 style="margin: 0 0 4px; font-size: 22px; font-weight: 700; color: #1c1917;">${escapeHtml(regionName)}</h1>
-      <p style="margin: 0; font-size: 14px; color: #78716c;">${locations.length} ${locations.length === 1 ? 'ubicación' : 'ubicaciones'}</p>
+      <p style="margin: 0 0 4px; font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: #D97706;">Resumen semanal · ${escapeHtml(briefingWeekLabel(weekStart))}</p>
+      <h1 style="margin: 0 0 4px; font-family: 'Playfair Display', Georgia, 'Times New Roman', serif; font-size: 28px; font-weight: 700; color: #111111;">${escapeHtml(regionName)}</h1>
+      <p style="margin: 0; font-size: 14px; color: #666666;">${locations.length} ${locations.length === 1 ? 'ubicación' : 'ubicaciones'}</p>
     </div>
 
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin: 8px 0 20px;">
-      <tr>
-        ${statTile('Escaneos', String(scans))}
-        ${statTile('Socios nuevos', newGuests > 0 ? '+' + newGuests : '0')}
-        ${statTile('Cortesías', String(courtesies))}
-      </tr>
-    </table>
-
-    <div style="margin: 0 28px 22px; padding: 18px; background: #faf8f6; border-radius: 12px;">
-      <p style="margin: 0 0 10px; font-size: 12px; font-weight: 700; color: #78716c; text-transform: uppercase; letter-spacing: 0.06em;">Tus ubicaciones</p>
-      <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
-        <tr>
-          <td style="padding: 0 0 6px; font-size: 11px; color: #a8a29e;">Ubicación</td>
-          <td style="padding: 0 0 6px; font-size: 11px; color: #a8a29e; text-align: right;">Escaneos</td>
-          <td style="padding: 0 0 6px; font-size: 11px; color: #a8a29e; text-align: right;">vs sem.</td>
-          <td style="padding: 0 0 6px; font-size: 11px; color: #a8a29e; text-align: right;">Google</td>
-          <td style="padding: 0 0 6px; font-size: 11px; color: #a8a29e; text-align: right;">Socios</td>
-          <td style="padding: 0 0 6px; font-size: 11px; color: #a8a29e; text-align: right;">Cort.</td>
-          <td style="padding: 0 0 6px; font-size: 11px; color: #a8a29e; text-align: right;">Quejas</td>
-          <td style="padding: 0 0 6px; font-size: 11px; color: #a8a29e; text-align: right;">Gte.</td>
+    <div style="padding: 0 28px;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" class="stack-table" style="margin: 8px 0 20px; background: #ffffff; border: 1px solid #111111; border-radius: 0;">
+        <tr class="stack-row">
+          ${statTile('Escaneos', String(scans))}
+          ${statTile('Socios nuevos', newGuests > 0 ? '+' + newGuests : '0')}
+          ${statTile('Cortesías', String(courtesies))}
         </tr>
-        ${locationRows}
       </table>
-      <p style="margin: 12px 0 0; font-size: 11px; line-height: 1.5; color: #a8a29e;">
+    </div>
+
+    <div style="margin: 0 28px 22px; padding: 18px; background: #ffffff; border: 1px solid #111111; border-radius: 0;">
+      <p style="margin: 0 0 4px; font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: #666666;">Tus ubicaciones</p>
+      ${locationRows}
+      <p style="margin: 12px 0 0; font-size: 11px; line-height: 1.5; color: #A3A3A3;">
         "Gte." son los días que el gerente abrió la app. Es contexto, no calificación: un gerente puede estar entrenando al piso todos los días sin abrirla.
       </p>
     </div>
 
-    <p style="margin: 0 28px 10px; font-size: 12px; font-weight: 700; color: #78716c; text-transform: uppercase; letter-spacing: 0.06em;">Dónde empujar y por qué</p>
+    <p style="margin: 0 28px 10px; font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: #666666;">Dónde empujar y por qué</p>
     ${pushBlock || noPush}
 
-    <p style="margin: 22px 28px 10px; font-size: 12px; font-weight: 700; color: #78716c; text-transform: uppercase; letter-spacing: 0.06em;">Cumpleaños de la semana</p>
+    <p style="margin: 22px 28px 10px; font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: #666666;">Cumpleaños de la semana</p>
     ${birthdayBlock}
 
     <div style="text-align: center; margin: 24px 0 30px;">
-      <a href="${dashboardUrl}" style="display: inline-block; padding: 13px 32px; background: #1c1917; color: #ffffff; border-radius: 10px; text-decoration: none; font-size: 15px; font-weight: 600;">Abrir panel</a>
+      <a href="${dashboardUrl}" style="display: inline-block; padding: 14px 36px; background: #111111; color: #ffffff; border-radius: 0; text-decoration: none; font-size: 15px; font-weight: 600; letter-spacing: 0.02em;">Abrir panel</a>
     </div>`;
 
   return sendMail({
