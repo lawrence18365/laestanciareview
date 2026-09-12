@@ -70,6 +70,7 @@ vi.mock('@/lib/weekly-signal', () => ({
   lastCompleteWeekStart: () => new Date('2026-08-31T00:00:00.000Z'),
   getWeeklySignals: async () => [],
   getGuestSignals: async () => new Map(),
+  getServiceSignals: async () => new Map(),
   getUpcomingBirthdays: async () => [],
 }));
 

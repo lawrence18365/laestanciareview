@@ -8,7 +8,7 @@ config({ path: '.env.local' });
 process.env.SMTP_USER = ''; process.env.SMTP_PASS = ''; // force skip, never send
 
 async function main() {
-  const { getWeeklySignals, getGuestSignals, getUpcomingBirthdays, lastCompleteWeekStart } =
+  const { getWeeklySignals, getGuestSignals, getServiceSignals, getUpcomingBirthdays, lastCompleteWeekStart } =
     await import('../src/lib/weekly-signal');
   const { signalLabel } = await import('../src/lib/location-signal');
   const { getGoogleRatingTrendBatch } = await import('../src/lib/google-places');
@@ -16,10 +16,12 @@ async function main() {
   const weekStart = lastCompleteWeekStart();
   const signals = await getWeeklySignals(weekStart);
   const guestStats = await getGuestSignals(weekStart);
+  const serviceStats = await getServiceSignals(weekStart);
   const trends = await getGoogleRatingTrendBatch(signals.map((s) => s.restaurantId));
 
   const toLoc = (s: (typeof signals)[number]) => {
     const g = guestStats.get(s.restaurantId);
+    const service = serviceStats.get(s.restaurantId);
     const t = trends[s.restaurantId] ?? null;
     return {
       name: s.name,
@@ -32,6 +34,8 @@ async function main() {
       staffAskingThisWeek: s.staffAskingThisWeek,
       staffAskingLastWeek: s.staffAskingLastWeek,
       gmActiveDays: s.gmActiveDays,
+      complaintsThisWeek: service?.complaintsThisWeek ?? 0,
+      overdueComplaints: service?.overdueOpen ?? 0,
       currentRating: t?.currentRating ?? null,
       baselineRating: t?.baselineRating ?? null,
       signalSummary: s.signal.summary,

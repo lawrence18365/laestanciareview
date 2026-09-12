@@ -13,14 +13,16 @@
  */
 import { db } from '@/db';
 import { restaurants, reviews, productEvents, guests, guestVisits } from '@/db/schema';
-import { and, eq, gte, lt, sql, inArray, isNotNull } from 'drizzle-orm';
+import { and, eq, gte, lt, lte, sql, inArray, isNotNull, ne } from 'drizzle-orm';
 import { classifyLocation, type LocationSignalResult } from '@/lib/location-signal';
+import { URGENT_MAX_RATING, RESOLVE_TARGET_HOURS } from '@/lib/complaint-sla';
 import { birthdayWindowKeys } from '@/lib/guest-messages';
 
 /** product_events started recording on this date. Nothing exists before it. */
 export const TELEMETRY_START = new Date('2026-08-21T00:00:00.000Z');
 
 const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
+const HOUR_MS = 60 * 60 * 1000;
 
 /**
  * Monday of the last COMPLETE week, in Mexico City terms.
@@ -210,8 +212,8 @@ export async function getGuestSignals(
     db
       .select({
         restaurantId: guestVisits.restaurantId,
-        returning: countSql`count(distinct ${guestVisits.guestId}) filter (where ${guestVisits.guestId} in (
-          select guest_id from guest_visits group by guest_id having count(distinct date(visit_date at time zone 'America/Mexico_City')) >= 2
+        returning: countSql`count(distinct ${guestVisits.guestId}) filter (where (${guestVisits.restaurantId}, ${guestVisits.guestId}) in (
+          select restaurant_id, guest_id from guest_visits group by restaurant_id, guest_id having count(distinct date(visit_date at time zone 'America/Mexico_City')) >= 2
         ))`,
       })
       .from(guestVisits)
@@ -232,6 +234,101 @@ export async function getGuestSignals(
       courtesiesThisWeek: g?.courtesies ?? 0,
     });
   }
+  return out;
+}
+
+// ────────────────────────────────────────────────────────────
+// Complaint load (the frame the regional briefing uses)
+// ────────────────────────────────────────────────────────────
+
+export interface ServiceSignal {
+  restaurantId: number;
+  /** Reviews with feedback and a rating of 3 or less filed during the week. */
+  complaintsThisWeek: number;
+  /** Urgent complaints still open past the resolve target. */
+  overdueOpen: number;
+}
+
+/** At or below this rating, a review with feedback is a complaint. */
+const COMPLAINT_MAX_RATING = 3;
+
+/**
+ * Complaint load per location: what came in during the reported week, and what
+ * is still open past the resolve target.
+ *
+ * Both counts use the same filters as the complaint SLA tooling in
+ * lib/complaint-sla.ts, so the briefing and the inbox never disagree about what
+ * counts as a complaint or as overdue. Every location gets an entry, zeros
+ * included: "nothing filed" is itself the number the regional needs to see.
+ */
+export async function getServiceSignals(
+  weekStart: Date,
+  now: Date = new Date(),
+  region?: string,
+): Promise<Map<number, ServiceSignal>> {
+  const weekEnd = new Date(weekStart.getTime() + WEEK_MS);
+  const overdueCutoff = new Date(now.getTime() - RESOLVE_TARGET_HOURS * HOUR_MS);
+
+  const where = [eq(restaurants.isOwner, false), eq(restaurants.isRegional, false)];
+  if (region) where.push(eq(restaurants.region, region));
+
+  const locations = await db
+    .select({ id: restaurants.id })
+    .from(restaurants)
+    .where(and(...where));
+  const ids = locations.map((l) => l.id);
+
+  const out = new Map<number, ServiceSignal>();
+  for (const id of ids) {
+    out.set(id, { restaurantId: id, complaintsThisWeek: 0, overdueOpen: 0 });
+  }
+  if (ids.length === 0) return out;
+
+  const [weekRows, overdueRows] = await Promise.all([
+    db
+      .select({
+        restaurantId: reviews.restaurantId,
+        count: countSql`count(*)`,
+      })
+      .from(reviews)
+      .where(
+        and(
+          inArray(reviews.restaurantId, ids),
+          isNotNull(reviews.feedback),
+          lte(reviews.rating, COMPLAINT_MAX_RATING),
+          gte(reviews.createdAt, weekStart),
+          lt(reviews.createdAt, weekEnd),
+        ),
+      )
+      .groupBy(reviews.restaurantId),
+
+    db
+      .select({
+        restaurantId: reviews.restaurantId,
+        count: countSql`count(*)`,
+      })
+      .from(reviews)
+      .where(
+        and(
+          inArray(reviews.restaurantId, ids),
+          isNotNull(reviews.feedback),
+          lte(reviews.rating, URGENT_MAX_RATING),
+          ne(reviews.status, 'resolved'),
+          lt(reviews.createdAt, overdueCutoff),
+        ),
+      )
+      .groupBy(reviews.restaurantId),
+  ]);
+
+  for (const row of weekRows) {
+    const entry = out.get(row.restaurantId);
+    if (entry) entry.complaintsThisWeek = row.count;
+  }
+  for (const row of overdueRows) {
+    const entry = out.get(row.restaurantId);
+    if (entry) entry.overdueOpen = row.count;
+  }
+
   return out;
 }
 

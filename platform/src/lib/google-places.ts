@@ -2,11 +2,11 @@ import { db } from '@/db';
 import { restaurants, googleRatingSnapshots } from '@/db/schema';
 import { and, eq, gte, sql, asc, desc, inArray } from 'drizzle-orm';
 import { startOfTodayMexico } from '@/lib/mexico-tz';
+import { RATING_BASELINE_FLOOR } from '@/lib/rating-baseline';
 
-/** Before 2026-03-17, eleven of twelve locations pointed at the wrong Google
- * Place ID; snapshots from before the re-point describe a different listing
- * (review counts jumped 115 -> 1133 overnight) and cannot be a baseline. */
-export const RATING_BASELINE_FLOOR = new Date('2026-03-17T00:00:00.000Z');
+/** The baseline floor and its explanation live in lib/rating-baseline.ts so the
+ * dashboards can render the note without importing the database. */
+export { RATING_BASELINE_FLOOR } from '@/lib/rating-baseline';
 
 /**
  * Fetch a restaurant's current Google rating and review count

@@ -21,9 +21,10 @@
  *   Xalapa             86->48 scans,  5->6 waiters  -> traffic    (correct)
  *   Regio Norte        collapsed to 1 waiter        -> adoption   (correct)
  *
- * GM login activity is carried as supporting colour only. A GM who trains the
- * floor daily but never opens the app is doing the job; absence from the app is
- * never on its own evidence of anything.
+ * GM login activity is still collected and returned (gmPresent), but no summary
+ * describes it. A GM who trains the floor daily but never opens the app is
+ * doing the job; absence from the app is never on its own evidence of anything,
+ * and 2026-09-11 removed the sentence that said otherwise.
  *
  * Everything here is descriptive. It reports what the numbers show and stops.
  */
@@ -45,6 +46,8 @@ export const BREADTH_STABLE_THRESHOLD = -0.15;
 export const GM_ABSENT_LOGIN_DAYS = 1;
 
 export type LocationSignal =
+  /** No scans this week nor last. The loudest signal there is. */
+  | 'inactive'
   /** Volume down, participation held. Same floor, fewer captures each. */
   | 'traffic'
   /** Volume down and participation collapsed. The one case worth a call. */
@@ -63,9 +66,12 @@ export interface LocationSignalInput {
   staffAskingThisWeek: number;
   /** Same, the week before. */
   staffAskingLastWeek: number;
-  /** Distinct days the GM account opened the app. Supporting colour only. */
+  /** Distinct days the GM account opened the app. */
   gmActiveDays: number;
-  /** False when the week predates telemetry; suppresses GM commentary. */
+  /**
+   * False when the week predates telemetry. Retained for callers that track the
+   * difference; summaries carry no manager commentary either way.
+   */
   gmTelemetryAvailable?: boolean;
 }
 
@@ -78,7 +84,7 @@ export interface LocationSignalResult {
   gmPresent: boolean;
   /** One plain sentence, safe to put in front of an owner. */
   summary: string;
-  /** True only for 'adoption' — the sole case that should raise an alert. */
+  /** True only for 'adoption' and 'inactive' — the cases that raise an alert. */
   actionable: boolean;
 }
 
@@ -93,21 +99,31 @@ export function classifyLocation(input: LocationSignalInput): LocationSignalResu
     staffAskingThisWeek,
     staffAskingLastWeek,
     gmActiveDays,
-    gmTelemetryAvailable = true,
   } = input;
 
   const gmPresent = gmActiveDays > GM_ABSENT_LOGIN_DAYS;
 
   if (scansLastWeek === 0) {
+    // Nothing last week and nothing this week: either the floor stopped asking
+    // altogether or the product was never used here. Both are the loudest thing
+    // a weekly briefing can say, so this is the second actionable case.
+    if (scansThisWeek === 0) {
+      return {
+        signal: 'inactive',
+        scanChange: null,
+        breadthChange: null,
+        gmPresent,
+        summary: 'Sin escaneos registrados en 14 días.',
+        actionable: true,
+      };
+    }
+
     return {
       signal: 'insufficient-data',
       scanChange: null,
       breadthChange: null,
       gmPresent,
-      summary:
-        scansThisWeek === 0
-          ? 'Sin escaneos esta semana ni la anterior. No hay base para comparar.'
-          : `${scansThisWeek} escaneos esta semana, sin semana previa para comparar.`,
+      summary: `${scansThisWeek} escaneos esta semana, sin semana previa para comparar.`,
       actionable: false,
     };
   }
@@ -118,14 +134,6 @@ export function classifyLocation(input: LocationSignalInput): LocationSignalResu
       ? (staffAskingThisWeek - staffAskingLastWeek) / staffAskingLastWeek
       : null;
 
-  const gmNote = !gmTelemetryAvailable
-    ? ''
-    : gmActiveDays === 0
-      ? ' El gerente no abrió la app esta semana.'
-      : gmActiveDays === 1
-        ? ' El gerente abrió la app 1 día esta semana.'
-        : '';
-
   if (scanChange > SCAN_DROP_THRESHOLD) {
     const dir = scanChange >= 0 ? 'arriba' : 'abajo';
     return {
@@ -133,7 +141,7 @@ export function classifyLocation(input: LocationSignalInput): LocationSignalResu
       scanChange,
       breadthChange,
       gmPresent,
-      summary: `Escaneos ${dir} ${pct(scanChange)}, con ${staffAskingThisWeek} ${staffAskingThisWeek === 1 ? 'mesero capturando' : 'meseros capturando'}.${gmNote}`,
+      summary: `Escaneos ${dir} ${pct(scanChange)}, con ${staffAskingThisWeek} ${staffAskingThisWeek === 1 ? 'mesero capturando' : 'meseros capturando'}.`,
       actionable: false,
     };
   }
@@ -145,7 +153,7 @@ export function classifyLocation(input: LocationSignalInput): LocationSignalResu
       scanChange,
       breadthChange,
       gmPresent,
-      summary: `Escaneos ${pct(scanChange)} abajo. Sin base de participación previa para saber si bajó la participación del equipo o hubo menos afluencia.${gmNote}`,
+      summary: `Escaneos ${pct(scanChange)} abajo. Sin base de participación previa para saber si bajó la participación del equipo o hubo menos afluencia.`,
       actionable: false,
     };
   }
@@ -167,7 +175,7 @@ export function classifyLocation(input: LocationSignalInput): LocationSignalResu
       scanChange,
       breadthChange,
       gmPresent,
-      summary: `Escaneos ${pct(scanChange)} abajo y los meseros que capturan bajaron de ${staffAskingLastWeek} a ${staffAskingThisWeek}. Menos meseros participando, no sólo menos capturas.${gmNote}`,
+      summary: `Escaneos ${pct(scanChange)} abajo y los meseros que capturan bajaron de ${staffAskingLastWeek} a ${staffAskingThisWeek}. Menos meseros participando, no sólo menos capturas.`,
       actionable: true,
     };
   }
@@ -177,7 +185,7 @@ export function classifyLocation(input: LocationSignalInput): LocationSignalResu
     scanChange,
     breadthChange,
     gmPresent,
-    summary: `Escaneos ${pct(scanChange)} abajo, meseros capturando de ${staffAskingLastWeek} a ${staffAskingThisWeek}. No alcanza para distinguir menos afluencia de menos uso.${gmNote}`,
+    summary: `Escaneos ${pct(scanChange)} abajo, meseros capturando de ${staffAskingLastWeek} a ${staffAskingThisWeek}. No alcanza para distinguir menos afluencia de menos uso.`,
     actionable: false,
   };
 }
@@ -185,6 +193,8 @@ export function classifyLocation(input: LocationSignalInput): LocationSignalResu
 /** Spanish label for a signal, for table cells and subject lines. */
 export function signalLabel(signal: LocationSignal): string {
   switch (signal) {
+    case 'inactive':
+      return 'Sin actividad';
     case 'traffic':
       return 'Menos volumen';
     case 'adoption':

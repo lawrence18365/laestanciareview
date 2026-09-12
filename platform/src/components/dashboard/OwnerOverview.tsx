@@ -3,6 +3,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import { getBrandForSlug } from '@/lib/brands';
 import { t } from '@/lib/i18n';
+import { RATING_BASELINE_NOTE } from '@/lib/rating-baseline';
 
 function fmt(n: number): string {
   return n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
@@ -602,6 +603,8 @@ export default function OwnerOverview({ stats, unresolvedCounts, roiByLocation, 
             </table>
           </div>
         )}
+
+        <p style={{ fontSize: '11px', opacity: 0.6, margin: '0.35rem 0 0' }}>{RATING_BASELINE_NOTE}</p>
       </section>
     </div>
   );

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import React from 'react';
+import { RATING_BASELINE_NOTE } from '@/lib/rating-baseline';
 
 function fmt(n: number): string {
   return n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
@@ -1360,6 +1361,8 @@ function GoogleRatingCard({
           </div>
         </div>
         
+        <p style={{ fontSize: '11px', opacity: 0.6, margin: '0.35rem 0 0' }}>{RATING_BASELINE_NOTE}</p>
+
         {trend && trend.ratingChange !== 0 && (
           <div
             style={{

@@ -3,11 +3,13 @@ import { classifyLocation, signalLabel } from '@/lib/location-signal';
 
 /**
  * The owner briefing may only report what the numbers show. No summary may
- * claim to know what diners did — we do not measure footfall.
+ * claim to know what diners did — we do not measure footfall — and none may
+ * comment on whether the manager opened the app.
  */
 function expectDescriptive(summary: string) {
   expect(summary).not.toContain('comensales');
   expect(summary).not.toContain('afluencia');
+  expect(summary).not.toContain('gerente');
 }
 
 // Volume down hard, same eleven waiters asking each week: the floor is intact,
@@ -46,7 +48,25 @@ const noTelemetry = classifyLocation({
   gmTelemetryAvailable: false,
 });
 
-const cases = [traffic, adoption, adoptionGmAbsent, noTelemetry];
+// Nothing this week and nothing last week: the loudest signal there is.
+const inactive = classifyLocation({
+  scansThisWeek: 0,
+  scansLastWeek: 0,
+  staffAskingThisWeek: 0,
+  staffAskingLastWeek: 0,
+  gmActiveDays: 0,
+});
+
+// Nothing last week, twelve scans this week: no baseline to compare against.
+const noBaseline = classifyLocation({
+  scansThisWeek: 12,
+  scansLastWeek: 0,
+  staffAskingThisWeek: 4,
+  staffAskingLastWeek: 0,
+  gmActiveDays: 3,
+});
+
+const cases = [traffic, adoption, adoptionGmAbsent, noTelemetry, inactive, noBaseline];
 
 describe('classifyLocation — descriptive summaries', () => {
   it('reads held participation as traffic without claiming fewer guests', () => {
@@ -60,20 +80,32 @@ describe('classifyLocation — descriptive summaries', () => {
   it('reads collapsed participation as actionable adoption', () => {
     expect(adoption.signal).toBe('adoption');
     expect(adoption.actionable).toBe(true);
-    expect(adoption.summary).toContain('abrió la app 1 día');
-    expect(adoption.summary).not.toContain('no entró');
+    expect(adoption.summary).toContain('Menos meseros participando');
     expectDescriptive(adoption.summary);
   });
 
-  it('says the GM never opened the app when gmActiveDays is 0', () => {
-    expect(adoptionGmAbsent.signal).toBe('adoption');
-    expect(adoptionGmAbsent.summary).toContain('no abrió la app');
-    expectDescriptive(adoptionGmAbsent.summary);
+  it('reads two empty weeks as inactive and actionable', () => {
+    expect(inactive.signal).toBe('inactive');
+    expect(inactive.actionable).toBe(true);
+    expect(inactive.scanChange).toBeNull();
+    expect(inactive.breadthChange).toBeNull();
+    expect(inactive.summary).toBe('Sin escaneos registrados en 14 días.');
+    expect(signalLabel(inactive.signal)).toBe('Sin actividad');
+    expectDescriptive(inactive.summary);
   });
 
-  it('withholds GM commentary when the week predates telemetry', () => {
-    expect(noTelemetry.summary).not.toContain('gerente');
-    expectDescriptive(noTelemetry.summary);
+  it('holds back a conclusion when there is no previous week', () => {
+    expect(noBaseline.signal).toBe('insufficient-data');
+    expect(noBaseline.actionable).toBe(false);
+    expect(noBaseline.scanChange).toBeNull();
+    expect(noBaseline.breadthChange).toBeNull();
+    expectDescriptive(noBaseline.summary);
+  });
+
+  it('never names the manager, whatever the logins say', () => {
+    for (const result of cases) {
+      expect(result.summary).not.toContain('gerente');
+    }
   });
 
   it('never asserts what diners did in any case', () => {

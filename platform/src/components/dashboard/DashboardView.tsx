@@ -4,6 +4,7 @@ import { useMemo } from 'react';
 import { downloadCSV } from '@/lib/csv';
 import { t } from '@/lib/i18n';
 import { track } from '@/lib/analytics-client';
+import { RATING_BASELINE_NOTE } from '@/lib/rating-baseline';
 
 function fmt(n: number): string {
   return n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
@@ -238,6 +239,7 @@ export default function DashboardView({
                     </span>
                   )}
                 </div>
+                <p style={{ fontSize: '11px', opacity: 0.6, margin: '0.35rem 0 0' }}>{RATING_BASELINE_NOTE}</p>
                 <p style={{ margin: '0.5rem 0 0', fontSize: '0.8125rem', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                   {t.dashboard.googleRatingSinceStart}
                 </p>

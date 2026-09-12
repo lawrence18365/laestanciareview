@@ -18,6 +18,7 @@ import { sendWeeklyDigest, sendOwnerBriefing, sendRegionalBriefing, type Briefin
 import {
   getWeeklySignals,
   getGuestSignals,
+  getServiceSignals,
   getUpcomingBirthdays,
   lastCompleteWeekStart,
 } from '@/lib/weekly-signal';
@@ -147,14 +148,16 @@ export async function GET(req: NextRequest) {
   // week (verified 2026-09-10, all twelve showed double-digit falls).
   const briefingWeekStart = lastCompleteWeekStart(digestNow);
 
-  const [allSignals, allGuestSignals] = await Promise.all([
+  const [allSignals, allGuestSignals, allServiceSignals] = await Promise.all([
     getWeeklySignals(briefingWeekStart),
     getGuestSignals(briefingWeekStart),
+    getServiceSignals(briefingWeekStart, digestNow),
   ]);
   const ratingTrends = await getGoogleRatingTrendBatch(allSignals.map((s) => s.restaurantId));
 
   const toBriefingLocation = (sig: (typeof allSignals)[number]): BriefingLocation => {
     const guestStats = allGuestSignals.get(sig.restaurantId);
+    const serviceStats = allServiceSignals.get(sig.restaurantId);
     const trend = ratingTrends[sig.restaurantId] ?? null;
     return {
       name: sig.name,
@@ -167,6 +170,8 @@ export async function GET(req: NextRequest) {
       staffAskingThisWeek: sig.staffAskingThisWeek,
       staffAskingLastWeek: sig.staffAskingLastWeek,
       gmActiveDays: sig.gmActiveDays,
+      complaintsThisWeek: serviceStats?.complaintsThisWeek ?? 0,
+      overdueComplaints: serviceStats?.overdueOpen ?? 0,
       currentRating: trend?.currentRating ?? null,
       baselineRating: trend?.baselineRating ?? null,
       signalSummary: sig.signal.summary,

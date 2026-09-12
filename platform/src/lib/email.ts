@@ -1,5 +1,6 @@
 import { sendMail } from '@/lib/mailer';
 import { formatStaffAnomaly, type StaffAnomaly } from '@/lib/anomalies';
+import { RATING_BASELINE_NOTE } from '@/lib/rating-baseline';
 import { createTransport, type SendMailOptions, type Transporter } from 'nodemailer';
 
 /** Strip stray whitespace/newlines from env vars (Vercel CLI sometimes injects \\n). */
@@ -432,6 +433,7 @@ export async function sendWeeklyDigest({
         </span>
       </p>
       ${googleTrend.reviewsGained > 0 ? `<p style="margin: 6px 0 0; font-size: 12px; color: #78716c;">+${googleTrend.reviewsGained} nuevas reseñas en Google</p>` : ''}
+      <p style="margin: 8px 0 0; font-size: 11px; line-height: 1.5; color: #a8a29e;">${RATING_BASELINE_NOTE}</p>
     </div>` : '';
 
   const interceptedBanner = lastWeek.intercepted > 0 ? `
@@ -1391,6 +1393,10 @@ export interface BriefingLocation {
   staffAskingThisWeek: number;
   staffAskingLastWeek: number;
   gmActiveDays: number;
+  /** Reviews with feedback and a rating of 3 or less filed during the week. */
+  complaintsThisWeek: number;
+  /** Urgent complaints still open past the resolve target. */
+  overdueComplaints: number;
   currentRating: number | null;
   baselineRating: number | null;
   /** From classifyLocation(): plain sentence, safe to show the owner. */
@@ -1423,8 +1429,8 @@ function statTile(label: string, value: string, note?: string): string {
 }
 
 /**
- * Owner briefing. Four blocks, one screen: guests on file, guests who came
- * back, reputation by location, and anything needing a decision.
+ * Owner briefing. One screen: what needs a decision, activity per location,
+ * service load, the Club VIP guest book, and reputation.
  */
 export async function sendOwnerBriefing({
   to,
@@ -1437,12 +1443,71 @@ export async function sendOwnerBriefing({
   locations: BriefingLocation[];
   dashboardUrl: string;
 }) {
-  const totalGuests = locations.reduce((s, l) => s + l.totalGuests, 0);
-  const newGuests = locations.reduce((s, l) => s + l.newGuestsThisWeek, 0);
+  const activeCount = locations.filter((l) => l.scansThisWeek > 0).length;
+  const scans = locations.reduce((s, l) => s + l.scansThisWeek, 0);
+  const complaints = locations.reduce((s, l) => s + l.complaintsThisWeek, 0);
   const returning = locations.reduce((s, l) => s + l.returningGuests, 0);
-  const courtesies = locations.reduce((s, l) => s + l.courtesiesThisWeek, 0);
 
-  // Block 1 — guests in the database.
+  // Requiere decisión — silent locations first, then the rest of the alerts.
+  const decisions = locations.filter((l) => l.actionable);
+  const inactive = locations.filter((l) => l.signalLabel === 'Sin actividad');
+  const otherDecisions = locations.filter((l) => l.actionable && l.signalLabel !== 'Sin actividad');
+  const decisionBlock = decisions.length === 0
+    ? `<div style="margin: 0 28px 10px; padding: 16px 18px; background: #f0fdf4; border-radius: 10px; border-left: 4px solid #16a34a;">
+         <p style="margin: 0; font-size: 14px; color: #166534;">Las ${locations.length} ubicaciones registraron actividad esta semana.</p>
+       </div>`
+    : `
+      ${inactive.length > 0 ? `
+        <div style="margin: 0 28px 10px; padding: 16px 18px; background: #fef2f2; border-radius: 10px; border-left: 4px solid #dc2626;">
+          <p style="margin: 0 0 4px; font-size: 14px; font-weight: 700; color: #991b1b;">${inactive.length} ${inactive.length === 1 ? 'ubicación' : 'ubicaciones'} sin actividad registrada en 14 días</p>
+          <p style="margin: 0; font-size: 13px; line-height: 1.5; color: #7f1d1d;">${inactive.map((l) => escapeHtml(l.name)).join(', ')}</p>
+        </div>` : ''}
+      ${otherDecisions.map((l) => `
+        <div style="margin: 0 28px 10px; padding: 16px 18px; background: #fffbeb; border-radius: 10px; border-left: 4px solid #f59e0b;">
+          <p style="margin: 0 0 4px; font-size: 14px; font-weight: 700; color: #92400e;">${escapeHtml(l.name)}</p>
+          <p style="margin: 0; font-size: 13px; line-height: 1.5; color: #78350f;">${escapeHtml(l.signalSummary)}</p>
+        </div>`).join('')}`;
+
+  // Block 1 — activity per location. Silent locations first, then alerts, then volume.
+  const activityRank = (l: BriefingLocation) =>
+    l.signalLabel === 'Sin actividad' ? 0 : l.actionable ? 1 : 2;
+  const activityRows = [...locations]
+    .sort((a, b) => activityRank(a) - activityRank(b) || b.scansThisWeek - a.scansThisWeek)
+    .map((l) => {
+      const delta = l.scansLastWeek > 0
+        ? Math.round(((l.scansThisWeek - l.scansLastWeek) / l.scansLastWeek) * 100)
+        : null;
+      const deltaColor = delta == null ? '#a8a29e' : delta >= 0 ? '#16a34a' : delta <= -25 ? '#dc2626' : '#b45309';
+      const deltaText = delta == null ? '—' : `${delta >= 0 ? '+' : ''}${delta}%`;
+      return `
+        <tr style="border-top: 1px solid #ebe7e2;">
+          <td style="padding: 9px 0; font-size: 14px; color: ${l.signalLabel === 'Sin actividad' ? '#dc2626' : '#1c1917'};">${escapeHtml(l.name)}</td>
+          <td style="padding: 9px 0; font-size: 14px; text-align: right; color: #1c1917;">${l.scansThisWeek}</td>
+          <td style="padding: 9px 0; font-size: 13px; text-align: right; font-weight: 600; color: ${deltaColor};">${deltaText}</td>
+          <td style="padding: 9px 0; font-size: 13px; text-align: right; color: #57534e;">${l.staffAskingThisWeek}</td>
+          <td style="padding: 9px 0; font-size: 13px; text-align: right; color: #78716c;">${escapeHtml(l.signalLabel)}</td>
+        </tr>`;
+    }).join('');
+
+  // Block 2 — service load. Only locations with something to show.
+  const service = locations.filter((l) => l.complaintsThisWeek > 0 || l.overdueComplaints > 0);
+  const serviceBlock = service.length === 0
+    ? `<p style="margin: 0; font-size: 14px; color: #78716c;">Sin quejas registradas esta semana.</p>`
+    : `<table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+        <tr>
+          <td style="padding: 0 0 6px; font-size: 11px; color: #a8a29e;">Ubicación</td>
+          <td style="padding: 0 0 6px; font-size: 11px; color: #a8a29e; text-align: right;">Quejas (semana)</td>
+          <td style="padding: 0 0 6px; font-size: 11px; color: #a8a29e; text-align: right;">Sin resolver +24h</td>
+        </tr>
+        ${service.map((l) => `
+          <tr style="border-top: 1px solid #ebe7e2;">
+            <td style="padding: 9px 0; font-size: 14px; color: #1c1917;">${escapeHtml(l.name)}</td>
+            <td style="padding: 9px 0; font-size: 14px; text-align: right; color: #1c1917;">${l.complaintsThisWeek}</td>
+            <td style="padding: 9px 0; font-size: 13px; text-align: right; ${l.overdueComplaints > 0 ? 'font-weight: 700; color: #dc2626;' : 'color: #57534e;'}">${l.overdueComplaints}</td>
+          </tr>`).join('')}
+      </table>`;
+
+  // Block 3 — Club VIP guest book.
   const capturing = locations.filter((l) => l.totalGuests > 0);
   const guestRows = capturing.length === 0
     ? `<tr><td style="padding: 12px 0; font-size: 14px; color: #78716c;">Ninguna ubicación tiene captura de invitados activa todavía.</td></tr>`
@@ -1455,7 +1520,7 @@ export async function sendOwnerBriefing({
             <td style="padding: 9px 0; font-size: 14px; text-align: right; color: ${l.newGuestsThisWeek > 0 ? '#16a34a' : '#a8a29e'};">${l.newGuestsThisWeek > 0 ? '+' + l.newGuestsThisWeek : '—'}</td>
           </tr>`).join('');
 
-  // Block 3 — reputation. Only locations with a real baseline to compare.
+  // Block 4 — reputation. Only locations with a real baseline to compare.
   const rated = locations.filter((l) => l.currentRating != null && l.baselineRating != null);
   const ratingRows = rated.length === 0
     ? `<tr><td style="padding: 12px 0; font-size: 14px; color: #78716c;">Sin historial de Google suficiente para comparar todavía.</td></tr>`
@@ -1472,18 +1537,6 @@ export async function sendOwnerBriefing({
           </tr>`;
       }).join('');
 
-  // Block 4 — exceptions only.
-  const decisions = locations.filter((l) => l.actionable);
-  const decisionBlock = decisions.length === 0
-    ? `<div style="margin: 0 28px 8px; padding: 16px 18px; background: #f0fdf4; border-radius: 10px; border-left: 4px solid #16a34a;">
-         <p style="margin: 0; font-size: 14px; color: #166534;">Nada que decidir esta semana. Ninguna ubicación muestra caída de uso.</p>
-       </div>`
-    : decisions.map((l) => `
-        <div style="margin: 0 28px 10px; padding: 16px 18px; background: #fffbeb; border-radius: 10px; border-left: 4px solid #f59e0b;">
-          <p style="margin: 0 0 4px; font-size: 14px; font-weight: 700; color: #92400e;">${escapeHtml(l.name)}</p>
-          <p style="margin: 0; font-size: 13px; line-height: 1.5; color: #78350f;">${escapeHtml(l.signalSummary)}</p>
-        </div>`).join('');
-
   const content = `
     <div style="padding: 28px 28px 8px;">
       <p style="margin: 0 0 2px; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: #b45309;">Resumen semanal · ${escapeHtml(briefingWeekLabel(weekStart))}</p>
@@ -1493,15 +1546,39 @@ export async function sendOwnerBriefing({
 
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin: 8px 0 20px;">
       <tr>
-        ${statTile('Invitados en base', String(totalGuests))}
-        ${statTile('Nuevos esta semana', newGuests > 0 ? '+' + newGuests : '0')}
-        ${statTile('Han regresado', String(returning), '2+ visitas')}
-        ${statTile('Cortesías', String(courtesies))}
+        ${statTile('Ubicaciones activas', `${activeCount} de ${locations.length}`)}
+        ${statTile('Escaneos', String(scans))}
+        ${statTile('Quejas', String(complaints))}
+        ${statTile('Socios VIP que regresaron', String(returning))}
       </tr>
     </table>
 
+    <div style="margin: 0 0 6px;">
+      <p style="margin: 0 28px 10px; font-size: 12px; font-weight: 700; color: #78716c; text-transform: uppercase; letter-spacing: 0.06em;">Requiere decisión</p>
+      ${decisionBlock}
+    </div>
+
     <div style="margin: 0 28px 22px; padding: 18px; background: #faf8f6; border-radius: 12px;">
-      <p style="margin: 0 0 10px; font-size: 12px; font-weight: 700; color: #78716c; text-transform: uppercase; letter-spacing: 0.06em;">1 · Invitados en base de datos</p>
+      <p style="margin: 0 0 10px; font-size: 12px; font-weight: 700; color: #78716c; text-transform: uppercase; letter-spacing: 0.06em;">1 · Actividad por ubicación</p>
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+        <tr>
+          <td style="padding: 0 0 6px; font-size: 11px; color: #a8a29e;">Ubicación</td>
+          <td style="padding: 0 0 6px; font-size: 11px; color: #a8a29e; text-align: right;">Escaneos</td>
+          <td style="padding: 0 0 6px; font-size: 11px; color: #a8a29e; text-align: right;">vs sem.</td>
+          <td style="padding: 0 0 6px; font-size: 11px; color: #a8a29e; text-align: right;">Meseros</td>
+          <td style="padding: 0 0 6px; font-size: 11px; color: #a8a29e; text-align: right;">Estado</td>
+        </tr>
+        ${activityRows}
+      </table>
+    </div>
+
+    <div style="margin: 0 28px 22px; padding: 18px; background: #faf8f6; border-radius: 12px;">
+      <p style="margin: 0 0 10px; font-size: 12px; font-weight: 700; color: #78716c; text-transform: uppercase; letter-spacing: 0.06em;">2 · Quejas y servicio</p>
+      ${serviceBlock}
+    </div>
+
+    <div style="margin: 0 28px 22px; padding: 18px; background: #faf8f6; border-radius: 12px;">
+      <p style="margin: 0 0 10px; font-size: 12px; font-weight: 700; color: #78716c; text-transform: uppercase; letter-spacing: 0.06em;">3 · Socios del Club VIP</p>
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
         <tr>
           <td style="padding: 0 0 6px; font-size: 11px; color: #a8a29e;">Ubicación</td>
@@ -1510,18 +1587,16 @@ export async function sendOwnerBriefing({
         </tr>
         ${guestRows}
       </table>
-    </div>
-
-    <div style="margin: 0 28px 22px; padding: 18px; background: #f0fdf4; border-radius: 12px;">
-      <p style="margin: 0 0 6px; font-size: 12px; font-weight: 700; color: #166534; text-transform: uppercase; letter-spacing: 0.06em;">2 · Invitados que regresaron</p>
-      <p style="margin: 0 0 4px; font-size: 30px; font-weight: 700; color: #166534; line-height: 1;">${returning}</p>
-      <p style="margin: 0; font-size: 13px; line-height: 1.5; color: #15803d;">
-        Socios del Club VIP con dos o más visitas registradas. Es tráfico recuperado de invitados que ya eran suyos, no clientes nuevos comprados.
-      </p>
+      <div style="margin-top: 14px; padding: 14px 16px; background: #f0fdf4; border-radius: 10px;">
+        <p style="margin: 0 0 4px; font-size: 30px; font-weight: 700; color: #166534; line-height: 1;">${returning}</p>
+        <p style="margin: 0; font-size: 13px; line-height: 1.5; color: #15803d;">
+          Socios del Club VIP identificados con visitas en dos o más días distintos. Es la parte identificada del tráfico que regresa, no el total de comensales que vuelven.
+        </p>
+      </div>
     </div>
 
     <div style="margin: 0 28px 22px; padding: 18px; background: #faf8f6; border-radius: 12px;">
-      <p style="margin: 0 0 10px; font-size: 12px; font-weight: 700; color: #78716c; text-transform: uppercase; letter-spacing: 0.06em;">3 · Reputación por ubicación</p>
+      <p style="margin: 0 0 10px; font-size: 12px; font-weight: 700; color: #78716c; text-transform: uppercase; letter-spacing: 0.06em;">4 · Reputación en Google</p>
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
         <tr>
           <td style="padding: 0 0 6px; font-size: 11px; color: #a8a29e;">Ubicación</td>
@@ -1531,11 +1606,7 @@ export async function sendOwnerBriefing({
         </tr>
         ${ratingRows}
       </table>
-    </div>
-
-    <div style="margin: 0 0 6px;">
-      <p style="margin: 0 28px 10px; font-size: 12px; font-weight: 700; color: #78716c; text-transform: uppercase; letter-spacing: 0.06em;">4 · Requiere decisión</p>
-      ${decisionBlock}
+      <p style="margin: 12px 0 0; font-size: 11px; line-height: 1.5; color: #a8a29e;">${RATING_BASELINE_NOTE}</p>
     </div>
 
     <div style="text-align: center; margin: 24px 0 30px;">
@@ -1545,7 +1616,7 @@ export async function sendOwnerBriefing({
   return sendMail({
     from: FROM,
     to,
-    subject: `Grupo Estancia · ${totalGuests} invitados en base, ${returning} han regresado`,
+    subject: `Grupo Estancia · ${activeCount} de ${locations.length} ubicaciones activas, ${complaints} quejas esta semana`,
     html: emailLayout(content),
   });
 }
@@ -1590,6 +1661,7 @@ export async function sendRegionalBriefing({
         <td style="padding: 10px 0; font-size: 13px; text-align: right; color: #57534e;">${l.currentRating != null ? l.currentRating.toFixed(2) : '—'}</td>
         <td style="padding: 10px 0; font-size: 13px; text-align: right; color: #57534e;">${l.newGuestsThisWeek}</td>
         <td style="padding: 10px 0; font-size: 13px; text-align: right; color: #57534e;">${l.courtesiesThisWeek}</td>
+        <td style="padding: 10px 0; font-size: 13px; text-align: right; color: #57534e;">${l.complaintsThisWeek}</td>
         <td style="padding: 10px 0; font-size: 13px; text-align: right; color: ${l.gmActiveDays > 1 ? '#16a34a' : '#a8a29e'};">${l.gmActiveDays}d</td>
       </tr>`;
   }).join('');
@@ -1645,6 +1717,7 @@ export async function sendRegionalBriefing({
           <td style="padding: 0 0 6px; font-size: 11px; color: #a8a29e; text-align: right;">Google</td>
           <td style="padding: 0 0 6px; font-size: 11px; color: #a8a29e; text-align: right;">Socios</td>
           <td style="padding: 0 0 6px; font-size: 11px; color: #a8a29e; text-align: right;">Cort.</td>
+          <td style="padding: 0 0 6px; font-size: 11px; color: #a8a29e; text-align: right;">Quejas</td>
           <td style="padding: 0 0 6px; font-size: 11px; color: #a8a29e; text-align: right;">Gte.</td>
         </tr>
         ${locationRows}

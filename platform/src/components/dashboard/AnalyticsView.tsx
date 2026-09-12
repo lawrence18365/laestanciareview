@@ -3,6 +3,7 @@
 import { downloadCSV } from '@/lib/csv';
 import { t } from '@/lib/i18n';
 import { track } from '@/lib/analytics-client';
+import { RATING_BASELINE_NOTE } from '@/lib/rating-baseline';
 
 /* ── Types ── */
 
@@ -143,6 +144,7 @@ export default function AnalyticsView({
                     {googleTrend.ratingChange > 0 ? '+' : ''}{googleTrend.ratingChange.toFixed(1)}
                   </span>
                 </div>
+                <p style={{ fontSize: '11px', opacity: 0.6, margin: '0.35rem 0 0' }}>{RATING_BASELINE_NOTE}</p>
               </>
             ) : (
               <>
