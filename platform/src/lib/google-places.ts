@@ -1,7 +1,12 @@
 import { db } from '@/db';
 import { restaurants, googleRatingSnapshots } from '@/db/schema';
-import { eq, sql, asc, desc, inArray } from 'drizzle-orm';
+import { and, eq, gte, sql, asc, desc, inArray } from 'drizzle-orm';
 import { startOfTodayMexico } from '@/lib/mexico-tz';
+
+/** Before 2026-03-17, eleven of twelve locations pointed at the wrong Google
+ * Place ID; snapshots from before the re-point describe a different listing
+ * (review counts jumped 115 -> 1133 overnight) and cannot be a baseline. */
+export const RATING_BASELINE_FLOOR = new Date('2026-03-17T00:00:00.000Z');
 
 /**
  * Fetch a restaurant's current Google rating and review count
@@ -113,15 +118,20 @@ export async function refreshAllGoogleRatings(maxAgeMs = 60 * 60 * 1000) {
 }
 
 /**
- * Get the first-ever snapshot (baseline / "pre-RateTap" score)
- * and the latest snapshot for a restaurant.
+ * Get the baseline snapshot (the earliest one captured on or after
+ * RATING_BASELINE_FLOOR) and the latest snapshot for a restaurant.
  */
 export async function getGoogleRatingTrend(restaurantId: number) {
   const [firstRows, latestRows] = await Promise.all([
     db
       .select()
       .from(googleRatingSnapshots)
-      .where(eq(googleRatingSnapshots.restaurantId, restaurantId))
+      .where(
+        and(
+          eq(googleRatingSnapshots.restaurantId, restaurantId),
+          gte(googleRatingSnapshots.capturedAt, RATING_BASELINE_FLOOR),
+        ),
+      )
       .orderBy(asc(googleRatingSnapshots.capturedAt))
       .limit(1),
     db

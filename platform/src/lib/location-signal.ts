@@ -1,5 +1,5 @@
 /**
- * Tell "the team stopped asking" apart from "fewer guests came in".
+ * Tell "the team stopped asking" apart from "same floor, fewer captures each".
  *
  * Why this exists — 2026-09-10. Four locations looked disengaged on scan volume
  * alone. The conversations found something else: one had a floor-discipline
@@ -45,7 +45,7 @@ export const BREADTH_STABLE_THRESHOLD = -0.15;
 export const GM_ABSENT_LOGIN_DAYS = 1;
 
 export type LocationSignal =
-  /** Volume down, participation held. Fewer guests, same floor. */
+  /** Volume down, participation held. Same floor, fewer captures each. */
   | 'traffic'
   /** Volume down and participation collapsed. The one case worth a call. */
   | 'adoption'
@@ -118,10 +118,13 @@ export function classifyLocation(input: LocationSignalInput): LocationSignalResu
       ? (staffAskingThisWeek - staffAskingLastWeek) / staffAskingLastWeek
       : null;
 
-  const gmNote =
-    gmTelemetryAvailable && !gmPresent
-      ? ' El gerente no entró a la app esta semana.'
-      : '';
+  const gmNote = !gmTelemetryAvailable
+    ? ''
+    : gmActiveDays === 0
+      ? ' El gerente no abrió la app esta semana.'
+      : gmActiveDays === 1
+        ? ' El gerente abrió la app 1 día esta semana.'
+        : '';
 
   if (scanChange > SCAN_DROP_THRESHOLD) {
     const dir = scanChange >= 0 ? 'arriba' : 'abajo';
@@ -153,7 +156,7 @@ export function classifyLocation(input: LocationSignalInput): LocationSignalResu
       scanChange,
       breadthChange,
       gmPresent,
-      summary: `Escaneos ${pct(scanChange)} abajo, pero siguen participando ${staffAskingThisWeek} meseros (antes ${staffAskingLastWeek}). El equipo sigue pidiendo; entraron menos comensales.`,
+      summary: `Escaneos ${pct(scanChange)} abajo; siguen participando ${staffAskingThisWeek} meseros (antes ${staffAskingLastWeek}). Misma participación, menos capturas por mesero.`,
       actionable: false,
     };
   }
@@ -164,7 +167,7 @@ export function classifyLocation(input: LocationSignalInput): LocationSignalResu
       scanChange,
       breadthChange,
       gmPresent,
-      summary: `Escaneos ${pct(scanChange)} abajo y los meseros que capturan bajaron de ${staffAskingLastWeek} a ${staffAskingThisWeek}. Menos gente pidiendo, no sólo menos comensales.${gmNote}`,
+      summary: `Escaneos ${pct(scanChange)} abajo y los meseros que capturan bajaron de ${staffAskingLastWeek} a ${staffAskingThisWeek}. Menos meseros participando, no sólo menos capturas.${gmNote}`,
       actionable: true,
     };
   }
@@ -183,7 +186,7 @@ export function classifyLocation(input: LocationSignalInput): LocationSignalResu
 export function signalLabel(signal: LocationSignal): string {
   switch (signal) {
     case 'traffic':
-      return 'Menos afluencia';
+      return 'Menos volumen';
     case 'adoption':
       return 'Revisar uso';
     case 'mixed':

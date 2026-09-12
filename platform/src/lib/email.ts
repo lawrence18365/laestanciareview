@@ -1595,7 +1595,7 @@ export async function sendRegionalBriefing({
   }).join('');
 
   const pushBlock = locations
-    .filter((l) => l.actionable || l.signalLabel === 'Menos afluencia')
+    .filter((l) => l.actionable || l.signalLabel === 'Menos volumen')
     .map((l) => `
       <div style="margin: 0 28px 10px; padding: 14px 18px; background: ${l.actionable ? '#fffbeb' : '#faf8f6'}; border-radius: 10px; border-left: 4px solid ${l.actionable ? '#f59e0b' : '#d6d3d1'};">
         <p style="margin: 0 0 3px; font-size: 14px; font-weight: 700; color: ${l.actionable ? '#92400e' : '#44403c'};">${escapeHtml(l.name)}</p>

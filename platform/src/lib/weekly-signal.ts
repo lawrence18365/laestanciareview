@@ -172,7 +172,7 @@ export interface GuestSignal {
   totalGuests: number;
   /** Members captured during the reported week. */
   newThisWeek: number;
-  /** Members with 2+ recorded visits — traffic recovered from known guests. */
+  /** Members with visits on 2+ distinct days. */
   returningGuests: number;
   /** Courtesies validated during the reported week. */
   courtesiesThisWeek: number;
@@ -211,7 +211,7 @@ export async function getGuestSignals(
       .select({
         restaurantId: guestVisits.restaurantId,
         returning: countSql`count(distinct ${guestVisits.guestId}) filter (where ${guestVisits.guestId} in (
-          select guest_id from guest_visits group by guest_id having count(*) >= 2
+          select guest_id from guest_visits group by guest_id having count(distinct date(visit_date at time zone 'America/Mexico_City')) >= 2
         ))`,
       })
       .from(guestVisits)
