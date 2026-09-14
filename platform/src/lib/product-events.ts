@@ -47,6 +47,13 @@ export const PRODUCT_EVENT_NAMES = [
   'feedback_email_reply_click',
   'csv_export',
   'mesero_qr_generated',
+  // Client-side crashes. Until this existed, a browser exception was recorded
+  // NOWHERE: global-error.tsx calls Sentry.captureException, and
+  // NEXT_PUBLIC_SENTRY_DSN is set in no environment, so the SDK disables itself
+  // and that call is a no-op. The /quotes outage of 10-14 sep 2026 was therefore
+  // invisible for four days — every server-side check was green while every
+  // browser showed "Algo salio mal". See analytics-client.trackClientError.
+  'client_error',
 ] as const;
 
 export type ProductEventName = (typeof PRODUCT_EVENT_NAMES)[number];
@@ -56,6 +63,11 @@ export type ProductEventName = (typeof PRODUCT_EVENT_NAMES)[number];
  * surfaces: QR review page, guest capture, validation tablet, mesero card, and
  * service-worker push callbacks). Anything else from an anonymous caller is
  * dropped silently by the track endpoint.
+ *
+ * `client_error` is on this list on purpose: the surfaces with no one watching
+ * them are exactly the ones where a broken bundle goes unreported, and a crash
+ * on /login or the guest review page is indistinguishable from a guest who left
+ * until it is reported from the browser.
  */
 export const PUBLIC_EVENT_NAMES: readonly ProductEventName[] = [
   'review_page_open',
@@ -66,6 +78,7 @@ export const PUBLIC_EVENT_NAMES: readonly ProductEventName[] = [
   'staff_scoreboard_open',
   'push_notification_click',
   'push_permission_result',
+  'client_error',
 ];
 
 export interface ProductEventInput {

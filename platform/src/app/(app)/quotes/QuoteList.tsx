@@ -10,7 +10,7 @@ import {
   formatPesos,
   type QuoteConversion,
   type QuoteStatus,
-} from '@/lib/quote-lifecycle';
+} from '@/lib/quote-status';
 
 type Quote = {
   id: number;
@@ -27,8 +27,9 @@ type Quote = {
   outcomeAmountMxn?: number | null;
 };
 
-// Labels/colours come from lib/quote-lifecycle so the list, the readout and the
-// API can never disagree about what a status is called.
+// Labels/colours come from lib/quote-status (re-exported by lib/quote-lifecycle)
+// so the list, the readout and the API can never disagree about what a status is
+// called — and so this client component never imports the server-only module.
 const STATUS_LABELS: Record<string, string> = LIFECYCLE_LABELS;
 
 const STATUS_COLORS: Record<string, string> = Object.fromEntries(

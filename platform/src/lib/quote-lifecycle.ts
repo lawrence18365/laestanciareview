@@ -6,79 +6,31 @@
  * collected X pesos. That only works if the history stays intact — the quotes
  * written before today are the entire denominator, so nothing is ever deleted,
  * only moved out of the active view.
+ *
+ * This module is server-only: it reads the DB. The client-safe half — statuses,
+ * labels, colours and formatPesos — lives in @/lib/quote-status and is
+ * re-exported here, so the list, the readout and the API cannot drift apart
+ * while a client component (QuoteList) can import the vocabulary without
+ * dragging @/db into the browser bundle. See quote-status.ts for the outage that
+ * made that split necessary.
  */
 import { db } from '@/db';
 import { quotes } from '@/db/schema';
 import { and, eq, gte, lt, inArray, sql, desc } from 'drizzle-orm';
+import { ACTIVE_STATUSES, type QuoteConversion, type QuoteStatus } from './quote-status';
 
-export const QUOTE_STATUSES = ['draft', 'sent', 'won', 'declined', 'expired'] as const;
-export type QuoteStatus = (typeof QUOTE_STATUSES)[number];
-
-/** Statuses still in play. The quotes list defaults to exactly these. */
-export const ACTIVE_STATUSES: QuoteStatus[] = ['draft', 'sent'];
-
-/** Statuses that are finished. Kept forever; hidden from the default view. */
-export const TERMINAL_STATUSES: QuoteStatus[] = ['won', 'declined', 'expired'];
-
-export const STATUS_LABELS: Record<QuoteStatus, string> = {
-  draft: 'Borrador',
-  sent: 'Enviada',
-  won: 'Ganada',
-  declined: 'Declinada',
-  expired: 'Vencida',
-};
-
-/** Tailwind-free colour tokens, so the list and the readout agree. */
-export const STATUS_COLORS: Record<QuoteStatus, { bg: string; text: string }> = {
-  draft: { bg: '#f5f5f4', text: '#57534e' },
-  sent: { bg: '#eff6ff', text: '#1d4ed8' },
-  won: { bg: '#f0fdf4', text: '#15803d' },
-  declined: { bg: '#fef2f2', text: '#b91c1c' },
-  expired: { bg: '#fafaf9', text: '#a8a29e' },
-};
-
-export function isQuoteStatus(value: unknown): value is QuoteStatus {
-  return typeof value === 'string' && (QUOTE_STATUSES as readonly string[]).includes(value);
-}
-
-export function isTerminal(status: QuoteStatus): boolean {
-  return TERMINAL_STATUSES.includes(status);
-}
-
-/**
- * Which statuses a quote may move to next.
- *
- * Terminal statuses are reversible — a GM who marks the wrong quote Ganada
- * needs a way back, and a "declined" client sometimes returns. Reopening is
- * allowed; silently losing the row is not.
- */
-export function allowedTransitions(from: QuoteStatus): QuoteStatus[] {
-  switch (from) {
-    case 'draft':
-      return ['sent', 'declined', 'expired'];
-    case 'sent':
-      return ['won', 'declined', 'expired', 'draft'];
-    case 'won':
-    case 'declined':
-    case 'expired':
-      return ['sent', 'draft'];
-  }
-}
-
-export interface QuoteConversion {
-  /** Quotes that reached the client in the period. */
-  sent: number;
-  /** Quotes marked won in the period. */
-  won: number;
-  declined: number;
-  expired: number;
-  /** Still awaiting an answer — not yet countable either way. */
-  open: number;
-  /** Pesos actually collected on won quotes in the period. */
-  pesosCollected: number;
-  /** won / (won + declined + expired). Null while nothing has closed. */
-  closeRate: number | null;
-}
+export {
+  QUOTE_STATUSES,
+  ACTIVE_STATUSES,
+  TERMINAL_STATUSES,
+  STATUS_LABELS,
+  STATUS_COLORS,
+  isQuoteStatus,
+  isTerminal,
+  allowedTransitions,
+  formatPesos,
+} from './quote-status';
+export type { QuoteStatus, QuoteConversion } from './quote-status';
 
 /**
  * Conversion for one restaurant over a period.
@@ -146,9 +98,4 @@ export async function getStaleQuotes(restaurantId: number, olderThan: Date) {
       ),
     )
     .orderBy(quotes.sentAt);
-}
-
-/** MX$ 12,500 — no decimals, since these are whole-peso figures. */
-export function formatPesos(amount: number): string {
-  return `MX$${amount.toLocaleString('es-MX', { maximumFractionDigits: 0 })}`;
 }

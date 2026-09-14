@@ -10,6 +10,7 @@ node_modules/
 # Local agent/tool artifacts
 .claude/
 .playwright-mcp/
+.reasonix/
 __pycache__/
 scripts/__pycache__/
 
