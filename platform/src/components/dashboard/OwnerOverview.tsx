@@ -464,6 +464,9 @@ export default function OwnerOverview({ stats, unresolvedCounts, roiByLocation, 
                       <div style={{ fontSize: '0.55rem', color: 'var(--text-dim)', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
                         {t.owner.sentCaught}
                       </div>
+                      <div style={{ fontSize: '0.5rem', color: 'var(--text-dim)', marginTop: 2, lineHeight: 1.3, textTransform: 'none', letterSpacing: 0 }}>
+                        {t.owner.thresholdNotComparable}
+                      </div>
                     </div>
 
                     {/* Unresolved */}
@@ -541,6 +544,9 @@ export default function OwnerOverview({ stats, unresolvedCounts, roiByLocation, 
                         </span>
                         <div style={{ fontSize: '0.6rem', color: 'var(--text-dim)', marginTop: 1, letterSpacing: '0.05em', textTransform: 'uppercase' }}>
                           {t.owner.sentCaught}
+                        </div>
+                        <div style={{ fontSize: '0.55rem', color: 'var(--text-dim)', marginTop: 2, lineHeight: 1.3, textTransform: 'none', letterSpacing: 0 }}>
+                          {t.owner.thresholdNotComparable}
                         </div>
                       </TdCell>
 
@@ -702,7 +708,9 @@ function WeeklyHistorySection({ rows, baselineTotal }: { rows: WeeklyHistoryRow[
               <th style={thStyle('right')}>{t.owner.surveys}</th>
               <th style={thStyle('right')}>{t.owner.avgShort}</th>
               <th style={thStyle('right')}>{t.owner.sentToGoogleShort}</th>
-              <th style={thStyle('right')}>{t.owner.interceptedShort}</th>
+              <th style={thStyle('right')} title={t.owner.thresholdNotComparable}>
+                {t.owner.interceptedShort} *
+              </th>
               <th style={thStyle('right')}>{t.owner.cumulative}</th>
             </tr>
           </thead>
@@ -751,6 +759,11 @@ function WeeklyHistorySection({ rows, baselineTotal }: { rows: WeeklyHistoryRow[
             })}
           </tbody>
         </table>
+        {/* Visible footnote, not just a tooltip: this column sums a per-unit
+            threshold rule across units, so the caveat must be on screen. */}
+        <p style={{ fontSize: '0.7rem', color: 'var(--text-dim)', margin: '0.5rem 0 0', lineHeight: 1.4 }}>
+          * {t.owner.thresholdNotComparable}
+        </p>
       </div>
     </section>
   );

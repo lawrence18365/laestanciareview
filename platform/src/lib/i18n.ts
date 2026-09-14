@@ -262,6 +262,14 @@ export const t = {
     avgShort: 'Prom.',
     sentToGoogleShort: 'Google',
     interceptedShort: 'Bajo umbral sin clic',
+    // "Bajo el umbral" depends on each unit's own googleThreshold, which is 4 at
+    // some locations and 5 at others. At a threshold-5 unit a 4-star rating
+    // without a Google click counts; at a threshold-4 unit it does not. The
+    // number is correct per unit and NOT comparable between units, and summing it
+    // across units adds figures computed under different rules. Said out loud
+    // wherever the metric appears so two units are never read as like-for-like.
+    thresholdNotComparable:
+      'El umbral se configura por ubicación (4 o 5 estrellas), así que esta cifra no es comparable entre unidades ni sumable entre ellas.',
     cumulative: 'Acumulado',
     currentWeek: 'Semana actual',
     noWeeklyData: 'Aún no hay datos semanales',

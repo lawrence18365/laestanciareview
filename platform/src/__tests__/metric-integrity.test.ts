@@ -118,6 +118,24 @@ describe('labels name the event they count', () => {
   });
 });
 
+describe('threshold-dependent metrics are marked non-comparable', () => {
+  it('the note names the per-unit rule and denies comparability and summing', () => {
+    const n = t.owner.thresholdNotComparable;
+    expect(n).toMatch(/umbral/i);
+    expect(n).toMatch(/por ubicación/i);
+    expect(n).toMatch(/4 o 5/);
+    expect(n).toMatch(/no es comparable/i);
+    expect(n).toMatch(/sumable/i);
+  });
+
+  it('every threshold-dependent render site carries the note', () => {
+    const src = readFileSync(
+      path.resolve(__dirname, '../components/dashboard/OwnerOverview.tsx'), 'utf8');
+    // two per-unit surfaces plus the cross-unit weekly column (header + footnote)
+    expect((src.match(/thresholdNotComparable/g) ?? []).length).toBeGreaterThanOrEqual(4);
+  });
+});
+
 describe('CSV exports name the event they contain, in Spanish', () => {
   const ROOT = path.resolve(__dirname, '../..');
   const read = (rel: string) => readFileSync(path.join(ROOT, rel), 'utf8');
