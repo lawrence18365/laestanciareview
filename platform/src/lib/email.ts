@@ -510,7 +510,7 @@ export async function sendWeeklyDigest({
     <div style="padding: 20px 28px;">
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background: #ffffff; border: 1px solid #111111; border-radius: 0;">
         <tr>
-          ${statCell(String(lastWeek.totalReviews), 'Opiniones capturadas', delta(reviewsDelta))}
+          ${statCell(String(lastWeek.totalReviews), 'Calificaciones', delta(reviewsDelta))}
           ${statCell(lastWeek.avgRating ? lastWeek.avgRating.toFixed(1) : '--', 'Calif. Prom.', ratingD(ratingDelta))}
           ${statCell(String(lastWeek.googleSends), 'Clics a Google', '')}
         </tr>
@@ -540,7 +540,7 @@ export async function sendWeeklyDigest({
     from: FROM,
     to,
     subject: `📊 Resumen Semanal: ${restaurantName}, ${lastWeek.totalReviews} opiniones capturadas, ${lastWeek.avgRating ? lastWeek.avgRating.toFixed(1) : '--'} prom`,
-    html: emailLayout(content, 'Enviado cada lunes por RateTap'),
+    html: emailLayout(content, metricNote(['calificaciones', 'google'], 'Enviado cada lunes por RateTap')),
   });
 
   if (!result.success || result.skipped) {
@@ -670,7 +670,7 @@ export async function sendOwnerDigest({ to, locations, dashboardUrl }: OwnerDige
     <div style="padding: 20px 28px;">
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" class="stack-table" style="background: #ffffff; border: 1px solid #111111; border-radius: 0;">
         <tr class="stack-row">
-          ${statTile('Opiniones capturadas', String(totalReviews))}
+          ${statTile('Calificaciones', String(totalReviews))}
           ${statTile('Calif. Prom.', overallAvg)}
           ${statTile('Ubicaciones', String(locations.length))}
         </tr>
@@ -687,7 +687,7 @@ export async function sendOwnerDigest({ to, locations, dashboardUrl }: OwnerDige
         <thead>
           <tr>
             <th style="padding: 12px 14px; text-align: left; ${SECTION_LABEL_STYLE}">Ubicacion</th>
-            <th style="padding: 12px 14px; text-align: right; ${SECTION_LABEL_STYLE}">Opiniones capturadas</th>
+            <th style="padding: 12px 14px; text-align: right; ${SECTION_LABEL_STYLE}">Calificaciones</th>
             <th style="padding: 12px 14px; text-align: right; ${SECTION_LABEL_STYLE}">Prom</th>
             <th style="padding: 12px 14px; text-align: right; ${SECTION_LABEL_STYLE}">Clics a Google</th>
             <th style="padding: 12px 14px; text-align: right; ${SECTION_LABEL_STYLE}">Bajo umbral sin clic</th>
@@ -710,7 +710,7 @@ export async function sendOwnerDigest({ to, locations, dashboardUrl }: OwnerDige
     from: FROM,
     to,
     subject: `📊 Resumen Semanal: ${totalReviews} opiniones capturadas, ${overallAvg} prom en ${locations.length} ubicaciones`,
-    html: emailLayout(content, 'Enviado cada lunes por RateTap'),
+    html: emailLayout(content, metricNote(['calificaciones', 'google'], 'Enviado cada lunes por RateTap')),
   });
 
   if (!result.success || result.skipped) {
@@ -1456,6 +1456,34 @@ function briefingWeekLabel(weekStart: Date): string {
   return `${f(weekStart)} – ${f(end)}`;
 }
 
+/**
+ * Canonical metric definitions. Each label maps to exactly ONE event, and every
+ * email that prints one of these numbers carries the matching definition, so a
+ * label can never imply a different event than the one it counts.
+ *
+ *   Calificaciones    submitted star ratings        rows in `reviews`
+ *   Aperturas         guest page loads              review_page_open
+ *   Pantalla mostrada rating UI actually shown      review_screen_shown
+ *   Bloqueados        UI suppressed by the guard    review_blocked_local_guard
+ *   Google            Google CTA clicks             reviews.sent_to_google
+ */
+const METRIC_DEFS = {
+  calificaciones: 'Calificaciones = estrellas que los invitados enviaron',
+  aperturas: 'Aperturas = veces que se abrió la pantalla de calificación',
+  pantalla: 'Pantalla mostrada = la pantalla de calificación sí se mostró',
+  bloqueados: 'Bloqueados = pantalla no mostrada por el límite de visita repetida',
+  google: 'Google = clics en el botón de reseña de Google',
+} as const;
+
+/** Footer note: the definitions for the metrics this email actually shows. */
+function metricNote(
+  keys: ReadonlyArray<keyof typeof METRIC_DEFS>,
+  suffix?: string,
+): string {
+  const defs = keys.map((k) => METRIC_DEFS[k]).join(' · ');
+  return suffix ? `${defs}<br>${suffix}` : defs;
+}
+
 function statTile(label: string, value: string, note?: string): string {
   return `
     <td class="stat-tile" valign="top" style="box-sizing: border-box; padding: 18px 12px; text-align: center; vertical-align: top;">
@@ -1670,7 +1698,7 @@ export async function sendOwnerBriefing({
     from: FROM,
     to,
     subject: `Grupo Estancia · ${activeCount} de ${locations.length} ubicaciones activas, ${complaints} quejas esta semana`,
-    html: emailLayout(content),
+    html: emailLayout(content, metricNote(['calificaciones'])),
   });
 }
 
@@ -1797,6 +1825,6 @@ export async function sendRegionalBriefing({
     from: FROM,
     to,
     subject: `${regionName} · ${scans} calificaciones, ${birthdays.length} cumpleaños esta semana`,
-    html: emailLayout(content),
+    html: emailLayout(content, metricNote(['calificaciones', 'google'])),
   });
 }

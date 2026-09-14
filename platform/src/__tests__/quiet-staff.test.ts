@@ -211,7 +211,7 @@ describe('staff anomaly weekly digest rendering', () => {
     expect(text).toContain('Cambios anormales: Ana recibió 0 respuestas esta semana vs 12 normalmente (-100%).');
     expect(text).toContain('Quejas: 3 recibidas, 67% atendidas en menos de 24 h, 1 vencidas');
     expect(text).toContain('1 estrella, 30 h abierta: &ldquo;Servicio muy lento&rdquo;');
-    expect(text).toContain('Opiniones capturadas');
+    expect(text).toContain('Calificaciones');
     expect(text).not.toContain('reseñas por mesero');
   });
 });
