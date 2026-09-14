@@ -17,7 +17,9 @@
  *   Google             Google CTA clicks                reviews.sent_to_google = true
  */
 import { config } from 'dotenv';
-config({ path: process.env.ENV_FILE ?? '.env.local' });
+// Quiet before loading: dotenv's banner goes to stdout and would corrupt --json.
+process.env.DOTENV_CONFIG_QUIET ??= 'true';
+config({ path: process.env.ENV_FILE ?? '.env.local', quiet: true });
 
 import { Pool, neonConfig } from '@neondatabase/serverless';
 import ws from 'ws';
@@ -70,12 +72,11 @@ async function main() {
 
   const pool = new Pool({ connectionString: url });
   try {
-    const unitFilter = unit ? `AND r.slug = '${unit.replace(/'/g, "''")}'` : '';
-
     const { rows } = await pool.query<Row>(`
       WITH base AS (
-        SELECT id, slug, name, region FROM restaurants
-         WHERE is_owner = false AND is_regional = false ${unitFilter}
+        SELECT r.id, r.slug, r.name, r.region FROM restaurants r
+         WHERE r.is_owner = false AND r.is_regional = false
+           AND ($4::text IS NULL OR r.slug = $4)
       ),
       ev AS (
         SELECT restaurant_id,
@@ -108,16 +109,19 @@ async function main() {
         LEFT JOIN ev e ON e.restaurant_id = b.id
         LEFT JOIN rv v ON v.restaurant_id = b.id
        ORDER BY COALESCE(e.aperturas,0) DESC, b.slug
-    `, [start, end, GOOGLE_CLICK_SINCE]);
+    `, [start, end, GOOGLE_CLICK_SINCE, unit ?? null]);
 
     const { rows: ratingRows } = await pool.query(`
-      SELECT rating::int AS rating,
+      SELECT v.rating::int AS rating,
              count(*)::int AS submitted,
-             count(*) FILTER (WHERE sent_to_google AND created_at >= $3)::int AS google
-        FROM reviews
-       WHERE created_at >= $1 AND created_at < $2
+             count(*) FILTER (WHERE v.sent_to_google AND v.created_at >= $3)::int AS google
+        FROM reviews v
+        JOIN restaurants r ON r.id = v.restaurant_id
+       WHERE v.created_at >= $1 AND v.created_at < $2
+         AND r.is_owner = false AND r.is_regional = false
+         AND ($4::text IS NULL OR r.slug = $4)
        GROUP BY 1 ORDER BY 1
-    `, [start, end, GOOGLE_CLICK_SINCE]);
+    `, [start, end, GOOGLE_CLICK_SINCE, unit ?? null]);
 
     if (asJson) {
       console.log(JSON.stringify({
