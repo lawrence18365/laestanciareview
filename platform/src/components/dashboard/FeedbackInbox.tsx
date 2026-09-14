@@ -208,14 +208,16 @@ export default function FeedbackInbox({ initialFeedback }: Props) {
 
   function handleExport() {
     track('csv_export', { feature: 'inbox' });
+    // Spanish headers to match the rest of the product, and each header names the
+    // value it holds: Calificación is the star rating the guest submitted.
     const rows = filtered.map((f) => ({
-      Date: f.createdAt.slice(0, 10),
-      Customer: f.customerName ?? '',
+      Fecha: f.createdAt.slice(0, 10),
+      Cliente: f.customerName ?? '',
       Email: f.customerEmail ?? '',
-      Rating: f.rating,
-      Staff: f.staffName ?? '',
-      Status: statusLabel(f.status, isPositiveRating(f.rating)),
-      Feedback: f.feedback ?? '',
+      Calificación: f.rating,
+      Personal: f.staffName ?? '',
+      Estado: statusLabel(f.status, isPositiveRating(f.rating)),
+      Comentario: f.feedback ?? '',
     }));
     downloadCSV(rows, 'feedback-export.csv');
   }

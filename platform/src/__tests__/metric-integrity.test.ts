@@ -118,6 +118,44 @@ describe('labels name the event they count', () => {
   });
 });
 
+describe('CSV exports name the event they contain, in Spanish', () => {
+  const ROOT = path.resolve(__dirname, '../..');
+  const read = (rel: string) => readFileSync(path.join(ROOT, rel), 'utf8');
+
+  it('no export emits a column called Reseñas for submitted ratings', () => {
+    for (const f of [
+      'src/components/dashboard/AnalyticsView.tsx',
+      'src/components/dashboard/DashboardView.tsx',
+      'src/components/dashboard/FeedbackInbox.tsx',
+      'src/components/dashboard/InterceptedDrilldown.tsx',
+    ]) {
+      expect(read(f)).not.toMatch(/^\s*Reseñas:/m);
+    }
+  });
+
+  it('no export emits English headers in a Spanish-only product', () => {
+    for (const f of [
+      'src/components/dashboard/DashboardView.tsx',
+      'src/components/dashboard/FeedbackInbox.tsx',
+    ]) {
+      const src = read(f);
+      for (const bad of ['Rank:', 'Staff:', 'Code:', 'Reviews:', 'Date:', 'Customer:', 'Rating:', 'Status:', 'Feedback:']) {
+        expect(src).not.toMatch(new RegExp('^\\s*' + bad, 'm'));
+      }
+      expect(src).not.toMatch(/'Avg Rating'/);
+    }
+  });
+
+  it('the rating-count columns are backed by count(reviews.id), not a Google figure', () => {
+    // Values audit, not just labels: reviewCount and the daily count are both
+    // count(reviews.id); avgRating is avg(reviews.rating).
+    const q = read('src/lib/queries.ts');
+    expect(q).toMatch(/reviewCount: count\(reviews\.id\)/);
+    expect(q).toMatch(/count: count\(reviews\.id\)/);
+    expect(q).toMatch(/avgRating: avg\(reviews\.rating\)/);
+  });
+});
+
 describe('no prohibited claim survives anywhere in the source', () => {
   const ROOT = path.resolve(__dirname, '../..');
   const files = [
