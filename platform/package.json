@@ -12,6 +12,7 @@
     "db:migrate": "drizzle-kit migrate",
     "db:seed": "tsx src/db/seed.ts",
     "db:studio": "drizzle-kit studio",
+    "funnel:report": "tsx scripts/funnel-report.ts",
     "test": "vitest run",
     "test:watch": "vitest"
   },
