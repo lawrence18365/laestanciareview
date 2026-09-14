@@ -16,4 +16,4 @@ export const RATING_BASELINE_FLOOR = new Date('2026-03-17T00:00:00.000Z');
  * Said out loud wherever a baseline is compared against a current rating, so
  * nobody reads a step change in the numbers as a step change in the estate.
  */
-export const RATING_BASELINE_NOTE = 'Base de Google recalibrada el 11 sep 2026 tras corregir el ID de ficha de 11 ubicaciones; comparaciones anteriores usaban otra ficha.';
+export const RATING_BASELINE_NOTE = 'Base de Google desde el 17 mar 2026, cuando se corrigió el ID de ficha de 11 ubicaciones; los datos anteriores describen otra ficha y no se usan como base.';

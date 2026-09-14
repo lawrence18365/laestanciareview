@@ -91,9 +91,10 @@ export default function OwnerOverview({ stats, unresolvedCounts, roiByLocation, 
     let totalGoogleSends = 0;
     let totalIntercepted = 0;
     let totalReviews = 0;
-    let totalRatingGain = 0;
-    let totalReviewsGained = 0;
-    let locationsWithGain = 0;
+    let totalRatingDelta = 0;
+    let totalReviewsDelta = 0;
+    let locationsWithTrend = 0;
+    let locationsMissingTrend = 0;
 
     for (const r of stats) {
       const roi = roiByLocation[r.restaurantId];
@@ -102,13 +103,19 @@ export default function OwnerOverview({ stats, unresolvedCounts, roiByLocation, 
         totalIntercepted += roi.intercepted;
         totalReviews += roi.totalReviews;
       }
+      // Every location with a valid baseline+current observation pair is
+      // included: positive, zero and negative alike. The previous version summed
+      // and counted only `> 0` changes, so the average could never be <= 0 by
+      // construction and a declining location silently vanished from both the
+      // numerator and the denominator. A location is now excluded ONLY when the
+      // observation pair is missing, and that count is reported separately.
       const trend = googleTrends[r.restaurantId];
-      if (trend && trend.ratingChange > 0) {
-        totalRatingGain += trend.ratingChange;
-        locationsWithGain++;
-      }
-      if (trend && trend.reviewsGained > 0) {
-        totalReviewsGained += trend.reviewsGained;
+      if (trend) {
+        totalRatingDelta += trend.ratingChange;
+        totalReviewsDelta += trend.reviewsGained;
+        locationsWithTrend++;
+      } else {
+        locationsMissingTrend++;
       }
     }
 
@@ -116,9 +123,11 @@ export default function OwnerOverview({ stats, unresolvedCounts, roiByLocation, 
       totalGoogleSends,
       totalIntercepted,
       totalReviews,
-      totalReviewsGained,
-      avgRatingGain: locationsWithGain > 0 ? totalRatingGain / locationsWithGain : 0,
-      locationsWithGain,
+      // Denominator: locations with a baseline+current Google observation pair.
+      totalReviewsDelta,
+      avgRatingDelta: locationsWithTrend > 0 ? totalRatingDelta / locationsWithTrend : null,
+      locationsWithTrend,
+      locationsMissingTrend,
     };
   }, [stats, roiByLocation, googleTrends]);
 
@@ -264,8 +273,8 @@ export default function OwnerOverview({ stats, unresolvedCounts, roiByLocation, 
               {fmt(portfolioROI.totalGoogleSends)}
             </div>
             <div style={{ fontSize: '0.75rem', color: 'var(--text-dim)', marginTop: 4 }}>
-              {portfolioROI.totalReviewsGained > 0
-                ? t.owner.newGoogleReviewsConfirmed(portfolioROI.totalReviewsGained)
+              {portfolioROI.locationsWithTrend > 0
+                ? t.owner.googleTwoFact(portfolioROI.totalGoogleSends, portfolioROI.totalReviewsDelta)
                 : t.owner.customersDirectedToGoogle}
             </div>
           </div>
@@ -300,16 +309,16 @@ export default function OwnerOverview({ stats, unresolvedCounts, roiByLocation, 
           </div>
 
           {/* Google Rating Change */}
-          {portfolioROI.locationsWithGain > 0 && (
+          {portfolioROI.locationsWithTrend > 0 && (
             <div>
               <div style={{ fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: 6 }}>
                 Google &#9733;
               </div>
               <div className="font-numeric" style={{ fontSize: '2rem', fontWeight: 700, color: 'var(--green)', lineHeight: 1 }}>
-                +{portfolioROI.avgRatingGain.toFixed(1)}
+                {(portfolioROI.avgRatingDelta ?? 0) >= 0 ? '+' : ''}{(portfolioROI.avgRatingDelta ?? 0).toFixed(2)}
               </div>
               <div style={{ fontSize: '0.75rem', color: 'var(--text-dim)', marginTop: 4 }}>
-                {t.owner.avgGoogleRatingGain(portfolioROI.locationsWithGain)}
+                {t.owner.avgGoogleRatingDelta(portfolioROI.locationsWithTrend, portfolioROI.locationsMissingTrend)}
               </div>
             </div>
           )}

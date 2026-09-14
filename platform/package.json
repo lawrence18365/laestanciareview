@@ -13,6 +13,8 @@
     "db:seed": "tsx src/db/seed.ts",
     "db:studio": "drizzle-kit studio",
     "funnel:report": "tsx scripts/funnel-report.ts",
+    "roi:board": "tsx scripts/roi-board.ts",
+    "health:board": "tsx scripts/health-board.ts",
     "test": "vitest run",
     "test:watch": "vitest"
   },

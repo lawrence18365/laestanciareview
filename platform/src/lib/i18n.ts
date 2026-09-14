@@ -1,6 +1,26 @@
 // Central Spanish translations for the entire platform.
 // Usage: import { t } from '@/lib/i18n';
 
+/**
+ * Google context line — TWO SEPARATE OBSERVATIONS, never one causal claim.
+ *
+ * RateTap can count the CTA clicks it generated. Google's public review count is
+ * moved by every source: organic visitors, other channels, and Google's own
+ * removals (observed drops of -354, -236, -178 in our snapshots). Nothing joins
+ * a click to a published review — Google exposes no such link — so causation is
+ * neither stated nor implied.
+ *
+ * This replaced "N nuevas reseñas en Google confirmadas", which asserted
+ * attribution. That claim was demonstrably false: Estancia Juárez showed 1,231
+ * "confirmed" reviews against 25 measurable clicks in its entire history, and
+ * the two most dormant units carried the largest numbers.
+ *
+ * The delta is shown with its sign and is NOT hidden when zero or negative;
+ * suppressing non-positive values was itself an upward bias.
+ */
+export const googleTwoFactNote = (clicks: number, googleDelta: number) =>
+  `RateTap registró ${clicks} ${clicks === 1 ? 'clic' : 'clics'} a Google. Aparte, el conteo público de reseñas de Google cambió en ${googleDelta >= 0 ? '+' : ''}${googleDelta} en el mismo periodo. Son dos mediciones independientes; el cambio de Google no se atribuye a RateTap.`;
+
 export const t = {
   // ── Navigation ──
   nav: {
@@ -47,7 +67,7 @@ export const t = {
     currentGoogleRating: 'Calificación actual en Google',
     googleReviews: 'reseñas en Google',
     sentToGoogle: 'Clics a Google',
-    newGoogleReviewsConfirmed: (n: number) => `${n} nuevas reseñas en Google confirmadas`,
+    googleTwoFact: googleTwoFactNote,
     customersDirectedToGoogle: 'clics en la opción de Google',
     badReviewsPrevented: 'Bajo el umbral sin clic a Google',
     negativeReviewsCaughtPrivately: 'calificaciones sin clic registrado a Google',
@@ -82,11 +102,11 @@ export const t = {
     allTimeImpact: 'Impacto Total',
     scans: 'calificaciones capturadas',
     sentToGoogle: 'Clics a Google',
-    confirmedNewReviews: (n: number) => `${n} nuevas reseñas confirmadas`,
+    googleTwoFact: googleTwoFactNote,
     customersDirectedToGoogle: 'clics en la opción de Google',
     intercepted: 'Bajo el umbral sin clic a Google',
     badReviewsCaughtPrivately: 'calificaciones sin clic registrado a Google',
-    allTimeReviews: 'Reseñas Totales',
+    allTimeReviews: 'Calificaciones totales',
     allTimeAvg: 'Promedio Total',
     googleSends: 'Clics a Google',
     feedbackReceived: 'Comentarios Recibidos',
@@ -210,11 +230,15 @@ export const t = {
   // ── Owner Overview ──
   owner: {
     portfolioImpact: (n: number) => `Impacto del Portafolio — ${n} Ubicaciones`,
-    avgGoogleRatingGain: (n: number) =>
-      `Ganancia promedio de calificación en Google en ${n} ${n === 1 ? 'ubicación' : 'ubicaciones'}`,
+    // "Cambio promedio", not "ganancia": the average now includes locations that
+    // fell or stayed flat, so it can legitimately be zero or negative. The
+    // denominator is stated, and locations excluded for missing data are counted
+    // separately rather than silently dropped.
+    avgGoogleRatingDelta: (included: number, missing: number) =>
+      `Cambio promedio de calificación en Google · promedio sobre ${included} ${included === 1 ? 'ubicación' : 'ubicaciones'} con base y medición actual${missing > 0 ? ` · ${missing} sin datos suficientes` : ''}`,
     totalScansProcessed: 'Total de calificaciones capturadas en todas las ubicaciones',
     sentToGoogle: 'Clics a Google',
-    newGoogleReviewsConfirmed: (n: number) => `${n} nuevas reseñas en Google confirmadas`,
+    googleTwoFact: googleTwoFactNote,
     customersDirectedToGoogle: 'clics en la opción de Google',
     badReviewsPrevented: 'Bajo el umbral sin clic a Google',
     negativeReviewsCaughtPrivately: 'calificaciones sin clic registrado a Google',
@@ -234,7 +258,7 @@ export const t = {
     weeklyHistory: 'Historial Semanal',
     weeklyHistorySubtitle: 'Revisión semanal — se actualiza cada lunes',
     week: 'Semana',
-    surveys: 'Encuestas',
+    surveys: 'Calificaciones',
     avgShort: 'Prom.',
     sentToGoogleShort: 'Google',
     interceptedShort: 'Bajo umbral sin clic',
@@ -242,7 +266,7 @@ export const t = {
     currentWeek: 'Semana actual',
     noWeeklyData: 'Aún no hay datos semanales',
     effectivenessPerUnit: 'Efectividad por Unidad',
-    effectivenessSubtitle: 'Encuestas semanales por ubicación',
+    effectivenessSubtitle: 'Calificaciones semanales por ubicación',
     unit: 'Unidad',
     viewDetails: 'Ver detalle',
   },

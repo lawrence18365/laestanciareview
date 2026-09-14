@@ -7,6 +7,8 @@ import type { ProductEventName } from '@/lib/product-events';
 
 const SESSION_KEY = 'rt_sid';
 const TRACK_URL = '/api/analytics/track';
+/** Bundle this client is running. Inlined at build time by next.config.ts. */
+export const BUILD_SHA = process.env.NEXT_PUBLIC_BUILD_SHA ?? 'unknown';
 
 /** Stable-per-tab session id, persisted in sessionStorage. */
 export function getSessionId(): string | null {
@@ -60,7 +62,9 @@ export function track(
           // Guest surfaces have no session, so the slug is the only way the
           // track endpoint can attribute the event to a restaurant.
           restaurant_slug: opts?.restaurantSlug,
-          properties: properties ?? undefined,
+          // build_sha rides on every event so a stale client is identifiable
+          // without a schema change.
+          properties: { ...(properties ?? {}), build_sha: BUILD_SHA },
         },
       ],
     });

@@ -821,8 +821,12 @@ export const FEATURE_SOURCES = {
     tag: 'verified',
   },
   pwa: {
-    label: 'PWA instalada',
-    source: "app_open con display_mode 'standalone'",
+    // Names the event, not an installation. A standalone open proves the app is
+    // being USED in app mode; it does not prove when (or whether) it was
+    // installed, and zero here does NOT mean "never installed" — an installed
+    // app opened from the browser is indistinguishable from one never installed.
+    label: 'Uso en modo app (standalone)',
+    source: "app_open con display_mode 'standalone' — uso, no instalación",
     tag: 'verified',
   },
   push: {

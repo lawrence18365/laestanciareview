@@ -163,8 +163,8 @@ export default function AnalyticsView({
             <ImpactMetric
               label={t.analytics.sentToGoogle}
               value={roiStats.googleSends}
-              sub={googleTrend && googleTrend.reviewsGained > 0
-                ? t.analytics.confirmedNewReviews(googleTrend.reviewsGained)
+              sub={googleTrend
+                ? t.analytics.googleTwoFact(roiStats.googleSends, googleTrend.reviewsGained)
                 : t.analytics.customersDirectedToGoogle}
             />
             <ImpactMetric
@@ -213,7 +213,7 @@ export default function AnalyticsView({
                     Rango: i + 1,
                     Personal: s.staffName ?? s.staffCode ?? 'Desconocido',
                     Código: s.staffCode ?? '',
-                    Reseñas: s.reviewCount,
+                    Calificaciones: s.reviewCount,
                     '5 Estrellas': s.fiveStarCount,
                     'Menos de 4': s.belowFourCount,
                     'Calif. Prom.': s.avgRating ? s.avgRating.toFixed(1) : '',
@@ -295,7 +295,7 @@ export default function AnalyticsView({
                 downloadCSV(
                   dailyCounts.map((d) => ({
                     Fecha: d.date,
-                    Reseñas: d.count,
+                    Calificaciones: d.count,
                     'Calif. Prom.': d.avgRating?.toFixed(1) ?? '',
                   })),
                   'resenas-diarias.csv',

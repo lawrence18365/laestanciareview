@@ -29,6 +29,15 @@ export const PRODUCT_EVENT_NAMES = [
   'review_screen_shown',
   'review_blocked_local_guard',
   'review_submit_suppressed',
+  // PWA adoption. Installation itself is only observable where the browser says
+  // so: Chromium fires beforeinstallprompt/appinstalled, iOS Safari fires
+  // NEITHER. On iOS the only evidence is a later standalone open, so install is
+  // detected late and never at the moment it happens. Absence of these events is
+  // therefore NOT evidence that the app was never installed.
+  'pwa_install_prompt_offered',
+  'pwa_installed',
+  'pwa_standalone_first_open',
+  'pwa_standalone_open',
   'guest_capture_page_open',
   'validation_page_open',
   'staff_scoreboard_open',

@@ -117,8 +117,11 @@ export default function DashboardView({
   }, [roiStats.firstReviewAt]);
   const avgReviewsPerWeek = weeksActive > 0 ? (roiStats.totalReviews / weeksActive).toFixed(1) : '0';
 
-  const googleConversionText = googleTrend && googleTrend.reviewsGained > 0
-    ? t.dashboard.googleConversion(roiStats.googleSends, googleTrend.reviewsGained)
+  // Shown whenever a Google trend exists, regardless of the delta's sign: hiding
+  // non-positive movement was an upward bias. The two numbers are independent
+  // observations and the copy says so.
+  const googleConversionText = googleTrend
+    ? t.dashboard.googleTwoFact(roiStats.googleSends, googleTrend.reviewsGained)
     : null;
 
   return (
@@ -269,8 +272,8 @@ export default function DashboardView({
             <ImpactMetric
               label={t.dashboard.sentToGoogle}
               value={roiStats.googleSends}
-              sub={googleTrend && googleTrend.reviewsGained > 0
-                ? t.dashboard.newGoogleReviewsConfirmed(googleTrend.reviewsGained)
+              sub={googleTrend
+                ? t.dashboard.googleTwoFact(roiStats.googleSends, googleTrend.reviewsGained)
                 : t.dashboard.customersDirectedToGoogle}
             />
             <ImpactMetric
@@ -384,11 +387,11 @@ export default function DashboardView({
                 track('csv_export', { feature: 'dashboard' });
                 downloadCSV(
                   leaderboard.map((e, i) => ({
-                    Rank: i + 1,
-                    Staff: e.staffName ?? t.dashboard.unknown,
-                    Code: e.staffCode ?? '',
-                    'Avg Rating': e.avgRating.toFixed(1),
-                    Reviews: e.reviewCount,
+                    Rango: i + 1,
+                    Personal: e.staffName ?? t.dashboard.unknown,
+                    Código: e.staffCode ?? '',
+                    'Promedio': e.avgRating.toFixed(1),
+                    Calificaciones: e.reviewCount,
                   })),
                   'leaderboard.csv',
                 );
