@@ -1,4 +1,4 @@
-import { redirect, notFound } from 'next/navigation';
+import { redirect } from 'next/navigation';
 import { eq, and } from 'drizzle-orm';
 import { db } from '@/db';
 import { quotes, restaurants } from '@/db/schema';
@@ -6,6 +6,7 @@ import { verifySession } from '@/lib/session';
 import { getBrandForSlug } from '@/lib/brands';
 import { isAdminEmail } from '@/lib/admin';
 import QuoteBuilderV2 from '@/components/quotes/QuoteBuilderV2';
+import QuoteMissing from '@/components/quotes/QuoteMissing';
 import { emptyConfig, migrateConfig, type QuoteConfig } from '@/lib/quote-data';
 
 export default async function EditQuotePage({ params }: { params: Promise<{ id: string }> }) {
@@ -15,7 +16,7 @@ export default async function EditQuotePage({ params }: { params: Promise<{ id: 
 
   const { id } = await params;
   const quoteId = parseInt(id, 10);
-  if (isNaN(quoteId)) notFound();
+  if (isNaN(quoteId)) return <QuoteMissing />;
 
   const [restaurant] = await db
     .select({ id: restaurants.id, name: restaurants.name, managerEmail: restaurants.managerEmail })
@@ -30,7 +31,7 @@ export default async function EditQuotePage({ params }: { params: Promise<{ id: 
     .from(quotes)
     .where(and(eq(quotes.id, quoteId), eq(quotes.restaurantId, restaurant.id)))
     .limit(1);
-  if (!quote) notFound();
+  if (!quote) return <QuoteMissing quoteRef={`Q-${String(quoteId).padStart(4, '0')}`} />;
 
   // Prefer the stored builder state. Legacy rows without configJson get a
   // blank config seeded with the top-level client/event data.
