@@ -113,7 +113,7 @@ export function classifyLocation(input: LocationSignalInput): LocationSignalResu
         scanChange: null,
         breadthChange: null,
         gmPresent,
-        summary: 'Sin escaneos registrados en 14 días.',
+        summary: 'Sin calificaciones registradas en 14 días.',
         actionable: true,
       };
     }
@@ -123,7 +123,7 @@ export function classifyLocation(input: LocationSignalInput): LocationSignalResu
       scanChange: null,
       breadthChange: null,
       gmPresent,
-      summary: `${scansThisWeek} escaneos esta semana, sin semana previa para comparar.`,
+      summary: `${scansThisWeek} calificaciones esta semana, sin semana previa para comparar.`,
       actionable: false,
     };
   }
@@ -141,7 +141,7 @@ export function classifyLocation(input: LocationSignalInput): LocationSignalResu
       scanChange,
       breadthChange,
       gmPresent,
-      summary: `Escaneos ${dir} ${pct(scanChange)}, con ${staffAskingThisWeek} ${staffAskingThisWeek === 1 ? 'mesero capturando' : 'meseros capturando'}.`,
+      summary: `Calificaciones ${dir} ${pct(scanChange)}, con ${staffAskingThisWeek} ${staffAskingThisWeek === 1 ? 'mesero capturando' : 'meseros capturando'}.`,
       actionable: false,
     };
   }
@@ -153,7 +153,7 @@ export function classifyLocation(input: LocationSignalInput): LocationSignalResu
       scanChange,
       breadthChange,
       gmPresent,
-      summary: `Escaneos ${pct(scanChange)} abajo. Sin base de participación previa para saber si bajó la participación del equipo o hubo menos afluencia.`,
+      summary: `Calificaciones ${pct(scanChange)} abajo. Sin base de participación previa para saber si bajó la participación del equipo o hubo menos afluencia.`,
       actionable: false,
     };
   }
@@ -164,7 +164,7 @@ export function classifyLocation(input: LocationSignalInput): LocationSignalResu
       scanChange,
       breadthChange,
       gmPresent,
-      summary: `Escaneos ${pct(scanChange)} abajo; siguen participando ${staffAskingThisWeek} meseros (antes ${staffAskingLastWeek}). Misma participación, menos capturas por mesero.`,
+      summary: `Calificaciones ${pct(scanChange)} abajo; siguen participando ${staffAskingThisWeek} meseros (antes ${staffAskingLastWeek}). Misma participación, menos capturas por mesero.`,
       actionable: false,
     };
   }
@@ -175,7 +175,7 @@ export function classifyLocation(input: LocationSignalInput): LocationSignalResu
       scanChange,
       breadthChange,
       gmPresent,
-      summary: `Escaneos ${pct(scanChange)} abajo y los meseros que capturan bajaron de ${staffAskingLastWeek} a ${staffAskingThisWeek}. Menos meseros participando, no sólo menos capturas.`,
+      summary: `Calificaciones ${pct(scanChange)} abajo y los meseros que capturan bajaron de ${staffAskingLastWeek} a ${staffAskingThisWeek}. Menos meseros participando, no sólo menos capturas.`,
       actionable: true,
     };
   }
@@ -185,7 +185,7 @@ export function classifyLocation(input: LocationSignalInput): LocationSignalResu
     scanChange,
     breadthChange,
     gmPresent,
-    summary: `Escaneos ${pct(scanChange)} abajo, meseros capturando de ${staffAskingLastWeek} a ${staffAskingThisWeek}. No alcanza para distinguir menos afluencia de menos uso.`,
+    summary: `Calificaciones ${pct(scanChange)} abajo, meseros capturando de ${staffAskingLastWeek} a ${staffAskingThisWeek}. No alcanza para distinguir menos afluencia de menos uso.`,
     actionable: false,
   };
 }

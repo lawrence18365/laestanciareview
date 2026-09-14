@@ -89,7 +89,7 @@ describe('classifyLocation — descriptive summaries', () => {
     expect(inactive.actionable).toBe(true);
     expect(inactive.scanChange).toBeNull();
     expect(inactive.breadthChange).toBeNull();
-    expect(inactive.summary).toBe('Sin escaneos registrados en 14 días.');
+    expect(inactive.summary).toBe('Sin calificaciones registradas en 14 días.');
     expect(signalLabel(inactive.signal)).toBe('Sin actividad');
     expectDescriptive(inactive.summary);
   });

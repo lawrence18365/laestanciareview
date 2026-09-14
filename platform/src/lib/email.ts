@@ -1599,7 +1599,7 @@ export async function sendOwnerBriefing({
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" class="stack-table" style="margin: 8px 0 20px; background: #ffffff; border: 1px solid #111111; border-radius: 0;">
         <tr class="stack-row">
           ${statTile('Ubicaciones activas', `${activeCount} de ${locations.length}`)}
-          ${statTile('Escaneos', String(scans))}
+          ${statTile('Calificaciones', String(scans))}
           ${statTile('Quejas', String(complaints))}
           ${statTile('Socios VIP que regresaron', String(returning))}
         </tr>
@@ -1616,7 +1616,7 @@ export async function sendOwnerBriefing({
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
         <tr>
           <td style="padding: 0 0 6px; font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: #666666;">Ubicación</td>
-          <td style="padding: 0 0 6px; font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: #666666; text-align: right;">Escaneos</td>
+          <td style="padding: 0 0 6px; font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: #666666; text-align: right;">Calificaciones</td>
           <td style="padding: 0 0 6px; font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: #666666; text-align: right;">vs sem.</td>
           <td class="col-meseros" style="padding: 0 0 6px; font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: #666666; text-align: right;">Meseros</td>
           <td style="padding: 0 0 6px; font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: #666666; text-align: right;">Estado</td>
@@ -1717,7 +1717,7 @@ export async function sendRegionalBriefing({
         <div style="margin-top: 3px; font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: ${l.signalLabel === 'Sin actividad' ? '#DC2626' : '#666666'};">${escapeHtml(l.signalLabel)}</div>
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0" class="stack-table" style="margin-top: 8px;">
           <tr class="stack-row">
-            ${metric('Escaneos', String(l.scansThisWeek))}
+            ${metric('Calificaciones', String(l.scansThisWeek))}
             ${metric('vs sem.', deltaText, deltaColor)}
             ${metric('Google', l.currentRating != null ? l.currentRating.toFixed(2) : '—', l.currentRating != null ? '#111111' : '#A3A3A3')}
             ${metric('Socios', String(l.newGuestsThisWeek))}
@@ -1768,7 +1768,7 @@ export async function sendRegionalBriefing({
     <div style="padding: 0 28px;">
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" class="stack-table" style="margin: 8px 0 20px; background: #ffffff; border: 1px solid #111111; border-radius: 0;">
         <tr class="stack-row">
-          ${statTile('Escaneos', String(scans))}
+          ${statTile('Calificaciones', String(scans))}
           ${statTile('Socios nuevos', newGuests > 0 ? '+' + newGuests : '0')}
           ${statTile('Cortesías', String(courtesies))}
         </tr>
@@ -1796,7 +1796,7 @@ export async function sendRegionalBriefing({
   return sendMail({
     from: FROM,
     to,
-    subject: `${regionName} · ${scans} escaneos, ${birthdays.length} cumpleaños esta semana`,
+    subject: `${regionName} · ${scans} calificaciones, ${birthdays.length} cumpleaños esta semana`,
     html: emailLayout(content),
   });
 }

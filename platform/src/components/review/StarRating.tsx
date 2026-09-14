@@ -3,6 +3,7 @@
 import { useState, useCallback, useEffect, type CSSProperties } from 'react';
 import { useRouter } from 'next/navigation';
 import { t } from '@/lib/i18n';
+import { track } from '@/lib/analytics-client';
 
 interface StarRatingProps {
   restaurantSlug: string;
@@ -52,6 +53,11 @@ export default function StarRating({
   const ratedStorageKey = `ratetap_rated_${restaurantSlug}`;
 
   useEffect(() => {
+    // Exactly one of these two fires per mount, and together they close the
+    // funnel: review_page_open counts loads, review_screen_shown counts loads
+    // that actually offered the stars. The difference is the guard's cost,
+    // which was invisible before this.
+    let blocked = false;
     try {
       const storedAt = Number(window.localStorage.getItem(ratedStorageKey));
       const age = Date.now() - storedAt;
@@ -61,14 +67,23 @@ export default function StarRating({
         age >= 0 &&
         age < RATED_STORAGE_WINDOW
       ) {
+        blocked = true;
         setShowAlreadyReceived(true);
       }
     } catch {
       // Storage can be unavailable in private browsing or restricted contexts.
+      // That is a *pass*, not a block: the stars render.
     } finally {
       setStorageChecked(true);
+      track(
+        blocked ? 'review_blocked_local_guard' : 'review_screen_shown',
+        blocked
+          ? { staff_code: staffCode || null, window_hours: RATED_STORAGE_WINDOW / 3600000 }
+          : { staff_code: staffCode || null },
+        { restaurantSlug },
+      );
     }
-  }, [ratedStorageKey]);
+  }, [ratedStorageKey, restaurantSlug, staffCode]);
 
   const rememberSuccessfulSubmit = useCallback(() => {
     try {

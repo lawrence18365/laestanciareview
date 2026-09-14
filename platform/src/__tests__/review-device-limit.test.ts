@@ -25,6 +25,7 @@ const mocks = vi.hoisted(() => ({
   })),
   getStaffByCode: vi.fn(async () => ({ id: 23, name: 'Ana' })),
   trackCommercialEvent: vi.fn(async () => undefined),
+  recordProductEvent: vi.fn(async () => undefined),
 }));
 
 vi.mock('@/db', () => ({
@@ -71,6 +72,9 @@ vi.mock('@/lib/tokens', () => ({
 vi.mock('@/lib/commercial-tracking', () => ({
   trackCommercialEvent: mocks.trackCommercialEvent,
 }));
+vi.mock('@/lib/product-events', () => ({
+  recordProductEvent: mocks.recordProductEvent,
+}));
 
 import { POST } from '@/app/api/reviews/submit/route';
 import { t } from '@/lib/i18n';
@@ -116,6 +120,7 @@ describe('POST /api/reviews/submit device limit', () => {
     mocks.insertedValues.length = 0;
     mocks.selectConditions.length = 0;
     mocks.dbInsert.mockClear();
+    mocks.recordProductEvent.mockClear();
     mocks.dbSelect.mockClear();
     mocks.checkRateLimitAsync.mockClear();
     mocks.getRestaurantBySlug.mockClear();
@@ -153,8 +158,20 @@ describe('POST /api/reviews/submit device limit', () => {
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toEqual({ ok: true, limited: true });
     expect(response.headers.get('set-cookie')).toBeNull();
+    // No review row — but the suppression is no longer silent. A dropped
+    // submit that emits nothing is indistinguishable from a guest who walked
+    // off, which is what made the load->rating gap unattributable.
     expect(mocks.dbInsert).not.toHaveBeenCalled();
     expect(mocks.getStaffByCode).not.toHaveBeenCalled();
+    expect(mocks.recordProductEvent).toHaveBeenCalledTimes(1);
+    expect(mocks.recordProductEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        name: 'review_submit_suppressed',
+        restaurantId: 17,
+        role: 'guest',
+        properties: expect.objectContaining({ reason: 'device_limit_24h', limit: 3 }),
+      }),
+    );
   });
 
   it('does not limit a different cookie', async () => {

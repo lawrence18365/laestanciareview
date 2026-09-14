@@ -10,6 +10,7 @@ import { requireSameOrigin } from '@/lib/origin';
 import { randomToken, tokenHash } from '@/lib/tokens';
 import { trackCommercialEvent } from '@/lib/commercial-tracking';
 import { normalizeStaffCode } from '@/lib/staff-code';
+import { recordProductEvent } from '@/lib/product-events';
 
 // 30 reviews per minute per IP (generous for busy restaurants with shared tablet)
 const SUBMIT_LIMIT = 30;
@@ -89,6 +90,20 @@ export async function POST(req: NextRequest) {
       );
 
     if (Number(deviceReviewCount?.count ?? 0) >= DEVICE_REVIEW_LIMIT) {
+      // Awaited, not fire-and-forget: the response ends the serverless
+      // invocation, and a dropped insert here is exactly the blind spot this
+      // event exists to close.
+      await recordProductEvent({
+        name: 'review_submit_suppressed',
+        restaurantId: restaurant.id,
+        role: 'guest',
+        path: `/r/${restaurantSlug}`,
+        properties: {
+          reason: 'device_limit_24h',
+          limit: DEVICE_REVIEW_LIMIT,
+          staff_code: normalizedStaffCode || null,
+        },
+      });
       return respond(Response.json({ ok: true, limited: true }));
     }
   }

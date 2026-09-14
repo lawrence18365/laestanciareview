@@ -46,6 +46,7 @@ export function getDisplayMode(): 'browser' | 'standalone' {
 export function track(
   name: ProductEventName,
   properties?: Record<string, unknown>,
+  opts?: { restaurantSlug?: string },
 ): void {
   if (typeof window === 'undefined') return;
   try {
@@ -56,6 +57,9 @@ export function track(
           path: window.location.pathname + window.location.search,
           display_mode: getDisplayMode(),
           session_id: getSessionId() ?? undefined,
+          // Guest surfaces have no session, so the slug is the only way the
+          // track endpoint can attribute the event to a restaurant.
+          restaurant_slug: opts?.restaurantSlug,
           properties: properties ?? undefined,
         },
       ],

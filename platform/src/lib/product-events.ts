@@ -22,6 +22,13 @@ export const PRODUCT_EVENT_NAMES = [
   'push_subscription_healed',
   'push_device_conflict',
   'review_page_open',
+  // The three steps between a page open and a stored rating. Without these
+  // the gap between 'screen loads' and 'ratings' is unattributable: a load
+  // that the 12h local guard or the server device cap turned away looks
+  // identical to a guest who simply walked off.
+  'review_screen_shown',
+  'review_blocked_local_guard',
+  'review_submit_suppressed',
   'guest_capture_page_open',
   'validation_page_open',
   'staff_scoreboard_open',
@@ -43,6 +50,8 @@ export type ProductEventName = (typeof PRODUCT_EVENT_NAMES)[number];
  */
 export const PUBLIC_EVENT_NAMES: readonly ProductEventName[] = [
   'review_page_open',
+  'review_screen_shown',
+  'review_blocked_local_guard',
   'guest_capture_page_open',
   'validation_page_open',
   'staff_scoreboard_open',
