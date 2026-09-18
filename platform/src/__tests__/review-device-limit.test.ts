@@ -76,7 +76,15 @@ vi.mock('@/lib/product-events', () => ({
   recordProductEvent: mocks.recordProductEvent,
 }));
 
+// The route hands off to the complaint SLA sweep fire-and-forget. The sweep
+// itself is covered by complaint-sla.test.ts; here it is mocked so this test
+// stays about the device limit and its db.select assertions keep their meaning.
+vi.mock('@/lib/complaint-sla', () => ({
+  scheduleComplaintSlaSweep: vi.fn(),
+}));
+
 import { POST } from '@/app/api/reviews/submit/route';
+import { scheduleComplaintSlaSweep } from '@/lib/complaint-sla';
 import { t } from '@/lib/i18n';
 
 afterAll(() => {
@@ -126,6 +134,7 @@ describe('POST /api/reviews/submit device limit', () => {
     mocks.getRestaurantBySlug.mockClear();
     mocks.getStaffByCode.mockClear();
     mocks.trackCommercialEvent.mockClear();
+    vi.mocked(scheduleComplaintSlaSweep).mockClear();
   });
 
   it('sets a cookie and never checks the 24-hour limit on the first request', async () => {
@@ -138,6 +147,9 @@ describe('POST /api/reviews/submit device limit', () => {
       /^rt_device=[0-9a-f-]+; Path=\/; Max-Age=31536000; SameSite=Lax; Secure; HttpOnly$/,
     );
     expect(mocks.dbSelect).not.toHaveBeenCalled();
+    // The sweep handoff happens after the response value is settled, and can
+    // never delay or fail the guest's submission.
+    expect(vi.mocked(scheduleComplaintSlaSweep)).toHaveBeenCalledTimes(1);
     expect(mocks.insertedValues[0]?.deviceHash).toBe(deviceHash(String(newDeviceId)));
     expect(mocks.checkRateLimitAsync).toHaveBeenCalledWith(
       'submit:rate-limit-ip',

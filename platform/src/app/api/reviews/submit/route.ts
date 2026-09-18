@@ -11,6 +11,7 @@ import { randomToken, tokenHash } from '@/lib/tokens';
 import { trackCommercialEvent } from '@/lib/commercial-tracking';
 import { normalizeStaffCode } from '@/lib/staff-code';
 import { recordProductEvent } from '@/lib/product-events';
+import { scheduleComplaintSlaSweep } from '@/lib/complaint-sla';
 
 // 30 reviews per minute per IP (generous for busy restaurants with shared tablet)
 const SUBMIT_LIMIT = 30;
@@ -167,7 +168,11 @@ export async function POST(req: NextRequest) {
     console.error('[reviews/submit] commercial event failed:', err);
   }
 
-  return respond(
+  // The review row is committed, so the response value is settled: only now
+  // kick off the fire-and-forget sweep. This route sees roughly 8x the
+  // requests /api/reviews/feedback does, and the 2 h urgent window is only as
+  // real as how often the sweep runs.
+  const response = respond(
     Response.json({
       reviewId: review.id,
       feedbackToken,
@@ -175,4 +180,7 @@ export async function POST(req: NextRequest) {
       googleReviewUrl,
     }),
   );
+  scheduleComplaintSlaSweep();
+
+  return response;
 }

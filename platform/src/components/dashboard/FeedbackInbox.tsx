@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import { downloadCSV } from '@/lib/csv';
-import { isPositiveRating } from '@/lib/feedback';
+import { classifyReview, SEVERITY_LABEL } from '@/lib/review-classification';
 import { t } from '@/lib/i18n';
 import { track } from '@/lib/analytics-client';
 
@@ -138,19 +138,34 @@ export default function FeedbackInbox({ initialFeedback }: Props) {
 
   const positiveSection = activeSection === 'recognitions';
 
+  // Placement follows the same classification the alerts use. A 4-star review
+  // whose text is a complaint belongs in "Por atender", not "Reconocimientos" —
+  // otherwise the inbox contradicts the push the GM just received.
+  const classified = useMemo(
+    () => new Map(items.map((item) => [
+      item.id,
+      classifyReview({ rating: item.rating, feedback: item.feedback }),
+    ])),
+    [items],
+  );
+
+  const isRecognition = (item: FeedbackItem) => !classified.get(item.id)?.actionable;
+
   const sectionCounts = useMemo(() => {
     let complaints = 0;
     let recognitions = 0;
     for (const item of items) {
-      if (isPositiveRating(item.rating)) recognitions++;
+      if (isRecognition(item)) recognitions++;
       else complaints++;
     }
     return { complaints, recognitions };
-  }, [items]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [items, classified]);
 
   const sectionItems = useMemo(
-    () => items.filter((item) => isPositiveRating(item.rating) === positiveSection),
-    [items, positiveSection],
+    () => items.filter((item) => isRecognition(item) === positiveSection),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [items, positiveSection, classified],
   );
 
   const filtered = useMemo(() => {
@@ -216,7 +231,10 @@ export default function FeedbackInbox({ initialFeedback }: Props) {
       Email: f.customerEmail ?? '',
       Calificación: f.rating,
       Personal: f.staffName ?? '',
-      Estado: statusLabel(f.status, isPositiveRating(f.rating)),
+      Estado: statusLabel(f.status, isRecognition(f)),
+      Clasificación: SEVERITY_LABEL[
+        classified.get(f.id)?.severity ?? 'praise'
+      ],
       Comentario: f.feedback ?? '',
     }));
     downloadCSV(rows, 'feedback-export.csv');
@@ -410,7 +428,7 @@ export default function FeedbackInbox({ initialFeedback }: Props) {
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
             {filtered.map((fb) => {
-              const positive = isPositiveRating(fb.rating);
+              const positive = isRecognition(fb);
               return (
               <div
                 key={fb.id}

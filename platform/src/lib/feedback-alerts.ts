@@ -1,14 +1,34 @@
-import { and, eq, or } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 import { db } from '@/db';
-import { restaurants, reviews } from '@/db/schema';
+import { reviews } from '@/db/schema';
 import { sendFeedbackAlert } from '@/lib/email';
 import { sendSMSAlert } from '@/lib/sms';
 import { sendWhatsAppAlert } from '@/lib/whatsapp';
 import { sendPushToRestaurant } from '@/lib/push';
-import { isPositiveRating } from '@/lib/feedback';
+import {
+  classifyReview,
+  gmPushTitle,
+  pushKindFor,
+  type ReviewClassification,
+} from '@/lib/review-classification';
 
 /**
- * Per-channel dispatch of feedback alerts.
+ * Per-channel dispatch of feedback alerts — GM-first.
+ *
+ * This function notifies ONLY the location's own account (the GM). Owner and
+ * regional recipients used to be alerted here, in the same pass as the GM,
+ * which meant a Director of Operations could reach a GM's own restaurant's
+ * problem before the GM had seen it. Upward escalation now lives exclusively
+ * in complaint-sla.ts (escalateOverdueComplaints) and only fires when the GM
+ * did not act inside the severity's own window. The handoff is still recorded
+ * on the row as `escalation: { ok: false, skipped: 'deferred_to_sla' }` so the
+ * audit trail shows what happened instead of a silent absence.
+ *
+ * Routing is driven by ACTIONABILITY, not by the star count alone. A 5-star
+ * review whose text is a real complaint is actionable, and a restaurant whose
+ * googleThreshold is 5 would otherwise filter it out with `rating < 5` and
+ * never tell the one person who can fix it — the same defect as the 4-star
+ * incident (see review-classification.ts), one layer down.
  *
  * Every channel records its own outcome ({ ok, error?, skipped? }) so one
  * broken channel (e.g. Telnyx SMS returning 401) can never hide another
@@ -16,6 +36,12 @@ import { isPositiveRating } from '@/lib/feedback';
  * alert_channels = the full record, alert_sent_at = now when ANY channel
  * succeeded, alert_error = only the genuinely failed channels (skips are
  * not failures).
+ *
+ * Severity is classified exactly once per review, by classifyReview(), and the
+ * same ReviewClassification drives every channel here. Before that was true,
+ * the GM branch inferred sentiment from the star count while the escalation
+ * branch hardcoded the warning wording, so a 4-star complaint reached the GM as
+ * "Comentario positivo" and leadership as a warning on the same row.
  */
 
 export interface AlertChannelResult {
@@ -42,13 +68,36 @@ export type FeedbackAlertReview = typeof reviews.$inferSelect;
 export interface FeedbackAlertDispatchResult {
   channels: AlertChannelMap;
   anySuccess: boolean;
+  /** The one classification every channel in this dispatch was rendered from. */
+  classification: ReviewClassification;
 }
 
-function shouldSendFor(pref: string, rating: number, threshold: number): boolean {
+/**
+ * Whether one location account should be told about this review.
+ *
+ * The `actionable` override comes second, deliberately after the 'off' check:
+ * it exists to defeat *implicit* star-count rules, never an explicit decision.
+ * 'off' means this account asked to receive nothing, and overriding it would
+ * both spam someone who opted out and make the setting meaningless — whereas
+ * 'low' / 'threshold' only look like filters, and their whole failure mode is
+ * that a real complaint carrying a good rating never reaches the GM.
+ *
+ * Ordering note: everything that used to send still sends. This is strictly
+ * additive, because `actionable` is false for praise, and for praise the old
+ * three branches are evaluated unchanged.
+ */
+function shouldSendFor(
+  pref: string,
+  rating: number,
+  threshold: number,
+  actionable: boolean,
+): boolean {
+  if (pref === 'off') return false;
+  if (actionable) return true; // a complaint always reaches its own GM
   if (pref === 'all') return true;
   if (pref === 'low') return rating <= 2;
   if (pref === 'threshold') return rating < threshold;
-  return false; // 'off'
+  return false;
 }
 
 function errorMessage(err: unknown): string {
@@ -56,9 +105,9 @@ function errorMessage(err: unknown): string {
 }
 
 /**
- * Record a channel outcome. When several escalation accounts share a channel
- * key (e.g. two owners → owner_email), a recorded success always wins over a
- * later failure/skip so the aggregate never downgrades a delivered alert.
+ * Record a channel outcome. A recorded success always wins over a later
+ * failure/skip for the same key, so the aggregate never downgrades a delivered
+ * alert.
  */
 function record(channels: AlertChannelMap, key: string, result: AlertChannelResult) {
   if (channels[key]?.ok) return;
@@ -73,9 +122,24 @@ export async function dispatchFeedbackAlerts(
   const feedback = review.feedback ?? '';
   const feedbackPreview = feedback.length > 100 ? `${feedback.slice(0, 99)}…` : feedback;
 
-  // ── GM channels (location account) ──────────────────────────────────────
+  // Classified once, here. Every channel below reads from this object, which is
+  // what guarantees the GM and the escalated recipients cannot be told
+  // different things about the same review.
+  const classification: ReviewClassification = classifyReview({
+    rating: review.rating,
+    feedback,
+  });
+
+  // ── GM channels (location account only) ─────────────────────────────────
   const pref = restaurant.alertPreference ?? 'all';
-  if (shouldSendFor(pref, review.rating, restaurant.googleThreshold)) {
+  if (
+    shouldSendFor(
+      pref,
+      review.rating,
+      restaurant.googleThreshold,
+      classification.actionable,
+    )
+  ) {
     const attempts: Promise<void>[] = [];
 
     if (restaurant.managerEmail) {
@@ -88,6 +152,7 @@ export async function dispatchFeedbackAlerts(
           rating: review.rating,
           staffName: review.staffName,
           feedback,
+          severity: classification.severity,
         }).then((result) => {
           if (result.success === false) {
             const responseCode = result.error?.responseCode != null
@@ -157,14 +222,12 @@ export async function dispatchFeedbackAlerts(
 
     attempts.push(
       sendPushToRestaurant(review.restaurantId, {
-        title: isPositiveRating(review.rating)
-          ? `⭐ Comentario positivo de ${review.rating} estrellas`
-          : `⚠️ Reseña de ${review.rating} estrella${review.rating === 1 ? '' : 's'}`,
+        title: gmPushTitle(classification.severity, review.rating),
         body: feedbackPreview,
         url: '/inbox',
         tag: `review-${review.id}`,
       }, {
-        kind: review.rating < 4 ? 'low_review' : 'positive_review',
+        kind: pushKindFor(classification.severity),
         subjectType: 'review',
         subjectId: review.id,
       }).then((result) => {
@@ -181,128 +244,14 @@ export async function dispatchFeedbackAlerts(
     await Promise.all(attempts);
   }
 
-  // ── Owner / regional escalation ─────────────────────────────────────────
-  // Complaints must reach the owner and the regional manager for this
-  // location's region, not only the location GM. Each account's OWN
-  // alertPreference decides whether it hears about this rating; the location
-  // name is passed as restaurantName so multi-location recipients know which
-  // location the feedback belongs to.
-  let escalationAccounts: {
-    id: number;
-    isOwner: boolean;
-    managerEmail: string | null;
-    managerPhone: string | null;
-    alertPreference: string;
-    whatsappAlerts: boolean;
-    googleThreshold: number;
-  }[] = [];
-
-  try {
-    escalationAccounts = await db
-      .select({
-        id: restaurants.id,
-        isOwner: restaurants.isOwner,
-        managerEmail: restaurants.managerEmail,
-        managerPhone: restaurants.managerPhone,
-        alertPreference: restaurants.alertPreference,
-        whatsappAlerts: restaurants.whatsappAlerts,
-        googleThreshold: restaurants.googleThreshold,
-      })
-      .from(restaurants)
-      .where(
-        or(
-          eq(restaurants.isOwner, true),
-          restaurant.region
-            ? and(
-              eq(restaurants.isRegional, true),
-              eq(restaurants.region, restaurant.region),
-            )
-            : undefined,
-        ),
-      );
-  } catch (err) {
-    record(channels, 'escalation', { ok: false, error: errorMessage(err) });
-  }
-
-  for (const account of escalationAccounts) {
-    // Never escalate a location's alerts back to itself.
-    if (account.id === review.restaurantId) continue;
-
-    const prefix = account.isOwner ? 'owner' : 'regional';
-    const accountPref = account.alertPreference ?? 'threshold';
-    if (!shouldSendFor(accountPref, review.rating, account.googleThreshold)) {
-      record(channels, `${prefix}_email`, { ok: false, skipped: 'preference' });
-      record(channels, `${prefix}_whatsapp`, { ok: false, skipped: 'preference' });
-      record(channels, `${prefix}_push`, { ok: false, skipped: 'preference' });
-      continue;
-    }
-
-    try {
-      const result = await sendPushToRestaurant(account.id, {
-        title: `⚠️ ${restaurant.name}: ${review.rating} estrella${review.rating === 1 ? '' : 's'}`,
-        body: feedbackPreview,
-        url: '/overview',
-        tag: `review-${review.id}`,
-      }, {
-        kind: 'low_review',
-        subjectType: 'review',
-        subjectId: review.id,
-      });
-      if (result.targeted > 0) {
-        record(channels, `${prefix}_push`, { ok: true });
-      } else {
-        record(channels, `${prefix}_push`, { ok: false, skipped: 'no_devices' });
-      }
-    } catch (err) {
-      record(channels, `${prefix}_push`, { ok: false, error: errorMessage(err) });
-    }
-
-    if (account.managerEmail) {
-      try {
-        const result = await sendFeedbackAlert({
-          to: account.managerEmail,
-          restaurantName: restaurant.name,
-          customerName: review.customerName,
-          customerEmail: review.customerEmail,
-          rating: review.rating,
-          staffName: review.staffName,
-          feedback,
-        });
-        if (result.success === false) {
-          record(channels, `${prefix}_email`, {
-            ok: false,
-            error: result.error?.message ?? 'send skipped',
-          });
-        } else {
-          record(channels, `${prefix}_email`, { ok: true });
-        }
-      } catch (err) {
-        record(channels, `${prefix}_email`, { ok: false, error: errorMessage(err) });
-      }
-    } else if (!account.managerPhone) {
-      record(channels, `${prefix}_email`, { ok: false, skipped: 'no_channel' });
-    }
-
-    if (!account.whatsappAlerts || process.env.WHATSAPP_ALERTS_ENABLED !== 'true') {
-      record(channels, `${prefix}_whatsapp`, { ok: false, skipped: 'disabled' });
-    } else if (!account.managerPhone) {
-      record(channels, `${prefix}_whatsapp`, { ok: false, skipped: 'no_phone' });
-    } else {
-      try {
-        await sendWhatsAppAlert({
-          to: account.managerPhone,
-          restaurantName: restaurant.name,
-          customerName: review.customerName,
-          rating: review.rating,
-          staffName: review.staffName,
-          feedback,
-        });
-        record(channels, `${prefix}_whatsapp`, { ok: true });
-      } catch (err) {
-        record(channels, `${prefix}_whatsapp`, { ok: false, error: errorMessage(err) });
-      }
-    }
-  }
+  // ── Escalation handoff ──────────────────────────────────────────────────
+  // Deliberately NOT a send. Owner and regional recipients are reached by
+  // complaint-sla.ts, and only after this location's own account has been given
+  // its window (URGENT_ESCALATION_HOURS for urgent, ACTIONABLE_ESCALATION_HOURS
+  // for every other actionable review) without acting. Alerting them here would
+  // let leadership see a GM's restaurant before the GM does. The entry below
+  // keeps the row honest about which path owns the escalation.
+  record(channels, 'escalation', { ok: false, skipped: 'deferred_to_sla' });
 
   // ── Write back the per-channel truth ────────────────────────────────────
   const entries = Object.entries(channels);
@@ -325,5 +274,5 @@ export async function dispatchFeedbackAlerts(
     );
   }
 
-  return { channels, anySuccess };
+  return { channels, anySuccess, classification };
 }

@@ -1,6 +1,14 @@
 import { sendMail } from '@/lib/mailer';
 import { formatStaffAnomaly, type StaffAnomaly } from '@/lib/anomalies';
 import { RATING_BASELINE_NOTE } from '@/lib/rating-baseline';
+import {
+  classifyReview,
+  SEVERITY_COLOR,
+  SEVERITY_COLOR_BG,
+  SEVERITY_DOT,
+  SEVERITY_LABEL,
+  type ReviewSeverity,
+} from '@/lib/review-classification';
 import { createTransport, type SendMailOptions, type Transporter } from 'nodemailer';
 
 /** Strip stray whitespace/newlines from env vars (Vercel CLI sometimes injects \\n). */
@@ -284,6 +292,13 @@ interface FeedbackAlertParams {
   staffName: string | null;
   feedback: string;
   subjectPrefix?: string;
+  /**
+   * Shared classification from the caller. When omitted the severity is derived
+   * here from the same classifyReview() the alert dispatcher uses, so a caller
+   * that forgets to pass it still cannot produce a contradictory email — it
+   * just recomputes the identical answer.
+   */
+  severity?: ReviewSeverity;
 }
 
 export async function sendFeedbackAlert({
@@ -295,12 +310,18 @@ export async function sendFeedbackAlert({
   staffName,
   feedback,
   subjectPrefix,
+  severity,
 }: FeedbackAlertParams) {
   const filledStars = '★'.repeat(rating);
   const emptyStars = '☆'.repeat(5 - rating);
-  const accentColor = rating >= 4 ? '#059669' : rating >= 3 ? '#D97706' : '#DC2626';
-  const accentBg = rating >= 4 ? 'rgba(5,150,105,0.08)' : rating >= 3 ? 'rgba(217,119,6,0.08)' : 'rgba(220,38,38,0.08)';
-  const urgencyLabel = rating <= 2 ? 'Urgente' : rating <= 3 ? 'Atención' : 'Positivo';
+  // Presentation is derived from severity, never from the star count on its
+  // own: a 4-star review whose text is a complaint must not arrive in green
+  // with a "Positivo" badge.
+  const resolvedSeverity: ReviewSeverity = severity
+    ?? classifyReview({ rating, feedback }).severity;
+  const accentColor = SEVERITY_COLOR[resolvedSeverity];
+  const accentBg = SEVERITY_COLOR_BG[resolvedSeverity];
+  const urgencyLabel = SEVERITY_LABEL[resolvedSeverity];
 
   const content = `
     <!-- Colored accent bar -->
@@ -361,7 +382,7 @@ export async function sendFeedbackAlert({
   const result = await sendMail({
     from: FROM,
     to,
-    subject: `${subjectPrefix ? `${subjectPrefix} ` : ''}${rating <= 2 ? '🔴' : rating <= 3 ? '🟡' : '🟢'} Nuevo comentario de ${rating} estrellas: ${restaurantName}`,
+    subject: `${subjectPrefix ? `${subjectPrefix} ` : ''}${SEVERITY_DOT[resolvedSeverity]} ${SEVERITY_LABEL[resolvedSeverity]}: comentario de ${rating} estrella${rating === 1 ? '' : 's'} en ${restaurantName}`,
     html: emailLayout(content),
   });
 

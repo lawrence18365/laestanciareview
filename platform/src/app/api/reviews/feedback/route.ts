@@ -4,6 +4,7 @@ import { reviews, restaurants } from '@/db/schema';
 import { eq, and, isNull } from 'drizzle-orm';
 import { submitFeedbackSchema } from '@/lib/validations';
 import { dispatchFeedbackAlerts } from '@/lib/feedback-alerts';
+import { scheduleComplaintSlaSweep } from '@/lib/complaint-sla';
 import { checkRateLimitAsync, getClientIP, rateLimitResponse } from '@/lib/rate-limit';
 import { requireSameOrigin } from '@/lib/origin';
 import { tokenHash } from '@/lib/tokens';
@@ -98,5 +99,10 @@ export async function POST(req: NextRequest) {
     console.error('[reviews/feedback] commercial event failed:', err);
   }
 
-  return Response.json({ success: true, reviewId: updated.id });
+  // The response value is settled: the guest's submission is committed and the
+  // GM has been dispatched to. Only now kick off the fire-and-forget sweep.
+  const payload = { success: true, reviewId: updated.id };
+  scheduleComplaintSlaSweep();
+
+  return Response.json(payload);
 }
