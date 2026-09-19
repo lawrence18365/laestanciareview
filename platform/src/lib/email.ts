@@ -885,7 +885,7 @@ export async function sendFeatureAnnouncement({
 
       <div style="padding: 16px 20px; background: rgba(217,119,6,0.08); border: 1px solid #111111; border-left: 6px solid #D97706; border-radius: 0; margin-bottom: 28px;">
         <p style="margin: 0; font-size: 14px; color: #D97706; line-height: 1.5;">
-          Cuando un cliente deje una resena de 3 estrellas o menos, recibiras una notificacion al instante en tu celular, para que puedas actuar de inmediato.
+          Cuando un cliente deje un comentario que requiera atencion, recibiras una notificacion al instante en tu celular, sin importar cuantas estrellas haya dado, para que puedas actuar de inmediato.
         </p>
       </div>
 

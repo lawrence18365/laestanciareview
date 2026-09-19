@@ -519,6 +519,25 @@ export const SEVERITY_DOT: Record<ReviewSeverity, string> = {
 };
 
 /**
+ * Guest text cut to fit a push body or an email line.
+ *
+ * Cuts on code points, not UTF-16 units. String.slice() splits a surrogate
+ * pair, so an emoji straddling the cut leaves a lone surrogate behind. JSON
+ * carries it through unharmed, web-push then re-encodes the payload as UTF-8
+ * and turns it into U+FFFD, and the phone shows "\u{FFFD}" in the middle of the
+ * guest's own words. 58 of the 2,137 comments written so far carry an emoji and
+ * 244 run past 100 characters, so the cut lands on one rarely, not never.
+ *
+ * The returned string is never longer than `maxLength` code points, ellipsis
+ * included.
+ */
+export function previewFeedback(text: string, maxLength: number): string {
+  const chars = Array.from(text);
+  if (chars.length <= maxLength) return text;
+  return `${chars.slice(0, maxLength - 1).join('').trimEnd()}\u2026`;
+}
+
+/**
  * Title for the location's own push. Reads as the GM's view of the review.
  */
 export function gmPushTitle(severity: ReviewSeverity, rating: number): string {

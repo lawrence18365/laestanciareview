@@ -8,6 +8,7 @@ import { sendPushToRestaurant } from '@/lib/push';
 import {
   classifyReview,
   gmPushTitle,
+  previewFeedback,
   pushKindFor,
   type ReviewClassification,
 } from '@/lib/review-classification';
@@ -120,7 +121,7 @@ export async function dispatchFeedbackAlerts(
 ): Promise<FeedbackAlertDispatchResult> {
   const channels: AlertChannelMap = {};
   const feedback = review.feedback ?? '';
-  const feedbackPreview = feedback.length > 100 ? `${feedback.slice(0, 99)}…` : feedback;
+  const feedbackPreview = previewFeedback(feedback, 100);
 
   // Classified once, here. Every channel below reads from this object, which is
   // what guarantees the GM and the escalated recipients cannot be told

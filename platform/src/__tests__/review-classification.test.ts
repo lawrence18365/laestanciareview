@@ -13,6 +13,7 @@ import {
   escalationPushTitle,
   gmPushTitle,
   normalizeText,
+  previewFeedback,
   pushKindFor,
   type ReviewSeverity,
 } from '@/lib/review-classification';
@@ -302,5 +303,43 @@ describe('analyzeFeedbackText', () => {
     const result = analyzeFeedbackText('El servicio excelente pero la sopa estaba mala');
     expect(result.negative).toBe(true);
     expect(result.positive).toBe(true);
+  });
+});
+
+describe('previewFeedback', () => {
+  const ELLIPSIS = '\u2026';
+  const REPLACEMENT = '\uFFFD';
+
+  /** What the phone actually receives: JSON payload, then UTF-8 on the wire. */
+  function asDelivered(body: string): string {
+    const parsed = JSON.parse(JSON.stringify({ body })).body as string;
+    return Buffer.from(parsed, 'utf8').toString('utf8');
+  }
+
+  it('leaves short comments untouched', () => {
+    expect(previewFeedback('La sopa estaba fr\u00eda', 100)).toBe('La sopa estaba fr\u00eda');
+  });
+
+  it('never exceeds the limit, ellipsis included', () => {
+    const cut = previewFeedback('a'.repeat(400), 100);
+    expect([...cut].length).toBeLessThanOrEqual(100);
+    expect(cut.endsWith(ELLIPSIS)).toBe(true);
+  });
+
+  it('does not split an emoji across the cut', () => {
+    // The emoji straddles index 99, where slice() would leave a lone surrogate.
+    const body = previewFeedback(`${'a'.repeat(98)}\u{1F621} nunca vuelvo`, 100);
+    expect(asDelivered(body)).not.toContain(REPLACEMENT);
+    expect(asDelivered(body)).toBe(body);
+  });
+
+  it('keeps accented text intact at the cut', () => {
+    const body = previewFeedback(`${'\u00e1'.repeat(150)}`, 100);
+    expect(asDelivered(body)).toBe(body);
+    expect(body).not.toContain(REPLACEMENT);
+  });
+
+  it('does not leave a dangling space before the ellipsis', () => {
+    expect(previewFeedback(`${'a'.repeat(98)} palabra`, 100)).toBe(`${'a'.repeat(98)}${ELLIPSIS}`);
   });
 });

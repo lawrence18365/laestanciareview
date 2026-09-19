@@ -43,6 +43,7 @@ import { sendPushToRestaurant } from '@/lib/push';
 import {
   classifyReview,
   escalationPushTitle,
+  previewFeedback,
   pushKindFor,
   type ReviewClassification,
   type ReviewSeverity,
@@ -113,12 +114,6 @@ function record(
   result: AlertChannelResult,
 ) {
   channels[key] = result;
-}
-
-function preview(text: string, maxLength: number): string {
-  return text.length > maxLength
-    ? `${text.slice(0, maxLength - 1)}…`
-    : text;
 }
 
 function hoursOpen(createdAt: Date, now: Date): number {
@@ -330,7 +325,7 @@ export async function getOverdueComplaintPreviews(
   return rows.map((row) => ({
     rating: row.rating,
     hoursOpen: hoursOpen(row.createdAt, now),
-    feedbackPreview: (row.feedback ?? '').slice(0, 60),
+    feedbackPreview: previewFeedback(row.feedback ?? '', 60),
   }));
 }
 
@@ -359,7 +354,7 @@ export async function escalateOverdueComplaints(now: Date = new Date()) {
   for (const complaint of overdue) {
     const classification = complaint.classification;
     const openHours = hoursOpen(complaint.createdAt, now);
-    const body = preview(complaint.feedback ?? '', 100);
+    const body = previewFeedback(complaint.feedback ?? '', 100);
     // One vocabulary with the GM's own alert: the title comes from the shared
     // classification, and the "sin atender desde hace N h" fact is appended so
     // the overdue information survives the switch away from the old
