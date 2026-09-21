@@ -12,6 +12,8 @@ export const PRODUCT_EVENT_NAMES = [
   'app_open',
   'page_view',
   'push_notification_click',
+  // displayed by the device, vs accepted by the push service
+  'push_notification_shown',
   'push_permission_result',
   'push_banner_shown',
   'push_banner_suppressed',
@@ -77,6 +79,7 @@ export const PUBLIC_EVENT_NAMES: readonly ProductEventName[] = [
   'validation_page_open',
   'staff_scoreboard_open',
   'push_notification_click',
+  'push_notification_shown',
   'push_permission_result',
   'client_error',
 ];
