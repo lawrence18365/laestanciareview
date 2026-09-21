@@ -281,7 +281,18 @@ export async function getAllFeedback(restaurantId: number, status?: string, limi
   }
 
   return db
-    .select()
+    .select({
+      id: reviews.id,
+      rating: reviews.rating,
+      customerName: reviews.customerName,
+      customerEmail: reviews.customerEmail,
+      feedback: reviews.feedback,
+      staffName: reviews.staffName,
+      staffCode: reviews.staffCode,
+      status: reviews.status,
+      resolution: reviews.resolution,
+      createdAt: reviews.createdAt,
+    })
     .from(reviews)
     .where(and(...conditions))
     .orderBy(desc(reviews.createdAt))

@@ -2,13 +2,25 @@ import { verifySession } from '@/lib/session';
 import { redirect } from 'next/navigation';
 import { getRestaurantBySlug, getAllFeedback } from '@/lib/queries';
 import { getComplaintSlaStats } from '@/lib/complaint-sla';
+import { RESOLUTIONS, type Resolution } from '@/lib/review-recovery';
 import FeedbackInbox from '@/components/dashboard/FeedbackInbox';
 
 function percentage(count: number, total: number): number {
   return total > 0 ? Math.round((count / total) * 100) : 0;
 }
 
-export default async function InboxPage() {
+export default async function InboxPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ rid?: string; src?: string }>;
+}) {
+  const { rid, src } = await searchParams;
+  const parsedReviewId = Number(rid);
+  const focusReviewId = Number.isSafeInteger(parsedReviewId) && parsedReviewId > 0
+    ? parsedReviewId
+    : undefined;
+  const focusSource = src === 'push' || src === 'email' ? src : undefined;
+
   const session = await verifySession();
   if (!session) redirect('/login');
 
@@ -104,8 +116,13 @@ export default async function InboxPage() {
       </section>
 
       <FeedbackInbox
+        focusReviewId={focusReviewId}
+        focusSource={focusSource}
         initialFeedback={feedback.map((f) => ({
           ...f,
+          resolution: f.resolution && RESOLUTIONS.includes(f.resolution as Resolution)
+            ? f.resolution as Resolution
+            : null,
           createdAt: f.createdAt.toISOString(),
         }))}
       />

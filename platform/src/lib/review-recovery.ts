@@ -14,3 +14,43 @@ export const RESOLUTION_LABEL: Record<Resolution, string> = {
 export function inboxLinkFor(reviewId: number, src?: 'email'): string {
   return src === 'email' ? `/inbox?rid=${reviewId}&src=email` : `/inbox?rid=${reviewId}`;
 }
+
+export function reviewedViaFor({
+  id,
+  focusReviewId,
+  focusSource,
+}: {
+  id: number;
+  focusReviewId?: number;
+  focusSource?: 'push' | 'email';
+}): ReviewedVia {
+  return focusSource === 'push' && id === focusReviewId ? 'push_deeplink' : 'inbox';
+}
+
+export function partitionFocused<T extends { id: number }>(
+  items: T[],
+  focusReviewId?: number,
+): { pinned: T | null; rest: T[] } {
+  const pinned = items.find((item) => item.id === focusReviewId) ?? null;
+  return pinned ? { pinned, rest: items.filter((item) => item.id !== pinned.id) } : { pinned: null, rest: items };
+}
+
+export function statusPatchBody({
+  reviewId,
+  status,
+  reviewedVia,
+  resolution,
+}: {
+  reviewId: number;
+  status: 'reviewed' | 'resolved';
+  reviewedVia: ReviewedVia;
+  resolution?: Resolution;
+}): object {
+  if (status === 'resolved' && !resolution) {
+    throw new Error('A resolution is required when resolving feedback');
+  }
+
+  return status === 'resolved'
+    ? { reviewId, status, reviewedVia, resolution }
+    : { reviewId, status, reviewedVia };
+}

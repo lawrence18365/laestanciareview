@@ -1,10 +1,18 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { downloadCSV } from '@/lib/csv';
-import { classifyReview, SEVERITY_LABEL } from '@/lib/review-classification';
 import { t } from '@/lib/i18n';
 import { track } from '@/lib/analytics-client';
+import { downloadCSV } from '@/lib/csv';
+import { classifyReview, SEVERITY_LABEL } from '@/lib/review-classification';
+import {
+  partitionFocused,
+  RESOLUTION_LABEL,
+  RESOLUTIONS,
+  reviewedViaFor,
+  statusPatchBody,
+  type Resolution,
+} from '@/lib/review-recovery';
 
 interface FeedbackItem {
   id: number;
@@ -15,11 +23,14 @@ interface FeedbackItem {
   staffName: string | null;
   staffCode: string | null;
   status: 'new' | 'reviewed' | 'resolved';
+  'resolution': Resolution | null;
   createdAt: string;
 }
 
 interface Props {
   initialFeedback: FeedbackItem[];
+  focusReviewId?: number;
+  focusSource?: 'push' | 'email';
 }
 
 type FeedbackSection = 'complaints' | 'recognitions';
@@ -118,7 +129,7 @@ const actionButton = (color: string, bg: string, borderColor: string): React.CSS
   borderRadius: 0,
   border: `1px solid ${borderColor}`,
   background: bg,
-  color: color,
+  color,
   fontSize: '0.65rem',
   fontWeight: 600,
   cursor: 'pointer',
@@ -128,15 +139,20 @@ const actionButton = (color: string, bg: string, borderColor: string): React.CSS
   fontFamily: 'var(--font-sans)',
 });
 
-export default function FeedbackInbox({ initialFeedback }: Props) {
+export default function FeedbackInbox({ initialFeedback, focusReviewId, focusSource }: Props) {
   const [items, setItems] = useState<FeedbackItem[]>(initialFeedback);
   const [activeSection, setActiveSection] = useState<FeedbackSection>('complaints');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [ratingFilter, setRatingFilter] = useState<number>(0);
   const [search, setSearch] = useState('');
   const [sortBy, setSortBy] = useState<'newest' | 'oldest' | 'highest' | 'lowest'>('newest');
+  const [resolvingReviewId, setResolvingReviewId] = useState<number | null>(null);
 
   const positiveSection = activeSection === 'recognitions';
+  const { pinned: pinnedItem, rest: listItems } = useMemo(
+    () => partitionFocused(items, focusReviewId),
+    [items, focusReviewId],
+  );
 
   // Placement follows the same classification the alerts use. A 4-star review
   // whose text is a complaint belongs in "Por atender", not "Reconocimientos" —
@@ -154,18 +170,18 @@ export default function FeedbackInbox({ initialFeedback }: Props) {
   const sectionCounts = useMemo(() => {
     let complaints = 0;
     let recognitions = 0;
-    for (const item of items) {
+    for (const item of listItems) {
       if (isRecognition(item)) recognitions++;
       else complaints++;
     }
     return { complaints, recognitions };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [items, classified]);
+  }, [listItems, classified]);
 
   const sectionItems = useMemo(
-    () => items.filter((item) => isRecognition(item) === positiveSection),
+    () => listItems.filter((item) => isRecognition(item) === positiveSection),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [items, positiveSection, classified],
+    [listItems, positiveSection, classified],
   );
 
   const filtered = useMemo(() => {
@@ -201,20 +217,33 @@ export default function FeedbackInbox({ initialFeedback }: Props) {
     });
   }, [sectionItems, statusFilter, ratingFilter, search, sortBy]);
 
-  async function updateStatus(id: number, newStatus: string) {
+  async function updateStatus(
+    id: number,
+    newStatus: 'reviewed' | 'resolved',
+    resolution?: Resolution,
+  ) {
     try {
+      const reviewedVia = reviewedViaFor({ id, focusReviewId, focusSource });
       const res = await fetch('/api/auth/feedback', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ reviewId: id, status: newStatus }),
+        body: JSON.stringify(statusPatchBody({
+          reviewId: id,
+          status: newStatus,
+          reviewedVia,
+          ...(resolution ? { ['resolution']: resolution } : {}),
+        })),
       });
 
       if (res.ok) {
         setItems((prev) =>
           prev.map((item) =>
-            item.id === id ? { ...item, status: newStatus as FeedbackItem['status'] } : item,
+            item.id === id
+              ? { ...item, status: newStatus, ['resolution']: resolution ?? item.resolution }
+              : item,
           ),
         );
+        setResolvingReviewId(null);
       }
     } catch {
       // Network error — status stays unchanged in UI
@@ -242,11 +271,152 @@ export default function FeedbackInbox({ initialFeedback }: Props) {
 
   const counts = useMemo(() => {
     const c = { all: sectionItems.length, new: 0, reviewed: 0, resolved: 0 };
-    for (const item of sectionItems) {
-      c[item.status]++;
-    }
+    for (const item of sectionItems) c[item.status]++;
     return c;
   }, [sectionItems]);
+
+  const renderFeedbackItem = (fb: FeedbackItem, pinned = false) => {
+    const positive = isRecognition(fb);
+    const showAcknowledgement = pinned && fb.status === 'new';
+    const severityColor = positive ? 'var(--green)' : statusBorderColors[fb.status] ?? 'var(--border-dark)';
+
+    return (
+      <div
+        key={fb.id}
+        style={{
+          padding: '1rem',
+          borderRadius: 0,
+          background: 'var(--bg-base)',
+          border: '1px solid var(--panel-border)',
+          borderLeftWidth: 3,
+          borderLeftColor: severityColor,
+        }}
+      >
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+            <span style={{ fontWeight: 600, fontSize: '0.85rem', color: 'var(--text-main)' }}>
+              {fb.customerName || t.inbox.anonymous}
+            </span>
+            <span style={statusBadge(fb.status, positive)}>
+              {statusLabel(fb.status, positive)}
+            </span>
+            {fb.status === 'resolved' && fb.resolution && (
+              <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
+                {RESOLUTION_LABEL[fb.resolution]}
+              </span>
+            )}
+          </div>
+          <span style={{ fontSize: '0.75rem', color: 'var(--text-dim)', fontFamily: 'var(--font-mono)', fontVariantNumeric: 'tabular-nums' }}>
+            {'★'.repeat(fb.rating)}{'☆'.repeat(5 - fb.rating)}
+            {' · '}
+            {fb.createdAt.slice(0, 10)}
+            {fb.staffName && ` · ${fb.staffName}`}
+          </span>
+        </div>
+
+        <p style={{ margin: '0 0 0.6rem', fontSize: '0.85rem', color: 'var(--text-muted)', lineHeight: 1.5 }}>
+          {fb.feedback}
+        </p>
+
+        {showAcknowledgement ? (
+          <button
+            type="button"
+            onClick={() => updateStatus(fb.id, 'reviewed')}
+            style={{
+              ...actionButton('var(--blue)', 'rgba(37,99,235,0.08)', 'var(--blue)'),
+              width: '100%',
+              minHeight: '2.75rem',
+              fontSize: '0.75rem',
+            }}
+          >
+            {t.inbox.acknowledge}
+          </button>
+        ) : (
+          <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+            {positive && fb.status === 'new' && (
+              <button
+                type="button"
+                onClick={() => updateStatus(fb.id, 'reviewed')}
+                style={actionButton('var(--green)', 'var(--green-light)', 'var(--green)')}
+              >
+                {t.inbox.markAsRead}
+              </button>
+            )}
+            {!positive && fb.status === 'new' && (
+              <button
+                type="button"
+                onClick={() => updateStatus(fb.id, 'reviewed')}
+                style={actionButton('var(--blue)', 'rgba(37,99,235,0.08)', 'var(--blue)')}
+              >
+                {t.inbox.markReviewed}
+              </button>
+            )}
+            {!positive && fb.status !== 'resolved' && (
+              <button
+                type="button"
+                onClick={() => setResolvingReviewId(fb.id)}
+                style={actionButton('var(--green)', 'var(--green-light)', 'var(--green)')}
+              >
+                {t.inbox.resolve}
+              </button>
+            )}
+            {fb.customerEmail && (
+              <a
+                href={`mailto:${encodeURIComponent(fb.customerEmail)}?subject=${encodeURIComponent(t.inbox.reYourFeedback)}`}
+                style={actionButton('var(--text-main)', 'transparent', 'var(--border-dark)')}
+                onClick={() => track('feedback_email_reply_click', { review_id: fb.id })}
+              >
+                {t.inbox.replyViaEmail}
+              </a>
+            )}
+          </div>
+        )}
+
+        {!positive && resolvingReviewId === fb.id && (
+          <div style={{ marginTop: '1rem', paddingTop: '0.9rem', borderTop: '1px solid var(--panel-border)' }}>
+            <p style={{ margin: '0 0 0.65rem', fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-main)' }}>
+              {t.inbox.whatHappened}
+            </p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              {RESOLUTIONS.map((resolution) => (
+                <button
+                  key={resolution}
+                  type="button"
+                  onClick={() => updateStatus(fb.id, 'resolved', resolution)}
+                  style={{
+                    ...actionButton('var(--text-main)', 'var(--panel-bg)', 'var(--border-dark)'),
+                    width: '100%',
+                    minHeight: '2.5rem',
+                    textAlign: 'left',
+                    textTransform: 'none',
+                    letterSpacing: 0,
+                    fontSize: '0.8rem',
+                  }}
+                >
+                  {RESOLUTION_LABEL[resolution]}
+                </button>
+              ))}
+            </div>
+            <button
+              type="button"
+              onClick={() => setResolvingReviewId(null)}
+              style={{
+                border: 0,
+                background: 'transparent',
+                color: 'var(--text-muted)',
+                padding: '0.6rem 0 0',
+                cursor: 'pointer',
+                fontSize: '0.75rem',
+                textDecoration: 'underline',
+              }}
+            >
+              {t.inbox.cancel}
+            </button>
+          </div>
+        )}
+      </div>
+    );
+  };
 
   if (initialFeedback.length === 0) {
     return (
@@ -259,32 +429,13 @@ export default function FeedbackInbox({ initialFeedback }: Props) {
           textAlign: 'center',
           gap: '0.75rem',
         }}>
-          <p style={{
-            margin: 0,
-            fontSize: '0.65rem',
-            fontWeight: 700,
-            letterSpacing: '0.12em',
-            textTransform: 'uppercase',
-            color: 'var(--text-dim)',
-          }}>
+          <p style={{ margin: 0, fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--text-dim)' }}>
             BANDEJA DE ENTRADA
           </p>
-          <h2 style={{
-            margin: 0,
-            fontSize: '1.5rem',
-            fontWeight: 600,
-            fontFamily: 'var(--font-serif)',
-            color: 'var(--text-main)',
-          }}>
+          <h2 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 600, fontFamily: 'var(--font-serif)', color: 'var(--text-main)' }}>
             Aún no hay comentarios de clientes
           </h2>
-          <p style={{
-            margin: 0,
-            fontSize: '0.9375rem',
-            color: 'var(--text-muted)',
-            maxWidth: 420,
-            lineHeight: 1.5,
-          }}>
+          <p style={{ margin: 0, fontSize: '0.9375rem', color: 'var(--text-muted)', maxWidth: 420, lineHeight: 1.5 }}>
             Aparecerán aquí cuando alguien deje feedback.
           </p>
         </section>
@@ -294,129 +445,69 @@ export default function FeedbackInbox({ initialFeedback }: Props) {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-      {/* Sections */}
-      <div style={{ display: 'flex', gap: 0, flexWrap: 'wrap' }}>
-        <button
-          type="button"
-          style={sectionTabStyle(activeSection === 'complaints', false)}
-          onClick={() => {
-            setActiveSection('complaints');
-            setStatusFilter('all');
-            setRatingFilter(0);
+      {pinnedItem && (
+        <section
+          className="flat-panel"
+          style={{
+            padding: '1rem',
+            border: `1px solid ${isRecognition(pinnedItem) ? 'var(--green)' : statusBorderColors[pinnedItem.status] ?? 'var(--border-dark)'}`,
+            borderLeftWidth: 3,
+            borderLeftColor: isRecognition(pinnedItem) ? 'var(--green)' : statusBorderColors[pinnedItem.status] ?? 'var(--border-dark)',
           }}
         >
+          <p style={{ ...sectionLabel, marginBottom: '0.65rem' }}>{t.inbox.fromNotification}</p>
+          {renderFeedbackItem(pinnedItem, true)}
+        </section>
+      )}
+
+      <div style={{ display: 'flex', gap: 0, flexWrap: 'wrap' }}>
+        <button type="button" style={sectionTabStyle(activeSection === 'complaints', false)} onClick={() => { setActiveSection('complaints'); setStatusFilter('all'); setRatingFilter(0); }}>
           {t.inbox.porAtender} ({sectionCounts.complaints})
         </button>
-        <button
-          type="button"
-          style={sectionTabStyle(activeSection === 'recognitions', true)}
-          onClick={() => {
-            setActiveSection('recognitions');
-            setStatusFilter('all');
-            setRatingFilter(0);
-          }}
-        >
+        <button type="button" style={sectionTabStyle(activeSection === 'recognitions', true)} onClick={() => { setActiveSection('recognitions'); setStatusFilter('all'); setRatingFilter(0); }}>
           {t.inbox.reconocimientos} ({sectionCounts.recognitions})
         </button>
       </div>
 
-      {/* Filters */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
         <div style={{ display: 'flex', gap: 0 }}>
           {positiveSection
             ? ([
                 { status: 'all', label: t.inbox.all, count: counts.all },
                 { status: 'new', label: t.inbox.unread, count: counts.new },
-                {
-                  status: 'read',
-                  label: t.inbox.read,
-                  count: counts.reviewed + counts.resolved,
-                },
+                { status: 'read', label: t.inbox.read, count: counts.reviewed + counts.resolved },
               ] as const).map(({ status, label, count }) => (
-                <button
-                  key={status}
-                  style={tabStyle(statusFilter === status)}
-                  onClick={() => setStatusFilter(status)}
-                >
+                <button key={status} type="button" style={tabStyle(statusFilter === status)} onClick={() => setStatusFilter(status)}>
                   {label} ({count})
                 </button>
               ))
             : (['all', 'new', 'reviewed', 'resolved'] as const).map((status) => (
-                <button
-                  key={status}
-                  style={tabStyle(statusFilter === status)}
-                  onClick={() => setStatusFilter(status)}
-                >
-                  {status === 'all'
-                    ? t.inbox.all
-                    : status === 'new'
-                      ? t.inbox.new
-                      : status === 'reviewed'
-                        ? t.inbox.reviewed
-                        : t.inbox.resolved}{' '}
-                  ({counts[status]})
+                <button key={status} type="button" style={tabStyle(statusFilter === status)} onClick={() => setStatusFilter(status)}>
+                  {status === 'all' ? t.inbox.all : status === 'new' ? t.inbox.new : status === 'reviewed' ? t.inbox.reviewed : t.inbox.resolved} ({counts[status]})
                 </button>
               ))}
         </div>
 
-        <select
-          value={ratingFilter}
-          onChange={(e) => setRatingFilter(Number(e.target.value))}
-          style={{
-            ...inputStyle,
-            padding: '0.4rem 0.6rem',
-          }}
-        >
+        <select value={ratingFilter} onChange={(e) => setRatingFilter(Number(e.target.value))} style={{ ...inputStyle, padding: '0.4rem 0.6rem' }}>
           <option value={0}>{t.inbox.allRatings}</option>
-          {(positiveSection ? [5, 4] : [3, 2, 1]).map((r) => (
-            <option key={r} value={r}>
-              {r} ★
-            </option>
-          ))}
+          {(positiveSection ? [5, 4] : [3, 2, 1]).map((r) => <option key={r} value={r}>{r} ★</option>)}
         </select>
 
-        <select
-          value={sortBy}
-          onChange={(e) => setSortBy(e.target.value as 'newest' | 'oldest' | 'highest' | 'lowest')}
-          style={{
-            ...inputStyle,
-            padding: '0.4rem 0.6rem',
-          }}
-        >
+        <select value={sortBy} onChange={(e) => setSortBy(e.target.value as 'newest' | 'oldest' | 'highest' | 'lowest')} style={{ ...inputStyle, padding: '0.4rem 0.6rem' }}>
           <option value="newest">{t.inbox.sortNewest}</option>
           <option value="oldest">{t.inbox.sortOldest}</option>
           <option value="highest">{t.inbox.sortHighest}</option>
           <option value="lowest">{t.inbox.sortLowest}</option>
         </select>
 
-        <input
-          type="text"
-          placeholder={t.inbox.searchPlaceholder}
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          style={{
-            ...inputStyle,
-            flex: 1,
-            minWidth: 180,
-          }}
-        />
+        <input type="text" placeholder={t.inbox.searchPlaceholder} value={search} onChange={(e) => setSearch(e.target.value)} style={{ ...inputStyle, flex: 1, minWidth: 180 }} />
 
-        <button
-          onClick={handleExport}
-          style={actionButton('var(--text-main)', 'var(--panel-bg)', 'var(--border-dark)')}
-        >
+        <button type="button" onClick={handleExport} style={actionButton('var(--text-main)', 'var(--panel-bg)', 'var(--border-dark)')}>
           {t.inbox.exportCsv}
         </button>
       </div>
 
-      {/* Feedback List */}
-      <section
-        className="flat-panel"
-        style={{
-          padding: '1.5rem',
-          ...(positiveSection ? { borderTop: '3px solid var(--green)' } : {}),
-        }}
-      >
+      <section className="flat-panel" style={{ padding: '1.5rem', ...(positiveSection ? { borderTop: '3px solid var(--green)' } : {}) }}>
         <h2 style={sectionLabel}>
           {positiveSection ? t.inbox.reconocimientos : t.inbox.porAtender} ({filtered.length})
         </h2>
@@ -427,80 +518,7 @@ export default function FeedbackInbox({ initialFeedback }: Props) {
           </p>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-            {filtered.map((fb) => {
-              const positive = isRecognition(fb);
-              return (
-              <div
-                key={fb.id}
-                style={{
-                  padding: '1rem',
-                  borderRadius: 0,
-                  background: 'var(--bg-base)',
-                  borderLeft: `3px solid ${positive ? 'var(--green)' : statusBorderColors[fb.status] ?? 'var(--border-dark)'}`,
-                  border: '1px solid var(--panel-border)',
-                  borderLeftWidth: 3,
-                  borderLeftColor: positive ? 'var(--green)' : statusBorderColors[fb.status] ?? 'var(--border-dark)',
-                }}
-              >
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem', flexWrap: 'wrap', gap: '0.5rem' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <span style={{ fontWeight: 600, fontSize: '0.85rem', color: 'var(--text-main)' }}>
-                      {fb.customerName || t.inbox.anonymous}
-                    </span>
-                    <span style={statusBadge(fb.status, positive)}>
-                      {statusLabel(fb.status, positive)}
-                    </span>
-                  </div>
-                  <span style={{ fontSize: '0.75rem', color: 'var(--text-dim)', fontFamily: 'var(--font-mono)', fontVariantNumeric: 'tabular-nums' }}>
-                    {'★'.repeat(fb.rating)}{'☆'.repeat(5 - fb.rating)}
-                    {' · '}
-                    {fb.createdAt.slice(0, 10)}
-                    {fb.staffName && ` · ${fb.staffName}`}
-                  </span>
-                </div>
-
-                <p style={{ margin: '0 0 0.6rem', fontSize: '0.85rem', color: 'var(--text-muted)', lineHeight: 1.5 }}>
-                  {fb.feedback}
-                </p>
-
-                <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                  {positive && fb.status === 'new' && (
-                    <button
-                      onClick={() => updateStatus(fb.id, 'reviewed')}
-                      style={actionButton('var(--green)', 'var(--green-light)', 'var(--green)')}
-                    >
-                      {t.inbox.markAsRead}
-                    </button>
-                  )}
-                  {!positive && fb.status === 'new' && (
-                    <button
-                      onClick={() => updateStatus(fb.id, 'reviewed')}
-                      style={actionButton('var(--blue)', 'rgba(37,99,235,0.08)', 'var(--blue)')}
-                    >
-                      {t.inbox.markReviewed}
-                    </button>
-                  )}
-                  {!positive && fb.status !== 'resolved' && (
-                    <button
-                      onClick={() => updateStatus(fb.id, 'resolved')}
-                      style={actionButton('var(--green)', 'var(--green-light)', 'var(--green)')}
-                    >
-                      {t.inbox.resolve}
-                    </button>
-                  )}
-                  {fb.customerEmail && (
-                    <a
-                      href={`mailto:${encodeURIComponent(fb.customerEmail)}?subject=${encodeURIComponent(t.inbox.reYourFeedback)}`}
-                      style={actionButton('var(--text-main)', 'transparent', 'var(--border-dark)')}
-                      onClick={() => track('feedback_email_reply_click', { review_id: fb.id })}
-                    >
-                      {t.inbox.replyViaEmail}
-                    </a>
-                  )}
-                </div>
-              </div>
-              );
-            })}
+            {filtered.map((fb) => renderFeedbackItem(fb))}
           </div>
         )}
       </section>
