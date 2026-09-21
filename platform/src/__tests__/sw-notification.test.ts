@@ -10,7 +10,7 @@ function loadWorker() {
   const showNotification = vi.fn(() => Promise.resolve());
   const matchAll = vi.fn(() => Promise.resolve([]));
   const openWindow = vi.fn(() => Promise.resolve());
-  const fetch = vi.fn(() => Promise.resolve());
+  const fetch = vi.fn(() => Promise.resolve({ ok: true }));
   const self = {
     addEventListener: (name: string, handler: (event: never) => void) => handlers.set(name, handler),
     registration: { showNotification },
@@ -106,7 +106,7 @@ describe('service worker notification handling', () => {
     );
   });
 
-  it('acknowledges from the action without opening a window', async () => {
+  it('acknowledges from the action after a successful PATCH without opening a window', async () => {
     const worker = loadWorker();
     const click = dispatchClick(
       worker,
@@ -139,6 +139,36 @@ describe('service worker notification handling', () => {
     });
     expect(worker.matchAll).not.toHaveBeenCalled();
     expect(worker.openWindow).not.toHaveBeenCalled();
+  });
+
+  it('opens the inbox when an acknowledge PATCH returns 401', async () => {
+    const worker = loadWorker();
+    worker.fetch.mockResolvedValueOnce({ ok: true }).mockResolvedValueOnce({ ok: false });
+
+    const click = dispatchClick(
+      worker,
+      { url: '/inbox?rid=42', nid: 99, kind: 'low_review', rid: 42 },
+      'acknowledge',
+    );
+    await click.settled;
+
+    expect(click.close).toHaveBeenCalledOnce();
+    expect(worker.openWindow).toHaveBeenCalledWith('/inbox?rid=42');
+  });
+
+  it('opens the inbox when an acknowledge PATCH rejects', async () => {
+    const worker = loadWorker();
+    worker.fetch.mockResolvedValueOnce({ ok: true }).mockRejectedValueOnce(new Error('Network unavailable'));
+
+    const click = dispatchClick(
+      worker,
+      { url: '/inbox?rid=42', nid: 99, kind: 'low_review', rid: 42 },
+      'acknowledge',
+    );
+    await click.settled;
+
+    expect(click.close).toHaveBeenCalledOnce();
+    expect(worker.openWindow).toHaveBeenCalledWith('/inbox?rid=42');
   });
 
   it('opens the notification URL for a plain click', async () => {

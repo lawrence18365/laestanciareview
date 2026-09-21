@@ -353,6 +353,8 @@ describe('the GM is told one consistent story about the review', () => {
     const calls = pushCalls();
     expect(new Set(calls.map((c) => c.kind))).toEqual(new Set(['positive_review']));
     expect(new Set(calls.map((c) => c.title.includes('positivo')))).toEqual(new Set([true]));
+    expect(mocks.sendPushToRestaurant.mock.calls[0][1]).toMatchObject({ url: '/inbox' });
+    expect(mocks.sendPushToRestaurant.mock.calls[0][1]).not.toHaveProperty('rid');
   });
 
   it.each([
