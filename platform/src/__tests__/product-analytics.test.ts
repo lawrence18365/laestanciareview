@@ -1,4 +1,6 @@
 import { describe, it, expect, beforeAll, vi } from 'vitest';
+import type { SQL } from 'drizzle-orm';
+import { PgDialect } from 'drizzle-orm/pg-core';
 
 const mockSelect = vi.hoisted(() => vi.fn());
 
@@ -18,38 +20,47 @@ beforeAll(async () => {
 });
 
 describe('getAlertCoverage', () => {
-  it('counts operating locations with active subscriptions and sorts uncovered names', async () => {
-    const locations = [
-      ...Array.from({ length: 8 }, (_, index) => ({ id: index + 1, name: `Ubicación ${index + 1}` })),
-      { id: 9, name: 'Zaragoza' },
-      { id: 10, name: 'Álamo' },
-      { id: 11, name: 'Bravo' },
-      { id: 12, name: 'Centro' },
+  it('counts only operational locations and narrows coverage to the selected region', async () => {
+    const allOperationalLocations = [
+      { id: 1, name: 'Centro', slug: 'centro' },
+      { id: 2, name: 'Norte sin dispositivo', slug: 'norte-sin-dispositivo' },
+      { id: 3, name: 'Norte con dispositivo', slug: 'norte-con-dispositivo' },
     ];
+    const canceledLocation = { id: 4, name: 'Cancelada', slug: 'cancelada' };
+    const allLocations = [...allOperationalLocations, canceledLocation];
+    const norteLocations = allOperationalLocations.filter((location) => location.id !== 1);
+    const selectedLocations: Array<typeof allLocations> = [];
+    const dialect = new PgDialect();
 
     mockSelect.mockReset();
     mockSelect
-      .mockImplementationOnce(() => ({
+      .mockImplementation(() => ({
         from: () => ({
-          where: () => ({ orderBy: async () => locations }),
-        }),
-      }))
-      .mockImplementationOnce(() => ({
-        from: () => ({
-          where: () => ({
-            groupBy: async () => [
-              ...Array.from({ length: 8 }, (_, index) => ({ restaurantId: index + 1 })),
-              { restaurantId: 13 },
-              { restaurantId: 14 },
-            ],
+          where: (condition: SQL) => ({
+            orderBy: async () => {
+              const params = dialect.sqlToQuery(condition).params;
+              const locations = !params.includes('active') || !params.includes('trialing')
+                ? allLocations
+                : params.includes('norte') ? norteLocations : allOperationalLocations;
+              selectedLocations.push(locations);
+              return locations;
+            },
+            groupBy: async () => selectedLocations.at(-1) === norteLocations
+              ? [{ restaurantId: 3 }]
+              : [{ restaurantId: 1 }, { restaurantId: 3 }],
           }),
         }),
       }));
 
     await expect(pa.getAlertCoverage()).resolves.toEqual({
-      covered: 8,
-      total: 12,
-      missing: ['Álamo', 'Bravo', 'Centro', 'Zaragoza'],
+      covered: 2,
+      total: 3,
+      missing: ['Norte sin dispositivo'],
+    });
+    await expect(pa.getAlertCoverage('norte')).resolves.toEqual({
+      covered: 1,
+      total: 2,
+      missing: ['Norte sin dispositivo'],
     });
   });
 });

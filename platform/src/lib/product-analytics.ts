@@ -156,35 +156,27 @@ interface OperationalLocation {
 
 /** Operational restaurants only — owner/regional accounts and churned
  *  subscriptions (anything not active/trialing) are excluded. */
-async function getOperationalLocations(): Promise<OperationalLocation[]> {
+async function getOperationalLocations(regionFilter?: string): Promise<OperationalLocation[]> {
+  const conditions = [
+    eq(restaurants.isOwner, false),
+    eq(restaurants.isRegional, false),
+    inArray(restaurants.subscriptionStatus, ['active', 'trialing']),
+  ];
+  if (regionFilter) conditions.push(eq(restaurants.region, regionFilter));
+
   return db
     .select({ id: restaurants.id, name: restaurants.name, slug: restaurants.slug })
     .from(restaurants)
-    .where(
-      and(
-        eq(restaurants.isOwner, false),
-        eq(restaurants.isRegional, false),
-        inArray(restaurants.subscriptionStatus, ['active', 'trialing']),
-      ),
-    )
+    .where(and(...conditions))
     .orderBy(asc(restaurants.name));
 }
 
-export async function getAlertCoverage(): Promise<{
+export async function getAlertCoverage(regionFilter?: string): Promise<{
   covered: number;
   total: number;
   missing: string[];
 }> {
-  const locations = await db
-    .select({ id: restaurants.id, name: restaurants.name })
-    .from(restaurants)
-    .where(
-      and(
-        eq(restaurants.isOwner, false),
-        eq(restaurants.isRegional, false),
-      ),
-    )
-    .orderBy(asc(restaurants.name));
+  const locations = await getOperationalLocations(regionFilter);
 
   if (locations.length === 0) return { covered: 0, total: 0, missing: [] };
 
