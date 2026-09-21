@@ -1,13 +1,33 @@
+import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import {
   inboxLinkFor,
+  RESOLUTIONS,
+  REVIEWED_VIA,
   partitionFocused,
   reviewedViaFor,
   statusPatchBody,
 } from '@/lib/review-recovery';
 import { sessionFeedbackPatchSchema } from '@/lib/validations';
 
+const migration = readFileSync(
+  new URL('../db/migrations/0029_review_recovery_loop.sql', import.meta.url),
+  'utf8',
+);
+
+function checkValues(column: 'reviewed_via' | 'resolution'): string[] {
+  const match = migration.match(new RegExp(column + ' IN \\(([^)]*)\\)'));
+  return match?.[1].match(/'([^']+)'/g)?.map((value) => value.slice(1, -1)) ?? [];
+}
+
 describe('review recovery foundation', () => {
+  it('keeps migration check constraints aligned with recovery union types', () => {
+    expect(checkValues('reviewed_via')).toEqual(REVIEWED_VIA);
+    expect(checkValues('resolution')).toEqual(RESOLUTIONS);
+    expect(migration).toContain('ADD COLUMN IF NOT EXISTS');
+    expect(migration).toContain('DROP CONSTRAINT IF EXISTS');
+  });
+
   it('builds inbox links for push and email alerts', () => {
     expect(inboxLinkFor(42)).toBe('/inbox?rid=42');
     expect(inboxLinkFor(42, 'email')).toBe('/inbox?rid=42&src=email');

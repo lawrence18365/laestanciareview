@@ -17,6 +17,7 @@ import {
   check,
 } from 'drizzle-orm/pg-core';
 import { relations, sql } from 'drizzle-orm';
+import type { Resolution, ReviewedVia } from '@/lib/review-recovery';
 
 export const reviewStatusEnum = pgEnum('review_status', [
   'new',
@@ -294,9 +295,9 @@ export const reviews = pgTable(
     feedback: text('feedback'),
     status: reviewStatusEnum('status').notNull().default('new'),
     reviewedAt: timestamp('reviewed_at', { withTimezone: true }),
-    reviewedVia: text('reviewed_via'),
+    reviewedVia: text('reviewed_via').$type<ReviewedVia>(),
     resolvedAt: timestamp('resolved_at', { withTimezone: true }),
-    resolution: text('resolution'),
+    resolution: text('resolution').$type<Resolution>(),
     escalatedAt: timestamp('escalated_at', { withTimezone: true }),
     sentToGoogle: boolean('sent_to_google').notNull().default(false),
     alertSentAt: timestamp('alert_sent_at', { withTimezone: true }),
