@@ -170,6 +170,44 @@ async function getOperationalLocations(): Promise<OperationalLocation[]> {
     .orderBy(asc(restaurants.name));
 }
 
+export async function getAlertCoverage(): Promise<{
+  covered: number;
+  total: number;
+  missing: string[];
+}> {
+  const locations = await db
+    .select({ id: restaurants.id, name: restaurants.name })
+    .from(restaurants)
+    .where(
+      and(
+        eq(restaurants.isOwner, false),
+        eq(restaurants.isRegional, false),
+      ),
+    )
+    .orderBy(asc(restaurants.name));
+
+  if (locations.length === 0) return { covered: 0, total: 0, missing: [] };
+
+  const subscriptions = await db
+    .select({ restaurantId: pushSubscriptions.restaurantId })
+    .from(pushSubscriptions)
+    .where(
+      and(
+        inArray(pushSubscriptions.restaurantId, locations.map((location) => location.id)),
+        isNull(pushSubscriptions.revokedAt),
+      ),
+    )
+    .groupBy(pushSubscriptions.restaurantId);
+
+  const coveredIds = new Set(subscriptions.map((subscription) => subscription.restaurantId));
+  const missing = locations
+    .filter((location) => !coveredIds.has(location.id))
+    .map((location) => location.name)
+    .sort((a, b) => a.localeCompare(b, 'es'));
+
+  return { covered: locations.length - missing.length, total: locations.length, missing };
+}
+
 /* ── 1. Group summary ───────────────────────────────────────────────────── */
 
 export interface GroupSummary {

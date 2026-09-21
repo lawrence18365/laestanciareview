@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { getOverviewStats, getNewFeedbackCount, getROIStats, getWeeklyHistory, getTotalReviewsBefore, getWeeklyHistoryByRestaurant } from '@/lib/queries';
 import { getGoogleRatingTrendBatch } from '@/lib/google-places';
 import { getComplaintSlaStats, type ComplaintSlaStats } from '@/lib/complaint-sla';
+import { getAlertCoverage } from '@/lib/product-analytics';
 import { startOfWeek } from 'date-fns';
 import OwnerOverview from '@/components/dashboard/OwnerOverview';
 
@@ -29,7 +30,8 @@ export default async function OverviewPage() {
 
   const regionFilter = session.role === 'regional' ? session.region : undefined;
 
-  const [, , googleTrends, weeklyHistory, baselineTotal, weeklyByRestaurant] = await Promise.all([
+  const [alertCoverage, , , googleTrends, weeklyHistory, baselineTotal, weeklyByRestaurant] = await Promise.all([
+    getAlertCoverage(),
     // Unresolved feedback per location
     Promise.all(
       stats.map(async (r) => {
@@ -67,6 +69,27 @@ export default async function OverviewPage() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+      <div
+        style={
+          alertCoverage.covered < alertCoverage.total
+            ? {
+                background: '#FFFBEB',
+                border: '1px solid #D97706',
+                color: '#92400E',
+                padding: '0.75rem 1rem',
+              }
+            : { color: 'var(--text-muted)' }
+        }
+      >
+        <p style={{ margin: 0, fontWeight: 600 }}>
+          Cobertura de alertas: {alertCoverage.covered}/{alertCoverage.total} ubicaciones
+        </p>
+        {alertCoverage.covered < alertCoverage.total && (
+          <p style={{ margin: '0.35rem 0 0', color: 'var(--text-muted)', fontSize: '0.875rem' }}>
+            Sin dispositivo: {alertCoverage.missing.join(', ')}
+          </p>
+        )}
+      </div>
       <OwnerOverview
         stats={stats}
         unresolvedCounts={unresolvedCounts}
