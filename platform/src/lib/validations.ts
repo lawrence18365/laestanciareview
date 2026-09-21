@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { RESOLUTIONS, REVIEWED_VIA } from '@/lib/review-recovery';
 
 // Review submission — customer taps NFC card, selects stars
 export const submitReviewSchema = z.object({
@@ -157,6 +158,16 @@ export const sessionStaffDeleteSchema = z.object({
 export const sessionFeedbackPatchSchema = z.object({
   reviewId: z.number().int().positive(),
   status: z.enum(['new', 'reviewed', 'resolved']),
+  reviewedVia: z.enum(REVIEWED_VIA).optional(),
+  resolution: z.enum(RESOLUTIONS).optional(),
+}).superRefine((data, ctx) => {
+  if (data.status === 'resolved' && !data.resolution) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['resolution'],
+      message: 'Resolution is required when status is resolved',
+    });
+  }
 });
 
 // Quote builder POST/PUT body schema.

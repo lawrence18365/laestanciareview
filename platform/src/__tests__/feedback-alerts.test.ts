@@ -54,7 +54,9 @@ function makeReview(overrides: Partial<FeedbackAlertReview> = {}): FeedbackAlert
     feedback: 'La comida llegó fría',
     status: 'new',
     reviewedAt: null,
+    reviewedVia: null,
     resolvedAt: null,
+    resolution: null,
     escalatedAt: null,
     sentToGoogle: false,
     alertSentAt: null,
@@ -155,8 +157,15 @@ describe('dispatchFeedbackAlerts', () => {
     expect(escalationChannelKeys(result.channels)).toEqual([]);
     expect(mocks.sendPushToRestaurant).toHaveBeenCalledTimes(1);
     expect(mocks.sendPushToRestaurant.mock.calls[0][0]).toBe(7);
+    expect(mocks.sendPushToRestaurant.mock.calls[0][1]).toMatchObject({
+      rid: 42,
+      url: '/inbox?rid=42',
+    });
     expect(mocks.sendFeedbackAlert).toHaveBeenCalledTimes(1);
-    expect(mocks.sendFeedbackAlert.mock.calls[0][0]).toMatchObject({ to: 'gm@example.com' });
+    expect(mocks.sendFeedbackAlert.mock.calls[0][0]).toMatchObject({
+      to: 'gm@example.com',
+      reviewId: 42,
+    });
 
     // The row still shows what happened to the escalation branch.
     expect(result.channels.escalation).toEqual({ ok: false, skipped: 'deferred_to_sla' });

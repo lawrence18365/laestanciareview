@@ -283,7 +283,8 @@ describe('complaint SLA', () => {
       7,
       expect.objectContaining({
         title: '🔴 Centro: queja urgente de 2 estrellas sin atender desde hace 30 h',
-        url: '/inbox',
+        url: '/inbox?rid=41',
+        rid: 41,
         tag: 'overdue-41',
       }),
       { kind: 'low_review', subjectType: 'review', subjectId: 41 },
@@ -296,10 +297,14 @@ describe('complaint SLA', () => {
       }),
       { kind: 'low_review', subjectType: 'review', subjectId: 41 },
     );
+    for (const [, payload] of mocks.sendPushToRestaurant.mock.calls.slice(1)) {
+      expect(payload).not.toHaveProperty('rid');
+    }
     expect(mocks.sendFeedbackAlert).toHaveBeenCalledTimes(1);
     expect(mocks.sendFeedbackAlert).toHaveBeenCalledWith(
       expect.objectContaining({
         to: 'owner@example.com',
+        reviewId: 41,
         severity: 'urgent',
         subjectPrefix: '[Escalada]',
       }),

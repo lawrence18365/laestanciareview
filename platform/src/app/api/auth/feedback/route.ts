@@ -42,13 +42,20 @@ export async function PATCH(req: Request) {
       ? sql`COALESCE(${reviews.reviewedAt}, ${now})`
       : undefined;
   const resolvedAtPatch = status === 'resolved' ? now : undefined;
+  const reviewedViaPatch =
+    status === 'reviewed' || status === 'resolved'
+      ? sql`COALESCE(${reviews.reviewedVia}, ${parsed.data.reviewedVia ?? 'inbox'})`
+      : undefined;
+  const resolutionPatch = status === 'resolved' ? parsed.data.resolution : undefined;
 
   const [updated] = await db
     .update(reviews)
     .set({
       status,
       ...(reviewedAtPatch ? { reviewedAt: reviewedAtPatch } : {}),
+      ...(reviewedViaPatch ? { reviewedVia: reviewedViaPatch } : {}),
       ...(resolvedAtPatch ? { resolvedAt: resolvedAtPatch } : {}),
+      ...(resolutionPatch ? { resolution: resolutionPatch } : {}),
     })
     .where(
       and(

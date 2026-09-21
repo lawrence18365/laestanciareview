@@ -36,6 +36,7 @@ interface PushPayload {
   title: string;
   body: string;
   url?: string;
+  rid?: number;
   tag?: string;
 }
 
