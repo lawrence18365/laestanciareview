@@ -23,7 +23,7 @@ interface FeedbackItem {
   staffName: string | null;
   staffCode: string | null;
   status: 'new' | 'reviewed' | 'resolved';
-  'resolution': Resolution | null;
+  resolution: Resolution | null;
   createdAt: string;
 }
 
@@ -231,7 +231,7 @@ export default function FeedbackInbox({ initialFeedback, focusReviewId, focusSou
           reviewId: id,
           status: newStatus,
           reviewedVia,
-          ...(resolution ? { ['resolution']: resolution } : {}),
+          ...(resolution ? { resolution } : {}),
         })),
       });
 
@@ -239,7 +239,7 @@ export default function FeedbackInbox({ initialFeedback, focusReviewId, focusSou
         setItems((prev) =>
           prev.map((item) =>
             item.id === id
-              ? { ...item, status: newStatus, ['resolution']: resolution ?? item.resolution }
+              ? { ...item, status: newStatus, resolution: resolution ?? item.resolution }
               : item,
           ),
         );
@@ -277,7 +277,7 @@ export default function FeedbackInbox({ initialFeedback, focusReviewId, focusSou
 
   const renderFeedbackItem = (fb: FeedbackItem, pinned = false) => {
     const positive = isRecognition(fb);
-    const showAcknowledgement = pinned && fb.status === 'new';
+    const showAcknowledgement = pinned && !positive && fb.status === 'new';
     const severityColor = positive ? 'var(--green)' : statusBorderColors[fb.status] ?? 'var(--border-dark)';
 
     return (

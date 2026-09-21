@@ -227,8 +227,8 @@ export async function dispatchFeedbackAlerts(
       sendPushToRestaurant(review.restaurantId, {
         title: gmPushTitle(classification.severity, review.rating),
         body: feedbackPreview,
-        url: inboxLinkFor(review.id),
-        rid: review.id,
+        url: classification.actionable ? inboxLinkFor(review.id) : '/inbox',
+        ...(classification.actionable ? { rid: review.id } : {}),
         tag: `review-${review.id}`,
       }, {
         kind: pushKindFor(classification.severity),

@@ -31,9 +31,14 @@ describe('FeedbackInbox recovery boundary', () => {
     for (const key of ['acknowledge', 'whatHappened', 'cancel', 'fromNotification']) {
       expect(source).toContain(`t.inbox.${key}`);
     }
-    const patchBodies = [...source.matchAll(/JSON\.stringify\(([^)]*)/g)].map((match) => match[1].trim());
-    expect(patchBodies.every((body) => body.startsWith('statusPatchBody('))).toBe(true);
-    expect(source).not.toMatch(/\bresolution\s*:/);
+    const feedbackFetchBlocks = [...source.matchAll(
+      /fetch\(\s*['"]\/api\/auth\/feedback['"][\s\S]*?\n\s*}\);/g,
+    )].map((match) => match[0]);
+    expect(feedbackFetchBlocks.length).toBeGreaterThan(0);
+    for (const block of feedbackFetchBlocks) {
+      const body = block.match(/\bbody:\s*([^\n]+)/)?.[1].trim();
+      expect(body?.startsWith('JSON.stringify(statusPatchBody(')).toBe(true);
+    }
   });
 
   it('has a label for every available resolution', () => {

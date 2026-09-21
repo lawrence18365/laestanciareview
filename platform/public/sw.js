@@ -63,33 +63,34 @@ self.addEventListener('notificationclick', (event) => {
     }),
   }).catch(() => {});
 
-  if (action) {
-    event.waitUntil(
-      Promise.all([
-        fetch('/api/auth/feedback', {
+  event.waitUntil(
+    (async () => {
+      if (action) {
+        const acknowledged = await fetch('/api/auth/feedback', {
           method: 'PATCH',
           credentials: 'include',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ reviewId: rid, status: 'reviewed', reviewedVia: 'push_action' }),
-        }).catch(() => {}),
-        clickPing,
-      ])
-    );
-    return;
-  }
+        }).then((res) => res.ok).catch(() => false);
 
-  event.waitUntil(
-    Promise.all([
-      clickPing,
-      clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
-        for (const client of windowClients) {
-          if (client.url.includes(url) && 'focus' in client) {
-            return client.focus();
-          }
+        if (acknowledged) {
+          await clickPing;
+          return;
         }
-        return clients.openWindow(url);
-      }),
-    ])
+      }
+
+      await Promise.all([
+        clickPing,
+        clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
+          for (const client of windowClients) {
+            if (client.url.includes(url) && 'focus' in client) {
+              return client.focus();
+            }
+          }
+          return clients.openWindow(url);
+        }),
+      ]);
+    })()
   );
 });
 
