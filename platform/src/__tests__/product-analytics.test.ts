@@ -1,4 +1,10 @@
-import { describe, it, expect, beforeAll } from 'vitest';
+import { describe, it, expect, beforeAll, vi } from 'vitest';
+
+const mockSelect = vi.hoisted(() => vi.fn());
+
+vi.mock('@/db', () => ({
+  db: { select: mockSelect },
+}));
 
 // The module under test transitively imports @/db, which reads DATABASE_URL
 // at module load. Follow the established pattern (see product-events.test.ts):
@@ -9,6 +15,43 @@ let pa: typeof import('@/lib/product-analytics');
 beforeAll(async () => {
   process.env.DATABASE_URL = 'postgresql://user:pass@localhost:5432/test';
   pa = await import('@/lib/product-analytics');
+});
+
+describe('getAlertCoverage', () => {
+  it('counts operating locations with active subscriptions and sorts uncovered names', async () => {
+    const locations = [
+      ...Array.from({ length: 8 }, (_, index) => ({ id: index + 1, name: `Ubicación ${index + 1}` })),
+      { id: 9, name: 'Zaragoza' },
+      { id: 10, name: 'Álamo' },
+      { id: 11, name: 'Bravo' },
+      { id: 12, name: 'Centro' },
+    ];
+
+    mockSelect.mockReset();
+    mockSelect
+      .mockImplementationOnce(() => ({
+        from: () => ({
+          where: () => ({ orderBy: async () => locations }),
+        }),
+      }))
+      .mockImplementationOnce(() => ({
+        from: () => ({
+          where: () => ({
+            groupBy: async () => [
+              ...Array.from({ length: 8 }, (_, index) => ({ restaurantId: index + 1 })),
+              { restaurantId: 13 },
+              { restaurantId: 14 },
+            ],
+          }),
+        }),
+      }));
+
+    await expect(pa.getAlertCoverage()).resolves.toEqual({
+      covered: 8,
+      total: 12,
+      missing: ['Álamo', 'Bravo', 'Centro', 'Zaragoza'],
+    });
+  });
 });
 
 describe('tag', () => {
