@@ -117,10 +117,10 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <dd style="margin-left: 0; color: var(--text-secondary);">An active location with at least two Google rating snapshots in the <code>google_rating_snapshots</code> table, with a gap of at least 7 days between the earliest and latest. Locations below this threshold are excluded from rating statistics because their observation window is too short to draw conclusions from.</dd>
 
 <dt style="font-weight: 700; margin-top: 1.5rem;">Guest tap</dt>
-<dd style="margin-left: 0; color: var(--text-secondary);">A row in the <code>reviews</code> table representing one in-restaurant tap on a server's NFC card. Each tap captures a star rating, optional feedback, the staff member tapped, and whether the tap was forwarded to Google's review form.</dd>
+<dd style="margin-left: 0; color: var(--text-secondary);">A row in the <code>reviews</code> table representing one guest rating submission through a restaurant's RateTap flow. Each tap captures a star rating, optional feedback, optional staff attribution, and whether the guest chose Google's review form.</dd>
 
 <dt style="font-weight: 700; margin-top: 1.5rem;">Guest issue detection</dt>
-<dd style="margin-left: 0; color: var(--text-secondary);">A guest tap with a star rating below the restaurant's <code>googleThreshold</code> (default 4). These low-score responses are routed to a private feedback form that triggers a real-time manager alert for service recovery. They count as a "guest issue captured" only if their rating is strictly below the threshold.</dd>
+<dd style="margin-left: 0; color: var(--text-secondary);">Every guest is offered the same choice between Google's review form and private feedback; the platform does not route guests by a star threshold. When feedback is submitted, <code>classifyReview()</code> classifies its written content as praise, mixed, complaint, or urgent. Ratings at or below 2 are urgent regardless of the text, and ratings at or below 3 are never praise. Any result other than praise is actionable: it is something a human needs to act on, and this is what the site's "guest issue" counts mean.</dd>
 
 <dt style="font-weight: 700; margin-top: 1.5rem;">Staff attribution rate</dt>
 <dd style="margin-left: 0; color: var(--text-secondary);">The percentage of guest taps where <code>staff_id</code> is non-null — i.e., the tap can be tied to a specific staff member. Computed across the full <code>reviews</code> table for paying restaurants.</dd>
