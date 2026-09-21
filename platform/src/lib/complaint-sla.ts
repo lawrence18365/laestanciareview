@@ -40,6 +40,7 @@ import { db } from '@/db';
 import { restaurants, reviews } from '@/db/schema';
 import { sendFeedbackAlert } from '@/lib/email';
 import { sendPushToRestaurant } from '@/lib/push';
+import { inboxLinkFor } from '@/lib/review-recovery';
 import {
   classifyReview,
   escalationPushTitle,
@@ -390,7 +391,8 @@ export async function escalateOverdueComplaints(now: Date = new Date()) {
       const result = await sendPushToRestaurant(complaint.restaurantId, {
         title,
         body,
-        url: '/inbox',
+        url: inboxLinkFor(complaint.id),
+        rid: complaint.id,
         tag: `overdue-${complaint.id}`,
       }, {
         kind: pushKind,
@@ -444,6 +446,7 @@ export async function escalateOverdueComplaints(now: Date = new Date()) {
       try {
         const result = await sendFeedbackAlert({
           to: account.managerEmail,
+          reviewId: complaint.id,
           restaurantName: complaint.restaurantName,
           customerName: complaint.customerName,
           customerEmail: complaint.customerEmail,

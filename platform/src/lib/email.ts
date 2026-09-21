@@ -1,4 +1,5 @@
 import { sendMail } from '@/lib/mailer';
+import { inboxLinkFor } from '@/lib/review-recovery';
 import { formatStaffAnomaly, type StaffAnomaly } from '@/lib/anomalies';
 import { RATING_BASELINE_NOTE } from '@/lib/rating-baseline';
 import {
@@ -285,6 +286,7 @@ function emailLayout(content: string, footerNote?: string): string {
 
 interface FeedbackAlertParams {
   to: string;
+  reviewId: number;
   restaurantName: string;
   customerName: string | null;
   customerEmail: string | null;
@@ -303,6 +305,7 @@ interface FeedbackAlertParams {
 
 export async function sendFeedbackAlert({
   to,
+  reviewId,
   restaurantName,
   customerName,
   customerEmail,
@@ -373,7 +376,7 @@ export async function sendFeedbackAlert({
 
       <!-- CTA -->
       <div style="text-align: center;">
-        <a href="${BASE_URL}/inbox" style="${CTA_STYLE}">
+        <a href="${BASE_URL}${inboxLinkFor(reviewId, 'email')}" style="${CTA_STYLE}">
           Ver en Buzón
         </a>
       </div>

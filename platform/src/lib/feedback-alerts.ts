@@ -5,6 +5,7 @@ import { sendFeedbackAlert } from '@/lib/email';
 import { sendSMSAlert } from '@/lib/sms';
 import { sendWhatsAppAlert } from '@/lib/whatsapp';
 import { sendPushToRestaurant } from '@/lib/push';
+import { inboxLinkFor } from '@/lib/review-recovery';
 import {
   classifyReview,
   gmPushTitle,
@@ -147,6 +148,7 @@ export async function dispatchFeedbackAlerts(
       attempts.push(
         sendFeedbackAlert({
           to: restaurant.managerEmail,
+          reviewId: review.id,
           restaurantName: restaurant.name,
           customerName: review.customerName,
           customerEmail: review.customerEmail,
@@ -225,7 +227,8 @@ export async function dispatchFeedbackAlerts(
       sendPushToRestaurant(review.restaurantId, {
         title: gmPushTitle(classification.severity, review.rating),
         body: feedbackPreview,
-        url: '/inbox',
+        url: inboxLinkFor(review.id),
+        rid: review.id,
         tag: `review-${review.id}`,
       }, {
         kind: pushKindFor(classification.severity),
