@@ -52,6 +52,11 @@ describe('trackBatchSchema', () => {
 });
 
 describe('PUBLIC_EVENT_NAMES', () => {
+  it('includes the device-displayed push event in both event lists', () => {
+    expect(productEvents.PRODUCT_EVENT_NAMES).toContain('push_notification_shown');
+    expect(productEvents.PUBLIC_EVENT_NAMES).toContain('push_notification_shown');
+  });
+
   it('contains only names present in PRODUCT_EVENT_NAMES', () => {
     const all = new Set<string>(productEvents.PRODUCT_EVENT_NAMES);
     for (const name of productEvents.PUBLIC_EVENT_NAMES) {
