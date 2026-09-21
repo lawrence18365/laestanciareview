@@ -31,7 +31,7 @@ export default async function OverviewPage() {
   const regionFilter = session.role === 'regional' ? session.region : undefined;
 
   const [alertCoverage, , , googleTrends, weeklyHistory, baselineTotal, weeklyByRestaurant] = await Promise.all([
-    getAlertCoverage(),
+    getAlertCoverage(regionFilter),
     // Unresolved feedback per location
     Promise.all(
       stats.map(async (r) => {
