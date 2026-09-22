@@ -1,17 +1,21 @@
 'use client';
 
-import { useState, useCallback, useEffect, type CSSProperties } from 'react';
+import { useState, useCallback, useEffect, useRef, type CSSProperties } from 'react';
 import { useRouter } from 'next/navigation';
 import { t } from '@/lib/i18n';
 import { track } from '@/lib/analytics-client';
+import {
+  resolveReviewEntry,
+  resolveSubmitOutcome,
+  reviewResumeAnalyticsProperties,
+  saveReviewSession,
+} from '@/lib/review-session';
 
 interface StarRatingProps {
   restaurantSlug: string;
   staffCode: string;
   restaurantName: string;
 }
-
-const RATED_STORAGE_WINDOW = 12 * 60 * 60 * 1000;
 
 function StarIcon({ filled, size = 44 }: { filled: boolean; size?: number }) {
   return (
@@ -30,11 +34,79 @@ function StarIcon({ filled, size = 44 }: { filled: boolean; size?: number }) {
   );
 }
 
-export default function StarRating({
-  restaurantSlug,
-  staffCode,
-  restaurantName,
-}: StarRatingProps) {
+export interface ReviewChoice {
+  reviewId: number;
+  feedbackToken: string;
+  googleReviewUrl: string | null;
+}
+
+export interface ReviewMountState {
+  /** True when the guest already tapped a star and is resuming that review. */
+  resumed: boolean;
+  /** The rating to redraw, so the copy matches what the guest picked. 0 = fresh. */
+  rating: number;
+  /** The Google/private-feedback choice to offer, or null when the stars show. */
+  choice: ReviewChoice | null;
+}
+
+/**
+ * The whole mount path of the review screen, in one step: restore the cached
+ * session (read-only — a restore never writes, so a reload loop can never
+ * extend the 12 h window, and it validates shape, slug, TTL and link protocol)
+ * and report the single `review_screen_shown` this mount owes analytics.
+ *
+ * It touches localStorage and analytics and NOTHING ELSE. In particular it never
+ * fetches: the review row and its feedback token already exist from the star
+ * tap, so re-POSTing on a reload would create a second review row and spend a
+ * second slot of the guest's 3-per-device/24 h cap. Exported so that "a resume
+ * calls nothing" is asserted rather than merely intended (see
+ * review-resume.test.tsx); a DOM test renderer is not available to this suite.
+ *
+ * The token never reaches analytics: reviewResumeAnalyticsProperties() is the
+ * only projection of a session that may be logged.
+ */
+export function resolveReviewMountState(
+  restaurantSlug: string,
+  staffCode: string,
+): ReviewMountState {
+  const entry = resolveReviewEntry(restaurantSlug);
+
+  // A resume offers the choice instead of the stars, and `resumed: true`
+  // separates the two populations in the funnel.
+  track(
+    'review_screen_shown',
+    entry.kind === 'resume'
+      ? { staff_code: staffCode || null, ...reviewResumeAnalyticsProperties(entry.session) }
+      : { staff_code: staffCode || null },
+    { restaurantSlug },
+  );
+
+  return entry.kind === 'resume'
+    ? {
+        resumed: true,
+        rating: entry.session.rating,
+        choice: {
+          reviewId: entry.session.reviewId,
+          feedbackToken: entry.session.feedbackToken,
+          googleReviewUrl: entry.session.googleReviewUrl,
+        },
+      }
+    : { resumed: false, rating: 0, choice: null };
+}
+
+/**
+ * The remount boundary. A different slug is a different restaurant, and no part
+ * of the screen belongs to the new one: keying on the slug discards the previous
+ * instance whole — choice, rating, flags — instead of trying to unpick its state,
+ * so a cached restaurant can never leave its still-valid review token's buttons
+ * on the fresh restaurant's screen. Restore for the new slug is then established
+ * by that instance's own mount effect.
+ */
+export default function StarRating(props: StarRatingProps) {
+  return <StarRatingScreen key={props.restaurantSlug} {...props} />;
+}
+
+function StarRatingScreen({ restaurantSlug, staffCode, restaurantName }: StarRatingProps) {
   const router = useRouter();
   const [hoveredStar, setHoveredStar] = useState(0);
   const [selectedStar, setSelectedStar] = useState(0);
@@ -44,57 +116,59 @@ export default function StarRating({
   const [redirecting, setRedirecting] = useState(false);
   const [storageChecked, setStorageChecked] = useState(false);
   const [showAlreadyReceived, setShowAlreadyReceived] = useState(false);
-  const [choice, setChoice] = useState<{
-    reviewId: number;
-    feedbackToken: string;
-    googleReviewUrl: string | null;
-  } | null>(null);
-
-  const ratedStorageKey = `ratetap_rated_${restaurantSlug}`;
+  const [choice, setChoice] = useState<ReviewChoice | null>(null);
+  /** The slug this instance currently speaks for; see the submit guard below. */
+  const activeSlug = useRef(restaurantSlug);
+  /** The pending Google redirect, so leaving the screen can cancel it. */
+  const redirectTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
-    // Exactly one of these two fires per mount, and together they close the
-    // funnel: review_page_open counts loads, review_screen_shown counts loads
-    // that actually offered the stars. The difference is the guard's cost,
-    // which was invisible before this.
-    let blocked = false;
-    try {
-      const storedAt = Number(window.localStorage.getItem(ratedStorageKey));
-      const age = Date.now() - storedAt;
-      if (
-        Number.isFinite(storedAt) &&
-        storedAt > 0 &&
-        age >= 0 &&
-        age < RATED_STORAGE_WINDOW
-      ) {
-        blocked = true;
-        setShowAlreadyReceived(true);
-      }
-    } catch {
-      // Storage can be unavailable in private browsing or restricted contexts.
-      // That is a *pass*, not a block: the stars render.
-    } finally {
-      setStorageChecked(true);
-      track(
-        blocked ? 'review_blocked_local_guard' : 'review_screen_shown',
-        blocked
-          ? { staff_code: staffCode || null, window_hours: RATED_STORAGE_WINDOW / 3600000 }
-          : { staff_code: staffCode || null },
-        { restaurantSlug },
-      );
-    }
-  }, [ratedStorageKey, restaurantSlug, staffCode]);
+    // Restore, then decide, in one step (see review-resume.test.tsx). The star tap
+    // already created the review and minted the feedback token; a reload or a
+    // re-scan must land back on the Google/private-feedback choice for THAT review.
+    const mount = resolveReviewMountState(restaurantSlug, staffCode);
+    activeSlug.current = restaurantSlug;
 
-  const rememberSuccessfulSubmit = useCallback(() => {
-    try {
-      window.localStorage.setItem(ratedStorageKey, Date.now().toString());
-    } catch {
-      // The server-side limit still applies when storage is unavailable.
+    if (mount.choice) {
+      setSelectedStar(mount.rating);
+      setChoice(mount.choice);
+    } else {
+      // A fresh entry clears every field the previous restaurant could have set,
+      // so the stars cannot sit under a heading whose screen still answers with
+      // that restaurant's token.
+      setChoice(null);
+      setSelectedStar(0);
+      setHoveredStar(0);
+      setPopStar(0);
+      setError(false);
+      setShowAlreadyReceived(false);
+      setSubmitting(false);
+      setRedirecting(false);
     }
-  }, [ratedStorageKey]);
+
+    // Exactly one review_screen_shown per mount, reported by the resolver above,
+    // so review_page_open minus review_screen_shown keeps balancing.
+    setStorageChecked(true);
+
+    return () => {
+      // The redirect is a plain timer, not React state: leaving the screen would
+      // otherwise still send the guest to the previous restaurant's Google link.
+      if (redirectTimer.current !== null) {
+        clearTimeout(redirectTimer.current);
+        redirectTimer.current = null;
+      }
+    };
+  }, [restaurantSlug, staffCode]);
 
   const handleSubmit = useCallback(
     async (rating: number) => {
+      // The slug this tap belongs to: the answer may arrive after the screen has
+      // moved to another restaurant.
+      const requestedSlug = restaurantSlug;
+      // Whether an answer may repaint the screen at all: the guest can leave this
+      // restaurant while the POST is in flight, and the screen that is up by then
+      // is no longer the one this tap was about.
+      const stillShowingRequestedSlug = () => activeSlug.current === requestedSlug;
       setSelectedStar(rating);
       setPopStar(rating);
       setSubmitting(true);
@@ -110,33 +184,46 @@ export default function StarRating({
         if (!res.ok) throw new Error('Submit failed');
 
         const data = await res.json();
+        const outcome = resolveSubmitOutcome(data, { slug: restaurantSlug, rating });
 
-        if (data.limited === true) {
-          rememberSuccessfulSubmit();
-          setShowAlreadyReceived(true);
-          setSubmitting(false);
+        if (outcome.kind === 'invalid') throw new Error('Invalid submit response');
+
+        if (outcome.kind === 'limited') {
+          // The server's own 3-per-device/24 h cap. Terminal for this phone, and
+          // no session: there is no review row to resume, so inventing one would
+          // only fake a choice screen whose token authenticates nothing.
+          if (stillShowingRequestedSlug()) {
+            setSubmitting(false);
+            setShowAlreadyReceived(true);
+          }
           return;
         }
 
-        if (!data.feedbackToken) throw new Error('Missing feedback token');
-        rememberSuccessfulSubmit();
+        // Persist BEFORE revealing the choice: a reload between the tap and the
+        // choice must resume this exact review. save uses the original createdAt.
+        // The write belongs to `requestedSlug` and stays correct even if this tap
+        // is answered after the screen moved on.
+        saveReviewSession(outcome.session);
+
+        if (!stillShowingRequestedSlug()) return;
 
         // No rating-based routing: offer every guest the same two options and
         // let them choose (see chooseGoogle / chooseFeedback).
         setChoice({
-          reviewId: data.reviewId,
-          feedbackToken: data.feedbackToken,
-          googleReviewUrl: data.googleReviewUrl ?? null,
+          reviewId: outcome.session.reviewId,
+          feedbackToken: outcome.session.feedbackToken,
+          googleReviewUrl: outcome.session.googleReviewUrl,
         });
         setSubmitting(false);
       } catch {
+        if (!stillShowingRequestedSlug()) return;
         setSubmitting(false);
         setSelectedStar(0);
         setPopStar(0);
         setError(true);
       }
     },
-    [rememberSuccessfulSubmit, restaurantSlug, staffCode],
+    [restaurantSlug, staffCode],
   );
 
   function chooseFeedback() {
@@ -172,7 +259,8 @@ export default function StarRating({
       });
     }
     setRedirecting(true);
-    setTimeout(() => {
+    redirectTimer.current = setTimeout(() => {
+      redirectTimer.current = null;
       window.location.href = url;
     }, 800);
   }

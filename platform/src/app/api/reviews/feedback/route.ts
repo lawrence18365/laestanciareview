@@ -42,6 +42,9 @@ export async function POST(req: NextRequest) {
 
   // Only allow updating reviews that don't already have feedback
   // The opaque token binds this public form to the review created by the star tap.
+  // The `feedback IS NULL` clause is what makes this atomic under a concurrent
+  // double submit: the second UPDATE re-evaluates its WHERE while waiting on the
+  // row lock and matches nothing.
   const [updated] = await db
     .update(reviews)
     .set({
@@ -59,6 +62,31 @@ export async function POST(req: NextRequest) {
     .returning();
 
   if (!updated) {
+    // No row moved. Either this guest already submitted, or the id/token pair
+    // matched nothing at all — the two look identical here, so they are told
+    // apart by the same lookup the UPDATE used (id AND token hash, never the id
+    // alone). A correct-token retry is a SUCCESS for the guest: their feedback
+    // is already stored, so the double tap / retry after a dropped response /
+    // second tab gets the same success shape. What it must NOT do is replay the
+    // first write's side effects — the alert dispatch, the commercial event and
+    // the SLA sweep all belong to the write that actually happened, and the
+    // stored feedback is never overwritten.
+    const [existing] = await db
+      .select({ id: reviews.id, feedback: reviews.feedback })
+      .from(reviews)
+      .where(
+        and(
+          eq(reviews.id, reviewId),
+          eq(reviews.feedbackTokenHash, feedbackTokenHash),
+        ),
+      )
+      .limit(1);
+
+    if (existing?.feedback) {
+      return Response.json({ success: true, reviewId: existing.id });
+    }
+
+    // Missing review, or a token that does not belong to it: still non-success.
     return Response.json({ error: 'Review not found or feedback already submitted' }, { status: 404 });
   }
 
