@@ -50,4 +50,6 @@ jobs:
           cache: npm
           cache-dependency-path: platform/package-lock.json
       - run: npm install
+      - name: Install Chromium for review-flow regression tests
+        run: npx playwright install --with-deps chromium
       - run: npm test
