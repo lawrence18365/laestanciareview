@@ -37,6 +37,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     <meta name="twitter:description" content="Convierte a los clientes que ya tienes en ingresos medibles de eventos."/>
     <meta name="twitter:image" content="https://ratetapmx.com/assets/og-image.png"/>
     <link as="style" href="../styles.css" rel="preload" />
+    <link rel="preload" href="../assets/hero-restaurant.webp" as="image" type="image/webp" fetchpriority="high">
     <link href="../styles.css" rel="stylesheet" />
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
 
@@ -54,9 +55,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <div class="ambient-canvas"></div>
     <div class="ambient-background"></div>
     <!-- Navigation -->
-    <nav class="navbar" id="navbar">
+    <nav class="navbar navbar--hero" id="navbar">
         <a class="nav-brand" href="/es/">
-            <img src="../assets/logo-new-small.webp" alt="RateTap" width="225" height="150" decoding="async" loading="eager">
+            <span class="nav-wordmark">RateTap</span>
         </a>
         <div class="nav-menu" id="nav-menu">
             <a class="nav-link" href="#how-it-works">Cómo funciona</a>
@@ -69,91 +70,19 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             <a href="/" class="nav-lang-toggle" style="margin-right: 1.5rem; color: var(--text-secondary); text-decoration: none; font-weight: 700; font-size: 0.95rem; transition: color 0.2s; display: flex; align-items: center; gap: 0.5rem;">
                 <i class="fa-solid fa-globe"></i> EN
             </a>
-            <a class="btn btn-primary" href="https://app.ratetapmx.com/auditoria-ingresos" style="padding: 0.7rem 1.8rem; font-size: 0.9rem;">Auditoría gratuita</a>
+            <a class="btn btn-primary" href="https://app.ratetapmx.com/auditoria-ingresos" style="padding: 0.7rem 1.8rem; font-size: 0.9rem;">Auditoría</a>
         </div>
     </nav>
     <!-- Hero Section -->
-    <section class="hero" id="hero">
-        <div class="container">
-            <div class="grid-2">
-                <!-- Text Content -->
-                <div class="hero-content">
-                    <span class="hero-eyebrow">
-                        <i class="fa-solid fa-bolt"></i> Ingresos desde tu base propia
-                    </span>
-                    <h1>
-                        Llena tus noches flojas con los clientes que ya tienes
-                    </h1>
-                    <p class="hero-subtitle">
-                        Elige una fecha débil. Segmenta a los invitados correctos. Opera la campaña por WhatsApp. Mide cada
-                        reservación, anticipo y peso atribuible. NFC y reseñas vienen incluidos porque hacen crecer la base.
-                    </p>
-                    <div class="hero-actions">
-                        <a class="btn btn-primary" href="https://app.ratetapmx.com/auditoria-ingresos">Auditar mi noche floja</a>
-                        <a class="btn btn-secondary" href="#features">Ver el sistema</a>
-                    </div>
-                </div>
-                <!-- Showcase Stage (Unbound Mockup) -->
-                <div class="hero-visual-stage">
-                    <div class="product-proof">
-                        <!-- Phone -->
-                        <div class="phone-shell">
-                            <div class="phone-screen-stack">
-                                <!-- Screen 1: Rating -->
-                                <div class="phone-screen-state screen-rating">
-                                    <div class="screen-top">
-                                        <span>La Brasa · Mesa 12</span>
-                                        <span>10s</span>
-                                    </div>
-                                    <p class="screen-kicker">Check-in de cliente</p>
-                                    <h3 class="screen-title">¿Cómo estuvo tu cena hoy?</h3>
-                                    <div class="rating-row">
-                                        <i class="fa-solid fa-star"></i>
-                                        <i class="fa-solid fa-star"></i>
-                                        <i class="fa-solid fa-star"></i>
-                                        <i class="fa-solid fa-star"></i>
-                                        <i class="fa-regular fa-star" style="color: #cbd5e1;"></i>
-                                    </div>
-                                    <button
-                                        style="width:100%; font-size:0.85rem; padding:0.8rem; border-radius: 12px; color: #64748b; background: #f8fafc; border: none; font-weight: 700; margin-top: auto; cursor: default;">Continuar</button>
-                                </div>
-                                <!-- Screen 2: Low Rating (Private) -->
-                                <div class="phone-screen-state screen-low">
-                                    <p class="screen-kicker">Feedback privado</p>
-                                    <h3 class="screen-title">¿Qué debemos corregir ahora?</h3>
-                                    <div class="feedback-chips">
-                                        <span>Tiempo</span>
-                                        <span>Comida</span>
-                                        <span style="background: var(--brand-blue); color: white;">Servicio</span>
-                                    </div>
-                                    <button
-                                        style="width:100%; font-size:0.85rem; padding:0.8rem; border-radius: 12px; margin-top: auto; background: var(--brand-blue); color: white; border: none; font-weight: 700; cursor: default;">Enviar
-                                        a gerente</button>
-                                </div>
-                                <!-- Screen 3: High Rating (Google) -->
-                                <div class="phone-screen-state screen-high">
-                                    <p class="screen-kicker">Excelente experiencia</p>
-                                    <div
-                                        style="margin:2rem 0; color:var(--brand-blue); font-size:3rem; text-align:center;">
-                                        <i class="fa-solid fa-circle-check"></i>
-                                    </div>
-                                    <h3 class="screen-title" style="text-align: center;">¿Nos ayudas en Google?</h3>
-                                    <button
-                                        style="width:100%; font-size:0.85rem; padding:0.8rem; border-radius: 12px; border:1px solid #e2e8f0; margin-top: auto; color: #0f172a; background: white; font-weight: 800; display: flex; align-items: center; justify-content: center; gap: 0.5rem; cursor: default;">
-                                        <i class="fa-brands fa-google" style="color: #4285F4;"></i> Dejar reseña
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                        <!-- Hovering Card -->
-                        <div class="nfc-card-render">
-                            <div class="nfc-card-header">Tarjeta NFC RateTap</div>
-                            <div class="nfc-card-body">
-                                <span>Mesa 12 · Mesera Ana M.</span>
-                                <strong>Toca tu teléfono aquí</strong>
-                            </div>
-                        </div>
-                    </div>
+    <section class="hero" data-photo-hero id="hero">
+        <div class="container hero-container">
+            <div class="hero-content">
+                <span class="hero-eyebrow"><i class="fa-solid fa-bolt"></i> Ingresos desde tu base propia</span>
+                <h1>Llena tus noches flojas con los clientes que ya tienes.</h1>
+                <p class="hero-subtitle">Activa campañas por WhatsApp para mover reservaciones en fechas débiles y mide cada resultado.</p>
+                <div class="hero-actions">
+                    <a class="btn btn-primary" href="https://app.ratetapmx.com/auditoria-ingresos">Auditar mi noche floja</a>
+                    <a class="btn btn-secondary" href="#features">Ver el sistema</a>
                 </div>
             </div>
         </div>

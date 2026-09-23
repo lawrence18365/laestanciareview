@@ -1915,3 +1915,113 @@ h3 {
     position: relative;
     z-index: 1;
 }
+
+
+/* Homepage photographic hero — deliberately scoped so interior pages retain their layout. */
+.navbar--hero {
+    top: 1.25rem;
+    width: min(calc(100% - 3rem), 1140px);
+    height: 66px;
+    padding: 0 1.3rem;
+    border-radius: 999px;
+    background: rgba(6, 15, 25, 0.84) !important;
+    border-color: rgba(255, 255, 255, 0.24);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.22) !important;
+}
+
+.navbar--hero .nav-brand {
+    display: inline-flex;
+    align-items: center;
+    min-width: 120px;
+    color: #fff;
+    text-decoration: none;
+}
+
+.navbar--hero .nav-wordmark {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 1.5rem;
+    font-weight: 800;
+    letter-spacing: -0.075em;
+    line-height: 1;
+}
+
+.navbar--hero .nav-menu { gap: clamp(0.85rem, 1.65vw, 1.55rem); }
+.navbar--hero .nav-link,
+.navbar--hero .nav-lang-toggle { color: rgba(255, 255, 255, 0.92) !important; }
+.navbar--hero .nav-link:hover,
+.navbar--hero .nav-lang-toggle:hover { color: #fff !important; }
+.navbar--hero .nav-actions .btn.btn-primary {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.45);
+    box-shadow: none;
+}
+
+.hero[data-photo-hero] {
+    min-height: max(680px, 100svh);
+    height: auto;
+    padding: 112px 0 64px;
+    isolation: isolate;
+    color: #fff;
+    background-color: #09111a;
+    background-image: linear-gradient(90deg, rgba(5, 13, 22, 0.92) 0%, rgba(5, 13, 22, 0.74) 37%, rgba(5, 13, 22, 0.18) 68%, rgba(5, 13, 22, 0.08) 100%), url('assets/hero-restaurant.webp');
+    background-position: center right;
+    background-size: cover;
+}
+.hero[data-photo-hero] .hero-container { width: min(92%, 1180px); }
+.hero[data-photo-hero] .hero-content { position: relative; z-index: 1; max-width: 800px; }
+.hero[data-photo-hero] .hero-eyebrow { color: #8bd5ff; margin-bottom: 1.1rem; }
+.hero[data-photo-hero] .hero-eyebrow::before { background: #8bd5ff; }
+.hero[data-photo-hero] h1 {
+    max-width: 790px;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: clamp(2.9rem, 4.2vw, 4.3rem);
+    font-weight: 800;
+    letter-spacing: -0.055em;
+    line-height: 0.98;
+    margin-bottom: 1.4rem;
+    color: #fff;
+}
+.hero[data-photo-hero] .hero-subtitle { max-width: 570px; margin-bottom: 2rem; color: rgba(255, 255, 255, 0.88); font-size: clamp(1rem, 1.35vw, 1.18rem); line-height: 1.55; }
+.hero[data-photo-hero] .btn-primary { background: #fff; color: #08131d; box-shadow: 0 12px 28px rgba(0, 0, 0, 0.25); }
+.hero[data-photo-hero] .btn-primary:hover { background: #dff3ff; color: #08131d; }
+.hero[data-photo-hero] .btn-secondary { background: rgba(255, 255, 255, 0.08); border-color: rgba(255, 255, 255, 0.6); color: #fff; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
+.hero[data-photo-hero] .btn-secondary:hover { background: rgba(255, 255, 255, 0.2); }
+body:has(.hero[data-photo-hero]) .mobile-sticky-cta { display: none; }
+body:has(.hero[data-photo-hero]).has-mobile-sticky-cta { padding-bottom: 0; }
+.navbar--hero a:focus-visible,
+.hero[data-photo-hero] a:focus-visible { outline: 3px solid #8bd5ff; outline-offset: 3px; }
+
+@media (max-width: 768px) {
+    .navbar--hero { top: 0.8rem; width: calc(100% - 1.5rem); min-height: 62px; padding: 0.5rem 0.75rem; background: rgba(6, 15, 25, 0.9) !important; }
+    .navbar--hero .nav-brand { min-width: 76px; }
+    .navbar--hero .nav-wordmark { font-size: 1.28rem; }
+    .navbar--hero .nav-lang-toggle { background: rgba(255, 255, 255, 0.12); border-color: rgba(255, 255, 255, 0.22); }
+    .navbar--hero .nav-toggle { color: #fff; background: rgba(255, 255, 255, 0.12); border-color: rgba(255, 255, 255, 0.25); }
+    .navbar--hero .nav-menu { background: rgba(6, 15, 25, 0.96); border-color: rgba(255, 255, 255, 0.16); }
+    .navbar--hero .nav-link { color: #fff !important; background: rgba(255, 255, 255, 0.08); border-color: rgba(255, 255, 255, 0.12); }
+    .hero[data-photo-hero] { min-height: 100svh; padding: 122px 0 94px; align-items: center; background-image: linear-gradient(180deg, rgba(5, 13, 22, 0.82) 0%, rgba(5, 13, 22, 0.68) 54%, rgba(5, 13, 22, 0.42) 100%), url('assets/hero-restaurant.webp'); background-position: 65% center; }
+    .hero[data-photo-hero] .hero-content { text-align: left; }
+    .hero[data-photo-hero] .hero-eyebrow { margin-inline: 0; font-size: 0.72rem; }
+    .hero[data-photo-hero] .hero-eyebrow::before { display: block; }
+    .hero[data-photo-hero] h1 {
+        max-width: 360px;
+        font-size: clamp(2.25rem, 10vw, 2.8rem);
+        letter-spacing: -0.05em;
+        line-height: 1.02;
+    }
+    .hero[data-photo-hero] .hero-subtitle { margin-inline: 0; }
+    .hero[data-photo-hero] .hero-actions { align-items: stretch; flex-direction: column; gap: 0.7rem; max-width: 330px; }
+}
+
+@media (max-width: 360px) {
+    .navbar--hero .nav-brand { min-width: 68px; }
+    .navbar--hero .nav-wordmark { font-size: 1.16rem; }
+    .navbar--hero .nav-actions .btn.btn-primary { padding-inline: 0.58rem !important; font-size: 0.74rem !important; }
+    .hero[data-photo-hero] { padding-top: 112px; }
+    .hero[data-photo-hero] h1 { font-size: 2.2rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .navbar--hero,
+    .hero[data-photo-hero] .btn { transition: none; }
+}

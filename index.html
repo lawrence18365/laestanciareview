@@ -36,6 +36,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     <meta name="twitter:image" content="https://ratetapmx.com/assets/og-image.png"/>
 
     <link rel="preload" href="styles.css" as="style">
+    <link rel="preload" href="assets/hero-restaurant.webp" as="image" type="image/webp" fetchpriority="high">
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
@@ -54,9 +55,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <div class="ambient-canvas"></div>
 
     <!-- Navigation -->
-    <nav class="navbar" id="navbar">
+    <nav class="navbar navbar--hero" id="navbar">
         <a href="/" class="nav-brand">
-            <img src="assets/logo-new-small.webp" alt="RateTap" width="225" height="150" decoding="async" loading="eager">
+            <span class="nav-wordmark">RateTap</span>
         </a>
 
         <div class="nav-menu" id="nav-menu">
@@ -71,92 +72,19 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             <a href="/es/" class="nav-lang-toggle" style="margin-right: 1.5rem; color: var(--text-secondary); text-decoration: none; font-weight: 700; font-size: 0.95rem; transition: color 0.2s; display: flex; align-items: center; gap: 0.5rem;">
                 <i class="fa-solid fa-globe"></i> ES
             </a>
-            <a href="contacto.html" class="btn btn-primary" style="padding: 0.7rem 1.8rem; font-size: 0.9rem;">See RateTap across your group</a>
+            <a href="contacto.html" class="btn btn-primary" style="padding: 0.7rem 1.8rem; font-size: 0.9rem;">See RateTap</a>
         </div>
     </nav>
 
     <!-- Hero Section -->
-    <section class="hero" id="hero">
-        <div class="container">
-            <div class="grid-2">
-                <!-- Text Content -->
-                <div class="hero-content">
-                    <span class="hero-eyebrow">
-                        For 6–20 location restaurant groups
-                    </span>
-                    <h1>
-                        Catch the bad experience before the guest leaves.
-                    </h1>
-                    <p class="hero-subtitle">
-                        RateTap reads what guests write, flags actionable feedback—even at 4 or 5 stars—and alerts the manager at the right location within minutes.
-                    </p>
-                    <div class="hero-actions">
-                        <a href="contacto.html" class="btn btn-primary">See RateTap across your group</a>
-                        <a href="#how-it-works" class="btn btn-secondary">See how it works</a>
-                    </div>
-                </div>
-
-                <!-- Showcase Stage (Unbound Mockup) -->
-                <div class="hero-visual">
-                    <div class="product-proof">
-                        <!-- Phone -->
-                        <div class="phone-shell">
-                            <div class="phone-notch"></div>
-                            <div class="phone-screen-stack">
-                                <!-- Screen 1: Rating -->
-                                <div class="phone-screen-state screen-rating">
-                                    <div class="screen-top">
-                                        <span>La Brasa · Table 12</span>
-                                        <span>10s</span>
-                                    </div>
-                                    <p class="screen-kicker">Check-in</p>
-                                    <h3 class="screen-title">How was dinner tonight?</h3>
-                                    <div class="rating-row">
-                                        <i class="fa-solid fa-star"></i>
-                                        <i class="fa-solid fa-star"></i>
-                                        <i class="fa-solid fa-star"></i>
-                                        <i class="fa-solid fa-star"></i>
-                                        <i class="fa-regular fa-star" style="color: #cbd5e1;"></i>
-                                    </div>
-                                    <button class="mockup-btn mockup-btn-muted">Continue</button>
-                                </div>
-
-                                <!-- Screen 2: Low Rating (Private) -->
-                                <div class="phone-screen-state screen-low">
-                                    <p class="screen-kicker">Private feedback</p>
-                                    <h3 class="screen-title">What should we fix right now?</h3>
-                                    <div class="feedback-chips">
-                                        <span>Wait time</span>
-                                        <span>Food quality</span>
-                                        <span
-                                            style="background: var(--brand-blue); color: white; border-color: var(--brand-blue);">Service</span>
-                                    </div>
-                                    <button class="mockup-btn mockup-btn-primary">Send to manager</button>
-                                </div>
-
-                                <!-- Screen 3: High Rating (Google) -->
-                                <div class="phone-screen-state screen-high">
-                                    <p class="screen-kicker">Exceptional</p>
-                                    <div style="margin:1rem 0 2rem; color:var(--text-primary); font-size:3rem;">
-                                        <i class="fa-solid fa-certificate"></i>
-                                    </div>
-                                    <h3 class="screen-title">Would you post this on Google?</h3>
-                                    <button class="mockup-btn mockup-btn-outline">
-                                        <i class="fa-brands fa-google" style="color: #4285F4;"></i> Leave a review
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Hovering Card -->
-                        <div class="nfc-card-render">
-                            <div class="nfc-card-header">RateTap Access Card</div>
-                            <div class="nfc-card-body">
-                                <span>Table 12 · Server Ana M.</span>
-                                <strong>Tap your phone here</strong>
-                            </div>
-                        </div>
-                    </div>
+    <section class="hero" data-photo-hero id="hero">
+        <div class="container hero-container">
+            <div class="hero-content">
+                <h1>Catch Guest Issues Before They Leave.</h1>
+                <p class="hero-subtitle">RateTap reads what guests write, flags actionable feedback—even at 4 or 5 stars—and alerts the manager at the right location within minutes.</p>
+                <div class="hero-actions">
+                    <a href="contacto.html" class="btn btn-primary">See RateTap across your group</a>
+                    <a href="#how-it-works" class="btn btn-secondary">See how it works</a>
                 </div>
             </div>
         </div>
