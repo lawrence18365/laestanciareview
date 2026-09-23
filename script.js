@@ -1224,25 +1224,34 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // Intersection Observer for Reveal Animations
-    const observerOptions = {
-        threshold: 0.1,
-        rootMargin: '0px 0px -50px 0px'
-    };
+    // Intersection Observer for Reveal Animations. Content remains visible unless
+    // the browser supports the animation and the visitor has not reduced motion.
+    const reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    if ('IntersectionObserver' in window && !reducedMotion) {
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
 
-    const revealObserver = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                entry.target.classList.add('revealed');
-                // Optional: stop observing once revealed
-                // revealObserver.unobserve(entry.target);
-            }
-        });
-    }, observerOptions);
+        try {
+            const revealObserver = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('revealed');
+                        // Optional: stop observing once revealed
+                        // revealObserver.unobserve(entry.target);
+                    }
+                });
+            }, observerOptions);
 
-    document.querySelectorAll('.reveal').forEach(el => {
-        revealObserver.observe(el);
-    });
+            document.documentElement.classList.add('reveal-enabled');
+            document.querySelectorAll('.reveal').forEach(el => {
+                revealObserver.observe(el);
+            });
+        } catch (error) {
+            document.documentElement.classList.remove('reveal-enabled');
+        }
+    }
 
     // Header Scroll Effect
     const navbar = getNavbarElement();
