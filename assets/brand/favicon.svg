@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-labelledby="title desc">
+  <title id="title">RateTap mark</title>
+  <desc id="desc">A blue rounded square framed in charcoal with a white R monogram.</desc>
+  <rect x="10" y="10" width="236" height="236" rx="60" fill="#0F172A"/>
+  <rect x="22" y="22" width="212" height="212" rx="48" fill="#2D9CDB"/>
+  <path fill="#FFFFFF" d="M69 61h62c36 0 57 20 57 51 0 21-10 37-28 45l37 55h-49l-30-47h-11v47H69V61Zm38 31v42h21c14 0 22-8 22-21 0-14-8-21-22-21h-21Z"/>
+</svg>
