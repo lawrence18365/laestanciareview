@@ -176,6 +176,36 @@ describe('classifyReview — 5 stars with a complaint', () => {
   });
 });
 
+describe('classifyReview — 5 stars with food complaint phrasing', () => {
+  it.each([
+    ['El corte salió demasiado rojo para el término solicitado', 'food_quality'],
+    ['La carne quedó demasiado cocida', 'food_quality'],
+    ['Al guiso le faltó sal', 'food_quality'],
+    ['El emplatado fue pobre', 'food_quality'],
+    ['Los platos se ven muy sencillos', 'food_quality'],
+    ['El platillo se enfrió antes de llegar a la mesa', 'temperature'],
+  ])('flags %j with the %s food signal', (feedback, domain) => {
+    const result = classifyReview({ rating: 5, feedback });
+    expect(result.severity).toBe('complaint');
+    expect(result.actionable).toBe(true);
+    expect(result.signals).toContain(`negative:${domain}`);
+  });
+
+  it.each([
+    'La carne quedó en su punto',
+    'El término fue perfecto',
+    'El pollo estaba bien cocido',
+    'El platillo no estaba nada salado',
+    'La presentación sencilla y elegante nos gustó',
+  ])('keeps praise %j out of the food signals', (feedback) => {
+    const result = classifyReview({ rating: 5, feedback });
+    expect(result.severity).toBe('praise');
+    expect(result.actionable).toBe(false);
+    expect(result.signals).not.toContain('negative:food_quality');
+    expect(result.signals).not.toContain('negative:temperature');
+  });
+});
+
 describe('classifyReview — low-star negative reviews', () => {
   it.each<[number, ReviewSeverity]>([
     [1, 'urgent'],

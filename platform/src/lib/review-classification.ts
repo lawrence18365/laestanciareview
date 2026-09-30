@@ -122,8 +122,19 @@ const NEGATIVE_LEXICON: Record<string, string[]> = {
     'quemado', 'quemada', 'crudo', 'cruda', 'grasoso', 'grasosa',
     'salado', 'salada', 'salado', 'soso', 'sosa', 'aguado', 'aguada',
     'echado', 'echada', 'rancio', 'rancia', 'agrio', 'agria',
+    // Cooking, seasoning and presentation need phrases: their individual words
+    // are neutral or praise in other contexts ("en su punto", "bien cocido").
+    'demasiado rojo', 'pasado de coccion', 'pasaron de cocido', 'muy cocido',
+    'muy cocida', 'demasiado cocido', 'demasiado cocida', 'no estaba en su termino',
+    'termino incorrecto', 'termino equivocado', 'fuera de termino',
+    'le faltaba sal', 'le falto sal', 'falta sal', 'cuidar la sal',
+    'platos muy sencillos', 'mal emplatado', 'emplatado pobre', 'emplatado fue pobre',
+    'emplatado descuidado', 'presentacion descuidada', 'mala presentacion',
   ],
-  temperature: ['frio', 'fria', 'frios', 'frias', 'tibio', 'tibia', 'helada', 'helado'],
+  temperature: [
+    'frio', 'fria', 'frios', 'frias', 'tibio', 'tibia', 'helada', 'helado',
+    'se enfrio', 'se enfriaron', 'llego frio', 'llego fria',
+  ],
   wait: [
     'tardaron', 'tardo', 'tarde', 'lento', 'lenta', 'lentos', 'lentas',
     'demora', 'demoro', 'demoraron', 'espera', 'esperamos', 'esperar',
@@ -300,6 +311,9 @@ function containsPhrase(haystack: string, needle: string): boolean {
     : containsWord(haystack, needle);
 }
 
+const FOOD_PRESENTATION_PATTERN =
+  / (?:plato|platos|presentacion|emplatado)(?: [a-z0-9ñ]+){0,2} muy sencill(?:o|a|os|as) /;
+
 /** Domains whose negative vocabulary appears in the text, un-negated. */
 function negativeDomains(
   normalized: string,
@@ -308,7 +322,10 @@ function negativeDomains(
 ): string[] {
   const hits: string[] = [];
   for (const [domain, terms] of Object.entries(NEGATIVE_LEXICON)) {
-    if (terms.some((term) => containsLive(normalized, words, suppressed, term))) {
+    if (
+      terms.some((term) => containsLive(normalized, words, suppressed, term))
+      || (domain === 'food_quality' && FOOD_PRESENTATION_PATTERN.test(normalized))
+    ) {
       hits.push(domain);
     }
   }
