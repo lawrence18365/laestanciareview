@@ -118,7 +118,7 @@ const NEGATIVE_LEXICON: Record<string, string[]> = {
     'mala', 'malo', 'malas', 'malos', 'pesima', 'pesimo', 'pesimas', 'pesimos',
     'horrible', 'horribles', 'asqueroso', 'asquerosa', 'incomible',
     'desabrido', 'desabrida', 'deshabrido', 'deshabrida', 'insipido', 'insipida',
-    'simple', 'seco', 'seca', 'duro', 'dura', 'chiclosa', 'chicloso',
+    'simple', 'seco', 'seca', 'reseco', 'reseca', 'resecos', 'resecas', 'duro', 'dura', 'chiclosa', 'chicloso',
     'quemado', 'quemada', 'crudo', 'cruda', 'grasoso', 'grasosa',
     'salado', 'salada', 'salado', 'soso', 'sosa', 'aguado', 'aguada',
     'echado', 'echada', 'rancio', 'rancia', 'agrio', 'agria',
@@ -276,7 +276,7 @@ const POSITIVE_LEXICON = [
   'felicidades', 'gracias', 'perfecto', 'perfecta', 'increible', 'espectacular',
   'maravilloso', 'maravillosa', 'agradable', 'satisfecho', 'satisfecha',
   'volveremos', 'volvere', 'impecable', 'genial', 'crack', 'excepcional',
-  'muy bien', 'todo bien', 'todo excelente', 'super bien', 'buena atencion',
+  'muy bien', 'todo bien', 'todo excelente', 'super bien', 'en su punto', 'buena atencion',
   'buen servicio', 'buena experiencia', 'gran experiencia',
   // Base adjectives. Negated uses ("no muy buena") are cancelled by the
   // suppression pass, so these only count when the guest means them.
@@ -319,26 +319,61 @@ const FOOD_COMPLAINT_PATTERNS = [
   / terminos?(?: [a-z0-9ñ]+){0,5} (?:mal|fuera|incorrecto|equivocado) /,
   / no (?:[a-z0-9ñ]+ ){0,2}estaba (?:[a-z0-9ñ]+ ){0,2}en su termino /,
   / pedi(?: [a-z0-9ñ]+){0,4} (?:[0-9]+ [0-9]+|tres cuartos|medio|termino medio)(?: [a-z0-9ñ]+){0,4} (?:y|pero)(?: [a-z0-9ñ]+){0,4} (?:era|fue|salio|llego)(?: [a-z0-9ñ]+){0,3} (?:[0-9]+ [0-9]+|tres cuartos|medio|termino medio) /,
-  / terminos? de las carnes /,
   / (?:se )?(?:tuvo|tuvieron) que regresar(?:on)?(?: [a-z0-9ñ]+){0,3} cocina /,
   / regresaron?(?: [a-z0-9ñ]+){0,3} cocina /,
-  / resec(?:o|a|os|as) /,
   / terminos?(?: [a-z0-9ñ]+){0,5} demasiado (?:rojo|cocid(?:o|a|os|as)) /,
   / (?:corte|carne|platillo|pollo|guiso)(?: [a-z0-9ñ]+){0,3} demasiado (?:rojo|cocid(?:o|a|os|as)) /,
   / (?:plato|platos|presentacion|emplatado)(?: [a-z0-9ñ]+){0,2} (?:pobre|descuidado|mal(?:o|a)) /,
   / pas(?:aron|ado|ada)(?: [a-z0-9ñ]+){0,2} cocid(?:o|a|os|as) /,
-  / no se seque /,
+  /(?:^ | (?:que tengan|le falta|necesita|deberian|consejo|ojala)(?: [a-z0-9ñ]+){0,12} )no se seque /,
   / (?:cuidar|cuidado|fijarse)(?: [a-z0-9ñ]+){0,3} (?:sal|sabor) /,
   / falt(?:a|o|aba|aron)(?: un poco de| mas)? (?:sal|sabor) /,
-  / mas(?: de)? (?:sal|sabor a) /,
+  / mas(?: de)? sal /,
+  /(?:^ | (?:que tengan|le falta|necesita|deberian|consejo|ojala)(?: [a-z0-9ñ]+){0,12} )mas sabor a /,
   / demasiado (?:aderezo|sal|grasa|dulce|azucar|picante) /,
-  / sabor (?:un poco|un tanto )?comercial /,
+  / sabor (?:un poco |un tanto )?comercial /,
 ];
 
 const TEMPERATURE_COMPLAINT_PATTERN = / se enfri(?:a|an|o|aron) /;
+const BARE_MEAT_TERMS_PATTERN = / terminos? de las carnes /;
 
-function hasFoodComplaintPattern(normalized: string): boolean {
-  return FOOD_COMPLAINT_PATTERNS.some((pattern) => pattern.test(normalized));
+function hasNearbyPositiveCue(
+  words: string[],
+  suppressed: Set<number>,
+  start: number,
+  end: number,
+): boolean {
+  return POSITIVE_LEXICON.some((term) => {
+    const cue = term.split(' ');
+    for (let i = Math.max(0, start - 4); i <= Math.min(words.length - cue.length, end + 4); i++) {
+      if (cue.every((word, offset) => words[i + offset] === word && !suppressed.has(i + offset))) {
+        return true;
+      }
+    }
+    return false;
+  });
+}
+
+function hasBareMeatTermsComplaint(
+  normalized: string,
+  words: string[],
+  suppressed: Set<number>,
+): boolean {
+  const match = BARE_MEAT_TERMS_PATTERN.exec(normalized);
+  if (!match || match.index === undefined) return false;
+
+  const start = tokens(normalized.slice(0, match.index)).length;
+  const end = start + tokens(match[0]).length;
+  return !hasNearbyPositiveCue(words, suppressed, start, end);
+}
+
+function hasFoodComplaintPattern(
+  normalized: string,
+  words: string[],
+  suppressed: Set<number>,
+): boolean {
+  return FOOD_COMPLAINT_PATTERNS.some((pattern) => pattern.test(normalized))
+    || hasBareMeatTermsComplaint(normalized, words, suppressed);
 }
 
 /** Domains whose negative vocabulary appears in the text, un-negated. */
@@ -352,7 +387,7 @@ function negativeDomains(
     if (
       terms.some((term) => containsLive(normalized, words, suppressed, term))
       || (domain === 'food_quality' && (
-        FOOD_PRESENTATION_PATTERN.test(normalized) || hasFoodComplaintPattern(normalized)
+        FOOD_PRESENTATION_PATTERN.test(normalized) || hasFoodComplaintPattern(normalized, words, suppressed)
       ))
       || (domain === 'temperature' && TEMPERATURE_COMPLAINT_PATTERN.test(normalized))
     ) {

@@ -215,6 +215,7 @@ describe('classifyReview — generalized food complaint patterns', () => {
     ['El aderezo quedó demasiado dulce', 'food_quality'],
     ['La sopa se enfría muy rápido', 'temperature'],
     ['El postre tiene un sabor comercial', 'food_quality'],
+    ['El postre tiene un sabor un poco comercial', 'food_quality'],
   ];
 
   it.each([4, 5])('flags each complaint family at %i stars', (rating) => {
@@ -230,6 +231,11 @@ describe('classifyReview — generalized food complaint patterns', () => {
     'El término de la carne y la atención',
     'Carne perfecta en porción y asado',
     'Ya mejoraron sabor y cocción',
+    'Excelente el término de las carnes',
+    'Perfecto el término de las carnes, felicidades',
+    'Le dan más sabor a la carne con su chimichurri, delicioso',
+    'Mi carne en su término, nada reseca, excelente',
+    'La carne no se seque nunca aquí, perfecta',
   ];
 
   it.each([4, 5])('keeps food praise guards as praise at %i stars', (rating) => {
