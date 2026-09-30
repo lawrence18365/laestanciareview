@@ -122,14 +122,9 @@ const NEGATIVE_LEXICON: Record<string, string[]> = {
     'quemado', 'quemada', 'crudo', 'cruda', 'grasoso', 'grasosa',
     'salado', 'salada', 'salado', 'soso', 'sosa', 'aguado', 'aguada',
     'echado', 'echada', 'rancio', 'rancia', 'agrio', 'agria',
-    // Cooking, seasoning and presentation need phrases: their individual words
-    // are neutral or praise in other contexts ("en su punto", "bien cocido").
-    'demasiado rojo', 'pasado de coccion', 'pasaron de cocido', 'muy cocido',
-    'muy cocida', 'demasiado cocido', 'demasiado cocida', 'no estaba en su termino',
-    'termino incorrecto', 'termino equivocado', 'fuera de termino',
-    'le faltaba sal', 'le falto sal', 'falta sal', 'cuidar la sal',
-    'platos muy sencillos', 'mal emplatado', 'emplatado pobre', 'emplatado fue pobre',
-    'emplatado descuidado', 'presentacion descuidada', 'mala presentacion',
+    // Cooking, seasoning and presentation need contextual patterns below: their
+    // individual words are neutral or praise in other contexts ("en su punto",
+    // "bien cocido").
   ],
   temperature: [
     'frio', 'fria', 'frios', 'frias', 'tibio', 'tibia', 'helada', 'helado',
@@ -314,6 +309,38 @@ function containsPhrase(haystack: string, needle: string): boolean {
 const FOOD_PRESENTATION_PATTERN =
   / (?:plato|platos|presentacion|emplatado)(?: [a-z0-9ñ]+){0,2} muy sencill(?:o|a|os|as) /;
 
+/**
+ * Cooking and seasoning complaints need their surrounding words for polarity:
+ * "termino" and "cocido" alone are common praise. These patterns deliberately
+ * require a correction, a mismatch, or a specific quality problem instead.
+ */
+const FOOD_COMPLAINT_PATTERNS = [
+  / (?:mal|fuera|incorrecto|equivocado|cuidar|cuidado|fijarse|explicar)(?: [a-z0-9ñ]+){0,5} terminos? /,
+  / terminos?(?: [a-z0-9ñ]+){0,5} (?:mal|fuera|incorrecto|equivocado) /,
+  / no (?:[a-z0-9ñ]+ ){0,2}estaba (?:[a-z0-9ñ]+ ){0,2}en su termino /,
+  / pedi(?: [a-z0-9ñ]+){0,4} (?:[0-9]+ [0-9]+|tres cuartos|medio|termino medio)(?: [a-z0-9ñ]+){0,4} (?:y|pero)(?: [a-z0-9ñ]+){0,4} (?:era|fue|salio|llego)(?: [a-z0-9ñ]+){0,3} (?:[0-9]+ [0-9]+|tres cuartos|medio|termino medio) /,
+  / terminos? de las carnes /,
+  / (?:se )?(?:tuvo|tuvieron) que regresar(?:on)?(?: [a-z0-9ñ]+){0,3} cocina /,
+  / regresaron?(?: [a-z0-9ñ]+){0,3} cocina /,
+  / resec(?:o|a|os|as) /,
+  / terminos?(?: [a-z0-9ñ]+){0,5} demasiado (?:rojo|cocid(?:o|a|os|as)) /,
+  / (?:corte|carne|platillo|pollo|guiso)(?: [a-z0-9ñ]+){0,3} demasiado (?:rojo|cocid(?:o|a|os|as)) /,
+  / (?:plato|platos|presentacion|emplatado)(?: [a-z0-9ñ]+){0,2} (?:pobre|descuidado|mal(?:o|a)) /,
+  / pas(?:aron|ado|ada)(?: [a-z0-9ñ]+){0,2} cocid(?:o|a|os|as) /,
+  / no se seque /,
+  / (?:cuidar|cuidado|fijarse)(?: [a-z0-9ñ]+){0,3} (?:sal|sabor) /,
+  / falt(?:a|o|aba|aron)(?: un poco de| mas)? (?:sal|sabor) /,
+  / mas(?: de)? (?:sal|sabor a) /,
+  / demasiado (?:aderezo|sal|grasa|dulce|azucar|picante) /,
+  / sabor (?:un poco|un tanto )?comercial /,
+];
+
+const TEMPERATURE_COMPLAINT_PATTERN = / se enfri(?:a|an|o|aron) /;
+
+function hasFoodComplaintPattern(normalized: string): boolean {
+  return FOOD_COMPLAINT_PATTERNS.some((pattern) => pattern.test(normalized));
+}
+
 /** Domains whose negative vocabulary appears in the text, un-negated. */
 function negativeDomains(
   normalized: string,
@@ -324,7 +351,10 @@ function negativeDomains(
   for (const [domain, terms] of Object.entries(NEGATIVE_LEXICON)) {
     if (
       terms.some((term) => containsLive(normalized, words, suppressed, term))
-      || (domain === 'food_quality' && FOOD_PRESENTATION_PATTERN.test(normalized))
+      || (domain === 'food_quality' && (
+        FOOD_PRESENTATION_PATTERN.test(normalized) || hasFoodComplaintPattern(normalized)
+      ))
+      || (domain === 'temperature' && TEMPERATURE_COMPLAINT_PATTERN.test(normalized))
     ) {
       hits.push(domain);
     }

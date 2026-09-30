@@ -206,6 +206,42 @@ describe('classifyReview — 5 stars with food complaint phrasing', () => {
   });
 });
 
+describe('classifyReview — generalized food complaint patterns', () => {
+  const foodComplaints: [string, string][] = [
+    ['El término del corte estuvo mal explicado', 'food_quality'],
+    ['Pedí el corte 3/4 y llegó 1/2', 'food_quality'],
+    ['La carne estaba reseca', 'food_quality'],
+    ['Al platillo le faltaba un poco de sabor', 'food_quality'],
+    ['El aderezo quedó demasiado dulce', 'food_quality'],
+    ['La sopa se enfría muy rápido', 'temperature'],
+    ['El postre tiene un sabor comercial', 'food_quality'],
+  ];
+
+  it.each([4, 5])('flags each complaint family at %i stars', (rating) => {
+    for (const [feedback, domain] of foodComplaints) {
+      const result = classifyReview({ rating, feedback });
+      expect(result.actionable).toBe(true);
+      expect(result.signals).toContain(`negative:${domain}`);
+    }
+  });
+
+  const praiseGuards = [
+    'A muy buen término',
+    'El término de la carne y la atención',
+    'Carne perfecta en porción y asado',
+    'Ya mejoraron sabor y cocción',
+  ];
+
+  it.each([4, 5])('keeps food praise guards as praise at %i stars', (rating) => {
+    for (const feedback of praiseGuards) {
+      const result = classifyReview({ rating, feedback });
+      expect(result.severity).toBe('praise');
+      expect(result.actionable).toBe(false);
+      expect(result.signals).not.toContain('negative:food_quality');
+    }
+  });
+});
+
 describe('classifyReview — low-star negative reviews', () => {
   it.each<[number, ReviewSeverity]>([
     [1, 'urgent'],
