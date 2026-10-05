@@ -160,7 +160,10 @@ describe('chef report scope, structured content and privacy', () => {
         if (!inverted) throw new Error('Global helper unavailable');
         return { positive: true, signals: ['negative:food_quality', 'negative:temperature'] } as never;
       });
-      for (const [feedback, expected] of cases) expect(classifyKitchenSignals(feedback)).toEqual(expected);
+      for (const [feedback, expected] of cases) {
+        expect(() => classifyKitchenSignals(feedback)).not.toThrow();
+        expect(classifyKitchenSignals(feedback)).toEqual(expected);
+      }
     }
     expect(mocks.analysis).not.toHaveBeenCalled();
   });
