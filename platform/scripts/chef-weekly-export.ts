@@ -9,31 +9,15 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { Pool } from '@neondatabase/serverless';
 import { analyzeFeedbackText } from '../src/lib/review-classification';
+import { TZ, UNIT_IDS, UNIT_NAMES, computeWeekWindow, parseArgs, redactComment, toCsv, localIso, type WeekWindow } from '../src/lib/chef-weekly-export';
+export { computeWeekWindow, parseArgs, redactComment, csvField, toCsv, type WeekWindow } from '../src/lib/chef-weekly-export';
+type CsvRow = Parameters<typeof toCsv>[0][number];
+const CSV_HEADERS = ['unidad', 'fecha', 'calificacion', 'mesero', 'comentario', 'senal_comida'] as const;
 
 const SCRIPT_DIR = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.resolve(SCRIPT_DIR, '../..');
 const ENV_PATH = path.resolve(SCRIPT_DIR, '../.env.local');
 const OUTPUT_DIR = path.join(REPO_ROOT, 'data/chef-exports');
-const TZ = 'America/Mexico_City';
-const REDACTION_MARKER = '[datos personales omitidos]';
-const UNIT_IDS = [3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14];
-const UNIT_NAMES: Record<string, string> = {
-  'estancia-angelopolis': 'La Estancia Argentina Angelópolis',
-  'estancia-queretaro': 'La Estancia Argentina Querétaro',
-  'estancia-veracruz': 'La Estancia Argentina Veracruz',
-  'steakcompany-queretaro': 'Steak Company Querétaro',
-  'harbors-angelopolis': "Harbor's Angelópolis",
-  'la-silla-huexotitla': 'La Silla Huexotitla',
-  'harbors-veracruz': "Harbor's Veracruz",
-  'la-silla-juarez': 'La Silla Juárez',
-  'estancia-xalapa': 'La Estancia Argentina Xalapa',
-  'estancia-leon': 'La Estancia Argentina León',
-  'estancia-juarez': 'La Estancia Argentina Juárez',
-  'regio-norte': 'Regio Norte',
-};
-const CSV_HEADERS = ['unidad', 'fecha', 'calificacion', 'mesero', 'comentario', 'senal_comida'] as const;
-
-type CsvRow = Record<(typeof CSV_HEADERS)[number], string>;
 type DbRow = {
   restaurant_id: number;
   unit: string;
@@ -46,81 +30,6 @@ type DbRow = {
   created_at: Date | string;
 };
 
-export type WeekWindow = {
-  startDate: string;
-  endDateExclusive: string;
-  startUtc: string;
-  endUtc: string;
-};
-
-function dateParts(value: Date, timeZone = TZ): Record<string, string> {
-  return Object.fromEntries(new Intl.DateTimeFormat('en-CA', {
-    timeZone,
-    year: 'numeric', month: '2-digit', day: '2-digit',
-    hour: '2-digit', minute: '2-digit', second: '2-digit',
-    hourCycle: 'h23',
-  }).formatToParts(value).filter((part) => part.type !== 'literal').map((part) => [part.type, part.value]));
-}
-
-function calendarDateInMexicoCity(value: Date): string {
-  const fields = dateParts(value);
-  return `${fields.year}-${fields.month}-${fields.day}`;
-}
-
-function parseCalendarDate(value: string): Date {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) throw new Error('--week-start must use YYYY-MM-DD');
-  const date = new Date(`${value}T00:00:00.000Z`);
-  if (Number.isNaN(date.valueOf()) || date.toISOString().slice(0, 10) !== value) {
-    throw new Error('--week-start must be a real calendar date');
-  }
-  return date;
-}
-
-function addCalendarDays(date: string, days: number): string {
-  const parsed = parseCalendarDate(date);
-  parsed.setUTCDate(parsed.getUTCDate() + days);
-  return parsed.toISOString().slice(0, 10);
-}
-
-function localMidnightUtc(date: string): string {
-  const desired = parseCalendarDate(date).valueOf();
-  const candidate = new Date(desired);
-  const local = dateParts(candidate);
-  const localTimestamp = Date.UTC(Number(local.year), Number(local.month) - 1, Number(local.day), Number(local.hour), Number(local.minute), Number(local.second));
-  const offset = localTimestamp - candidate.valueOf();
-  return new Date(desired - offset).toISOString();
-}
-
-export function computeWeekWindow(weekStart: string | undefined, now = new Date()): WeekWindow {
-  const today = calendarDateInMexicoCity(now);
-  let startDate: string;
-  if (weekStart === undefined) {
-    const todayDate = parseCalendarDate(today);
-    const daysSinceMonday = (todayDate.getUTCDay() + 6) % 7;
-    startDate = addCalendarDays(today, -(daysSinceMonday + 7));
-  } else {
-    const start = parseCalendarDate(weekStart);
-    if (start.getUTCDay() !== 1) throw new Error('--week-start must be a Monday in America/Mexico_City');
-    if (weekStart > today) throw new Error('--week-start cannot be in the future');
-    startDate = weekStart;
-  }
-  const endDateExclusive = addCalendarDays(startDate, 7);
-  return {
-    startDate,
-    endDateExclusive,
-    startUtc: localMidnightUtc(startDate),
-    endUtc: localMidnightUtc(endDateExclusive),
-  };
-}
-
-export function parseArgs(args: string[], now = new Date()): WeekWindow {
-  if (args.length === 0) return computeWeekWindow(undefined, now);
-  if (args.length !== 2 || args[0] !== '--week-start') {
-    throw new Error('Usage: chef-weekly-export.ts [--week-start YYYY-MM-DD]');
-  }
-  return computeWeekWindow(args[1], now);
-}
-
 function loadDatabaseUrl(file: string): string {
   for (const line of fs.readFileSync(file, 'utf8').split(/\r?\n/)) {
     const match = line.match(/^\s*(?:export\s+)?DATABASE_URL\s*=\s*(.*)\s*$/);
@@ -130,64 +39,6 @@ function loadDatabaseUrl(file: string): string {
     return value.replace(/\\n/g, '').trim();
   }
   throw new Error('DATABASE_URL missing from local environment file');
-}
-
-function escapeRegExp(value: string): string {
-  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-}
-
-function replaceKnown(text: string, value: string, counts: Record<string, number>, kind: string): string {
-  const trimmed = value.trim();
-  if (trimmed.length < 2) return text;
-  return text.replace(new RegExp(escapeRegExp(trimmed), 'giu'), () => {
-    counts[kind] = (counts[kind] ?? 0) + 1;
-    return REDACTION_MARKER;
-  });
-}
-
-function replacePattern(text: string, pattern: RegExp, counts: Record<string, number>, kind: string): string {
-  return text.replace(pattern, () => {
-    counts[kind] = (counts[kind] ?? 0) + 1;
-    return REDACTION_MARKER;
-  });
-}
-
-export function redactComment(raw: string, customerName: string | null, customerEmail: string | null): { text: string; counts: Record<string, number>; uncertain: boolean } {
-  const counts: Record<string, number> = {};
-  let text = raw;
-  text = replaceKnown(text, customerEmail ?? '', counts, 'email');
-  text = replaceKnown(text, customerName ?? '', counts, 'guest_name');
-  text = replacePattern(text, /[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/giu, counts, 'email');
-  text = replacePattern(text, /(?:https?:\/\/|www\.)[^\s<]+|(?:wa\.me|t\.me|instagram\.com|facebook\.com|bit\.ly)\/[^\s<]+/giu, counts, 'contact_url');
-  text = replacePattern(text, /[@＠][a-z0-9_.-]{2,}/giu, counts, 'contact_handle');
-  text = replacePattern(text, /[+]?(?:\d[\s().-]?){8,15}\d/g, counts, 'phone');
-  const properName = /(?<![.!?]\s)(?:\b[A-ZÁÉÍÓÚÑ][a-záéíóúñ]{2,}\s+){1,2}\b[A-ZÁÉÍÓÚÑ][a-záéíóúñ]{2,}\b/u.test(raw);
-  const residualContact = /[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}|(?:https?:\/\/|www\.)|[@＠][a-z0-9_.-]{2,}/iu.test(text);
-  return { text, counts, uncertain: properName || residualContact || Object.keys(counts).length > 0 };
-}
-
-function formatOffset(value: Date): string {
-  const zone = new Intl.DateTimeFormat('en-US', { timeZone: TZ, timeZoneName: 'shortOffset' })
-    .formatToParts(value).find((part) => part.type === 'timeZoneName')?.value;
-  const match = zone?.match(/^GMT([+-])(\d{1,2})(?::?(\d{2}))?$/);
-  if (!match) throw new Error(`Could not determine ${TZ} offset`);
-  return `${match[1]}${match[2].padStart(2, '0')}:${match[3] ?? '00'}`;
-}
-
-function localIso(value: Date): string {
-  const fields = dateParts(value);
-  return `${fields.year}-${fields.month}-${fields.day}T${fields.hour}:${fields.minute}:${fields.second}${formatOffset(value)}`;
-}
-
-export function csvField(value: string): string {
-  const safe = /^[=+\-@]/.test(value) ? `'${value}` : value;
-  return `"${safe.replace(/"/g, '""')}"`;
-}
-
-export function toCsv(rows: CsvRow[]): string {
-  return [CSV_HEADERS, ...rows.map((row) => CSV_HEADERS.map((header) => csvField(row[header])))]
-    .map((line) => line.join(','))
-    .join('\r\n') + '\r\n';
 }
 
 function foodSignal(feedback: string): string {

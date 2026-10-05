@@ -12,6 +12,7 @@ import {
   type ReviewSeverity,
 } from '@/lib/review-classification';
 import { createTransport, type SendMailOptions, type Transporter } from 'nodemailer';
+import { randomUUID } from 'node:crypto';
 
 /** Strip stray whitespace/newlines from env vars (Vercel CLI sometimes injects \\n). */
 const clean = (v: string | undefined, fallback: string) => (v ?? fallback).replace(/\\n/g, '').trim();
@@ -35,6 +36,10 @@ interface SendEmailOptions {
     contentType?: string;
   }[];
   headers?: Record<string, string>;
+  /** Chef ledger needs explicit SMTP acceptance, not just a generated message id. */
+  requireRecipientAcceptance?: boolean;
+  /** Chef-only bounded transport; omitted preserves legacy transport behavior. */
+  smtpTimeoutMs?: number;
 }
 
 interface OutreachSmtpConfig {
@@ -103,13 +108,19 @@ export async function sendEmail({
   replyTo,
   attachments,
   headers,
+  requireRecipientAcceptance = false,
+  smtpTimeoutMs,
 }: SendEmailOptions): Promise<{ provider: 'smtp'; data?: { id?: string } }> {
   const config = getOutreachSmtpConfig();
   if (!config) {
-    throw new Error('SMTP_USER or SMTP_PASS not set');
+    throw Object.assign(new Error('SMTP_USER or SMTP_PASS not set'), smtpTimeoutMs ? { code: 'chef_pre_smtp_no_accept' } : {});
   }
 
+  // Bounded chef mode owns one wire ID before composing MIME. A provider's
+  // separately generated response ID must not become the chef ledger authority.
+  const wireMessageId = smtpTimeoutMs ? `<${randomUUID()}@ratetapmx.com>` : undefined;
   const options: SendMailOptions = {
+    ...(wireMessageId ? { messageId: wireMessageId } : {}),
     from: from ?? FROM,
     to,
     subject,
@@ -119,20 +130,47 @@ export async function sendEmail({
     attachments,
     headers,
   };
-  const { default: MailComposer } = await import('nodemailer/lib/mail-composer');
-  const rawMessage = await new MailComposer(options).compile().build();
-  const result = await getOutreachTransport(config).sendMail({ ...options, raw: rawMessage });
+  let rawMessage: Buffer;
+  try {
+    const { default: MailComposer } = await import('nodemailer/lib/mail-composer');
+    rawMessage = await new MailComposer(options).compile().build();
+  } catch (error) {
+    if (smtpTimeoutMs) throw Object.assign(new Error('chef_message_build_failed'), { code: 'chef_pre_smtp_no_accept' });
+    throw error;
+  }
+  // A chef send uses its own closable transport and absolute deadline. Never
+  // close the cached transport used by existing outreach callers.
+  const transport = smtpTimeoutMs ? createTransport({ ...config, tls: { rejectUnauthorized: true },
+    connectionTimeout: 2000, greetingTimeout: 2000, socketTimeout: 4000 }) : getOutreachTransport(config);
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  let result;
+  try {
+    result = await (smtpTimeoutMs ? Promise.race([
+      transport.sendMail({ ...options, raw: rawMessage }),
+      new Promise<never>((_, reject) => { timer = setTimeout(() => {
+        transport.close(); reject(new Error('chef_smtp_deadline_unknown'));
+      }, smtpTimeoutMs); }),
+    ]) : transport.sendMail({ ...options, raw: rawMessage }));
+  } finally {
+    if (timer) clearTimeout(timer);
+    if (smtpTimeoutMs) transport.close();
+  }
+  if (requireRecipientAcceptance && (!result.accepted?.some((address: string | { address: string }) =>
+    (typeof address === 'string' ? address : address.address).toLowerCase() === to.toLowerCase()) || result.rejected?.length)) {
+    const rejectedOnly = !result.accepted?.length && result.rejected?.some((address: string | { address: string }) =>
+      (typeof address === 'string' ? address : address.address).toLowerCase() === to.toLowerCase());
+    throw Object.assign(new Error('SMTP recipient acceptance not confirmed'),
+      rejectedOnly ? { code: 'chef_recipient_rejected_no_accept' } : {});
+  }
 
-  appendOutreachToSent(rawMessage, config).catch((error: unknown) => {
-    console.warn(
-      '[email] IMAP Sent append failed:',
-      error instanceof Error ? error.message : String(error),
-    );
+  if (!smtpTimeoutMs) appendOutreachToSent(rawMessage, config).catch(() => {
+    // Provider errors can contain addresses; never print them.
+    console.warn('[email] IMAP Sent append failed');
   });
 
   return {
     provider: 'smtp',
-    data: result.messageId ? { id: result.messageId } : undefined,
+    data: (wireMessageId ?? result.messageId) ? { id: wireMessageId ?? result.messageId } : undefined,
   };
 }
 
@@ -201,7 +239,7 @@ const SECTION_LABEL_STYLE = 'font-size: 11px; font-weight: 700; letter-spacing: 
 const CTA_STYLE = 'display: inline-block; padding: 14px 36px; background: #111111; color: #ffffff; border-radius: 0; text-decoration: none; font-size: 15px; font-weight: 600; letter-spacing: 0.02em;';
 
 /** Branded email wrapper — header with logo, content area, footer. */
-function emailLayout(content: string, footerNote?: string): string {
+export function emailLayout(content: string, footerNote?: string): string {
   return `
 <!DOCTYPE html>
 <html lang="es">
