@@ -582,7 +582,6 @@ def render_index(posts: list[dict], locale: str) -> str:
         cards.append(
             f"""
                 <a class="blog-card reveal" href="{escape(variant['slug'])}">
-                    <span class="blog-card-tag">{escape(variant['eyebrow'])}</span>
                     <h3>{escape(variant['title'])}</h3>
                     <p>{escape(variant['cardSummary'])}</p>
                     <div class="blog-card-meta">
@@ -668,7 +667,6 @@ def render_index(posts: list[dict], locale: str) -> str:
         <div class="container blog-shell">
             <div class="blog-featured-card reveal">
                 <div>
-                    <span class="blog-card-tag">{escape(cfg['hub_featured_label'])}</span>
                     <h2>{escape(featured_variant['title'])}</h2>
                     <p>{escape(featured_variant['cardSummary'])}</p>
                     <div class="blog-card-meta">
