@@ -104,6 +104,8 @@ const MIGRATED_PAGES = [
   'es/blog/resenas-ovation-alternativas.html',
   'es/blog/restaurante-bajo-calificacion-google.html',
   'es/blog/restaurante-no-recibe-resenas-google.html',
+  'index.html',
+  'es/index.html',
 ];
 
 // Classes toggled or injected by script.js (grep classList / className) plus FA families.
