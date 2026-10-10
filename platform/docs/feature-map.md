@@ -19,7 +19,7 @@ Grouped by the outcome each feature delivers, not by screen.
 | Location-drop anomaly alert (last 3 days ≤25% of 4-week same-weekday baseline) | GM, owner, regional (push) | LIVE, needs push devices |
 | Quiet-staff detection (server down ≥60% vs their baseline), Mondays only | GM, owner, regional | LIVE |
 | Google rating tracking: daily snapshot + trend per location | owner, GM | GATED: GOOGLE_PLACES_API_KEY + place id |
-| Chef weekly report: kitchen signals from guest comments, CSV, no raw text | chef | Ships DARK: unscheduled + CHEF_REPORT_ENABLED |
+| Chef weekly report: kitchen signals from guest comments, CSV, no raw text | owner, chef | LIVE since 2026-10-10 (daily 14 UTC sweep, Monday send; first delivery verified) |
 
 ## 2. Catch problems before they become 1-star reviews (GM)
 
