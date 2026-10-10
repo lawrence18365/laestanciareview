@@ -24,6 +24,13 @@
     <link rel="preload" href="../styles.css" as="style"/>
     <link rel="stylesheet" href="../styles.css"/>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+    <style>
+        /* Offset below the fixed navbar, then tighten the section that follows. */
+        .page-top { padding-top: calc(var(--space-8) * 2 + var(--space-6)); padding-bottom: var(--space-7); }
+        .page-top + .section { padding-top: var(--space-7); }
+        .page-top h1 { font-size: var(--fs-h1); }
+        .section--tight { padding-top: var(--space-6); }
+    </style>
     <!-- chrome:icons -->
     <link rel="icon" href="/favicon.ico" sizes="32x32">
     <link rel="icon" href="/assets/brand/favicon.svg" type="image/svg+xml">
@@ -53,7 +60,8 @@
         <button type="button" class="nav-toggle" aria-label="Open navigation menu" aria-controls="nav-menu" aria-expanded="false"><i class="fa-solid fa-bars"></i></button>
     </nav>
     <!-- /chrome:header -->
-    <section class="section blog-hero" style="padding-top: 10rem;">
+    <main>
+    <section class="section page-top">
         <div class="container blog-shell">
             <h1>Ovation Reviews: A Look at the Platform and Why Restaurants Switch to RateTap</h1>
             <p class="blog-hero-copy">Ovation is a well-known guest feedback platform, but many restaurants find it overly complex and expensive when their real goal is simply growing Google reviews and catching guest issues early.</p>
@@ -66,7 +74,7 @@
         </div>
     </section>
 
-    <section class="section" style="padding-top: 2rem;">
+    <section class="section">
         <div class="container blog-shell blog-article-grid">
             <aside class="blog-rail">
                 <div class="blog-rail-card reveal">
@@ -141,44 +149,31 @@
         </div>
     </section>
 
-    <section class="section">
+    <section class="section bg-muted">
         <div class="container blog-shell">
-            <div class="blog-cta-card reveal">
-                <h2>Tired of complicated SMS flows?</h2>
-                <p>RateTap gives you a faster, more effective way to capture Google reviews directly at the table without asking for phone numbers.</p>
-                <div class="blog-cta-actions">
-                    <a class="btn btn-primary" href="../demo">Book a demo</a>
-                    <a class="btn btn-secondary" href="../ratetap-vs-ovation">Compare RateTap vs Ovation</a>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <section class="section blog-faq-section">
-        <div class="container blog-shell">
-            <div class="section-header" style="margin-bottom: 2rem;">
+            <div class="section-header">
                 <h2>Frequently Asked Questions</h2>
             </div>
-            <div class="blog-faq-grid">
+            <div class="reveal">
 
-                <div class="blog-faq-card reveal">
-                    <h3>Is RateTap cheaper than Ovation?</h3>
-                    <p>Yes. Ovation acts as a heavy CRM with high monthly SaaS fees. RateTap is designed as a focused, lightweight operational tool for review capture and guest issue detection, making it far more cost-effective.</p>
+                <div class="faq-item active">
+                    <button class="faq-question" type="button"><span>Is RateTap cheaper than Ovation?</span><i class="fa-solid fa-minus"></i></button>
+                    <div class="faq-answer"><p>Yes. Ovation acts as a heavy CRM with high monthly SaaS fees. RateTap is designed as a focused, lightweight operational tool for review capture and guest issue detection, making it far more cost-effective.</p></div>
                 </div>
         
 
-                <div class="blog-faq-card reveal">
-                    <h3>Does RateTap integrate with my POS like Ovation?</h3>
-                    <p>RateTap doesn&#x27;t require a POS integration because the capture happens via physical NFC cards presented by servers. This removes IT headaches and lets you launch in a single day.</p>
+                <div class="faq-item">
+                    <button class="faq-question" type="button"><span>Does RateTap integrate with my POS like Ovation?</span><i class="fa-solid fa-plus"></i></button>
+                    <div class="faq-answer"><p>RateTap doesn&#x27;t require a POS integration because the capture happens via physical NFC cards presented by servers. This removes IT headaches and lets you launch in a single day.</p></div>
                 </div>
         
             </div>
         </div>
     </section>
 
-    <section class="section" style="padding-top: 2rem;">
+    <section class="section">
         <div class="container blog-shell">
-            <div class="section-header" style="margin-bottom: 2rem;">
+            <div class="section-header">
                 <h2>Compare the solutions</h2>
             </div>
             <div class="blog-related-grid">
@@ -199,6 +194,15 @@
             </div>
         </div>
     </section>
+
+    <section class="cta-band">
+        <div class="container blog-shell">
+            <h2>Tired of complicated SMS flows?</h2>
+            <p>RateTap gives you a faster, more effective way to capture Google reviews directly at the table without asking for phone numbers.</p>
+            <a class="btn btn-primary" href="../demo">Book a demo</a>
+        </div>
+    </section>
+    </main>
     <!-- chrome:footer -->
     <footer class="footer">
         <div class="container">

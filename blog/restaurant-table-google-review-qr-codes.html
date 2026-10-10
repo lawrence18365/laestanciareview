@@ -24,6 +24,13 @@
     <link rel="preload" href="../styles.css" as="style"/>
     <link rel="stylesheet" href="../styles.css"/>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+    <style>
+        /* Offset below the fixed navbar, then tighten the section that follows. */
+        .page-top { padding-top: calc(var(--space-8) * 2 + var(--space-6)); padding-bottom: var(--space-7); }
+        .page-top + .section { padding-top: var(--space-7); }
+        .page-top h1 { font-size: var(--fs-h1); }
+        .section--tight { padding-top: var(--space-6); }
+    </style>
     <!-- chrome:icons -->
     <link rel="icon" href="/favicon.ico" sizes="32x32">
     <link rel="icon" href="/assets/brand/favicon.svg" type="image/svg+xml">
@@ -53,7 +60,8 @@
         <button type="button" class="nav-toggle" aria-label="Open navigation menu" aria-controls="nav-menu" aria-expanded="false"><i class="fa-solid fa-bars"></i></button>
     </nav>
     <!-- /chrome:header -->
-    <section class="section blog-hero" style="padding-top: 10rem;">
+    <main>
+    <section class="section page-top">
         <div class="container blog-shell">
             <h1>How to Set Up Google Review QR Codes on Restaurant Tables (and Why Many Operators Are Replacing Them With NFC)</h1>
             <p class="blog-hero-copy">QR codes for Google reviews are still the default starting point for most restaurants. They are cheap, fast to print, and require no hardware. The catch: a poorly placed or poorly worded QR code converts almost no one. Here is the operator-grade setup that actually works — and the upgrade path that fixes the conversion ceiling.</p>
@@ -66,7 +74,7 @@
         </div>
     </section>
 
-    <section class="section" style="padding-top: 2rem;">
+    <section class="section">
         <div class="container blog-shell blog-article-grid">
             <aside class="blog-rail">
                 <div class="blog-rail-card reveal">
@@ -192,56 +200,43 @@
         </div>
     </section>
 
-    <section class="section">
+    <section class="section bg-muted">
         <div class="container blog-shell">
-            <div class="blog-cta-card reveal">
-                <h2>Want NFC tap cards instead of printing more QR tents?</h2>
-                <p>We ship pre-coded NFC cards, set up per-server attribution, and give every guest a private feedback option that reaches your inbox. Most operators stop using their QR cards within two weeks of switching.</p>
-                <div class="blog-cta-actions">
-                    <a class="btn btn-primary" href="../nfc-google-review-cards-for-restaurants?offer=nfc-upgrade&amp;source_page=blog-qr-setup&amp;source_cluster=qr-table-setup#contact">Get NFC cards</a>
-                    <a class="btn btn-secondary" href="../roi-calculator">Run the ROI math</a>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <section class="section blog-faq-section">
-        <div class="container blog-shell">
-            <div class="section-header" style="margin-bottom: 2rem;">
+            <div class="section-header">
                 <h2>Common questions about restaurant QR review setup</h2>
             </div>
-            <div class="blog-faq-grid">
+            <div class="reveal">
 
-                <div class="blog-faq-card reveal">
-                    <h3>Do we need a separate QR code per location?</h3>
-                    <p>Yes. Each location has its own Google Business Profile and its own review URL. Sharing one QR across multiple locations sends reviews to the wrong listing and makes per-location performance impossible to track.</p>
+                <div class="faq-item active">
+                    <button class="faq-question" type="button"><span>Do we need a separate QR code per location?</span><i class="fa-solid fa-minus"></i></button>
+                    <div class="faq-answer"><p>Yes. Each location has its own Google Business Profile and its own review URL. Sharing one QR across multiple locations sends reviews to the wrong listing and makes per-location performance impossible to track.</p></div>
                 </div>
         
 
-                <div class="blog-faq-card reveal">
-                    <h3>Can we put the QR code on the menu instead of a separate card?</h3>
-                    <p>It works, but converts worse. The menu is associated with ordering, not with closing the experience. A separate card placed with the bill is consistently the highest-converting placement.</p>
+                <div class="faq-item">
+                    <button class="faq-question" type="button"><span>Can we put the QR code on the menu instead of a separate card?</span><i class="fa-solid fa-plus"></i></button>
+                    <div class="faq-answer"><p>It works, but converts worse. The menu is associated with ordering, not with closing the experience. A separate card placed with the bill is consistently the highest-converting placement.</p></div>
                 </div>
         
 
-                <div class="blog-faq-card reveal">
-                    <h3>What if guests photograph the QR but never come back to it?</h3>
-                    <p>That is the QR conversion ceiling everyone hits. The guest left intending to scan later and never did. NFC tap solves it because the action happens at the table, not at home.</p>
+                <div class="faq-item">
+                    <button class="faq-question" type="button"><span>What if guests photograph the QR but never come back to it?</span><i class="fa-solid fa-plus"></i></button>
+                    <div class="faq-answer"><p>That is the QR conversion ceiling everyone hits. The guest left intending to scan later and never did. NFC tap solves it because the action happens at the table, not at home.</p></div>
                 </div>
         
 
-                <div class="blog-faq-card reveal">
-                    <h3>Should we offer a discount for leaving a review?</h3>
-                    <p>No. Google&#x27;s policy explicitly prohibits incentivizing reviews and platforms detect coordinated patterns. The result is removed reviews and a damaged listing. The right lever is friction reduction, not bribery.</p>
+                <div class="faq-item">
+                    <button class="faq-question" type="button"><span>Should we offer a discount for leaving a review?</span><i class="fa-solid fa-plus"></i></button>
+                    <div class="faq-answer"><p>No. Google&#x27;s policy explicitly prohibits incentivizing reviews and platforms detect coordinated patterns. The result is removed reviews and a damaged listing. The right lever is friction reduction, not bribery.</p></div>
                 </div>
         
             </div>
         </div>
     </section>
 
-    <section class="section" style="padding-top: 2rem;">
+    <section class="section">
         <div class="container blog-shell">
-            <div class="section-header" style="margin-bottom: 2rem;">
+            <div class="section-header">
                 <h2>Build the rest of the capture system</h2>
             </div>
             <div class="blog-related-grid">
@@ -269,6 +264,15 @@
             </div>
         </div>
     </section>
+
+    <section class="cta-band">
+        <div class="container blog-shell">
+            <h2>Want NFC tap cards instead of printing more QR tents?</h2>
+            <p>We ship pre-coded NFC cards, set up per-server attribution, and give every guest a private feedback option that reaches your inbox. Most operators stop using their QR cards within two weeks of switching.</p>
+            <a class="btn btn-primary" href="../nfc-google-review-cards-for-restaurants?offer=nfc-upgrade&amp;source_page=blog-qr-setup&amp;source_cluster=qr-table-setup#contact">Get NFC cards</a>
+        </div>
+    </section>
+    </main>
     <!-- chrome:footer -->
     <footer class="footer">
         <div class="container">

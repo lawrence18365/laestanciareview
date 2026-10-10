@@ -24,6 +24,13 @@
     <link rel="preload" href="../styles.css" as="style"/>
     <link rel="stylesheet" href="../styles.css"/>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+    <style>
+        /* Offset below the fixed navbar, then tighten the section that follows. */
+        .page-top { padding-top: calc(var(--space-8) * 2 + var(--space-6)); padding-bottom: var(--space-7); }
+        .page-top + .section { padding-top: var(--space-7); }
+        .page-top h1 { font-size: var(--fs-h1); }
+        .section--tight { padding-top: var(--space-6); }
+    </style>
     <!-- chrome:icons -->
     <link rel="icon" href="/favicon.ico" sizes="32x32">
     <link rel="icon" href="/assets/brand/favicon.svg" type="image/svg+xml">
@@ -53,7 +60,8 @@
         <button type="button" class="nav-toggle" aria-label="Open navigation menu" aria-controls="nav-menu" aria-expanded="false"><i class="fa-solid fa-bars"></i></button>
     </nav>
     <!-- /chrome:header -->
-    <section class="section blog-hero" style="padding-top: 10rem;">
+    <main>
+    <section class="section page-top">
         <div class="container blog-shell">
             <h1>NFC vs QR vs Comment Cards: Which Review Capture Tool Actually Works in a Real Restaurant?</h1>
             <p class="blog-hero-copy">Most operators end up choosing between three things on the table: an NFC tap card, a printed QR code, or an old-school paper comment card. They all promise the same outcome — more reviews, less friction. In practice they perform very differently once a real shift hits them.</p>
@@ -66,7 +74,7 @@
         </div>
     </section>
 
-    <section class="section" style="padding-top: 2rem;">
+    <section class="section">
         <div class="container blog-shell blog-article-grid">
             <aside class="blog-rail">
                 <div class="blog-rail-card reveal">
@@ -182,56 +190,43 @@
         </div>
     </section>
 
-    <section class="section">
+    <section class="section bg-muted">
         <div class="container blog-shell">
-            <div class="blog-cta-card reveal">
-                <h2>Ready to roll out NFC cards for one location?</h2>
-                <p>Start with a single-location pilot. We ship the cards, wire the per-server attribution, and give every table a private feedback option that reaches your inbox so your team can recover the service issue in real time.</p>
-                <div class="blog-cta-actions">
-                    <a class="btn btn-primary" href="../nfc-google-review-cards-for-restaurants?offer=nfc-pilot&amp;source_page=blog-nfc-vs-qr&amp;source_cluster=tools-comparison#contact">Start a pilot</a>
-                    <a class="btn btn-secondary" href="../restaurant-review-management-software">See the platform</a>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <section class="section blog-faq-section">
-        <div class="container blog-shell">
-            <div class="section-header" style="margin-bottom: 2rem;">
+            <div class="section-header">
                 <h2>Questions before you choose a format</h2>
             </div>
-            <div class="blog-faq-grid">
+            <div class="reveal">
 
-                <div class="blog-faq-card reveal">
-                    <h3>Do all phones support NFC for review cards?</h3>
-                    <p>Yes. Every iPhone since iPhone 7 and every modern Android handles NFC natively in the operating system. The guest does not need to install anything; tapping the card opens a browser to your review flow.</p>
+                <div class="faq-item active">
+                    <button class="faq-question" type="button"><span>Do all phones support NFC for review cards?</span><i class="fa-solid fa-minus"></i></button>
+                    <div class="faq-answer"><p>Yes. Every iPhone since iPhone 7 and every modern Android handles NFC natively in the operating system. The guest does not need to install anything; tapping the card opens a browser to your review flow.</p></div>
                 </div>
         
 
-                <div class="blog-faq-card reveal">
-                    <h3>Can we keep our existing QR codes and add NFC?</h3>
-                    <p>Yes. Many operators run both on the same card so the guest can choose. Most still tap because it is faster, but the QR is there for the rare edge case (older device, stuck NFC reader).</p>
+                <div class="faq-item">
+                    <button class="faq-question" type="button"><span>Can we keep our existing QR codes and add NFC?</span><i class="fa-solid fa-plus"></i></button>
+                    <div class="faq-answer"><p>Yes. Many operators run both on the same card so the guest can choose. Most still tap because it is faster, but the QR is there for the rare edge case (older device, stuck NFC reader).</p></div>
                 </div>
         
 
-                <div class="blog-faq-card reveal">
-                    <h3>How many NFC cards does a typical restaurant need?</h3>
-                    <p>Usually one per server for attribution, plus a small backup pool for hosts and managers. For multi-location groups, it is usually one per server per location, with a clear rotation policy.</p>
+                <div class="faq-item">
+                    <button class="faq-question" type="button"><span>How many NFC cards does a typical restaurant need?</span><i class="fa-solid fa-plus"></i></button>
+                    <div class="faq-answer"><p>Usually one per server for attribution, plus a small backup pool for hosts and managers. For multi-location groups, it is usually one per server per location, with a clear rotation policy.</p></div>
                 </div>
         
 
-                <div class="blog-faq-card reveal">
-                    <h3>What happens if the guest taps but does not leave a review?</h3>
-                    <p>Most well-designed systems still capture the visit signal — a tap that did not convert is itself useful data. It tells you the moment happened but the request did not land, which is a coaching opportunity that paper cards never give you.</p>
+                <div class="faq-item">
+                    <button class="faq-question" type="button"><span>What happens if the guest taps but does not leave a review?</span><i class="fa-solid fa-plus"></i></button>
+                    <div class="faq-answer"><p>Most well-designed systems still capture the visit signal — a tap that did not convert is itself useful data. It tells you the moment happened but the request did not land, which is a coaching opportunity that paper cards never give you.</p></div>
                 </div>
         
             </div>
         </div>
     </section>
 
-    <section class="section" style="padding-top: 2rem;">
+    <section class="section">
         <div class="container blog-shell">
-            <div class="section-header" style="margin-bottom: 2rem;">
+            <div class="section-header">
                 <h2>Pair this with the rest of the system</h2>
             </div>
             <div class="blog-related-grid">
@@ -259,6 +254,15 @@
             </div>
         </div>
     </section>
+
+    <section class="cta-band">
+        <div class="container blog-shell">
+            <h2>Ready to roll out NFC cards for one location?</h2>
+            <p>Start with a single-location pilot. We ship the cards, wire the per-server attribution, and give every table a private feedback option that reaches your inbox so your team can recover the service issue in real time.</p>
+            <a class="btn btn-primary" href="../nfc-google-review-cards-for-restaurants?offer=nfc-pilot&amp;source_page=blog-nfc-vs-qr&amp;source_cluster=tools-comparison#contact">Start a pilot</a>
+        </div>
+    </section>
+    </main>
     <!-- chrome:footer -->
     <footer class="footer">
         <div class="container">

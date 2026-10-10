@@ -207,6 +207,44 @@ def render_icons() -> str:
     return chrome_block("icons", read_partial("head-icons.html"))
 
 
+# Page-level layout helpers shared by every generated blog page. Tokens only (defined in styles.css).
+PAGE_STYLE = """    <style>
+        /* Offset below the fixed navbar, then tighten the section that follows. */
+        .page-top { padding-top: calc(var(--space-8) * 2 + var(--space-6)); padding-bottom: var(--space-7); }
+        .page-top + .section { padding-top: var(--space-7); }
+        .page-top h1 { font-size: var(--fs-h1); }
+        .section--tight { padding-top: var(--space-6); }
+    </style>"""
+
+
+def render_faq_items(items: list[dict]) -> str:
+    """Design-system accordion (.faq-item): first answer open, script.js wires the toggle."""
+    out = []
+    for index, item in enumerate(items):
+        active = " active" if index == 0 else ""
+        icon = "fa-minus" if index == 0 else "fa-plus"
+        out.append(
+            f"""
+                <div class="faq-item{active}">
+                    <button class="faq-question" type="button"><span>{escape(item['question'])}</span><i class="fa-solid {icon}"></i></button>
+                    <div class="faq-answer"><p>{escape(item['answer'])}</p></div>
+                </div>
+        """
+        )
+    return "\n".join(out)
+
+
+def render_cta_band(title: str, body: str, href: str, label: str) -> str:
+    """Design-system CTA band: dark surface, one button."""
+    return f"""    <section class="cta-band">
+        <div class="container blog-shell">
+            <h2>{escape(title)}</h2>
+            <p>{escape(body)}</p>
+            <a class="btn btn-primary" href="{escape(href)}">{escape(label)}</a>
+        </div>
+    </section>"""
+
+
 def render_head(
     *,
     locale: str,
@@ -247,6 +285,7 @@ def render_head(
     <link rel="preload" href="{asset_prefix}styles.css" as="style"/>
     <link rel="stylesheet" href="{asset_prefix}styles.css"/>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+{PAGE_STYLE}
     {render_icons()}
     <script type="application/ld+json">{structured_data}</script>
 </head>
@@ -350,15 +389,7 @@ def render_post(post: dict, locale: str) -> str:
             """
         )
 
-    faq_html = "\n".join(
-        f"""
-                <div class="blog-faq-card reveal">
-                    <h3>{escape(item['question'])}</h3>
-                    <p>{escape(item['answer'])}</p>
-                </div>
-        """
-        for item in variant["faqs"]
-    )
+    faq_html = render_faq_items(variant["faqs"])
 
     related_html = "\n".join(
         f"""
@@ -396,7 +427,8 @@ def render_post(post: dict, locale: str) -> str:
 <body>
     <div class="ambient-canvas"></div>
     {render_header(locale, alt_lang_url, variant['slug'])}
-    <section class="section blog-hero" style="padding-top: 10rem;">
+    <main>
+    <section class="section page-top">
         <div class="container blog-shell">
             <h1>{escape(variant['title'])}</h1>
             <p class="blog-hero-copy">{escape(variant['heroSubtitle'])}</p>
@@ -409,7 +441,7 @@ def render_post(post: dict, locale: str) -> str:
         </div>
     </section>
 
-    <section class="section" style="padding-top: 2rem;">
+    <section class="section">
         <div class="container blog-shell blog-article-grid">
             <aside class="blog-rail">
                 <div class="blog-rail-card reveal">
@@ -440,33 +472,20 @@ def render_post(post: dict, locale: str) -> str:
         </div>
     </section>
 
-    <section class="section">
+    <section class="section bg-muted">
         <div class="container blog-shell">
-            <div class="blog-cta-card reveal">
-                <h2>{escape(variant['cta']['title'])}</h2>
-                <p>{escape(variant['cta']['body'])}</p>
-                <div class="blog-cta-actions">
-                    <a class="btn btn-primary" href="{escape(variant['cta']['primaryHref'])}">{escape(variant['cta']['primaryLabel'])}</a>
-                    <a class="btn btn-secondary" href="{escape(variant['cta']['secondaryHref'])}">{escape(variant['cta']['secondaryLabel'])}</a>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <section class="section blog-faq-section">
-        <div class="container blog-shell">
-            <div class="section-header" style="margin-bottom: 2rem;">
+            <div class="section-header">
                 <h2>{escape(variant['faqHeading'])}</h2>
             </div>
-            <div class="blog-faq-grid">
+            <div class="reveal">
 {faq_html}
             </div>
         </div>
     </section>
 
-    <section class="section" style="padding-top: 2rem;">
+    <section class="section">
         <div class="container blog-shell">
-            <div class="section-header" style="margin-bottom: 2rem;">
+            <div class="section-header">
                 <h2>{escape(variant['relatedHeading'])}</h2>
             </div>
             <div class="blog-related-grid">
@@ -474,6 +493,9 @@ def render_post(post: dict, locale: str) -> str:
             </div>
         </div>
     </section>
+
+{render_cta_band(variant['cta']['title'], variant['cta']['body'], variant['cta']['primaryHref'], variant['cta']['primaryLabel'])}
+    </main>
     {render_footer(locale, alt_lang_url, variant['slug'])}
     <script src="{asset_prefix}script.js"></script>
 </body>
@@ -571,7 +593,8 @@ def render_index(posts: list[dict], locale: str) -> str:
     <div class="ambient-canvas"></div>
     {render_header(locale, alt_lang_url, 'blog')}
 
-    <section class="section blog-index-hero" style="padding-top: 10rem;">
+    <main>
+    <section class="section page-top">
         <div class="container blog-shell">
             <h1>{escape(cfg['hub_title'])}</h1>
             <p class="blog-hero-copy">{escape(cfg['hub_description'])}</p>
@@ -581,7 +604,7 @@ def render_index(posts: list[dict], locale: str) -> str:
         </div>
     </section>
 
-    <section class="section" style="padding-top: 2rem;">
+    <section class="section">
         <div class="container blog-shell">
             <div class="blog-featured-card reveal">
                 <div>
@@ -600,7 +623,7 @@ def render_index(posts: list[dict], locale: str) -> str:
         </div>
     </section>
 
-    <section class="section">
+    <section class="section section--tight">
         <div class="container blog-shell">
             <div class="blog-card-grid">
 {''.join(cards)}
@@ -608,9 +631,9 @@ def render_index(posts: list[dict], locale: str) -> str:
         </div>
     </section>
 
-    <section class="section">
+    <section class="section bg-muted">
         <div class="container blog-shell">
-            <div class="section-header" style="margin-bottom: 2rem;">
+            <div class="section-header">
                 <h2>{escape(cfg['hub_cluster_title'])}</h2>
             </div>
             <div class="blog-cluster-grid">
@@ -619,18 +642,8 @@ def render_index(posts: list[dict], locale: str) -> str:
         </div>
     </section>
 
-    <section class="section">
-        <div class="container blog-shell">
-            <div class="blog-cta-card reveal">
-                <h2>{escape(cfg['hub_cta_title'])}</h2>
-                <p>{escape(cfg['hub_cta_body'])}</p>
-                <div class="blog-cta-actions">
-                    <a class="btn btn-primary" href="../demo">{escape(cfg['hub_cta_primary'])}</a>
-                    <a class="btn btn-secondary" href="{escape(cfg['hub_cta_secondary_href'])}">{escape(cfg['hub_cta_secondary'])}</a>
-                </div>
-            </div>
-        </div>
-    </section>
+{render_cta_band(cfg['hub_cta_title'], cfg['hub_cta_body'], '../demo', cfg['hub_cta_primary'])}
+    </main>
     {render_footer(locale, alt_lang_url, 'blog')}
     <script src="{asset_prefix}script.js"></script>
 </body>

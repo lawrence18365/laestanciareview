@@ -24,6 +24,13 @@
     <link rel="preload" href="../../styles.css" as="style"/>
     <link rel="stylesheet" href="../../styles.css"/>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+    <style>
+        /* Offset below the fixed navbar, then tighten the section that follows. */
+        .page-top { padding-top: calc(var(--space-8) * 2 + var(--space-6)); padding-bottom: var(--space-7); }
+        .page-top + .section { padding-top: var(--space-7); }
+        .page-top h1 { font-size: var(--fs-h1); }
+        .section--tight { padding-top: var(--space-6); }
+    </style>
     <!-- chrome:icons -->
     <link rel="icon" href="/favicon.ico" sizes="32x32">
     <link rel="icon" href="/assets/brand/favicon.svg" type="image/svg+xml">
@@ -53,7 +60,8 @@
         <button type="button" class="nav-toggle" aria-label="Open navigation menu" aria-controls="nav-menu" aria-expanded="false"><i class="fa-solid fa-bars"></i></button>
     </nav>
     <!-- /chrome:header -->
-    <section class="section blog-hero" style="padding-top: 10rem;">
+    <main>
+    <section class="section page-top">
         <div class="container blog-shell">
             <h1>¿Bajó la calificación de tu restaurante en Google? Usa un plan que tu equipo pueda ejecutar esta semana</h1>
             <p class="blog-hero-copy">Cuando baja la calificación, normalmente no falló el marketing: falló algún punto operativo. Puede ser un turno lento, un cierre débil, un gerente que se enteró demasiado tarde o clientes satisfechos que se fueron sin dejar reseña. La solución es ajustar el loop operativo.</p>
@@ -66,7 +74,7 @@
         </div>
     </section>
 
-    <section class="section" style="padding-top: 2rem;">
+    <section class="section">
         <div class="container blog-shell blog-article-grid">
             <aside class="blog-rail">
                 <div class="blog-rail-card reveal">
@@ -165,50 +173,37 @@
         </div>
     </section>
 
-    <section class="section">
+    <section class="section bg-muted">
         <div class="container blog-shell">
-            <div class="blog-cta-card reveal">
-                <h2>¿Quieres activar un piloto gratis para recuperar tu calificación?</h2>
-                <p>Empieza con una sucursal y valida el flujo completo: cada huésped elige entre Google o feedback privado, con señal en tiempo real para gerencia.</p>
-                <div class="blog-cta-actions">
-                    <a class="btn btn-primary" href="../mejorar-calificacion-google-restaurante?offer=rating-recovery-pilot&amp;source_page=blog-restaurante-bajo-calificacion-google&amp;source_cluster=rating-recovery#contact">Activar piloto gratis</a>
-                    <a class="btn btn-secondary" href="../mejorar-calificacion-google-restaurante">Ver la página de recuperación</a>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <section class="section blog-faq-section">
-        <div class="container blog-shell">
-            <div class="section-header" style="margin-bottom: 2rem;">
+            <div class="section-header">
                 <h2>Preguntas después de una baja de calificación</h2>
             </div>
-            <div class="blog-faq-grid">
+            <div class="reveal">
 
-                <div class="blog-faq-card reveal">
-                    <h3>¿Qué tan rápido puede recuperarse un restaurante después de una baja?</h3>
-                    <p>Depende de qué tan rápido elimines la causa operativa y empieces a capturar más reseñas recientes de todos los huéspedes. El avance es más rápido cuando arreglas el problema de piso primero y ajustas el flujo de reseñas esa misma semana.</p>
+                <div class="faq-item active">
+                    <button class="faq-question" type="button"><span>¿Qué tan rápido puede recuperarse un restaurante después de una baja?</span><i class="fa-solid fa-minus"></i></button>
+                    <div class="faq-answer"><p>Depende de qué tan rápido elimines la causa operativa y empieces a capturar más reseñas recientes de todos los huéspedes. El avance es más rápido cuando arreglas el problema de piso primero y ajustas el flujo de reseñas esa misma semana.</p></div>
                 </div>
         
 
-                <div class="blog-faq-card reveal">
-                    <h3>¿Debemos pedir reseña de Google a todos los clientes si estamos bajos?</h3>
-                    <p>No. Da a todos las dos opciones: reseña en Google o comentario privado al gerente. Hay huéspedes que prefieren hablar primero con el gerente, y esa decisión es suya.</p>
+                <div class="faq-item">
+                    <button class="faq-question" type="button"><span>¿Debemos pedir reseña de Google a todos los clientes si estamos bajos?</span><i class="fa-solid fa-plus"></i></button>
+                    <div class="faq-answer"><p>No. Da a todos las dos opciones: reseña en Google o comentario privado al gerente. Hay huéspedes que prefieren hablar primero con el gerente, y esa decisión es suya.</p></div>
                 </div>
         
 
-                <div class="blog-faq-card reveal">
-                    <h3>¿Qué métrica debería ver primero gerencia?</h3>
-                    <p>Empieza por el volumen y tema del feedback privado por turno. Esa señal te dice dónde se rompe el servicio antes de que el promedio público vuelva a rezagarse.</p>
+                <div class="faq-item">
+                    <button class="faq-question" type="button"><span>¿Qué métrica debería ver primero gerencia?</span><i class="fa-solid fa-plus"></i></button>
+                    <div class="faq-answer"><p>Empieza por el volumen y tema del feedback privado por turno. Esa señal te dice dónde se rompe el servicio antes de que el promedio público vuelva a rezagarse.</p></div>
                 </div>
         
             </div>
         </div>
     </section>
 
-    <section class="section" style="padding-top: 2rem;">
+    <section class="section">
         <div class="container blog-shell">
-            <div class="section-header" style="margin-bottom: 2rem;">
+            <div class="section-header">
                 <h2>Siguientes pasos para recuperar reputación</h2>
             </div>
             <div class="blog-related-grid">
@@ -236,6 +231,15 @@
             </div>
         </div>
     </section>
+
+    <section class="cta-band">
+        <div class="container blog-shell">
+            <h2>¿Quieres activar un piloto gratis para recuperar tu calificación?</h2>
+            <p>Empieza con una sucursal y valida el flujo completo: cada huésped elige entre Google o feedback privado, con señal en tiempo real para gerencia.</p>
+            <a class="btn btn-primary" href="../mejorar-calificacion-google-restaurante?offer=rating-recovery-pilot&amp;source_page=blog-restaurante-bajo-calificacion-google&amp;source_cluster=rating-recovery#contact">Activar piloto gratis</a>
+        </div>
+    </section>
+    </main>
     <!-- chrome:footer -->
     <footer class="footer">
         <div class="container">

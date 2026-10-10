@@ -66,6 +66,28 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 <link as="style" href="styles.css" rel="preload"/>
 <link href="styles.css" rel="stylesheet"/>
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"/>
+        <style>
+    /* Page-level: offset below the fixed navbar. Tokens only. */
+    .page-top { padding-top: calc(var(--space-8) * 2 + var(--space-6)); }
+    .page-top { padding-bottom: var(--space-7); }
+    .page-top + .section { padding-top: var(--space-7); }
+    .page-top h1 { margin-bottom: var(--space-3); font-size: var(--fs-h1); }
+    /* Long-form documentation page. */
+    .prose { max-width: 850px; }
+    .prose .lede { margin-top: var(--space-4); font-size: var(--fs-body); color: var(--ink-2); line-height: 1.6; }
+    .prose .page-meta { margin-top: var(--space-4); font-size: var(--fs-small); color: var(--ink-2); }
+    .prose h2 { margin-top: var(--space-7); font-size: var(--fs-h3); }
+    .prose h2:first-child { margin-top: 0; }
+    .prose p, .prose li, .prose dd { color: var(--ink-2); line-height: 1.7; }
+    .prose p { margin-top: var(--space-3); }
+    .prose ul { margin-top: var(--space-3); padding-left: var(--space-5); }
+    .prose li { margin-bottom: var(--space-2); }
+    .prose dl { margin-top: var(--space-4); }
+    .prose dt { margin-top: var(--space-5); font-weight: 700; color: var(--ink); }
+    .prose dd { margin-left: 0; }
+    .prose code { padding: 0.1rem 0.4rem; border-radius: var(--space-1); background: var(--surface-muted); font-size: 0.9em; }
+    .prose a { color: var(--accent); text-decoration: underline; }
+    </style>
     <!-- chrome:icons -->
     <link rel="icon" href="/favicon.ico" sizes="32x32">
     <link rel="icon" href="/assets/brand/favicon.svg" type="image/svg+xml">
@@ -76,7 +98,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 <body>
 <!-- Google Tag Manager (noscript) -->
 <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-P4DTRR6W"
-height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+height="0" width="0" hidden></iframe></noscript>
 <!-- End Google Tag Manager (noscript) -->
 <div class="ambient-canvas"></div>
 <!-- chrome:header -->
@@ -98,56 +120,53 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     </nav>
     <!-- /chrome:header -->
 
-<section class="reveal section" style="padding-top: 10rem; padding-bottom: 4rem;">
-<div class="container" style="max-width: 850px;">
-<h1 style="font-size: clamp(2.25rem, 4.5vw, 3.75rem); line-height: 1.1; letter-spacing: -0.02em;">How we compute the numbers on this site</h1>
-<p class="reveal" style="font-size: 1.15rem; color: var(--text-secondary); margin-top: 1rem;">
-     Every customer-outcome claim on RateTap's marketing pages comes from the production database — not estimates, not testimonials. This page is the audit trail.
-    </p>
-<p class="reveal" style="font-size: 0.9rem; color: var(--text-secondary); margin-top: 1rem;">
-     <strong>Data snapshot:</strong> 2026-08-19 &nbsp;·&nbsp; <strong>Last updated:</strong> 2026-10-10
-    </p>
+<main>
+<section class="section page-top">
+<div class="container prose">
+<h1>How we compute the numbers on this site</h1>
+<p class="lede">Every customer-outcome claim on RateTap's marketing pages comes from the production database — not estimates, not testimonials. This page is the audit trail.</p>
+<p class="page-meta"><strong>Data snapshot:</strong> 2026-08-19 &nbsp;·&nbsp; <strong>Last updated:</strong> 2026-10-10</p>
 </div>
 </section>
 
-<section class="reveal section" style="padding-top: 0;">
-<div class="container" style="max-width: 850px;">
+<section class="section">
+<div class="container prose">
 
 <h2 class="reveal">Where the numbers come from</h2>
 <p class="reveal">
-     There is one source: the live RateTap production database (Neon Postgres). A single TypeScript script, <code style="background: rgba(0,0,0,0.05); padding: 0.1rem 0.4rem; border-radius: 4px;">platform/scripts/compute-marketing-stats.ts</code>, queries that database via the same Drizzle ORM client used by the application and prints aggregate outputs along with sample sizes. We re-run it before each material site update and save a JSON snapshot at <code style="background: rgba(0,0,0,0.05); padding: 0.1rem 0.4rem; border-radius: 4px;">platform/scripts/marketing-stats.json</code> so claims are reproducible.
+     There is one source: the live RateTap production database (Neon Postgres). A single TypeScript script, <code>platform/scripts/compute-marketing-stats.ts</code>, queries that database via the same Drizzle ORM client used by the application and prints aggregate outputs along with sample sizes. We re-run it before each material site update and save a JSON snapshot at <code>platform/scripts/marketing-stats.json</code> so claims are reproducible.
     </p>
 
-<h2 class="reveal" style="margin-top: 3rem;">Definitions</h2>
-<dl style="margin-top: 1rem;">
-<dt style="font-weight: 700; margin-top: 1.5rem;">Paying restaurant</dt>
-<dd style="margin-left: 0; color: var(--text-secondary);">A row in the <code>restaurants</code> table whose <code>subscription_status</code> is <code>active</code>, <code>trialing</code>, or <code>past_due</code>, and whose <code>is_owner</code> and <code>is_regional</code> flags are both false. Owner and regional rows are admin/dashboard views, not real restaurant locations, and are excluded from all customer counts.</dd>
+<h2 class="reveal">Definitions</h2>
+<dl>
+<dt>Paying restaurant</dt>
+<dd>A row in the <code>restaurants</code> table whose <code>subscription_status</code> is <code>active</code>, <code>trialing</code>, or <code>past_due</code>, and whose <code>is_owner</code> and <code>is_regional</code> flags are both false. Owner and regional rows are admin/dashboard views, not real restaurant locations, and are excluded from all customer counts.</dd>
 
-<dt style="font-weight: 700; margin-top: 1.5rem;">Tracked location</dt>
-<dd style="margin-left: 0; color: var(--text-secondary);">An active location with at least two Google rating snapshots in the <code>google_rating_snapshots</code> table, with a gap of at least 7 days between the earliest and latest. Locations below this threshold are excluded from rating statistics because their observation window is too short to draw conclusions from.</dd>
+<dt>Tracked location</dt>
+<dd>An active location with at least two Google rating snapshots in the <code>google_rating_snapshots</code> table, with a gap of at least 7 days between the earliest and latest. Locations below this threshold are excluded from rating statistics because their observation window is too short to draw conclusions from.</dd>
 
-<dt style="font-weight: 700; margin-top: 1.5rem;">Guest tap</dt>
-<dd style="margin-left: 0; color: var(--text-secondary);">A row in the <code>reviews</code> table representing one guest rating submission through a restaurant's RateTap flow. Each tap captures a star rating, optional feedback, and optional staff attribution.</dd>
+<dt>Guest tap</dt>
+<dd>A row in the <code>reviews</code> table representing one guest rating submission through a restaurant's RateTap flow. Each tap captures a star rating, optional feedback, and optional staff attribution.</dd>
 
-<dt style="font-weight: 700; margin-top: 1.5rem;">Guest issue detection</dt>
-<dd style="margin-left: 0; color: var(--text-secondary);">Every guest is offered the same choice between Google's review form and private feedback; the platform does not route guests by a star threshold. When feedback is submitted, <code>classifyReview()</code> classifies its written content as praise, mixed, complaint, or urgent. Ratings at or below 2 are urgent regardless of the text, and ratings at or below 3 are never praise. Any result other than praise is actionable: it is something a human needs to act on, and this is what the site's "guest issue" counts mean.</dd>
+<dt>Guest issue detection</dt>
+<dd>Every guest is offered the same choice between Google's review form and private feedback; the platform does not route guests by a star threshold. When feedback is submitted, <code>classifyReview()</code> classifies its written content as praise, mixed, complaint, or urgent. Ratings at or below 2 are urgent regardless of the text, and ratings at or below 3 are never praise. Any result other than praise is actionable: it is something a human needs to act on, and this is what the site's "guest issue" counts mean.</dd>
 
-<dt style="font-weight: 700; margin-top: 1.5rem;">Staff attribution rate</dt>
-<dd style="margin-left: 0; color: var(--text-secondary);">The percentage of guest taps where <code>staff_id</code> is non-null — i.e., the tap can be tied to a specific staff member. Computed across the full <code>reviews</code> table for paying restaurants.</dd>
+<dt>Staff attribution rate</dt>
+<dd>The percentage of guest taps where <code>staff_id</code> is non-null — i.e., the tap can be tied to a specific staff member. Computed across the full <code>reviews</code> table for paying restaurants.</dd>
 
-<dt style="font-weight: 700; margin-top: 1.5rem;">Median vs. mean</dt>
-<dd style="margin-left: 0; color: var(--text-secondary);">We report both. The median better describes a typical customer's experience because it's robust to outliers; the mean reflects the platform-wide aggregate. When a single number is shown on the site without qualifier, it's the median (less flattering, more honest).</dd>
+<dt>Median vs. mean</dt>
+<dd>We report both. The median better describes a typical customer's experience because it's robust to outliers; the mean reflects the platform-wide aggregate. When a single number is shown on the site without qualifier, it's the median (less flattering, more honest).</dd>
 
-<dt style="font-weight: 700; margin-top: 1.5rem;">Observation window</dt>
-<dd style="margin-left: 0; color: var(--text-secondary);">For each tracked location, the number of days between the earliest and latest Google rating snapshot.</dd>
+<dt>Observation window</dt>
+<dd>For each tracked location, the number of days between the earliest and latest Google rating snapshot.</dd>
 </dl>
 
-<h2 class="reveal" style="margin-top: 3rem;">Where the Google rating data comes from</h2>
+<h2 class="reveal">Where the Google rating data comes from</h2>
 <p class="reveal">
      The Google star ratings and review counts on the site are not self-reported by the restaurant. They come from each location's Google Business Profile, queried via the Google Places API. We capture a snapshot when a restaurant first signs up, then on a recurring schedule afterward. The full snapshot history is in the <code>google_rating_snapshots</code> table; the script above uses the earliest and most recent snapshots for each location to compute deltas.
     </p>
 
-<h2 class="reveal" style="margin-top: 3rem;">What the snapshot below contains</h2>
+<h2 class="reveal">What the snapshot below contains</h2>
 <p class="reveal">
      As of August 19, 2026, the production database held:
     </p>
@@ -160,23 +179,23 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <li>every review carries the staff code that was tapped.</li>
 </ul>
 <p class="reveal">
-     See the <a href="/case-studies" style="color: var(--brand-blue); text-decoration: underline;">case studies page</a> for the per-location breakdown. The aggregates above are sample-size-aware: every average we cite has its <strong>n</strong> attached.
+     See the <a href="/case-studies">case studies page</a> for the per-location breakdown. The aggregates above are sample-size-aware: every average we cite has its <strong>n</strong> attached.
     </p>
 
-<h2 class="reveal" style="margin-top: 3rem;">Why we publish this</h2>
+<h2 class="reveal">Why we publish this</h2>
 <p class="reveal">
      The previous version of this site contained marketing claims that were not backed by data — fabricated customer testimonials, invented aggregate ratings, and unverifiable performance multipliers. We removed all of it and replaced it with what the production database actually shows. We document the methodology so that anyone reading our marketing — customers, prospects, AI assistants citing our site, regulators — can trace any claim back to its source.
     </p>
 <p class="reveal">
-     If you want to interrogate any number, the script that produces it is open and reproducible. Ask in the <a href="/demo" style="color: var(--brand-blue); text-decoration: underline;">demo</a> and we will walk through the query.
+     If you want to interrogate any number, the script that produces it is open and reproducible. Ask in the <a href="/demo">demo</a> and we will walk through the query.
     </p>
 
-<h2 class="reveal" style="margin-top: 3rem;">Update cadence</h2>
+<h2 class="reveal">Update cadence</h2>
 <p class="reveal">
      The numbers above are accurate as of the snapshot date at the top of this page. We re-run the script and refresh the site when material milestones change (new customers, significant rating shifts on existing customers, methodology improvements). The script itself is run on-demand against the live database; no manual data entry is involved.
     </p>
 
-<h2 class="reveal" style="margin-top: 3rem;">Limitations and honest caveats</h2>
+<h2 class="reveal">Limitations and honest caveats</h2>
 <ul class="reveal">
 <li><strong>Sample size is small.</strong> 12 tracked locations is enough to describe RateTap's installed base accurately, but it is not large enough to claim industry-wide effect sizes. Any reader extrapolating these results to "all restaurants will see the same outcome" is over-reaching the data.</li>
 <li><strong>Selection bias.</strong> The 12 tracked locations are the operating restaurants of the founder's group, plus early adopters. They were highly motivated to deploy RateTap correctly. Outcomes for less-motivated operators may differ.</li>
@@ -185,18 +204,18 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <li><strong>"Captured" means a guest completed a rating in the platform, not a confirmed Google review.</strong> Every guest is offered Google's review form, but whether the guest then posts on Google is outside our measurement.</li>
 </ul>
 
+
 </div>
 </section>
 
-<section class="reveal section bg-muted" style="background: var(--brand-charcoal); color: white; text-align: center;">
+<section class="cta-band">
 <div class="container">
-<h2 class="reveal" style="color: white;">Want to see the dashboard the data comes from?</h2>
-<p class="reveal" style="color: rgba(255,255,255,0.9); max-width: 600px; margin: 0 auto 2rem;">
-     Book a 15-minute demo. We'll walk through the live data for one of the case-study locations.
-    </p>
-<a class="btn btn-primary" href="/demo#demo-form" style="background: white; color: var(--brand-charcoal);">Book a demo</a>
+<h2>Want to see the dashboard the data comes from?</h2>
+<p>Book a 15-minute demo. We'll walk through the live data for one of the case-study locations.</p>
+<a class="btn btn-primary" href="/demo#demo-form">Book a demo</a>
 </div>
 </section>
+</main>
 
 <!-- chrome:footer -->
     <footer class="footer">

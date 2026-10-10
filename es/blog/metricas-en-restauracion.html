@@ -24,6 +24,13 @@
     <link rel="preload" href="../../styles.css" as="style"/>
     <link rel="stylesheet" href="../../styles.css"/>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+    <style>
+        /* Offset below the fixed navbar, then tighten the section that follows. */
+        .page-top { padding-top: calc(var(--space-8) * 2 + var(--space-6)); padding-bottom: var(--space-7); }
+        .page-top + .section { padding-top: var(--space-7); }
+        .page-top h1 { font-size: var(--fs-h1); }
+        .section--tight { padding-top: var(--space-6); }
+    </style>
     <!-- chrome:icons -->
     <link rel="icon" href="/favicon.ico" sizes="32x32">
     <link rel="icon" href="/assets/brand/favicon.svg" type="image/svg+xml">
@@ -53,7 +60,8 @@
         <button type="button" class="nav-toggle" aria-label="Open navigation menu" aria-controls="nav-menu" aria-expanded="false"><i class="fa-solid fa-bars"></i></button>
     </nav>
     <!-- /chrome:header -->
-    <section class="section blog-hero" style="padding-top: 10rem;">
+    <main>
+    <section class="section page-top">
         <div class="container blog-shell">
             <h1>5 Métricas en Restauración que Realmente Debes Medir (Más Allá de las Estrellas)</h1>
             <p class="blog-hero-copy">La calificación promedio en Google es una métrica de vanidad. Te dice cómo terminaste, pero no por qué. El verdadero cambio operativo ocurre cuando mides la velocidad de reseñas nuevas y la tasa de detección de problemas de clientes en privado.</p>
@@ -66,7 +74,7 @@
         </div>
     </section>
 
-    <section class="section" style="padding-top: 2rem;">
+    <section class="section">
         <div class="container blog-shell blog-article-grid">
             <aside class="blog-rail">
                 <div class="blog-rail-card reveal">
@@ -152,44 +160,31 @@
         </div>
     </section>
 
-    <section class="section">
+    <section class="section bg-muted">
         <div class="container blog-shell">
-            <div class="blog-cta-card reveal">
-                <h2>¿Listo para medir los KPIs operativos reales?</h2>
-                <p>RateTap te da visibilidad completa sobre tus tasas de captura, problemas de clientes recuperados y desempeño del staff hasta el nivel de cada mesero.</p>
-                <div class="blog-cta-actions">
-                    <a class="btn btn-primary" href="../es/demo">Agendar demo</a>
-                    <a class="btn btn-secondary" href="../es/software-gestion-resenas-restaurantes">Ver la plataforma</a>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <section class="section blog-faq-section">
-        <div class="container blog-shell">
-            <div class="section-header" style="margin-bottom: 2rem;">
+            <div class="section-header">
                 <h2>Preguntas sobre métricas en restauración</h2>
             </div>
-            <div class="blog-faq-grid">
+            <div class="reveal">
 
-                <div class="blog-faq-card reveal">
-                    <h3>¿La calificación promedio en Google no sirve?</h3>
-                    <p>Sí sirve, es muy visible para los clientes. Pero es un indicador de resultado (lagging). Necesitas métricas de acción (leading) como la Tasa de Captura para poder influir en el puntaje final.</p>
+                <div class="faq-item active">
+                    <button class="faq-question" type="button"><span>¿La calificación promedio en Google no sirve?</span><i class="fa-solid fa-minus"></i></button>
+                    <div class="faq-answer"><p>Sí sirve, es muy visible para los clientes. Pero es un indicador de resultado (lagging). Necesitas métricas de acción (leading) como la Tasa de Captura para poder influir en el puntaje final.</p></div>
                 </div>
         
 
-                <div class="blog-faq-card reveal">
-                    <h3>¿Cómo podemos medir la Tasa de Detección de Problemas de Clientes?</h3>
-                    <p>Necesitas un sistema de reseñas que dé a cada cliente dos opciones: reseña en Google o mensaje privado al inbox del gerente.</p>
+                <div class="faq-item">
+                    <button class="faq-question" type="button"><span>¿Cómo podemos medir la Tasa de Detección de Problemas de Clientes?</span><i class="fa-solid fa-plus"></i></button>
+                    <div class="faq-answer"><p>Necesitas un sistema de reseñas que dé a cada cliente dos opciones: reseña en Google o mensaje privado al inbox del gerente.</p></div>
                 </div>
         
             </div>
         </div>
     </section>
 
-    <section class="section" style="padding-top: 2rem;">
+    <section class="section">
         <div class="container blog-shell">
-            <div class="section-header" style="margin-bottom: 2rem;">
+            <div class="section-header">
                 <h2>Toma acción sobre tus métricas</h2>
             </div>
             <div class="blog-related-grid">
@@ -217,6 +212,15 @@
             </div>
         </div>
     </section>
+
+    <section class="cta-band">
+        <div class="container blog-shell">
+            <h2>¿Listo para medir los KPIs operativos reales?</h2>
+            <p>RateTap te da visibilidad completa sobre tus tasas de captura, problemas de clientes recuperados y desempeño del staff hasta el nivel de cada mesero.</p>
+            <a class="btn btn-primary" href="../es/demo">Agendar demo</a>
+        </div>
+    </section>
+    </main>
     <!-- chrome:footer -->
     <footer class="footer">
         <div class="container">

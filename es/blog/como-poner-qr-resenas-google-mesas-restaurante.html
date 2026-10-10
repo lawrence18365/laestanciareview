@@ -24,6 +24,13 @@
     <link rel="preload" href="../../styles.css" as="style"/>
     <link rel="stylesheet" href="../../styles.css"/>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+    <style>
+        /* Offset below the fixed navbar, then tighten the section that follows. */
+        .page-top { padding-top: calc(var(--space-8) * 2 + var(--space-6)); padding-bottom: var(--space-7); }
+        .page-top + .section { padding-top: var(--space-7); }
+        .page-top h1 { font-size: var(--fs-h1); }
+        .section--tight { padding-top: var(--space-6); }
+    </style>
     <!-- chrome:icons -->
     <link rel="icon" href="/favicon.ico" sizes="32x32">
     <link rel="icon" href="/assets/brand/favicon.svg" type="image/svg+xml">
@@ -53,7 +60,8 @@
         <button type="button" class="nav-toggle" aria-label="Open navigation menu" aria-controls="nav-menu" aria-expanded="false"><i class="fa-solid fa-bars"></i></button>
     </nav>
     <!-- /chrome:header -->
-    <section class="section blog-hero" style="padding-top: 10rem;">
+    <main>
+    <section class="section page-top">
         <div class="container blog-shell">
             <h1>Cómo poner códigos QR de reseñas de Google en mesas de tu restaurante (y por qué muchos los están reemplazando por NFC)</h1>
             <p class="blog-hero-copy">Los códigos QR para reseñas de Google siguen siendo el punto de partida default para la mayoría de restaurantes. Son baratos, rápidos de imprimir y no requieren hardware. El detalle: un QR mal puesto o mal redactado no convierte casi a nadie. Aquí está el setup operativo que sí funciona — y la ruta de upgrade que rompe el techo de conversión.</p>
@@ -66,7 +74,7 @@
         </div>
     </section>
 
-    <section class="section" style="padding-top: 2rem;">
+    <section class="section">
         <div class="container blog-shell blog-article-grid">
             <aside class="blog-rail">
                 <div class="blog-rail-card reveal">
@@ -192,56 +200,43 @@
         </div>
     </section>
 
-    <section class="section">
+    <section class="section bg-muted">
         <div class="container blog-shell">
-            <div class="blog-cta-card reveal">
-                <h2>¿Quieres tarjetas NFC en lugar de imprimir más tents con QR?</h2>
-                <p>Te mandamos las tarjetas NFC pre-codificadas, configuramos atribución por mesero y damos a cada mesa una opción de feedback privado. La mayoría de operadores deja de usar el QR a las dos semanas del cambio.</p>
-                <div class="blog-cta-actions">
-                    <a class="btn btn-primary" href="../nfc-google-review-cards-for-restaurants?offer=nfc-upgrade&amp;source_page=blog-qr-setup-es&amp;source_cluster=qr-table-setup#contact">Pedir tarjetas NFC</a>
-                    <a class="btn btn-secondary" href="../roi-calculator">Calcular ROI</a>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <section class="section blog-faq-section">
-        <div class="container blog-shell">
-            <div class="section-header" style="margin-bottom: 2rem;">
+            <div class="section-header">
                 <h2>Preguntas comunes sobre setup de QR en restaurantes</h2>
             </div>
-            <div class="blog-faq-grid">
+            <div class="reveal">
 
-                <div class="blog-faq-card reveal">
-                    <h3>¿Necesitamos un QR distinto por sucursal?</h3>
-                    <p>Sí. Cada sucursal tiene su propio Google Business Profile y su propia URL de reseña. Compartir un QR entre sucursales manda reseñas a la ficha equivocada y vuelve imposible medir desempeño por sitio.</p>
+                <div class="faq-item active">
+                    <button class="faq-question" type="button"><span>¿Necesitamos un QR distinto por sucursal?</span><i class="fa-solid fa-minus"></i></button>
+                    <div class="faq-answer"><p>Sí. Cada sucursal tiene su propio Google Business Profile y su propia URL de reseña. Compartir un QR entre sucursales manda reseñas a la ficha equivocada y vuelve imposible medir desempeño por sitio.</p></div>
                 </div>
         
 
-                <div class="blog-faq-card reveal">
-                    <h3>¿Podemos poner el QR en el menú en lugar de una tarjeta separada?</h3>
-                    <p>Funciona, pero convierte peor. El menú está asociado a ordenar, no a cerrar la experiencia. Una tarjeta separada puesta con la cuenta es consistentemente la posición de mayor conversión.</p>
+                <div class="faq-item">
+                    <button class="faq-question" type="button"><span>¿Podemos poner el QR en el menú en lugar de una tarjeta separada?</span><i class="fa-solid fa-plus"></i></button>
+                    <div class="faq-answer"><p>Funciona, pero convierte peor. El menú está asociado a ordenar, no a cerrar la experiencia. Una tarjeta separada puesta con la cuenta es consistentemente la posición de mayor conversión.</p></div>
                 </div>
         
 
-                <div class="blog-faq-card reveal">
-                    <h3>¿Y si los huéspedes le toman foto al QR pero nunca regresan a él?</h3>
-                    <p>Ese es el techo de conversión del QR que todos topan. El huésped salió pensando escanear después y nunca lo hizo. El tap NFC lo resuelve porque la acción ocurre en mesa, no en casa.</p>
+                <div class="faq-item">
+                    <button class="faq-question" type="button"><span>¿Y si los huéspedes le toman foto al QR pero nunca regresan a él?</span><i class="fa-solid fa-plus"></i></button>
+                    <div class="faq-answer"><p>Ese es el techo de conversión del QR que todos topan. El huésped salió pensando escanear después y nunca lo hizo. El tap NFC lo resuelve porque la acción ocurre en mesa, no en casa.</p></div>
                 </div>
         
 
-                <div class="blog-faq-card reveal">
-                    <h3>¿Conviene ofrecer un descuento por dejar reseña?</h3>
-                    <p>No. La política de Google prohíbe explícitamente incentivar reseñas y las plataformas detectan patrones coordinados. El resultado son reseñas eliminadas y la ficha penalizada. La palanca correcta es reducir fricción, no sobornar.</p>
+                <div class="faq-item">
+                    <button class="faq-question" type="button"><span>¿Conviene ofrecer un descuento por dejar reseña?</span><i class="fa-solid fa-plus"></i></button>
+                    <div class="faq-answer"><p>No. La política de Google prohíbe explícitamente incentivar reseñas y las plataformas detectan patrones coordinados. El resultado son reseñas eliminadas y la ficha penalizada. La palanca correcta es reducir fricción, no sobornar.</p></div>
                 </div>
         
             </div>
         </div>
     </section>
 
-    <section class="section" style="padding-top: 2rem;">
+    <section class="section">
         <div class="container blog-shell">
-            <div class="section-header" style="margin-bottom: 2rem;">
+            <div class="section-header">
                 <h2>Construye el resto del sistema de captura</h2>
             </div>
             <div class="blog-related-grid">
@@ -269,6 +264,15 @@
             </div>
         </div>
     </section>
+
+    <section class="cta-band">
+        <div class="container blog-shell">
+            <h2>¿Quieres tarjetas NFC en lugar de imprimir más tents con QR?</h2>
+            <p>Te mandamos las tarjetas NFC pre-codificadas, configuramos atribución por mesero y damos a cada mesa una opción de feedback privado. La mayoría de operadores deja de usar el QR a las dos semanas del cambio.</p>
+            <a class="btn btn-primary" href="../nfc-google-review-cards-for-restaurants?offer=nfc-upgrade&amp;source_page=blog-qr-setup-es&amp;source_cluster=qr-table-setup#contact">Pedir tarjetas NFC</a>
+        </div>
+    </section>
+    </main>
     <!-- chrome:footer -->
     <footer class="footer">
         <div class="container">

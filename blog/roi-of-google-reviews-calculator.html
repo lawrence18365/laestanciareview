@@ -24,6 +24,13 @@
     <link rel="preload" href="../styles.css" as="style"/>
     <link rel="stylesheet" href="../styles.css"/>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+    <style>
+        /* Offset below the fixed navbar, then tighten the section that follows. */
+        .page-top { padding-top: calc(var(--space-8) * 2 + var(--space-6)); padding-bottom: var(--space-7); }
+        .page-top + .section { padding-top: var(--space-7); }
+        .page-top h1 { font-size: var(--fs-h1); }
+        .section--tight { padding-top: var(--space-6); }
+    </style>
     <!-- chrome:icons -->
     <link rel="icon" href="/favicon.ico" sizes="32x32">
     <link rel="icon" href="/assets/brand/favicon.svg" type="image/svg+xml">
@@ -53,7 +60,8 @@
         <button type="button" class="nav-toggle" aria-label="Open navigation menu" aria-controls="nav-menu" aria-expanded="false"><i class="fa-solid fa-bars"></i></button>
     </nav>
     <!-- /chrome:header -->
-    <section class="section blog-hero" style="padding-top: 10rem;">
+    <main>
+    <section class="section page-top">
         <div class="container blog-shell">
             <h1>What is the Actual ROI of a Half-Star Increase on Google?</h1>
             <p class="blog-hero-copy">Reviews aren&#x27;t just about pride; they are a primary driver of new foot traffic. Academic studies and industry data show a direct correlation between star ratings and revenue. Here is how to calculate exactly what your reputation is worth.</p>
@@ -66,7 +74,7 @@
         </div>
     </section>
 
-    <section class="section" style="padding-top: 2rem;">
+    <section class="section">
         <div class="container blog-shell blog-article-grid">
             <aside class="blog-rail">
                 <div class="blog-rail-card reveal">
@@ -132,44 +140,31 @@
         </div>
     </section>
 
-    <section class="section">
+    <section class="section bg-muted">
         <div class="container blog-shell">
-            <div class="blog-cta-card reveal">
-                <h2>Ready to protect your revenue?</h2>
-                <p>See how much a half-star increase could mean for your bottom line, then implement the system to make it happen.</p>
-                <div class="blog-cta-actions">
-                    <a class="btn btn-primary" href="../roi-calculator">Try the ROI Calculator</a>
-                    <a class="btn btn-secondary" href="../demo">Book a demo</a>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <section class="section blog-faq-section">
-        <div class="container blog-shell">
-            <div class="section-header" style="margin-bottom: 2rem;">
+            <div class="section-header">
                 <h2>Questions about Review ROI</h2>
             </div>
-            <div class="blog-faq-grid">
+            <div class="reveal">
 
-                <div class="blog-faq-card reveal">
-                    <h3>How long does it take to see a financial return?</h3>
-                    <p>You will see an increase in review volume immediately. The financial return (increased foot traffic) typically follows within 30 to 90 days as your improved rating influences Google Maps visibility.</p>
+                <div class="faq-item active">
+                    <button class="faq-question" type="button"><span>How long does it take to see a financial return?</span><i class="fa-solid fa-minus"></i></button>
+                    <div class="faq-answer"><p>You will see an increase in review volume immediately. The financial return (increased foot traffic) typically follows within 30 to 90 days as your improved rating influences Google Maps visibility.</p></div>
                 </div>
         
 
-                <div class="blog-faq-card reveal">
-                    <h3>Does this apply to fine dining and QSRs equally?</h3>
-                    <p>Yes. While average ticket sizes differ, the percentage of consumers using Google to choose their next meal remains extremely high across all dining segments.</p>
+                <div class="faq-item">
+                    <button class="faq-question" type="button"><span>Does this apply to fine dining and QSRs equally?</span><i class="fa-solid fa-plus"></i></button>
+                    <div class="faq-answer"><p>Yes. While average ticket sizes differ, the percentage of consumers using Google to choose their next meal remains extremely high across all dining segments.</p></div>
                 </div>
         
             </div>
         </div>
     </section>
 
-    <section class="section" style="padding-top: 2rem;">
+    <section class="section">
         <div class="container blog-shell">
-            <div class="section-header" style="margin-bottom: 2rem;">
+            <div class="section-header">
                 <h2>Use the tools</h2>
             </div>
             <div class="blog-related-grid">
@@ -190,6 +185,15 @@
             </div>
         </div>
     </section>
+
+    <section class="cta-band">
+        <div class="container blog-shell">
+            <h2>Ready to protect your revenue?</h2>
+            <p>See how much a half-star increase could mean for your bottom line, then implement the system to make it happen.</p>
+            <a class="btn btn-primary" href="../roi-calculator">Try the ROI Calculator</a>
+        </div>
+    </section>
+    </main>
     <!-- chrome:footer -->
     <footer class="footer">
         <div class="container">

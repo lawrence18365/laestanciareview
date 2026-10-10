@@ -24,6 +24,13 @@
     <link rel="preload" href="../styles.css" as="style"/>
     <link rel="stylesheet" href="../styles.css"/>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+    <style>
+        /* Offset below the fixed navbar, then tighten the section that follows. */
+        .page-top { padding-top: calc(var(--space-8) * 2 + var(--space-6)); padding-bottom: var(--space-7); }
+        .page-top + .section { padding-top: var(--space-7); }
+        .page-top h1 { font-size: var(--fs-h1); }
+        .section--tight { padding-top: var(--space-6); }
+    </style>
     <!-- chrome:icons -->
     <link rel="icon" href="/favicon.ico" sizes="32x32">
     <link rel="icon" href="/assets/brand/favicon.svg" type="image/svg+xml">
@@ -53,7 +60,8 @@
         <button type="button" class="nav-toggle" aria-label="Open navigation menu" aria-controls="nav-menu" aria-expanded="false"><i class="fa-solid fa-bars"></i></button>
     </nav>
     <!-- /chrome:header -->
-    <section class="section blog-hero" style="padding-top: 10rem;">
+    <main>
+    <section class="section page-top">
         <div class="container blog-shell">
             <h1>Restaurant Not Getting Google Reviews? The Problem Is Usually Your Request System</h1>
             <p class="blog-hero-copy">Most restaurants do not have a demand problem. They have a capture problem. Guests leave happy, promise to post later, and never come back to it. A better review flow fixes the timing, the friction, and the ownership.</p>
@@ -66,7 +74,7 @@
         </div>
     </section>
 
-    <section class="section" style="padding-top: 2rem;">
+    <section class="section">
         <div class="container blog-shell blog-article-grid">
             <aside class="blog-rail">
                 <div class="blog-rail-card reveal">
@@ -153,50 +161,37 @@
         </div>
     </section>
 
-    <section class="section">
+    <section class="section bg-muted">
         <div class="container blog-shell">
-            <div class="blog-cta-card reveal">
-                <h2>Want more happy guests to actually post?</h2>
-                <p>RateTap gives staff a clean, repeatable request path at the table and gives every guest a private option, so management hears problems early.</p>
-                <div class="blog-cta-actions">
-                    <a class="btn btn-primary" href="../demo">Book a demo</a>
-                    <a class="btn btn-secondary" href="../get-more-google-reviews-restaurants">See the software</a>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <section class="section blog-faq-section">
-        <div class="container blog-shell">
-            <div class="section-header" style="margin-bottom: 2rem;">
+            <div class="section-header">
                 <h2>Questions about low review volume</h2>
             </div>
-            <div class="blog-faq-grid">
+            <div class="reveal">
 
-                <div class="blog-faq-card reveal">
-                    <h3>Is email still useful for getting Google reviews?</h3>
-                    <p>It can support follow-up, but it should not be your primary capture path if your main issue is low volume. The highest-intent moment usually happens before the guest leaves the restaurant.</p>
+                <div class="faq-item active">
+                    <button class="faq-question" type="button"><span>Is email still useful for getting Google reviews?</span><i class="fa-solid fa-minus"></i></button>
+                    <div class="faq-answer"><p>It can support follow-up, but it should not be your primary capture path if your main issue is low volume. The highest-intent moment usually happens before the guest leaves the restaurant.</p></div>
                 </div>
         
 
-                <div class="blog-faq-card reveal">
-                    <h3>Should hosts, servers, or managers ask for the review?</h3>
-                    <p>Use the role that naturally owns the final positive moment. In many restaurants that is the server, but managers should still own the process design and monitor consistency.</p>
+                <div class="faq-item">
+                    <button class="faq-question" type="button"><span>Should hosts, servers, or managers ask for the review?</span><i class="fa-solid fa-plus"></i></button>
+                    <div class="faq-answer"><p>Use the role that naturally owns the final positive moment. In many restaurants that is the server, but managers should still own the process design and monitor consistency.</p></div>
                 </div>
         
 
-                <div class="blog-faq-card reveal">
-                    <h3>What is the safest way to increase review volume?</h3>
-                    <p>Reduce friction for every table and add a private channel for guests who want to share a problem. That protects the guest experience while keeping the public review stream honest.</p>
+                <div class="faq-item">
+                    <button class="faq-question" type="button"><span>What is the safest way to increase review volume?</span><i class="fa-solid fa-plus"></i></button>
+                    <div class="faq-answer"><p>Reduce friction for every table and add a private channel for guests who want to share a problem. That protects the guest experience while keeping the public review stream honest.</p></div>
                 </div>
         
             </div>
         </div>
     </section>
 
-    <section class="section" style="padding-top: 2rem;">
+    <section class="section">
         <div class="container blog-shell">
-            <div class="section-header" style="margin-bottom: 2rem;">
+            <div class="section-header">
                 <h2>Build the full capture flow</h2>
             </div>
             <div class="blog-related-grid">
@@ -224,6 +219,15 @@
             </div>
         </div>
     </section>
+
+    <section class="cta-band">
+        <div class="container blog-shell">
+            <h2>Want more happy guests to actually post?</h2>
+            <p>RateTap gives staff a clean, repeatable request path at the table and gives every guest a private option, so management hears problems early.</p>
+            <a class="btn btn-primary" href="../demo">Book a demo</a>
+        </div>
+    </section>
+    </main>
     <!-- chrome:footer -->
     <footer class="footer">
         <div class="container">

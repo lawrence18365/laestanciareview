@@ -24,6 +24,13 @@
     <link rel="preload" href="../../styles.css" as="style"/>
     <link rel="stylesheet" href="../../styles.css"/>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+    <style>
+        /* Offset below the fixed navbar, then tighten the section that follows. */
+        .page-top { padding-top: calc(var(--space-8) * 2 + var(--space-6)); padding-bottom: var(--space-7); }
+        .page-top + .section { padding-top: var(--space-7); }
+        .page-top h1 { font-size: var(--fs-h1); }
+        .section--tight { padding-top: var(--space-6); }
+    </style>
     <!-- chrome:icons -->
     <link rel="icon" href="/favicon.ico" sizes="32x32">
     <link rel="icon" href="/assets/brand/favicon.svg" type="image/svg+xml">
@@ -53,7 +60,8 @@
         <button type="button" class="nav-toggle" aria-label="Open navigation menu" aria-controls="nav-menu" aria-expanded="false"><i class="fa-solid fa-bars"></i></button>
     </nav>
     <!-- /chrome:header -->
-    <section class="section blog-hero" style="padding-top: 10rem;">
+    <main>
+    <section class="section page-top">
         <div class="container blog-shell">
             <h1>Cómo los restaurantes reducen las malas reseñas con una recuperación de clientes más rápida</h1>
             <p class="blog-hero-copy">Casi ninguna mala reseña en Google la escribe alguien de mala fe. La escribe un huésped que tuvo un problema real y no encontró otro lugar dónde reportarlo. Para cuando la reseña ya está publicada, la ventana de recuperación se cerró. La solución es darle a la fricción una casa privada para poder recuperar al huésped temprano.</p>
@@ -66,7 +74,7 @@
         </div>
     </section>
 
-    <section class="section" style="padding-top: 2rem;">
+    <section class="section">
         <div class="container blog-shell blog-article-grid">
             <aside class="blog-rail">
                 <div class="blog-rail-card reveal">
@@ -183,56 +191,43 @@
         </div>
     </section>
 
-    <section class="section">
+    <section class="section bg-muted">
         <div class="container blog-shell">
-            <div class="blog-cta-card reveal">
-                <h2>¿Quieres feedback privado activo en tu restaurante esta semana?</h2>
-                <p>Configuramos la pantalla de elección del huésped, las alertas a gerencia y el dashboard de recuperación. La mayoría de operadores ven el primer problema de cliente recuperado dentro de las 48 horas de ir en vivo.</p>
-                <div class="blog-cta-actions">
-                    <a class="btn btn-primary" href="../evitar-malas-resenas-restaurante?offer=protect-pilot&amp;source_page=blog-detener-malas-resenas-es&amp;source_cluster=reputation-defense#contact">Activar defensa de reputación</a>
-                    <a class="btn btn-secondary" href="../software-gestion-resenas-restaurantes">Ver cómo funciona</a>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <section class="section blog-faq-section">
-        <div class="container blog-shell">
-            <div class="section-header" style="margin-bottom: 2rem;">
+            <div class="section-header">
                 <h2>Preguntas comunes sobre prevenir malas reseñas</h2>
             </div>
-            <div class="blog-faq-grid">
+            <div class="reveal">
 
-                <div class="blog-faq-card reveal">
-                    <h3>¿Es ético ofrecer una opción de feedback privado?</h3>
-                    <p>Sí. Todos los huéspedes ven un botón de reseña en Google y uno de comentario privado, sin importar su calificación. No se bloquea nada y la opción privada lleva a una respuesta real.</p>
+                <div class="faq-item active">
+                    <button class="faq-question" type="button"><span>¿Es ético ofrecer una opción de feedback privado?</span><i class="fa-solid fa-minus"></i></button>
+                    <div class="faq-answer"><p>Sí. Todos los huéspedes ven un botón de reseña en Google y uno de comentario privado, sin importar su calificación. No se bloquea nada y la opción privada lleva a una respuesta real.</p></div>
                 </div>
         
 
-                <div class="blog-faq-card reveal">
-                    <h3>¿Esto cumple las guías de Google?</h3>
-                    <p>La política de Google ataca las reseñas falsas e incentivadas, y también prohíbe desalentar las reseñas negativas o pedir reseñas solo a los huéspedes contentos. Por eso RateTap muestra a todos los huéspedes las dos opciones, sin importar su calificación, y nunca bloquea ni condiciona el acceso a Google.</p>
+                <div class="faq-item">
+                    <button class="faq-question" type="button"><span>¿Esto cumple las guías de Google?</span><i class="fa-solid fa-plus"></i></button>
+                    <div class="faq-answer"><p>La política de Google ataca las reseñas falsas e incentivadas, y también prohíbe desalentar las reseñas negativas o pedir reseñas solo a los huéspedes contentos. Por eso RateTap muestra a todos los huéspedes las dos opciones, sin importar su calificación, y nunca bloquea ni condiciona el acceso a Google.</p></div>
                 </div>
         
 
-                <div class="blog-faq-card reveal">
-                    <h3>¿Y si el huésped escribe la mala reseña aun después de la respuesta privada?</h3>
-                    <p>Pasa. Los huéspedes siempre pueden publicar en Google. Tendrás un registro documentado del intento de recuperación para referenciar en tu respuesta pública si decides responder.</p>
+                <div class="faq-item">
+                    <button class="faq-question" type="button"><span>¿Y si el huésped escribe la mala reseña aun después de la respuesta privada?</span><i class="fa-solid fa-plus"></i></button>
+                    <div class="faq-answer"><p>Pasa. Los huéspedes siempre pueden publicar en Google. Tendrás un registro documentado del intento de recuperación para referenciar en tu respuesta pública si decides responder.</p></div>
                 </div>
         
 
-                <div class="blog-faq-card reveal">
-                    <h3>¿Necesitamos a alguien dedicado a monitorear el inbox privado?</h3>
-                    <p>No tiempo completo, pero el inbox necesita un dueño claro por turno. La mayoría de operadores se lo asignan al gerente en turno con reglas de escalación para quejas que requieren atención de dirección.</p>
+                <div class="faq-item">
+                    <button class="faq-question" type="button"><span>¿Necesitamos a alguien dedicado a monitorear el inbox privado?</span><i class="fa-solid fa-plus"></i></button>
+                    <div class="faq-answer"><p>No tiempo completo, pero el inbox necesita un dueño claro por turno. La mayoría de operadores se lo asignan al gerente en turno con reglas de escalación para quejas que requieren atención de dirección.</p></div>
                 </div>
         
             </div>
         </div>
     </section>
 
-    <section class="section" style="padding-top: 2rem;">
+    <section class="section">
         <div class="container blog-shell">
-            <div class="section-header" style="margin-bottom: 2rem;">
+            <div class="section-header">
                 <h2>Construye el resto de la defensa</h2>
             </div>
             <div class="blog-related-grid">
@@ -260,6 +255,15 @@
             </div>
         </div>
     </section>
+
+    <section class="cta-band">
+        <div class="container blog-shell">
+            <h2>¿Quieres feedback privado activo en tu restaurante esta semana?</h2>
+            <p>Configuramos la pantalla de elección del huésped, las alertas a gerencia y el dashboard de recuperación. La mayoría de operadores ven el primer problema de cliente recuperado dentro de las 48 horas de ir en vivo.</p>
+            <a class="btn btn-primary" href="../evitar-malas-resenas-restaurante?offer=protect-pilot&amp;source_page=blog-detener-malas-resenas-es&amp;source_cluster=reputation-defense#contact">Activar defensa de reputación</a>
+        </div>
+    </section>
+    </main>
     <!-- chrome:footer -->
     <footer class="footer">
         <div class="container">

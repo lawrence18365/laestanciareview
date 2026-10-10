@@ -36,7 +36,7 @@ fbq('init', '1578821303344121');
 fbq('track', 'PageView');
 </script>
 <noscript>
-<img height="1" src="https://www.facebook.com/tr?id=1578821303344121&ev=PageView&noscript=1" style="display:none" width="1"/>
+<img height="1" src="https://www.facebook.com/tr?id=1578821303344121&ev=PageView&noscript=1" hidden width="1"/>
 </noscript>
 <!-- End Meta Pixel Code -->
 <link as="style" href="styles.css" rel="preload"/>
@@ -82,10 +82,11 @@ fbq('track', 'PageView');
   }
 
   .pago-amount .price {
-    font-family: 'Instrument Serif', serif;
+    font-family: var(--font-sans);
     font-size: 4.5rem;
-    font-weight: 400;
-    color: var(--brand-charcoal);
+    font-weight: 800;
+    letter-spacing: -0.04em;
+    color: var(--ink);
     line-height: 1;
   }
 
@@ -114,6 +115,8 @@ fbq('track', 'PageView');
     box-shadow: 0 8px 32px -8px rgba(0,0,0,0.06);
     transition: transform 0.3s ease, box-shadow 0.3s ease;
   }
+
+  .pago-card--stripe { border: 1.5px solid rgba(99, 91, 255, 0.2); }
 
   .pago-card:hover {
     transform: translateY(-3px);
@@ -435,7 +438,7 @@ fbq('track', 'PageView');
 <body>
 <!-- Google Tag Manager (noscript) -->
 <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-P4DTRR6W"
-height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+height="0" width="0" hidden></iframe></noscript>
 <!-- End Google Tag Manager (noscript) -->
 
 <div class="ambient-canvas"></div>
@@ -465,7 +468,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
     <!-- Header -->
     <div class="pago-header">
-      <h1>Tu suscripcion<br><span class="serif-italic">RateTap</span></h1>
+      <h1>Tu suscripcion RateTap</h1>
 
       <div class="pago-amount">
         <span class="currency">$</span>
@@ -480,7 +483,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <div class="pago-grid">
 
       <!-- Stripe (recommended) -->
-      <div class="pago-card" style="border: 1.5px solid rgba(99,91,255,0.2);">
+      <div class="pago-card pago-card--stripe">
         <div class="pago-card-header">
           <div class="pago-card-icon stripe">
             <i class="fa-solid fa-credit-card"></i>
