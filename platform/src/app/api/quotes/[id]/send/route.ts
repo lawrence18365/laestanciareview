@@ -14,6 +14,7 @@ import { and, eq } from 'drizzle-orm';
 import { db } from '@/db';
 import { quotes, restaurants } from '@/db/schema';
 import { verifySession } from '@/lib/session';
+import { hasEventsQuotes } from '@/lib/brands';
 import { requireSameOrigin } from '@/lib/origin';
 
 export const runtime = 'nodejs';
@@ -44,6 +45,7 @@ export async function POST(req: NextRequest, ctx: RouteContext) {
   if (!session || session.role !== 'gm') {
     return Response.json({ error: 'Unauthorized' }, { status: 401 });
   }
+  if (!hasEventsQuotes(session.slug)) return Response.json({ error: 'Not found' }, { status: 404 });
 
   const [restaurant] = await db
     .select({ id: restaurants.id })

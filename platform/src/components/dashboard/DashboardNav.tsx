@@ -10,8 +10,8 @@ const gmLinks = [
   { href: '/inbox', label: t.nav.inbox, badge: true },
   { href: '/guests', label: t.nav.guests },
   { href: '/campaigns', label: t.nav.campaigns },
-  { href: '/leads', label: t.nav.leads },
-  { href: '/quotes', label: t.nav.quotes },
+  { href: '/leads', label: t.nav.leads, eventsQuotes: true },
+  { href: '/quotes', label: t.nav.quotes, eventsQuotes: true },
   { href: '/staff', label: t.nav.staff },
   { href: '/analytics', label: t.nav.analytics },
   { href: '/settings', label: t.nav.settings },
@@ -43,6 +43,7 @@ export default function DashboardNav({
   isOwner,
   isRegional,
   isStaff,
+  showEventsQuotes,
   onOpenGuide,
 }: {
   restaurantName: string;
@@ -52,12 +53,15 @@ export default function DashboardNav({
   isOwner?: boolean;
   isRegional?: boolean;
   isStaff?: boolean;
+  /** Leads and quotes links are shown only for La Estancia (see hasEventsQuotes). */
+  showEventsQuotes?: boolean;
   onOpenGuide?: () => void;
 }) {
   const router = useRouter();
   const pathname = usePathname();
   const baseLinks = isRegional ? regionalLinks : isOwner ? ownerLinks : gmLinks;
-  const navLinks = isStaff ? [...baseLinks, ...staffLinks] : baseLinks;
+  const visibleLinks = baseLinks.filter((link) => showEventsQuotes || !('eventsQuotes' in link));
+  const navLinks = isStaff ? [...visibleLinks, ...staffLinks] : visibleLinks;
   const [mobileOpen, setMobileOpen] = useState(false);
 
   async function handleLogout() {

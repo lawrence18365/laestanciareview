@@ -9,6 +9,7 @@ import { NextRequest } from 'next/server';
 import { db } from '@/db';
 import { eventLeads } from '@/db/schema';
 import { verifySession } from '@/lib/session';
+import { hasEventsQuotes } from '@/lib/brands';
 import { getRestaurantBySlug } from '@/lib/queries';
 import { requireSameOrigin } from '@/lib/origin';
 import { eventLeadManualSchema } from '@/lib/validations';
@@ -23,6 +24,7 @@ export async function POST(req: NextRequest) {
   if (!session || session.role !== 'gm') {
     return Response.json({ error: 'Unauthorized' }, { status: 401 });
   }
+  if (!hasEventsQuotes(session.slug)) return Response.json({ error: 'Not found' }, { status: 404 });
 
   const restaurant = await getRestaurantBySlug(session.slug);
   if (!restaurant) {

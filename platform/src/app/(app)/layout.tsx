@@ -2,7 +2,7 @@ import { verifySession } from '@/lib/session';
 import { isRateTapStaff } from '@/lib/admin';
 import { getRestaurantBySlug, getNewFeedbackCount } from '@/lib/queries';
 import { redirect } from 'next/navigation';
-import { getBrandForSlug } from '@/lib/brands';
+import { getBrandForSlug, hasEventsQuotes } from '@/lib/brands';
 import { t } from '@/lib/i18n';
 import DashboardShell from '@/components/dashboard/DashboardShell';
 import SubscriptionBlocked from '@/components/dashboard/SubscriptionBlocked';
@@ -56,6 +56,7 @@ export default async function AppLayout({
         isOwner={isMultiView}
         isRegional={isRegional}
         isStaff={isRateTapStaff(session)}
+        showEventsQuotes={hasEventsQuotes(session.slug)}
         slug={session.slug}
         role={session.role}
       >

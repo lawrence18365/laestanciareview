@@ -3,7 +3,7 @@ import { eq, and } from 'drizzle-orm';
 import { db } from '@/db';
 import { quotes, restaurants } from '@/db/schema';
 import { verifySession } from '@/lib/session';
-import { getBrandForSlug } from '@/lib/brands';
+import { getBrandForSlug, hasEventsQuotes } from '@/lib/brands';
 import { migrateConfig, type QuoteConfig } from '@/lib/quote-data';
 import QuotePreview from '@/components/quotes/QuotePreview';
 import PrintButton from './PrintButton';
@@ -11,6 +11,7 @@ import PrintButton from './PrintButton';
 export default async function PrintQuotePage({ params }: { params: Promise<{ id: string }> }) {
   const session = await verifySession();
   if (!session) redirect('/login');
+  if (!hasEventsQuotes(session.slug)) notFound();
 
   const { id } = await params;
   const quoteId = parseInt(id, 10);

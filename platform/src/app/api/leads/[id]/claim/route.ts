@@ -12,6 +12,7 @@ import { and, eq, isNull } from 'drizzle-orm';
 import { db } from '@/db';
 import { eventLeads } from '@/db/schema';
 import { verifySession } from '@/lib/session';
+import { hasEventsQuotes } from '@/lib/brands';
 import { getRestaurantBySlug } from '@/lib/queries';
 
 type RouteContext = { params: Promise<{ id: string }> };
@@ -21,6 +22,7 @@ export async function POST(_req: NextRequest, ctx: RouteContext) {
   if (!session || session.role !== 'gm') {
     return Response.json({ error: 'Unauthorized' }, { status: 401 });
   }
+  if (!hasEventsQuotes(session.slug)) return Response.json({ error: 'Not found' }, { status: 404 });
 
   const { id } = await ctx.params;
   const leadId = parseInt(id, 10);
