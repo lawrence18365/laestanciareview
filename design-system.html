@@ -56,25 +56,35 @@
         .ds-box--shadow-sm { border-radius: var(--radius-md); box-shadow: var(--shadow-sm); }
         .ds-box--shadow-lg { border-radius: var(--radius-md); box-shadow: var(--shadow-lg); }
     </style>
+    <!-- chrome:icons -->
+    <link rel="icon" href="/favicon.ico" sizes="32x32">
+    <link rel="icon" href="/assets/brand/favicon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+    <meta name="theme-color" content="#0F172A">
+    <!-- /chrome:icons -->
 </head>
 
 <body>
     <div class="ambient-canvas"></div>
 
+    <!-- chrome:header -->
     <nav class="navbar navbar--hero" id="navbar">
         <a href="/" class="nav-brand">
             <span class="nav-wordmark">RateTap</span>
         </a>
         <div class="nav-menu" id="nav-menu">
-            <a href="#tokens" class="nav-link">Tokens</a>
-            <a href="#components" class="nav-link">Components</a>
-            <a href="#chrome" class="nav-link">Nav &amp; footer</a>
+            <a href="/#features" class="nav-link">Features</a>
+            <a href="/#proof" class="nav-link">Results</a>
+            <a href="/#pricing" class="nav-link">Pricing</a>
+            <a href="/blog/" class="nav-link">Guides</a>
         </div>
         <div class="nav-actions">
-            <a href="/es/" class="nav-lang-toggle"><i class="fa-solid fa-globe"></i> ES</a>
-            <a href="#components" class="btn btn-primary">Components</a>
+            <a href="/es/" class="nav-lang-toggle" hreflang="es" lang="es"><i class="fa-solid fa-globe" aria-hidden="true"></i> ES</a>
+            <a href="https://app.ratetapmx.com/contacto?offer=trial_checkout&amp;source_page=design-system&amp;cta_context=nav&amp;language=en" data-funnel-context="nav" class="btn btn-primary">Try it free</a>
         </div>
+        <button type="button" class="nav-toggle" aria-label="Open navigation menu" aria-controls="nav-menu" aria-expanded="false"><i class="fa-solid fa-bars"></i></button>
     </nav>
+    <!-- /chrome:header -->
 
     <section class="hero hero--photo hero--restaurant">
         <div class="container hero-container">
@@ -468,95 +478,53 @@
         <div class="container">
             <div class="section-header">
                 <h2>Nav and footer</h2>
-                <p>Copy verbatim. Rendered live on this page.</p>
+                <p>Same on every page. Rendered live on this one.</p>
             </div>
             <div class="ds-block">
-                <h3>Nav</h3>
-                <p class="ds-note">The nav is the dark pill. Prefix links with ../ under /es/. Set the language link to the other language.</p>
-                <pre class="ds-code"><code>&lt;nav class="navbar navbar--hero" id="navbar"&gt;
-  &lt;a href="/" class="nav-brand"&gt;
-    &lt;span class="nav-wordmark"&gt;RateTap&lt;/span&gt;
-  &lt;/a&gt;
-  &lt;div class="nav-menu" id="nav-menu"&gt;
-    &lt;a href="#features" class="nav-link"&gt;Features&lt;/a&gt;
-    &lt;a href="#proof" class="nav-link"&gt;Results&lt;/a&gt;
-    &lt;a href="#pricing" class="nav-link"&gt;Pricing&lt;/a&gt;
-    &lt;a href="/blog/" class="nav-link"&gt;Guides&lt;/a&gt;
-  &lt;/div&gt;
-  &lt;div class="nav-actions"&gt;
-    &lt;a href="/es/" class="nav-lang-toggle"&gt;&lt;i class="fa-solid fa-globe"&gt;&lt;/i&gt; ES&lt;/a&gt;
-    &lt;a href="https://app.ratetapmx.com/contacto?offer=trial_checkout&amp;amp;source_page=home&amp;amp;cta_context=nav&amp;amp;language=en" data-funnel-context="nav" class="btn btn-primary"&gt;Try it free&lt;/a&gt;
-  &lt;/div&gt;
-&lt;/nav&gt;</code></pre>
-            </div>
-            <div class="ds-block">
-                <h3>Footer</h3>
-                <pre class="ds-code"><code>&lt;footer class="footer"&gt;
-  &lt;div class="container"&gt;
-    &lt;div class="footer-grid"&gt;
-      &lt;div class="footer-brand"&gt;
-        &lt;img src="assets/logo-new-small.webp" alt="RateTap" width="225" height="150" decoding="async" loading="eager"&gt;
-        &lt;p&gt;The standard in premium hospitality reputation management.&lt;/p&gt;
-      &lt;/div&gt;
-      &lt;div class="footer-links"&gt;
-        &lt;h4&gt;Platform&lt;/h4&gt;
-        &lt;a href="/reputation-recovery"&gt;Guest Feedback&lt;/a&gt;
-        &lt;a href="/track-waiter-performance-dashboard"&gt;Staff Tracking&lt;/a&gt;
-        &lt;a href="/for-multi-location"&gt;Enterprise&lt;/a&gt;
-      &lt;/div&gt;
-      &lt;div class="footer-links"&gt;
-        &lt;h4&gt;Company&lt;/h4&gt;
-        &lt;a href="/blog/"&gt;Playbooks&lt;/a&gt;
-        &lt;a href="/case-studies"&gt;Case Studies&lt;/a&gt;
-        &lt;a href="/roi-calculator"&gt;ROI Calculator&lt;/a&gt;
-        &lt;a href="/demo#demo-form"&gt;Contact&lt;/a&gt;
-      &lt;/div&gt;
-    &lt;/div&gt;
-    &lt;div class="footer-bottom"&gt;
-      &lt;p&gt;&amp;copy; 2026 RateTap. All rights reserved.&lt;/p&gt;
-      &lt;div class="legal-links"&gt;
-        &lt;a href="privacy.html"&gt;Privacy Policy&lt;/a&gt;
-        &lt;a href="terms.html"&gt;Terms of Service&lt;/a&gt;
-        &lt;a href="cookies.html"&gt;Cookie Policy&lt;/a&gt;
-      &lt;/div&gt;
-    &lt;/div&gt;
-  &lt;/div&gt;
-&lt;/footer&gt;</code></pre>
+                <h3>Nav, footer and favicon</h3>
+                <p class="ds-note">One source: partials/header.*.html, footer.*.html and head-icons.html. Edit a partial, then sync. Never hand-edit a marked region.</p>
+                <pre class="ds-code"><code>node scripts/sync-chrome.mjs           # write every page
+node scripts/sync-chrome.mjs --check   # exit 1 on drift</code></pre>
+                <pre class="ds-code"><code>&lt;!-- chrome:icons --&gt;   in &lt;head&gt;
+&lt;!-- chrome:header --&gt;  right after &lt;body&gt;
+&lt;!-- chrome:footer --&gt;  before the scripts</code></pre>
             </div>
         </div>
     </section>
 
+    <!-- chrome:footer -->
     <footer class="footer">
-      <div class="container">
-        <div class="footer-grid">
-          <div class="footer-brand">
-            <img src="assets/logo-new-small.webp" alt="RateTap" width="225" height="150" decoding="async" loading="eager">
-            <p>The standard in premium hospitality reputation management.</p>
-          </div>
-          <div class="footer-links">
-            <h4>Platform</h4>
-            <a href="/reputation-recovery">Guest Feedback</a>
-            <a href="/track-waiter-performance-dashboard">Staff Tracking</a>
-            <a href="/for-multi-location">Enterprise</a>
-          </div>
-          <div class="footer-links">
-            <h4>Company</h4>
-            <a href="/blog/">Playbooks</a>
-            <a href="/case-studies">Case Studies</a>
-            <a href="/roi-calculator">ROI Calculator</a>
-            <a href="/demo#demo-form">Contact</a>
-          </div>
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-brand">
+                    <img src="/assets/logo-new-small.webp" alt="RateTap" width="225" height="150" decoding="async" loading="lazy">
+                    <p>The standard in premium hospitality reputation management.</p>
+                </div>
+                <div class="footer-links">
+                    <h4>Platform</h4>
+                    <a href="/reputation-recovery">Guest Feedback</a>
+                    <a href="/track-waiter-performance-dashboard">Staff Tracking</a>
+                    <a href="/for-multi-location">Enterprise</a>
+                </div>
+                <div class="footer-links">
+                    <h4>Company</h4>
+                    <a href="/blog/">Playbooks</a>
+                    <a href="/case-studies">Case Studies</a>
+                    <a href="/roi-calculator">ROI Calculator</a>
+                    <a href="/demo#demo-form">Contact</a>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2026 RateTap. All rights reserved.</p>
+                <div class="legal-links">
+                    <a href="/privacy">Privacy Policy</a>
+                    <a href="/terms">Terms of Service</a>
+                    <a href="/cookies">Cookie Policy</a>
+                </div>
+            </div>
         </div>
-        <div class="footer-bottom">
-          <p>&copy; 2026 RateTap. All rights reserved.</p>
-          <div class="legal-links">
-            <a href="privacy.html">Privacy Policy</a>
-            <a href="terms.html">Terms of Service</a>
-            <a href="cookies.html">Cookie Policy</a>
-          </div>
-        </div>
-      </div>
     </footer>
+    <!-- /chrome:footer -->
 
     <script src="script.js"></script>
 </body>

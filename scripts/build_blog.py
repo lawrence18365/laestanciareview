@@ -28,13 +28,7 @@ LOCALE_CONFIG = {
         "asset_prefix": "../",
         "home_prefix": "../",
         "blog_prefix": "blog",
-        "lang_toggle_label": "ES",
-        "lang_toggle_path": "../es/blog",
         "home_label": "Home",
-        "blog_label": "Playbooks",
-        "nav_how": "How It Works",
-        "nav_features": "Features",
-        "nav_faq": "FAQ",
         "hub_eyebrow": "RateTap Operator Journal",
         "hub_title": "Restaurant operator playbooks built around real review pain.",
         "hub_description": (
@@ -74,23 +68,6 @@ LOCALE_CONFIG = {
         "faq_title": "Questions operators usually ask next",
         "related_title": "Keep reading",
         "related_link_label": "Explore",
-        "footer_tagline": "The standard in premium hospitality reputation management.",
-        "footer_platform": "Platform",
-        "footer_company": "Company",
-        "footer_connect": "Connect",
-        "footer_platform_links": [
-            ("Guest Feedback", "/reputation-recovery"),
-            ("Staff Tracking", "#"),
-            ("Enterprise", "#"),
-        ],
-        "footer_company_links": [
-            ("Playbooks", "blog/"),
-            ("Case Studies", "case-studies"),
-            ("ROI Calculator", "roi-calculator"),
-            ("Contact", "demo#demo-form"),
-        ],
-        "footer_legal": [("Privacy Policy", "#"), ("Terms of Service", "#")],
-        "footer_rights": "&copy; 2026 RateTap. All rights reserved.",
         "updated_prefix": "Updated",
         "read_suffix": "read",
         "cta_secondary_label": "See the software",
@@ -104,13 +81,7 @@ LOCALE_CONFIG = {
         "asset_prefix": "../../",
         "home_prefix": "../",
         "blog_prefix": "es/blog",
-        "lang_toggle_label": "EN",
-        "lang_toggle_path": "../../blog",
         "home_label": "Inicio",
-        "blog_label": "Guías",
-        "nav_how": "Cómo funciona",
-        "nav_features": "Funciones",
-        "nav_faq": "FAQ",
         "hub_eyebrow": "Biblioteca operativa de RateTap",
         "hub_title": "Guías para restaurantes diseñadas alrededor de dolores reales de reputación.",
         "hub_description": (
@@ -150,23 +121,6 @@ LOCALE_CONFIG = {
         "faq_title": "Preguntas que suelen venir después",
         "related_title": "Sigue leyendo",
         "related_link_label": "Explorar",
-        "footer_tagline": "El estándar en gestión de reputación para restaurantes premium.",
-        "footer_platform": "Plataforma",
-        "footer_company": "Compañía",
-        "footer_connect": "Conectar",
-        "footer_platform_links": [
-            ("Opiniones de clientes", "/es/reputation-recovery"),
-            ("Seguimiento de staff", "#"),
-            ("Empresas", "#"),
-        ],
-        "footer_company_links": [
-            ("Guías", "blog/"),
-            ("Casos de éxito", "case-studies"),
-            ("Calculadora ROI", "roi-calculator"),
-            ("Contacto", "demo#demo-form"),
-        ],
-        "footer_legal": [("Privacidad", "#"), ("Términos", "#")],
-        "footer_rights": "&copy; 2026 RateTap. Todos los derechos reservados.",
         "updated_prefix": "Actualizado",
         "read_suffix": "de lectura",
         "cta_secondary_label": "Ver la plataforma",
@@ -213,73 +167,44 @@ def relative_locale_url(locale: str, target: str) -> str:
     return f"{LOCALE_CONFIG[locale]['home_prefix']}{target}"
 
 
-def render_nav(locale: str, lang_toggle_href: str) -> str:
-    cfg = LOCALE_CONFIG[locale]
-    home = cfg["home_prefix"]
-    assets = cfg["asset_prefix"]
-    return f"""
-    <nav class="navbar" id="navbar">
-        <a class="nav-brand" href="{home}">
-            <img src="{assets}assets/logo-new-small.webp" alt="RateTap" width="1536" height="1024" decoding="async" loading="eager">
-        </a>
-        <div class="nav-menu" id="nav-menu">
-            <a class="nav-link" href="{home}#how-it-works">{escape(cfg['nav_how'])}</a>
-            <a class="nav-link" href="{home}#features">{escape(cfg['nav_features'])}</a>
-            <a class="nav-link" href="{home}blog/">{escape(cfg['blog_label'])}</a>
-            <a class="nav-link" href="{home}#faq">{escape(cfg['nav_faq'])}</a>
-        </div>
-        <div class="nav-actions">
-            <a href="{escape(lang_toggle_href)}" class="nav-lang-toggle" style="margin-right: 1.5rem; color: var(--text-secondary); text-decoration: none; font-weight: 700; font-size: 0.95rem; transition: color 0.2s; display: flex; align-items: center; gap: 0.5rem;">
-                <i class="fa-solid fa-globe"></i> {escape(cfg['lang_toggle_label'])}
-            </a>
-            <a class="btn btn-primary" href="{home}demo" style="padding: 0.7rem 1.8rem; font-size: 0.9rem;">{escape(cfg['hub_cta_primary'])}</a>
-        </div>
-    </nav>
-    """
+PARTIALS_DIR = ROOT / "partials"
 
 
-def render_footer(locale: str) -> str:
-    cfg = LOCALE_CONFIG[locale]
-    assets = cfg["asset_prefix"]
-    home = cfg["home_prefix"]
-    platform_links = "\n".join(
-        f'                    <a href="{escape(href)}">{escape(label)}</a>'
-        for label, href in cfg["footer_platform_links"]
+def read_partial(name: str) -> str:
+    return (PARTIALS_DIR / name).read_text(encoding="utf-8").strip()
+
+
+def chrome_block(name: str, body: str) -> str:
+    """Same marker + indent rules as scripts/sync-chrome.mjs so --check passes without a sync pass."""
+    indented = "\n".join(f"    {line}" if line else line for line in body.split("\n"))
+    return f"<!-- chrome:{name} -->\n{indented}\n    <!-- /chrome:{name} -->"
+
+
+def fill_partial(template: str, *, alt_lang_url: str, source_page: str, lang: str) -> str:
+    values = {"ALT_LANG_URL": alt_lang_url, "SOURCE_PAGE": source_page, "LANG": lang}
+    return re.sub(
+        r"\{\{(\w+)\}\}",
+        lambda m: values.get(m.group(1), "").replace("&", "&amp;").replace('"', "&quot;"),
+        template,
     )
-    company_links = "\n".join(
-        f'                    <a href="{escape(home + href)}">{escape(label)}</a>'
-        for label, href in cfg["footer_company_links"]
-    )
-    legal_links = "\n".join(
-        f'                    <a href="{escape(href)}">{escape(label)}</a>'
-        for label, href in cfg["footer_legal"]
-    )
-    return f"""
-    <footer class="footer">
-        <div class="container">
-            <div class="footer-grid">
-                <div class="footer-brand">
-                    <img src="{assets}assets/logo-new-small.webp" alt="RateTap" width="1536" height="1024" decoding="async" loading="eager">
-                    <p style="color: var(--text-secondary); font-size: 0.95rem; line-height: 1.6; max-width: 320px;">{escape(cfg['footer_tagline'])}</p>
-                </div>
-                <div class="footer-links">
-                    <h4>{escape(cfg['footer_platform'])}</h4>
-{platform_links}
-                </div>
-                <div class="footer-links">
-                    <h4>{escape(cfg['footer_company'])}</h4>
-{company_links}
-                </div>
-            </div>
-            <div class="footer-bottom">
-                <p>{cfg['footer_rights']}</p>
-                <div class="legal-links">
-{legal_links}
-                </div>
-            </div>
-        </div>
-    </footer>
-    """
+
+
+def site_path(url: str) -> str:
+    return url[len(SITE_DOMAIN):] if url.startswith(SITE_DOMAIN) else url
+
+
+def render_header(locale: str, alt_lang_url: str, source_page: str) -> str:
+    template = read_partial(f"header.{locale}.html")
+    return chrome_block("header", fill_partial(template, alt_lang_url=site_path(alt_lang_url), source_page=source_page, lang=locale))
+
+
+def render_footer(locale: str, alt_lang_url: str, source_page: str) -> str:
+    template = read_partial(f"footer.{locale}.html")
+    return chrome_block("footer", fill_partial(template, alt_lang_url=site_path(alt_lang_url), source_page=source_page, lang=locale))
+
+
+def render_icons() -> str:
+    return chrome_block("icons", read_partial("head-icons.html"))
 
 
 def render_head(
@@ -322,6 +247,7 @@ def render_head(
     <link rel="preload" href="{asset_prefix}styles.css" as="style"/>
     <link rel="stylesheet" href="{asset_prefix}styles.css"/>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+    {render_icons()}
     <script type="application/ld+json">{structured_data}</script>
 </head>
 """
@@ -337,7 +263,7 @@ def render_post(post: dict, locale: str) -> str:
     alt_locale = "es" if locale == "en" else "en"
     alt_variant = post["locales"][alt_locale]
     asset_prefix = cfg["asset_prefix"]
-    lang_toggle_href = f"{cfg['lang_toggle_path']}/{alt_variant['slug']}"
+    alt_lang_url = article_url(alt_locale, alt_variant["slug"])
 
     headings = []
     for section in variant["sections"]:
@@ -469,7 +395,7 @@ def render_post(post: dict, locale: str) -> str:
     return f"""{head}
 <body>
     <div class="ambient-canvas"></div>
-    {render_nav(locale, lang_toggle_href)}
+    {render_header(locale, alt_lang_url, variant['slug'])}
     <section class="section blog-hero" style="padding-top: 10rem;">
         <div class="container blog-shell">
             <h1>{escape(variant['title'])}</h1>
@@ -548,7 +474,7 @@ def render_post(post: dict, locale: str) -> str:
             </div>
         </div>
     </section>
-    {render_footer(locale)}
+    {render_footer(locale, alt_lang_url, variant['slug'])}
     <script src="{asset_prefix}script.js"></script>
 </body>
 </html>
@@ -558,7 +484,7 @@ def render_post(post: dict, locale: str) -> str:
 def render_index(posts: list[dict], locale: str) -> str:
     cfg = LOCALE_CONFIG[locale]
     asset_prefix = cfg["asset_prefix"]
-    lang_toggle_href = f"{cfg['lang_toggle_path']}/"
+    alt_lang_url = index_url("es" if locale == "en" else "en")
     sorted_posts = sorted(
         posts,
         key=lambda item: (
@@ -643,7 +569,7 @@ def render_index(posts: list[dict], locale: str) -> str:
     return f"""{head}
 <body>
     <div class="ambient-canvas"></div>
-    {render_nav(locale, lang_toggle_href)}
+    {render_header(locale, alt_lang_url, 'blog')}
 
     <section class="section blog-index-hero" style="padding-top: 10rem;">
         <div class="container blog-shell">
@@ -705,7 +631,7 @@ def render_index(posts: list[dict], locale: str) -> str:
             </div>
         </div>
     </section>
-    {render_footer(locale)}
+    {render_footer(locale, alt_lang_url, 'blog')}
     <script src="{asset_prefix}script.js"></script>
 </body>
 </html>

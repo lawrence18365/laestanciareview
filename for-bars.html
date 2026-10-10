@@ -79,6 +79,12 @@ fbq('track', 'PageView');
 <link as="style" href="styles.css" rel="preload"/>
 <link href="styles.css" rel="stylesheet"/>
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"/>
+    <!-- chrome:icons -->
+    <link rel="icon" href="/favicon.ico" sizes="32x32">
+    <link rel="icon" href="/assets/brand/favicon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+    <meta name="theme-color" content="#0F172A">
+    <!-- /chrome:icons -->
 </head>
 <body>
 <!-- Google Tag Manager (noscript) -->
@@ -86,19 +92,24 @@ fbq('track', 'PageView');
 height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <!-- End Google Tag Manager (noscript) -->
 <div class="ambient-canvas"></div>
-<nav class="navbar" id="navbar">
-<a class="nav-brand" href="/">
-<img src="assets/logo-new-small.webp" alt="RateTap" width="225" height="150" decoding="async" loading="eager">
-</a>
-<div class="nav-menu" id="nav-menu">
-<a class="nav-link" href="/#how-it-works">How It Works</a>
-<a class="nav-link" href="/#features">Features</a>
-<a class="nav-link" href="/#faq">FAQ</a>
-</div>
-<div class="nav-actions">
-<a class="btn btn-primary" href="/demo" style="padding: 0.7rem 1.8rem; font-size: 0.9rem;">Book a demo</a>
-</div>
-</nav>
+<!-- chrome:header -->
+    <nav class="navbar navbar--hero" id="navbar">
+        <a href="/" class="nav-brand">
+            <span class="nav-wordmark">RateTap</span>
+        </a>
+        <div class="nav-menu" id="nav-menu">
+            <a href="/#features" class="nav-link">Features</a>
+            <a href="/#proof" class="nav-link">Results</a>
+            <a href="/#pricing" class="nav-link">Pricing</a>
+            <a href="/blog/" class="nav-link">Guides</a>
+        </div>
+        <div class="nav-actions">
+            <a href="/es/for-bars" class="nav-lang-toggle" hreflang="es" lang="es"><i class="fa-solid fa-globe" aria-hidden="true"></i> ES</a>
+            <a href="https://app.ratetapmx.com/contacto?offer=trial_checkout&amp;source_page=for-bars&amp;cta_context=nav&amp;language=en" data-funnel-context="nav" class="btn btn-primary">Try it free</a>
+        </div>
+        <button type="button" class="nav-toggle" aria-label="Open navigation menu" aria-controls="nav-menu" aria-expanded="false"><i class="fa-solid fa-bars"></i></button>
+    </nav>
+    <!-- /chrome:header -->
 <section class="reveal section bg-muted" style="padding-top: 10rem;">
 <div class="container text-center">
 <h1>
@@ -152,36 +163,39 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 </div>
 </div>
 </section>
-<!-- Footer -->
-<footer class="footer">
-<div class="container">
-<div class="footer-grid">
-<div class="footer-brand">
-<img src="assets/logo-new-small.webp" alt="RateTap" width="225" height="150" decoding="async" loading="eager">
-<p style="color: var(--text-secondary); font-size: 0.95rem; line-height: 1.6; max-width: 300px;">The standard in premium hospitality reputation management.</p>
-</div>
-<div class="footer-links">
-<h4>Platform</h4>
-<a href="/reputation-recovery">Guest Feedback</a>
-<a href="/track-waiter-performance-dashboard">Staff Tracking</a>
-<a href="/for-multi-location">Enterprise</a>
-</div>
-<div class="footer-links">
-<h4>Company</h4>
-<a href="/case-studies">Case Studies</a>
-<a href="/roi-calculator">ROI Calculator</a>
-<a href="/demo#demo-form">Contact</a>
-</div>
-</div>
-<div class="footer-bottom">
-<p>© 2026 RateTap. All rights reserved.</p>
-<div class="legal-links">
-<a href="privacy.html">Privacy Policy</a>
-<a href="terms.html">Terms of Service</a>
-                    <a href="cookies.html">Cookie Policy</a>
-</div>
-</div>
-</div>
-</footer>
+<!-- chrome:footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-brand">
+                    <img src="/assets/logo-new-small.webp" alt="RateTap" width="225" height="150" decoding="async" loading="lazy">
+                    <p>The standard in premium hospitality reputation management.</p>
+                </div>
+                <div class="footer-links">
+                    <h4>Platform</h4>
+                    <a href="/reputation-recovery">Guest Feedback</a>
+                    <a href="/track-waiter-performance-dashboard">Staff Tracking</a>
+                    <a href="/for-multi-location">Enterprise</a>
+                </div>
+                <div class="footer-links">
+                    <h4>Company</h4>
+                    <a href="/blog/">Playbooks</a>
+                    <a href="/case-studies">Case Studies</a>
+                    <a href="/roi-calculator">ROI Calculator</a>
+                    <a href="/demo#demo-form">Contact</a>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2026 RateTap. All rights reserved.</p>
+                <div class="legal-links">
+                    <a href="/privacy">Privacy Policy</a>
+                    <a href="/terms">Terms of Service</a>
+                    <a href="/cookies">Cookie Policy</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+    <!-- /chrome:footer -->
+    <script src="/script.js"></script>
 </body>
 </html>

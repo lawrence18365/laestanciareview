@@ -34,7 +34,12 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 <meta content="Detecta a los clientes insatisfechos a tiempo y ofrece a todos dejar su reseña en Google." name="twitter:description"/>
 <meta content="https://ratetapmx.com/assets/og-image.png" name="twitter:image"/>
 <!-- Favicon -->
-<link href="../assets/logo.png" rel="icon" type="image/png"/>
+<!-- chrome:icons -->
+    <link rel="icon" href="/favicon.ico" sizes="32x32">
+    <link rel="icon" href="/assets/brand/favicon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+    <meta name="theme-color" content="#0F172A">
+    <!-- /chrome:icons -->
 <!-- Structured Data -->
 <script type="application/ld+json">
 {
@@ -122,19 +127,24 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
 <div class="ambient-canvas"></div>
 
-<nav class="navbar" id="navbar">
-<a class="nav-brand" href="/es/">
-<img src="../assets/logo-new-small.webp" alt="RateTap" width="225" height="150" decoding="async" loading="eager">
-</a>
-<div class="nav-menu" id="nav-menu">
-<a class="nav-link" href="/es/#how-it-works">Cómo Funciona</a>
-<a class="nav-link" href="/es/#features">Características</a>
-<a class="nav-link" href="/es/#faq">FAQ</a>
-</div>
-<div class="nav-actions">
-<a class="btn btn-primary" href="/contacto" style="padding: 0.7rem 1.8rem; font-size: 0.9rem;">Solicitar Demo</a>
-</div>
-</nav>
+<!-- chrome:header -->
+    <nav class="navbar navbar--hero" id="navbar">
+        <a href="/es/" class="nav-brand">
+            <span class="nav-wordmark">RateTap</span>
+        </a>
+        <div class="nav-menu" id="nav-menu">
+            <a href="/es/#features" class="nav-link">Capacidades</a>
+            <a href="/es/#proof" class="nav-link">Casos</a>
+            <a href="/es/#pricing" class="nav-link">Precios</a>
+            <a href="/es/blog/" class="nav-link">Guías</a>
+        </div>
+        <div class="nav-actions">
+            <a href="/stop-bad-restaurant-reviews" class="nav-lang-toggle" hreflang="en" lang="en"><i class="fa-solid fa-globe" aria-hidden="true"></i> EN</a>
+            <a href="https://app.ratetapmx.com/contacto?offer=trial_checkout&amp;source_page=evitar-malas-resenas-restaurante&amp;cta_context=nav&amp;language=es" data-funnel-context="nav" class="btn btn-primary">Pruébalo gratis</a>
+        </div>
+        <button type="button" class="nav-toggle" aria-label="Open navigation menu" aria-controls="nav-menu" aria-expanded="false"><i class="fa-solid fa-bars"></i></button>
+    </nav>
+    <!-- /chrome:header -->
 
 <!-- Hero -->
 <section class="reveal section hero" id="hero">
@@ -472,37 +482,39 @@ Resolver Ahora
 </div>
 </section>
 
-<!-- Footer -->
-<footer class="footer">
-<div class="container">
-<div class="footer-grid">
-<div class="footer-brand">
-<img src="../assets/logo-new-small.webp" alt="RateTap" width="225" height="150" decoding="async" loading="eager">
-<p style="color: var(--text-secondary); font-size: 0.95rem; line-height: 1.6; max-width: 300px;">La plataforma líder en gestión de reseñas para restaurantes en México.</p>
-</div>
-<div class="footer-links">
-<h4>Plataforma</h4>
-<a href="/es/#features">Características</a>
-<a href="/es/for-owners">Para Dueños</a>
-<a href="/es/for-gms">Para Gerentes</a>
-</div>
-<div class="footer-links">
-<h4>Recursos</h4>
-<a href="/es/case-studies">Casos de Éxito</a>
-<a href="/es/roi-calculator">Calculadora ROI</a>
-<a href="/contacto">Contacto</a>
-</div>
-</div>
-<div class="footer-bottom">
-<p>&copy; 2026 RateTap. Todos los derechos reservados.</p>
-<div class="legal-links">
-<a href="../privacy.html">Política de Privacidad</a>
-<a href="../terms.html">Términos de Servicio</a>
-                    <a href="../cookies.html">Política de Cookies</a>
-</div>
-</div>
-</div>
-</footer>
+<!-- chrome:footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-brand">
+                    <img src="/assets/logo-new-small.webp" alt="RateTap" width="225" height="150" decoding="async" loading="lazy">
+                    <p>El estándar en gestión de reputación para restaurantes premium.</p>
+                </div>
+                <div class="footer-links">
+                    <h4>Plataforma</h4>
+                    <a href="/es/reputation-recovery">Opiniones de clientes</a>
+                    <a href="/es/medir-desempeno-meseros">Seguimiento de Staff</a>
+                    <a href="/es/for-multi-location">Empresas</a>
+                </div>
+                <div class="footer-links">
+                    <h4>Compañía</h4>
+                    <a href="/es/blog/">Guías</a>
+                    <a href="/es/case-studies">Casos de Éxito</a>
+                    <a href="/es/roi-calculator">Calculadora de ROI</a>
+                    <a href="/es/demo#demo-form">Contacto</a>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2026 RateTap. Todos los derechos reservados.</p>
+                <div class="legal-links">
+                    <a href="/privacy">Política de Privacidad</a>
+                    <a href="/terms">Términos de Servicio</a>
+                    <a href="/cookies">Política de Cookies</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+    <!-- /chrome:footer -->
 <script src="../script.js"></script>
 </body>
 </html>
