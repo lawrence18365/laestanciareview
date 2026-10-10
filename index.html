@@ -12,9 +12,9 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RateTap - Restaurant Reputation Software: More Google Reviews</title>
+    <title>RateTap - More Google Reviews, Credited to Each Server</title>
     <meta name="description"
-        content="Restaurant reputation software. RateTap turns great experiences into Google reviews and alerts you when something went wrong. Try it free for 30 days.">
+        content="RateTap credits Google reviews to each server, alerts your GM when a guest complains, and shows every location in one view. Try it free for 30 days.">
     <!-- Canonical & Hreflang -->
     <link href="https://ratetapmx.com/" rel="canonical"/>
     <link href="https://ratetapmx.com/" hreflang="en-US" rel="alternate"/>
@@ -59,42 +59,31 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <style>
-        /* Home (en) - page-scoped */
-        .rt-chips { list-style: none; display: flex; flex-wrap: wrap; gap: 0.6rem; margin: 0 0 1.75rem; padding: 0; }
-        .rt-chips li { padding: 0.45rem 1rem; border-radius: 999px; background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.35); color: #fff; font-weight: 700; font-size: 0.92rem; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
-        .rt-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 2rem; }
-        .rt-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1.25rem; }
-        .rt-stat { background: rgba(255,255,255,0.8); padding: 2rem 1.5rem; border-radius: 24px; border: 1px solid rgba(255,255,255,0.9); box-shadow: 0 10px 30px -10px rgba(0,0,0,0.05); }
-        .rt-stat .n { font-family: 'Instrument Serif', serif; font-size: clamp(2.4rem, 4vw, 3.5rem); color: var(--brand-charcoal); line-height: 1; }
-        .rt-stat .l { font-weight: 700; color: var(--brand-blue); font-size: 0.85rem; margin-top: 0.9rem; line-height: 1.35; }
+        /* Home (en) - page-scoped: only what the design system has no class for */
         .rt-locs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1.25rem; margin-top: 1.25rem; }
         .rt-loc { padding: 1.75rem 1.5rem; border-radius: 20px; background: #fff; border: 1px solid rgba(15,23,42,0.08); box-shadow: 0 10px 30px -12px rgba(0,0,0,0.06); }
         .rt-loc h3 { font-size: 1.25rem; margin-bottom: 0.4rem; }
         .rt-loc__rate { color: #b8860b; font-weight: 700; margin-bottom: 0.6rem; }
         .rt-loc p { color: var(--text-secondary); font-size: 0.95rem; line-height: 1.5; margin: 0; }
         .rt-note { text-align: center; color: var(--text-secondary); font-size: 0.85rem; max-width: 640px; margin: 1.75rem auto 0; }
+        .rt-more { margin-top: 2rem; }
+        .rt-d1 { transition-delay: 100ms; }
+        .rt-d2 { transition-delay: 200ms; }
         .rt-two { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2rem; max-width: 900px; margin: 0 auto; align-items: stretch; }
         .rt-two .pricing-card { display: flex; flex-direction: column; }
         .rt-two .pricing-card .btn, .rt-upsell .pricing-card .btn { margin-top: auto !important; }
+        .rt-featured { border: 2px solid var(--brand-blue); }
+        .rt-btn-block { width: 100%; text-align: center; }
         .rt-per { font: 600 1rem 'Plus Jakarta Sans', sans-serif; color: var(--text-secondary); }
         .rt-upsell { display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 4rem; align-items: center; }
         .rt-upsell .pricing-card { display: flex; flex-direction: column; }
+        .rt-upsell h2 { font-size: var(--fs-h2); margin-bottom: 1.25rem; }
         .rt-upsell__sub { font-size: 1.2rem; color: var(--text-secondary); max-width: 520px; margin-bottom: 1.75rem; }
         .rt-checks { list-style: none; padding: 0; margin: 0; display: grid; gap: 0.8rem; font-weight: 700; font-size: 1.05rem; }
         .rt-checks i { color: var(--brand-blue); margin-right: 0.5rem; }
         @media (max-width: 960px) {
-            .rt-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-            .rt-stat:last-child { grid-column: 1 / -1; }
-            .rt-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
             .rt-locs, .rt-two, .rt-upsell { grid-template-columns: 1fr; }
             .rt-upsell { gap: 2.5rem; }
-        }
-        @media (max-width: 520px) {
-            .rt-stats, .rt-grid { grid-template-columns: 1fr; }
-            .rt-stat:last-child { grid-column: auto; }
-            .rt-stat { padding: 1.5rem; }
-            .pricing-card { padding: 2rem; }
-            .rt-grid .card { padding: 2rem; }
         }
     </style>
     <!-- Gizmo analytics -->
@@ -111,7 +100,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 <body>
 <!-- Google Tag Manager (noscript) -->
 <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-P4DTRR6W"
-height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+height="0" width="0" hidden></iframe></noscript>
 <!-- End Google Tag Manager (noscript) -->
 
 
@@ -137,64 +126,48 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <!-- /chrome:header -->
 
 
+    <main>
     <!-- Hero Section -->
-    <section class="hero" data-photo-hero id="hero">
+    <section class="hero hero--photo hero--restaurant" id="hero">
         <div class="container hero-container">
             <div class="hero-content">
-                <h1>Give guests reasons to choose your restaurant.</h1>
-                <p class="hero-subtitle">Turn great experiences into Google reviews that build trust, and get alerts to follow up when something went wrong.</p>
-                <ul class="rt-chips">
-                    <li>23,664 reviews</li>
-                    <li>12 locations</li>
-                    <li>4.5&ndash;4.8&starf;</li>
+                <h1>More Google reviews, credited to each server.</h1>
+                <p class="hero-subtitle">Guests tap a server&rsquo;s card. You see who&rsquo;s asking, and get alerted when a guest complains.</p>
+                <ul class="stat-pills">
+                    <li class="stat-pill">23,664 reviews</li>
+                    <li class="stat-pill">12 locations</li>
+                    <li class="stat-pill">4.5&ndash;4.8&starf;</li>
                 </ul>
                 <div class="hero-actions">
                     <a class="btn btn-primary" data-funnel-context="hero" href="https://app.ratetapmx.com/contacto?offer=trial_checkout&amp;source_page=home&amp;cta_context=hero&amp;language=en">Try it free for 30 days</a>
                 </div>
                 <!-- Marker: stops script.js from injecting its generic trust strip (unverified claims) -->
-                <div class="hero-proof-row" hidden style="display:none"></div>
+                <div class="hero-proof-row" hidden></div>
             </div>
         </div>
     </section>
 
-    <!-- 2. Capabilities -->
+    <!-- 2. What RateTap does -->
     <section id="features" class="section bg-muted">
         <div class="container">
-            <div class="section-header" style="text-align: center; margin-bottom: 4rem;">
-                <h2 style="font-size: clamp(3rem, 5vw, 4.5rem);">Protect your <span class="serif-italic"
-                        style="background: linear-gradient(135deg, var(--brand-blue) 0%, #1A85C4 100%); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;">reputation.</span>
-                </h2>
+            <div class="section-header text-center">
+                <h2>What RateTap does</h2>
             </div>
-            <div class="grid-3 rt-grid">
+            <div class="grid-3">
                 <div class="card reveal">
-                    <div class="card-icon-wrapper"><i class="fa-solid fa-star"></i></div>
-                    <h3>Google reviews</h3>
-                    <p>Each guest chooses: leave a Google review or message the manager.</p>
-                </div>
-                <div class="card reveal" style="transition-delay: 100ms;">
-                    <div class="card-icon-wrapper"><i class="fa-solid fa-mobile-screen-button"></i></div>
-                    <h3>Instant alerts</h3>
-                    <p>If something goes wrong, your manager gets an SMS and email.</p>
-                </div>
-                <div class="card reveal" style="transition-delay: 200ms;">
-                    <div class="card-icon-wrapper"><i class="fa-solid fa-inbox"></i></div>
-                    <h3>Follow-up inbox</h3>
-                    <p>Mark each complaint reviewed or resolved. Nothing gets lost.</p>
+                    <div class="card-icon-wrapper"><i class="fa-solid fa-user-check" aria-hidden="true"></i></div>
+                    <h3>Reviews credited to each server</h3>
+                    <p>Every card belongs to one server. See who asks at every table, by shift and location.</p>
                 </div>
                 <div class="card reveal">
-                    <div class="card-icon-wrapper"><i class="fa-solid fa-envelope-open-text"></i></div>
-                    <h3>Weekly report</h3>
-                    <p>Every Monday: trends and issues found.</p>
+                    <div class="card-icon-wrapper"><i class="fa-solid fa-bell" aria-hidden="true"></i></div>
+                    <h3>An alert when a guest complains</h3>
+                    <p>Private feedback reaches your GM right away. Open complaints escalate to you after a few hours.</p>
                 </div>
-                <div class="card reveal" style="transition-delay: 100ms;">
-                    <div class="card-icon-wrapper"><i class="fa-solid fa-tv"></i></div>
-                    <h3>Live view</h3>
-                    <p>See scans and ratings as they happen.</p>
-                </div>
-                <div class="card reveal" style="transition-delay: 200ms;">
-                    <div class="card-icon-wrapper"><i class="fa-solid fa-building"></i></div>
-                    <h3>All your locations</h3>
-                    <p>One dashboard for every restaurant.</p>
+                <div class="card reveal">
+                    <div class="card-icon-wrapper"><i class="fa-solid fa-building" aria-hidden="true"></i></div>
+                    <h3>Every location in one view</h3>
+                    <p>A group dashboard and a Monday briefing show which location needs attention.</p>
                 </div>
             </div>
         </div>
@@ -203,13 +176,13 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <!-- 3. Proof -->
     <section id="proof" class="section">
         <div class="container">
-            <div class="section-header" style="text-align: center; margin-bottom: 3rem;">
-                <h2 style="font-size: clamp(3rem, 5vw, 4.5rem);">Real results across <span class="serif-italic">12 restaurants.</span></h2>
+            <div class="section-header text-center">
+                <h2>Real results across 12 restaurants.</h2>
             </div>
-            <div class="rt-stats">
-                <div class="rt-stat reveal"><div class="n">23,664</div><div class="l">Reviews captured</div></div>
-                <div class="rt-stat reveal"><div class="n">12</div><div class="l">Active locations</div></div>
-                <div class="rt-stat reveal"><div class="n" style="color: var(--brand-blue);">4.5&ndash;4.8&starf;</div><div class="l">Current Google rating</div></div>
+            <div class="stat-cards">
+                <div class="stat-card reveal"><div class="stat-card__num">23,664</div><div class="stat-card__label">Reviews captured</div></div>
+                <div class="stat-card reveal"><div class="stat-card__num">12</div><div class="stat-card__label">Active locations</div></div>
+                <div class="stat-card reveal"><div class="stat-card__num">4.5&ndash;4.8&starf;</div><div class="stat-card__label">Current Google rating</div></div>
             </div>
             <div class="rt-locs">
                 <div class="rt-loc reveal">
@@ -217,19 +190,19 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                     <div class="rt-loc__rate">4.8&starf; on Google today</div>
                     <p>4,935 reviews captured</p>
                 </div>
-                <div class="rt-loc reveal" style="transition-delay: 100ms;">
+                <div class="rt-loc reveal rt-d1">
                     <h3>Regio Norte</h3>
                     <div class="rt-loc__rate">4.8&starf; on Google today</div>
                     <p>633 reviews captured</p>
                 </div>
-                <div class="rt-loc reveal" style="transition-delay: 200ms;">
+                <div class="rt-loc reveal rt-d2">
                     <h3>Estancia Ju&aacute;rez</h3>
                     <div class="rt-loc__rate">4.7&starf; on Google today</div>
                     <p>746 reviews captured</p>
                 </div>
             </div>
             <p class="rt-note">Data as of August 19, 2026. Ratings show today&rsquo;s status, not an effect of RateTap.</p>
-            <div style="text-align: center; margin-top: 2rem;">
+            <div class="text-center rt-more">
                 <a class="btn btn-secondary" href="/case-studies">See all case studies</a>
             </div>
         </div>
@@ -238,8 +211,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <!-- 4. Pricing: free audit, then Software -->
     <section id="pricing" class="section bg-muted">
         <div class="container">
-            <div class="section-header" style="text-align: center; margin: 0 auto 3rem;">
-                <h2 style="font-size: clamp(3rem, 5vw, 4.5rem);">Clear prices, in Mexican pesos.</h2>
+            <div class="section-header text-center">
+                <h2>Clear prices, in Mexican pesos.</h2>
             </div>
             <div class="rt-two">
                 <div class="pricing-card reveal">
@@ -247,14 +220,14 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                     <div class="pricing-card__price">Free</div>
                     <div class="pricing-card__unit">No cost</div>
                     <p class="pricing-card__desc">We calculate what your slowest night is worth.</p>
-                    <a href="https://app.ratetapmx.com/auditoria-ingresos" class="btn btn-secondary" style="width:100%;text-align:center;margin-top:1.5rem;">Multiple locations? Get your free audit</a>
+                    <a href="https://app.ratetapmx.com/auditoria-ingresos" class="btn btn-secondary rt-btn-block">Multiple locations? Get your free audit</a>
                 </div>
-                <div class="pricing-card reveal" style="border:2px solid var(--brand-blue);">
+                <div class="pricing-card rt-featured reveal">
                     <div class="pricing-card__label">Software</div>
                     <div class="pricing-card__price">MX$700<span class="rt-per">/mo</span></div>
                     <div class="pricing-card__unit">+ MX$1,500 setup, NFC cards included</div>
                     <p class="pricing-card__desc">Reviews, alerts, inbox, reports, and dashboard. Your team runs it.</p>
-                    <a href="https://app.ratetapmx.com/contacto?offer=trial_checkout&amp;source_page=home&amp;cta_context=pricing_software&amp;language=en" data-funnel-context="pricing_software" class="btn btn-primary" style="width:100%;text-align:center;margin-top:1.5rem;">Try it free for 30 days</a>
+                    <a href="https://app.ratetapmx.com/contacto?offer=trial_checkout&amp;source_page=home&amp;cta_context=pricing_software&amp;language=en" data-funnel-context="pricing_software" class="btn btn-primary rt-btn-block">Try it free for 30 days</a>
                 </div>
             </div>
         </div>
@@ -265,48 +238,38 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <div class="container">
             <div class="rt-upsell">
                 <div>
-                    <h2 style="font-size: clamp(2.6rem, 4.5vw, 4rem); margin-bottom: 1.25rem;">Slow nights? <span class="serif-italic">Fill them.</span></h2>
+                    <h2>Slow nights? Fill them.</h2>
                     <p class="rt-upsell__sub">RateTap runs WhatsApp campaigns to your guests and measures every booking.</p>
                     <ul class="rt-checks">
-                        <li><i class="fa-solid fa-check"></i> Your own guest list</li>
-                        <li><i class="fa-solid fa-check"></i> WhatsApp segments</li>
-                        <li><i class="fa-solid fa-check"></i> Revenue tied to each message</li>
+                        <li><i class="fa-solid fa-check" aria-hidden="true"></i> Your own guest list</li>
+                        <li><i class="fa-solid fa-check" aria-hidden="true"></i> WhatsApp segments</li>
+                        <li><i class="fa-solid fa-check" aria-hidden="true"></i> Revenue tied to each message</li>
                     </ul>
                 </div>
-                <div class="pricing-card reveal" style="border:2px solid var(--brand-blue);">
+                <div class="pricing-card rt-featured reveal">
                     <div class="pricing-card__label">Growth</div>
                     <div class="pricing-card__price">MX$10,000<span class="rt-per">/mo</span></div>
                     <div class="pricing-card__unit">+ MX$15,000 setup</div>
                     <p class="pricing-card__desc">Operated campaign per location, with owner reporting.</p>
-                    <a href="https://wa.me/5212228822360?text=Hi%20Lawrence%2C%20I%20have%20a%20multi-location%20group%20and%20want%20a%20RateTap%20audit." class="btn btn-secondary" style="width:100%;text-align:center;margin-top:1.5rem;">Chat on WhatsApp</a>
+                    <a href="https://wa.me/5212228822360?text=Hi%20Lawrence%2C%20I%20have%20a%20multi-location%20group%20and%20want%20a%20RateTap%20audit." class="btn btn-secondary rt-btn-block">Chat on WhatsApp</a>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- CTA Section -->
-    <section class="section" style="padding: 9rem 0; position: relative; overflow: hidden;">
-        <div style="position: absolute; inset: 0; z-index: 1;">
-            <img src="assets/restaurant_atmosphere.webp" alt="Restaurant atmosphere"
-                style="width: 100%; height: 100%; object-fit: cover; filter: brightness(0.35);">
-        </div>
-        <div class="container" style="position: relative; z-index: 2; color: white;">
-            <div style="text-align: center; max-width: 800px; margin: 0 auto;">
-                <h2 style="font-size: clamp(2.6rem, 6vw, 4.5rem); margin-bottom: 2.5rem; color: white;">Ready for more <span class="serif-italic"
-                        style="background: linear-gradient(135deg, #fff 0%, #cbd5e1 100%); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;">Google reviews?</span></h2>
-                <div class="hero-actions" style="justify-content: center;">
-                    <a href="https://app.ratetapmx.com/contacto?offer=trial_checkout&amp;source_page=home&amp;cta_context=closing&amp;language=en" data-funnel-context="closing" class="btn btn-primary"
-                        style="padding: 1.2rem 3rem; font-size: 1.1rem; background: white; color: var(--brand-charcoal);">Try it free for 30 days</a>
-                </div>
-            </div>
+    <!-- CTA band -->
+    <section class="cta-band">
+        <div class="container">
+            <h2>Ready for more Google reviews?</h2>
+            <a href="https://app.ratetapmx.com/contacto?offer=trial_checkout&amp;source_page=home&amp;cta_context=closing&amp;language=en" data-funnel-context="closing" class="btn btn-primary">Try it free for 30 days</a>
         </div>
     </section>
 
     <!-- Guides -->
     <section class="section">
         <div class="container blog-shell">
-            <div class="section-header" style="text-align: center; margin-bottom: 3rem;">
-                <h2 style="font-size: clamp(2.6rem, 5vw, 4rem);">Guides for <span class="serif-italic">restaurant owners.</span></h2>
+            <div class="section-header text-center">
+                <h2>Guides for restaurant owners.</h2>
             </div>
             <div class="blog-card-grid">
                 <a class="blog-card reveal" href="/blog/restaurant-google-rating-dropped">
@@ -319,11 +282,12 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                     <h3>Track Service Recovery Coverage</h3>
                 </a>
             </div>
-            <div style="text-align: center; margin-top: 2rem;">
+            <div class="text-center rt-more">
                 <a class="btn btn-secondary" href="/blog/">Explore all guides</a>
             </div>
         </div>
     </section>
+    </main>
 
     <!-- chrome:footer -->
     <footer class="footer">

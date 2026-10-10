@@ -19,6 +19,7 @@
 // <noscript>, <svg>, JSON-LD and the <!-- chrome:header --> / <!-- chrome:footer --> regions removed:
 //   total <= 550 words | hero <= 30 | each <h2> <= 8 | each .faq-answer <= 40
 //   hero = first element with class hero / hero--photo or a data-photo-hero attribute, else first <section>.
+//   Button labels (.btn) are UI, not copy: the hero count is headline + subline + stat pills.
 //
 // Columns: undefined CSS vars | undefined classes | style="" attributes | visible words.
 // "Visible words" excludes <head>, scripts, styles, nav and footer. It is measured, never enforced.
@@ -43,6 +44,7 @@ const MIGRATED_PAGES = [
   'for-gms.html', 'for-multi-location.html', 'for-owners.html',
   'es/for-bars.html', 'es/for-cafes.html', 'es/for-fine-dining.html',
   'es/for-gms.html', 'es/for-multi-location.html', 'es/for-owners.html',
+  'index.html', 'es/index.html',
 ];
 
 // Classes toggled or injected by script.js (grep classList / className) plus FA families.
@@ -246,7 +248,8 @@ function budgetCheck(rawHtml) {
 
   let heroStart = findOpenTags(body, (t) => hasClass(t, 'hero', 'hero--photo') || /\sdata-photo-hero\b/i.test(t))[0];
   if (heroStart === undefined) heroStart = findOpenTags(body, (t) => /^<section\b/i.test(t))[0];
-  const hero = heroStart === undefined ? 0 : countWords(elementInner(body, heroStart));
+  const btnLabels = /<(a|button)\b[^>]*\sclass\s*=\s*"[^"]*\bbtn\b[^"]*"[^>]*>[\s\S]*?<\/\1>/gi;
+  const hero = heroStart === undefined ? 0 : countWords(elementInner(body, heroStart).replace(btnLabels, ''));
 
   const h2 = findOpenTags(body, (t) => /^<h2\b/i.test(t)).map((i) => {
     const text = plainText(elementInner(body, i));
@@ -277,6 +280,7 @@ function runSelfTest() {
       page(`${hero}<footer>${w(300)}</footer><script>${w(300)}</script><style>${w(300)}</style>`,
         `<nav>${w(300)}</nav><!-- chrome:header -->${w(300)}<!-- /chrome:header -->`), []],
     ['total over 550 fails', page(`${hero}<p>${w(551)}</p>`), ['total']],
+    ['hero button label is not counted', page(`<section class="hero"><h1>${w(30)}</h1><div class="hero-actions"><a class="btn btn-primary" href="/x">${w(6)}</a></div></section>`), []],
     ['hero over 30 fails', page(`<section class="hero hero--photo"><h1>${w(31)}</h1></section>`), ['hero']],
     ['data-photo-hero element is the hero', page(`<section><p>ok</p></section><div data-photo-hero><p>${w(31)}</p></div>`), ['hero']],
     ['first section is the hero when no hero class', page(`<section><p>${w(31)}</p></section>`), ['hero']],
