@@ -270,11 +270,6 @@ def render_footer(locale: str) -> str:
                     <h4>{escape(cfg['footer_company'])}</h4>
 {company_links}
                 </div>
-                <div class="footer-links">
-                    <h4>{escape(cfg['footer_connect'])}</h4>
-                    <div class="social-links">
-                    </div>
-                </div>
             </div>
             <div class="footer-bottom">
                 <p>{cfg['footer_rights']}</p>
