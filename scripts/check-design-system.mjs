@@ -39,6 +39,10 @@ const MIGRATED_PAGES = [
   'design-system.html',
   'nfc-google-review-cards-for-restaurants.html',
   'es/tarjetas-nfc-restaurantes-mexico.html',
+  'for-bars.html', 'for-cafes.html', 'for-fine-dining.html',
+  'for-gms.html', 'for-multi-location.html', 'for-owners.html',
+  'es/for-bars.html', 'es/for-cafes.html', 'es/for-fine-dining.html',
+  'es/for-gms.html', 'es/for-multi-location.html', 'es/for-owners.html',
 ];
 
 // Classes toggled or injected by script.js (grep classList / className) plus FA families.
