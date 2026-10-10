@@ -480,7 +480,6 @@ def render_post(post: dict, locale: str) -> str:
     {render_nav(locale, lang_toggle_href)}
     <section class="section blog-hero" style="padding-top: 10rem;">
         <div class="container blog-shell">
-            <span class="hero-eyebrow blog-kicker">{escape(variant['eyebrow'])}</span>
             <h1>{escape(variant['title'])}</h1>
             <p class="blog-hero-copy">{escape(variant['heroSubtitle'])}</p>
             <div class="blog-meta">
@@ -526,7 +525,6 @@ def render_post(post: dict, locale: str) -> str:
     <section class="section">
         <div class="container blog-shell">
             <div class="blog-cta-card reveal">
-                <span class="hero-eyebrow blog-kicker">{escape(variant['cta']['eyebrow'])}</span>
                 <h2>{escape(variant['cta']['title'])}</h2>
                 <p>{escape(variant['cta']['body'])}</p>
                 <div class="blog-cta-actions">
@@ -540,7 +538,6 @@ def render_post(post: dict, locale: str) -> str:
     <section class="section blog-faq-section">
         <div class="container blog-shell">
             <div class="section-header" style="margin-bottom: 2rem;">
-                <span class="hero-eyebrow blog-kicker">{escape(cfg['faq_title'])}</span>
                 <h2>{escape(variant['faqHeading'])}</h2>
             </div>
             <div class="blog-faq-grid">
@@ -552,7 +549,6 @@ def render_post(post: dict, locale: str) -> str:
     <section class="section" style="padding-top: 2rem;">
         <div class="container blog-shell">
             <div class="section-header" style="margin-bottom: 2rem;">
-                <span class="hero-eyebrow blog-kicker">{escape(cfg['related_title'])}</span>
                 <h2>{escape(variant['relatedHeading'])}</h2>
             </div>
             <div class="blog-related-grid">
@@ -660,7 +656,6 @@ def render_index(posts: list[dict], locale: str) -> str:
 
     <section class="section blog-index-hero" style="padding-top: 10rem;">
         <div class="container blog-shell">
-            <span class="hero-eyebrow blog-kicker">{escape(cfg['hub_eyebrow'])}</span>
             <h1>{escape(cfg['hub_title'])}</h1>
             <p class="blog-hero-copy">{escape(cfg['hub_description'])}</p>
             <div class="blog-chip-row">
@@ -700,7 +695,6 @@ def render_index(posts: list[dict], locale: str) -> str:
     <section class="section">
         <div class="container blog-shell">
             <div class="section-header" style="margin-bottom: 2rem;">
-                <span class="hero-eyebrow blog-kicker">{escape(cfg['hub_cluster_title'])}</span>
                 <h2>{escape(cfg['hub_cluster_title'])}</h2>
             </div>
             <div class="blog-cluster-grid">
@@ -712,7 +706,6 @@ def render_index(posts: list[dict], locale: str) -> str:
     <section class="section">
         <div class="container blog-shell">
             <div class="blog-cta-card reveal">
-                <span class="hero-eyebrow blog-kicker">RateTap</span>
                 <h2>{escape(cfg['hub_cta_title'])}</h2>
                 <p>{escape(cfg['hub_cta_body'])}</p>
                 <div class="blog-cta-actions">

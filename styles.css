@@ -272,11 +272,6 @@ h3 {
     margin-top: 1.5rem;
 }
 
-.blog-kicker {
-    margin-bottom: 1.35rem;
-    display: inline-flex;
-}
-
 .blog-meta,
 .blog-card-meta {
     display: flex;
@@ -628,27 +623,6 @@ h3 {
     justify-content: center;
 }
 
-.hero-eyebrow {
-    font-family: 'Plus Jakarta Sans', sans-serif;
-    color: var(--brand-blue);
-    font-weight: 800;
-    text-transform: uppercase;
-    font-size: 0.8rem;
-    letter-spacing: 0.15em;
-    margin-bottom: 1.5rem;
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-}
-
-.hero-eyebrow::before {
-    content: "";
-    width: 30px;
-    height: 2px;
-    background: var(--brand-blue);
-    border-radius: 2px;
-}
-
 .hero h1 {
     font-size: clamp(4rem, 7vw, 6.5rem);
     margin-bottom: 1.5rem;
@@ -821,15 +795,6 @@ h3 {
     font-weight: 700;
     letter-spacing: 0.05em;
     text-transform: uppercase;
-}
-
-.screen-kicker {
-    font-size: 0.7rem;
-    font-weight: 800;
-    color: var(--brand-blue);
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    margin-bottom: 0.75rem;
 }
 
 .screen-title {
@@ -1015,13 +980,6 @@ h3 {
         gap: 4rem;
     }
 
-    .hero-eyebrow {
-        margin-inline: auto;
-    }
-
-    .hero-eyebrow::before {
-        display: none;
-    }
 
     .hero-subtitle {
         margin-inline: auto;
@@ -1706,17 +1664,15 @@ h3 {
     pointer-events: none;
 }
 
-.pricing-card__eyebrow {
+.pricing-card__label {
     font-family: 'Plus Jakarta Sans', sans-serif;
     font-weight: 800;
-    text-transform: uppercase;
     font-size: 0.75rem;
-    letter-spacing: 0.15em;
     color: var(--brand-blue);
     margin-bottom: 1rem;
 }
 
-.pricing-card--featured .pricing-card__eyebrow {
+.pricing-card--featured .pricing-card__label {
     color: rgba(45, 156, 219, 0.8);
 }
 
@@ -1974,8 +1930,6 @@ html.reveal-enabled .reveal.revealed {
 }
 .hero[data-photo-hero] .hero-container { width: min(92%, 1180px); }
 .hero[data-photo-hero] .hero-content { position: relative; z-index: 1; max-width: 800px; }
-.hero[data-photo-hero] .hero-eyebrow { color: #8bd5ff; margin-bottom: 1.1rem; }
-.hero[data-photo-hero] .hero-eyebrow::before { background: #8bd5ff; }
 .hero[data-photo-hero] h1 {
     max-width: 790px;
     font-family: 'Plus Jakarta Sans', sans-serif;
@@ -2006,8 +1960,6 @@ body:has(.hero[data-photo-hero]).has-mobile-sticky-cta { padding-bottom: 0; }
     .navbar--hero .nav-link { color: #fff !important; background: rgba(255, 255, 255, 0.08); border-color: rgba(255, 255, 255, 0.12); }
     .hero[data-photo-hero] { min-height: 100svh; padding: 122px 0 94px; align-items: center; background-image: linear-gradient(180deg, rgba(5, 13, 22, 0.82) 0%, rgba(5, 13, 22, 0.68) 54%, rgba(5, 13, 22, 0.42) 100%), url('assets/hero-restaurant.webp'); background-position: 65% center; }
     .hero[data-photo-hero] .hero-content { text-align: left; }
-    .hero[data-photo-hero] .hero-eyebrow { margin-inline: 0; font-size: 0.72rem; }
-    .hero[data-photo-hero] .hero-eyebrow::before { display: block; }
     .hero[data-photo-hero] h1 {
         max-width: 360px;
         font-size: clamp(2.25rem, 10vw, 2.8rem);
