@@ -13,9 +13,9 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 
     <meta charset="utf-8" />
     <meta content="width=device-width, initial-scale=1.0" name="viewport" />
-    <title>RateTap - Llena tus noches flojas con los clientes que ya tienes</title>
+    <title>RateTap - Reputación online para restaurantes: más reseñas en Google</title>
     <meta
-        content="RateTap convierte tu base propia de invitados en ingresos medibles de eventos con campañas segmentadas por WhatsApp, anticipos y atribución."
+        content="Reputación online para restaurantes. RateTap convierte las buenas experiencias en reseñas en Google y te avisa cuando algo no salió bien. Pruébalo 15 días gratis."
         name="description" />
     <!-- Canonical & Hreflang -->
     <link href="https://ratetapmx.com/es/" rel="canonical"/>
@@ -25,21 +25,76 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     <!-- Open Graph -->
     <meta property="og:type" content="website"/>
     <meta property="og:url" content="https://ratetapmx.com/es/"/>
-    <meta property="og:title" content="RateTap - Llena tus noches flojas"/>
-    <meta property="og:description" content="Convierte a los clientes que ya tienes en ingresos medibles de eventos."/>
+    <meta property="og:title" content="RateTap - Reputación online para restaurantes"/>
+    <meta property="og:description" content="Convierte las buenas experiencias en reseñas en Google y recibe alertas cuando algo no salió bien."/>
     <meta property="og:image" content="https://ratetapmx.com/assets/og-image.png"/>
     <meta property="og:locale" content="es_MX"/>
     <meta property="og:locale:alternate" content="en_US"/>
     <meta property="og:site_name" content="RateTap"/>
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image"/>
-    <meta name="twitter:title" content="RateTap - Llena tus noches flojas"/>
-    <meta name="twitter:description" content="Convierte a los clientes que ya tienes en ingresos medibles de eventos."/>
+    <meta name="twitter:title" content="RateTap - Reputación online para restaurantes"/>
+    <meta name="twitter:description" content="Convierte las buenas experiencias en reseñas en Google y recibe alertas cuando algo no salió bien."/>
     <meta name="twitter:image" content="https://ratetapmx.com/assets/og-image.png"/>
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "RateTap",
+      "applicationCategory": "BusinessApplication",
+      "operatingSystem": "Web",
+      "inLanguage": "es-MX",
+      "url": "https://ratetapmx.com/es/",
+      "description": "Software de reputación online para restaurantes: convierte las buenas experiencias en reseñas en Google y envía alertas para dar seguimiento cuando algo no salió bien.",
+      "offers": {
+        "@type": "Offer",
+        "price": "700",
+        "priceCurrency": "MXN",
+        "url": "https://ratetapmx.com/es/#pricing"
+      }
+    }
+    </script>
     <link as="style" href="../styles.css?v=866417b9" rel="preload" />
     <link rel="preload" href="../assets/hero-restaurant.webp" as="image" type="image/webp" fetchpriority="high">
     <link href="../styles.css?v=866417b9" rel="stylesheet" />
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
+    <style>
+        /* Home (es) - page-scoped */
+        .rt-chips { list-style: none; display: flex; flex-wrap: wrap; gap: 0.6rem; margin: 0 0 1.75rem; padding: 0; }
+        .rt-chips li { padding: 0.45rem 1rem; border-radius: 999px; background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.35); color: #fff; font-weight: 700; font-size: 0.92rem; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
+        .rt-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 2rem; }
+        .rt-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1.25rem; }
+        .rt-stat { background: rgba(255,255,255,0.8); padding: 2rem 1.5rem; border-radius: 24px; border: 1px solid rgba(255,255,255,0.9); box-shadow: 0 10px 30px -10px rgba(0,0,0,0.05); }
+        .rt-stat .n { font-family: 'Instrument Serif', serif; font-size: clamp(2.4rem, 4vw, 3.5rem); color: var(--brand-charcoal); line-height: 1; }
+        .rt-stat .l { font-weight: 700; color: var(--brand-blue); font-size: 0.85rem; margin-top: 0.9rem; line-height: 1.35; }
+        .rt-locs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1.25rem; margin-top: 1.25rem; }
+        .rt-loc { padding: 1.75rem 1.5rem; border-radius: 20px; background: #fff; border: 1px solid rgba(15,23,42,0.08); box-shadow: 0 10px 30px -12px rgba(0,0,0,0.06); }
+        .rt-loc h3 { font-size: 1.25rem; margin-bottom: 0.4rem; }
+        .rt-loc__rate { color: #b8860b; font-weight: 700; margin-bottom: 0.6rem; }
+        .rt-loc p { color: var(--text-secondary); font-size: 0.95rem; line-height: 1.5; margin: 0; }
+        .rt-note { text-align: center; color: var(--text-secondary); font-size: 0.85rem; max-width: 640px; margin: 1.75rem auto 0; }
+        .rt-two { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2rem; max-width: 900px; margin: 0 auto; align-items: stretch; }
+        .rt-two .pricing-card { display: flex; flex-direction: column; }
+        .rt-two .pricing-card .btn, .rt-upsell .pricing-card .btn { margin-top: auto !important; }
+        .rt-per { font: 600 1rem 'Plus Jakarta Sans', sans-serif; color: var(--text-secondary); }
+        .rt-upsell { display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 4rem; align-items: center; }
+        .rt-upsell .pricing-card { display: flex; flex-direction: column; }
+        .rt-upsell__sub { font-size: 1.2rem; color: var(--text-secondary); max-width: 520px; margin-bottom: 1.75rem; }
+        .rt-checks { list-style: none; padding: 0; margin: 0; display: grid; gap: 0.8rem; font-weight: 700; font-size: 1.05rem; }
+        .rt-checks i { color: var(--brand-blue); margin-right: 0.5rem; }
+        @media (max-width: 960px) {
+            .rt-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            .rt-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            .rt-locs, .rt-two, .rt-upsell { grid-template-columns: 1fr; }
+            .rt-upsell { gap: 2.5rem; }
+        }
+        @media (max-width: 520px) {
+            .rt-stats, .rt-grid { grid-template-columns: 1fr; }
+            .rt-stat { padding: 1.5rem; }
+            .pricing-card { padding: 2rem; }
+            .rt-grid .card { padding: 2rem; }
+        }
+    </style>
 
     <!-- Gizmo analytics -->
     <script defer src="https://a.178-105-145-93.sslip.io/g.js" data-website-id="23f10698-01a8-4da3-b991-f6e57c14d2d4"></script>
@@ -60,291 +115,201 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             <span class="nav-wordmark">RateTap</span>
         </a>
         <div class="nav-menu" id="nav-menu">
-            <a class="nav-link" href="#how-it-works">Cómo funciona</a>
-            <a class="nav-link" href="#features">Características</a>
-            <a class="nav-link" href="/es/blog/">Guías</a>
+            <a class="nav-link" href="#features">Capacidades</a>
+            <a class="nav-link" href="#proof">Casos</a>
             <a class="nav-link" href="#pricing">Precios</a>
-            <a class="nav-link" href="#faq">FAQ</a>
+            <a class="nav-link" href="/es/blog/">Guías</a>
         </div>
         <div class="nav-actions">
             <a href="/" class="nav-lang-toggle" style="margin-right: 1.5rem; color: var(--text-secondary); text-decoration: none; font-weight: 700; font-size: 0.95rem; transition: color 0.2s; display: flex; align-items: center; gap: 0.5rem;">
                 <i class="fa-solid fa-globe"></i> EN
             </a>
-            <a class="btn btn-primary" href="https://app.ratetapmx.com/auditoria-ingresos" style="padding: 0.7rem 1.8rem; font-size: 0.9rem;">Auditoría</a>
+            <a class="btn btn-primary" href="https://app.ratetapmx.com/auditoria-ingresos" style="padding: 0.7rem 1.8rem; font-size: 0.9rem;">Pruébalo gratis</a>
         </div>
     </nav>
     <!-- Hero Section -->
     <section class="hero" data-photo-hero id="hero">
         <div class="container hero-container">
             <div class="hero-content">
-                <span class="hero-eyebrow"><i class="fa-solid fa-bolt"></i> Ingresos desde tu base propia</span>
-                <h1>Llena tus noches flojas con los clientes que ya tienes.</h1>
-                <p class="hero-subtitle">Activa campañas por WhatsApp para mover reservaciones en fechas débiles y mide cada resultado.</p>
+                <h1>Dales razones para elegir tu restaurante.</h1>
+                <p class="hero-subtitle">Convierte las buenas experiencias en reseñas en Google que generan confianza y recibe alertas para dar seguimiento cuando algo no salió bien.</p>
+                <ul class="rt-chips">
+                    <li>23,664 reseñas</li>
+                    <li>12 sucursales</li>
+                    <li>4.5&ndash;4.8&starf;</li>
+                </ul>
                 <div class="hero-actions">
-                    <a class="btn btn-primary" href="https://app.ratetapmx.com/auditoria-ingresos">Auditar mi noche floja</a>
-                    <a class="btn btn-secondary" href="#features">Ver el sistema</a>
+                    <a class="btn btn-primary" href="https://app.ratetapmx.com/auditoria-ingresos">Pruébalo 15 días gratis</a>
                 </div>
+                <!-- Marker: stops script.js from injecting its generic trust strip (unverified claims) -->
+                <div class="hero-proof-row" hidden style="display:none"></div>
             </div>
         </div>
     </section>
-    <!-- Features -->
+
+    <!-- 2. Capacidades -->
     <section id="features" class="section bg-muted">
         <div class="container">
             <div class="section-header" style="text-align: center; margin-bottom: 4rem;">
-                <span class="hero-eyebrow" style="margin: 0 auto 1.5rem; justify-content: center;">
-                    Capacidades Principales
-                </span>
-                <h2 style="font-size: clamp(3rem, 5vw, 4.5rem);">Creado para la <span class="serif-italic"
-                        style="background: linear-gradient(135deg, var(--brand-blue) 0%, #1A85C4 100%); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;">hospitalidad.</span>
+                <h2 style="font-size: clamp(3rem, 5vw, 4.5rem);">Cuida tu <span class="serif-italic"
+                        style="background: linear-gradient(135deg, var(--brand-blue) 0%, #1A85C4 100%); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;">reputación.</span>
                 </h2>
             </div>
-            <div class="grid-3">
+            <div class="grid-3 rt-grid">
                 <div class="card reveal">
-                    <div class="card-icon-wrapper">
-                        <i class="fa-solid fa-chart-line"></i>
-                    </div>
-                    <h3>Base propia de invitados</h3>
-                    <p>Convierte visitas normales en perfiles con consentimiento, preferencias, cumpleaños e historial.</p>
+                    <div class="card-icon-wrapper"><i class="fa-solid fa-star"></i></div>
+                    <h3>Reseñas en Google</h3>
+                    <p>Cada comensal elige: dejar su reseña en Google o escribirle al gerente.</p>
                 </div>
                 <div class="card reveal" style="transition-delay: 100ms;">
-                    <div class="card-icon-wrapper">
-                        <i class="fa-solid fa-shield-halved"></i>
-                    </div>
-                    <h3>Segmentación de campaña</h3>
-                    <p>Empieza con amantes del vino, clientes frecuentes o cumpleaños en vez de disparar a toda la base.</p>
+                    <div class="card-icon-wrapper"><i class="fa-solid fa-mobile-screen-button"></i></div>
+                    <h3>Alertas al instante</h3>
+                    <p>Si algo sale mal, tu gerente recibe SMS y email.</p>
                 </div>
                 <div class="card reveal" style="transition-delay: 200ms;">
-                    <div class="card-icon-wrapper">
-                        <i class="fa-solid fa-wifi" style="transform: rotate(90deg);"></i>
-                    </div>
-                    <h3>Atribución de ingresos</h3>
-                    <p>Conecta el mensaje con la reservación, anticipo, cobro, reembolso y fee de performance.</p>
+                    <div class="card-icon-wrapper"><i class="fa-solid fa-inbox"></i></div>
+                    <h3>Bandeja de seguimiento</h3>
+                    <p>Marca cada queja como revisada o resuelta. Nada se pierde.</p>
                 </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Platform Features -->
-    <section class="section">
-        <div class="container">
-            <div class="section-header" style="text-align: center; margin-bottom: 4rem;">
-                <span class="hero-eyebrow" style="margin: 0 auto 1.5rem; justify-content: center;">
-                    Más Allá de la Recolección
-                </span>
-                <h2 style="font-size: clamp(3rem, 5vw, 4.5rem);">Una plataforma operativa completa.</h2>
-                <p style="font-size: 1.25rem; color: var(--text-secondary); margin-top: 1.5rem; max-width: 600px; margin-left: auto; margin-right: auto;">
-                    RateTap no solo recolecta feedback &mdash; le da a tu equipo las herramientas para actuar en tiempo real.</p>
-            </div>
-
-            <div class="grid-3">
                 <div class="card reveal">
-                    <div class="card-icon-wrapper">
-                        <i class="fa-solid fa-tv"></i>
-                    </div>
-                    <h3>Vista en Vivo</h3>
-                    <p>Monta una tablet en la cocina. Ve cada escaneo, cada calificación y el desempeño de cada mesero actualizándose en tiempo real.</p>
+                    <div class="card-icon-wrapper"><i class="fa-solid fa-envelope-open-text"></i></div>
+                    <h3>Reporte semanal</h3>
+                    <p>Cada lunes: tendencias, meseros destacados y problemas detectados.</p>
                 </div>
                 <div class="card reveal" style="transition-delay: 100ms;">
-                    <div class="card-icon-wrapper">
-                        <i class="fa-solid fa-building"></i>
-                    </div>
-                    <h3>Dashboard de Dueño</h3>
-                    <p>¿Manejas múltiples sucursales? Un solo dashboard muestra el rendimiento de cada restaurante, tendencias en Google y problemas sin resolver.</p>
+                    <div class="card-icon-wrapper"><i class="fa-solid fa-tv"></i></div>
+                    <h3>Vista en vivo</h3>
+                    <p>Ve escaneos y calificaciones al momento.</p>
                 </div>
                 <div class="card reveal" style="transition-delay: 200ms;">
-                    <div class="card-icon-wrapper">
-                        <i class="fa-solid fa-inbox"></i>
-                    </div>
-                    <h3>Bandeja de Feedback</h3>
-                    <p>No solo recolectes feedback &mdash; dale seguimiento. Marca problemas como revisados o resueltos. Nada se queda sin atender.</p>
-                </div>
-                <div class="card reveal" style="transition-delay: 300ms;">
-                    <div class="card-icon-wrapper">
-                        <i class="fa-solid fa-envelope-open-text"></i>
-                    </div>
-                    <h3>Reportes Semanales</h3>
-                    <p>Cada lunes, tu equipo recibe un reporte automático con tendencias, mejores meseros y problemas de clientes detectados.</p>
-                </div>
-                <div class="card reveal" style="transition-delay: 400ms;">
-                    <div class="card-icon-wrapper">
-                        <i class="fa-solid fa-mobile-screen-button"></i>
-                    </div>
-                    <h3>Alertas SMS + Email</h3>
-                    <p>Cuando un cliente no está contento, tu gerente recibe un mensaje de texto y email al instante para recuperar la visita.</p>
-                </div>
-                <div class="card reveal" style="transition-delay: 500ms;">
-                    <div class="card-icon-wrapper">
-                        <i class="fa-solid fa-chart-pie"></i>
-                    </div>
-                    <h3>Analíticas</h3>
-                    <p>Distribución de calificaciones, tendencias diarias, tasa de conversión a Google y métricas de ROI &mdash; todo en un solo lugar.</p>
+                    <div class="card-icon-wrapper"><i class="fa-solid fa-building"></i></div>
+                    <h3>Todas tus sucursales</h3>
+                    <p>Un solo tablero con el desempeño de cada restaurante.</p>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- Testimonial -->
-    <section class="section bg-muted">
+    <!-- 3. Pruebas -->
+    <section id="proof" class="section">
         <div class="container">
-            <div class="grid-2">
-                <div>
-                    <span class="hero-eyebrow">
-                        Impacto Real
-                    </span>
-                    <h2 style="font-size: clamp(3rem, 5vw, 4.5rem); margin-bottom: 1.5rem;">Eleva tu <br><span
-                            class="serif-italic">reputación.</span></h2>
-                    <p style="font-size: 1.25rem; color: var(--text-secondary); margin-bottom: 3rem; max-width: 500px;">
-                        Grupos restauranteros usan RateTap para controlar su narrativa y capturar cada momento de 5 estrellas.</p>
-
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
-                        <div
-                            style="background: rgba(255,255,255,0.8); padding: 2.5rem 2rem; border-radius: 24px; border: 1px solid rgba(255,255,255,0.9); box-shadow: 0 10px 30px -10px rgba(0,0,0,0.03);">
-                            <div
-                                style="font-family: 'Instrument Serif', serif; font-size: 3.5rem; color: var(--brand-charcoal); line-height: 1;">
-                                18,726</div>
-                            <div
-                                style="font-weight: 700; color: var(--brand-blue); text-transform: uppercase; font-size: 0.8rem; letter-spacing: 0.1em; margin-top: 1rem;">
-                                Rese&ntilde;as Capturadas</div>
-                            <div
-                                style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.35rem;">
-                                al 20 de julio de 2026</div>
-                        </div>
-                        <div
-                            style="background: rgba(255,255,255,0.8); padding: 2.5rem 2rem; border-radius: 24px; border: 1px solid rgba(255,255,255,0.9); box-shadow: 0 10px 30px -10px rgba(0,0,0,0.03);">
-                            <div
-                                style="font-family: 'Instrument Serif', serif; font-size: 3.5rem; color: var(--brand-charcoal); line-height: 1;">
-                                12</div>
-                            <div
-                                style="font-weight: 700; color: var(--brand-blue); text-transform: uppercase; font-size: 0.8rem; letter-spacing: 0.1em; margin-top: 1rem;">
-                                Ubicaciones en Vivo</div>
-                        </div>
-                    </div>
+            <div class="section-header" style="text-align: center; margin-bottom: 3rem;">
+                <h2 style="font-size: clamp(3rem, 5vw, 4.5rem);">Resultados reales en <span class="serif-italic">12 restaurantes.</span></h2>
+            </div>
+            <div class="rt-stats">
+                <div class="rt-stat reveal"><div class="n">23,664</div><div class="l">Reseñas capturadas</div></div>
+                <div class="rt-stat reveal"><div class="n">19,654</div><div class="l">Enrutadas a Google</div></div>
+                <div class="rt-stat reveal"><div class="n">984</div><div class="l">Calificaciones bajas atendidas en privado</div></div>
+                <div class="rt-stat reveal"><div class="n" style="color: var(--brand-blue);">4.5&ndash;4.8&starf;</div><div class="l">Calificación actual en Google</div></div>
+            </div>
+            <div class="rt-locs">
+                <div class="rt-loc reveal">
+                    <h3>Estancia Angelópolis</h3>
+                    <div class="rt-loc__rate">4.8&starf; en Google hoy</div>
+                    <p>4,935 reseñas capturadas &middot; 4,012 enrutadas a Google</p>
                 </div>
-
-                <div class="card" style="display: flex; flex-direction: column; justify-content: center;">
-                    <div
-                        style="color: var(--brand-gold); font-size: 1.5rem; margin-bottom: 1.5rem; display: flex; gap: 0.25rem;">
-                        <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i
-                            class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i
-                            class="fa-solid fa-star"></i>
-                    </div>
-                    <p
-                        style="font-family: 'Instrument Serif', serif; font-size: 2.2rem; color: var(--brand-charcoal); line-height: 1.2; margin-bottom: 3rem;">
-                        "Con RateTap detectamos a los clientes insatisfechos en la mesa y los atendemos antes de que se vayan. El dashboard de dueño me permite ver todas las sucursales a la vez &mdash; cambió nuestra forma de operar."</p>
-                    <div style="display: flex; align-items: center; gap: 1rem;">
-                        <div>
-                            <img src="../assets/grupo_estancia_group_logo-small.webp" alt="Grupo Estancia" style="height: 40px; width: auto; object-fit: contain;">
-                        </div>
-                        <div>
-                            <strong style="display: block; color: var(--brand-charcoal);">Grupo Estancia</strong>
-                            <span style="font-size: 0.9rem; color: var(--text-secondary);">Grupo Restaurantero Multi-Sucursal</span>
-                        </div>
-                    </div>
+                <div class="rt-loc reveal" style="transition-delay: 100ms;">
+                    <h3>Regio Norte</h3>
+                    <div class="rt-loc__rate">4.8&starf; en Google hoy</div>
+                    <p>633 reseñas capturadas &middot; 452 enrutadas a Google</p>
                 </div>
+                <div class="rt-loc reveal" style="transition-delay: 200ms;">
+                    <h3>Estancia Juárez</h3>
+                    <div class="rt-loc__rate">4.7&starf; en Google hoy</div>
+                    <p>746 reseñas capturadas &middot; 688 enrutadas a Google</p>
+                </div>
+            </div>
+            <p class="rt-note">Corte al 19 de agosto de 2026. La calificación es el estado actual, no un efecto atribuido a RateTap.</p>
+            <div style="text-align: center; margin-top: 2rem;">
+                <a class="btn btn-secondary" href="/es/case-studies">Ver todos los casos</a>
             </div>
         </div>
     </section>
 
-    <!-- Precios de ingresos por eventos -->
-    <section id="pricing" class="section">
+    <!-- 4. Precios: auditoria gratis, luego Software -->
+    <section id="pricing" class="section bg-muted">
         <div class="container">
-            <div class="section-header" style="text-align:center;max-width:780px;margin:0 auto 3rem;">
-                <span class="hero-eyebrow" style="margin:0 auto 1.5rem;justify-content:center;">Precios piloto · MXN</span>
-                <h2 style="font-size:clamp(3rem,5vw,4.5rem);">Software por debajo. Operación de ingresos por encima.</h2>
-                <p style="font-size:1.15rem;color:var(--text-secondary);margin-top:1.25rem;">Empieza por tu cuenta o deja que RateTap opere una campaña medible por sucursal cada mes.</p>
+            <div class="section-header" style="text-align: center; margin: 0 auto 3rem;">
+                <h2 style="font-size: clamp(3rem, 5vw, 4.5rem);">Precios claros, en pesos.</h2>
             </div>
-            <div class="grid-3" style="align-items:stretch;">
+            <div class="rt-two">
                 <div class="pricing-card reveal">
-                    <div class="pricing-card__eyebrow">Software</div>
-                    <div class="pricing-card__price">$700<span style="font:600 1rem 'Plus Jakarta Sans',sans-serif;color:var(--text-secondary);">/mes</span></div>
-                    <div class="pricing-card__unit">+ $1,500 setup</div>
-                    <p class="pricing-card__desc">Captura de invitados, feedback, tabla de staff, CRM, leads de eventos, cotizaciones y plantillas. Tu equipo lo opera.</p>
+                    <div class="pricing-card__eyebrow">Auditoría</div>
+                    <div class="pricing-card__price">Gratis</div>
+                    <div class="pricing-card__unit">Sin costo</div>
+                    <p class="pricing-card__desc">Calculamos cuánto vale tu noche más floja.</p>
+                    <a href="https://app.ratetapmx.com/auditoria-ingresos" class="btn btn-secondary" style="width:100%;text-align:center;margin-top:1.5rem;">Solicitar auditoría gratuita</a>
                 </div>
                 <div class="pricing-card reveal" style="border:2px solid var(--brand-blue);">
-                    <div class="pricing-card__eyebrow">Growth · recomendado</div>
-                    <div class="pricing-card__price">$10,000<span style="font:600 1rem 'Plus Jakarta Sans',sans-serif;color:var(--text-secondary);">/mes</span></div>
-                    <div class="pricing-card__unit">+ $15,000 setup</div>
-                    <p class="pricing-card__desc">Una campaña operada: economía del evento, segmento, olas de WhatsApp, reservación/anticipo, atribución y reporte al dueño.</p>
-                    <a href="https://wa.me/5212228822360?text=Hola%20Lawrence%2C%20tengo%20un%20grupo%20con%20varias%20sucursales%20y%20quiero%20una%20auditor%C3%ADa%20de%20RateTap." class="btn btn-primary" style="width:100%;text-align:center;">Hablar con Lawrence por WhatsApp</a>
-                </div>
-                <div class="pricing-card reveal">
-                    <div class="pricing-card__eyebrow">Partner · por invitación</div>
-                    <div class="pricing-card__price">12%</div>
-                    <div class="pricing-card__unit">del ingreso atribuible neto cobrado + $15,000 setup</div>
-                    <p class="pricing-card__desc">Prueba de 90 días con riesgo compartido para operadores con suficiente audiencia, capacidad, consentimiento y verdad de reservas.</p>
-                    <a href="https://wa.me/5212228822360?text=Hola%20Lawrence%2C%20tengo%20un%20grupo%20con%20varias%20sucursales%20y%20quiero%20una%20auditor%C3%ADa%20de%20RateTap." class="btn btn-primary" style="width:100%;text-align:center;">Hablar con Lawrence por WhatsApp</a>
+                    <div class="pricing-card__eyebrow">Software</div>
+                    <div class="pricing-card__price">$700<span class="rt-per">/mes</span></div>
+                    <div class="pricing-card__unit">+ $1,500 setup</div>
+                    <p class="pricing-card__desc">Reseñas, alertas, bandeja, reportes y tablero. Tu equipo lo opera.</p>
+                    <a href="https://app.ratetapmx.com/auditoria-ingresos" class="btn btn-primary" style="width:100%;text-align:center;margin-top:1.5rem;">Pruébalo 15 días gratis</a>
                 </div>
             </div>
-            <div style="text-align:center;margin-top:2.5rem;"><a href="https://app.ratetapmx.com/auditoria-ingresos" class="btn btn-primary" style="padding:1rem 2.2rem;">Solicitar auditoría gratuita</a></div>
+        </div>
+    </section>
+
+    <!-- 5. Upsell: noches flojas / Growth -->
+    <section id="noches-flojas" class="section">
+        <div class="container">
+            <div class="rt-upsell">
+                <div>
+                    <h2 style="font-size: clamp(2.6rem, 4.5vw, 4rem); margin-bottom: 1.25rem;">¿Noches flojas? <span class="serif-italic">Llénalas.</span></h2>
+                    <p class="rt-upsell__sub">RateTap opera campañas por WhatsApp con tus invitados y mide cada reservación.</p>
+                    <ul class="rt-checks">
+                        <li><i class="fa-solid fa-check"></i> Base propia de invitados</li>
+                        <li><i class="fa-solid fa-check"></i> Segmentos por WhatsApp</li>
+                        <li><i class="fa-solid fa-check"></i> Ingresos atribuidos a cada mensaje</li>
+                    </ul>
+                </div>
+                <div class="pricing-card reveal" style="border:2px solid var(--brand-blue);">
+                    <div class="pricing-card__eyebrow">Growth</div>
+                    <div class="pricing-card__price">$10,000<span class="rt-per">/mes</span></div>
+                    <div class="pricing-card__unit">+ $15,000 setup</div>
+                    <p class="pricing-card__desc">Campaña operada por sucursal, con reporte al dueño.</p>
+                    <a href="https://wa.me/5212228822360?text=Hola%20Lawrence%2C%20tengo%20un%20grupo%20con%20varias%20sucursales%20y%20quiero%20una%20auditor%C3%ADa%20de%20RateTap." class="btn btn-secondary" style="width:100%;text-align:center;margin-top:1.5rem;">Hablar por WhatsApp</a>
+                </div>
+            </div>
         </div>
     </section>
 
     <!-- CTA Section -->
-    <section class="section" style="padding: 12rem 0; position: relative; overflow: hidden;">
+    <section class="section" style="padding: 9rem 0; position: relative; overflow: hidden;">
         <div style="position: absolute; inset: 0; z-index: 1;">
-            <img src="../assets/restaurant_atmosphere.webp" alt="Atmósfera de Restaurante de Lujo"
+            <img src="../assets/restaurant_atmosphere.webp" alt="Atmósfera de restaurante"
                 style="width: 100%; height: 100%; object-fit: cover; filter: brightness(0.35);">
         </div>
         <div class="container" style="position: relative; z-index: 2; color: white;">
             <div style="text-align: center; max-width: 800px; margin: 0 auto;">
-                <h2 style="font-size: clamp(3.5rem, 6vw, 5rem); margin-bottom: 1.5rem; color: white;">¿Listo para
-                    capturar cada <br><span class="serif-italic"
-                        style="background: linear-gradient(135deg, #fff 0%, #cbd5e1 100%); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;">momento
-                        de 5 estrellas?</span></h2>
-                <p style="font-size: 1.25rem; color: rgba(255,255,255,0.8); margin-bottom: 3rem;">Únete a los mejores
-                    restaurantes del mundo usando RateTap para elevar su reputación digital.</p>
+                <h2 style="font-size: clamp(2.6rem, 6vw, 4.5rem); margin-bottom: 2.5rem; color: white;">¿Listo para más reseñas de <span class="serif-italic"
+                        style="background: linear-gradient(135deg, #fff 0%, #cbd5e1 100%); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;">5 estrellas?</span></h2>
                 <div class="hero-actions" style="justify-content: center;">
-                    <a href="/es/demo" class="btn btn-primary"
-                        style="padding: 1.2rem 3rem; font-size: 1.1rem; background: white; color: var(--brand-charcoal);">Comenzar
-                        Ahora</a>
-                    <a href="/es/demo#demo-form" class="btn btn-secondary"
-                        style="padding: 1.2rem 3rem; font-size: 1.1rem; border-color: rgba(255,255,255,0.4); color: white; background: rgba(255,255,255,0.1);">Contactar
-                        Ventas</a>
+                    <a href="https://app.ratetapmx.com/auditoria-ingresos" class="btn btn-primary"
+                        style="padding: 1.2rem 3rem; font-size: 1.1rem; background: white; color: var(--brand-charcoal);">Pruébalo 15 días gratis</a>
                 </div>
             </div>
         </div>
     </section>
 
+    <!-- Guias -->
     <section class="section">
         <div class="container blog-shell">
             <div class="section-header" style="text-align: center; margin-bottom: 3rem;">
-                <span class="hero-eyebrow blog-kicker" style="margin: 0 auto 1rem; justify-content: center;">Biblioteca operativa</span>
-                <h2 style="font-size: clamp(3rem, 5vw, 4.4rem);">Guías para dolores <span class="serif-italic">reales del restaurante.</span></h2>
-                <p style="font-size: 1.15rem; color: var(--text-secondary); max-width: 760px; margin: 1.2rem auto 0;">
-                    Estas guías atacan búsquedas de alta intención cuando la reputación ya está pegando en operación: caída de rating, pocas reseñas y desempeño del staff que nadie logra medir bien.
-                </p>
+                <h2 style="font-size: clamp(2.6rem, 5vw, 4rem);">Guías para <span class="serif-italic">dueños de restaurante.</span></h2>
             </div>
-
             <div class="blog-card-grid">
                 <a class="blog-card reveal" href="/es/blog/restaurante-bajo-calificacion-google">
-                    <span class="blog-card-tag">Recuperación de calificación</span>
                     <h3>¿Bajó tu calificación en Google?</h3>
-                    <p>Un flujo de recuperación para operadores que necesitan detener la siguiente mala reseña pública y recuperar ritmo rápido.</p>
-                    <div class="blog-card-meta">
-                        <span>7 min de lectura</span>
-                        <span>Actualizado abril 2026</span>
-                    </div>
                 </a>
                 <a class="blog-card reveal" href="/es/blog/restaurante-no-recibe-resenas-google">
-                    <span class="blog-card-tag">Captura de reseñas</span>
                     <h3>¿Tu restaurante no recibe reseñas?</h3>
-                    <p>Corrige el sistema de solicitud para que las mesas satisfechas dejen de irse en silencio.</p>
-                    <div class="blog-card-meta">
-                        <span>6 min de lectura</span>
-                        <span>Actualizado abril 2026</span>
-                    </div>
                 </a>
                 <a class="blog-card reveal" href="/es/blog/medir-desempeno-meseros-resenas">
-                    <span class="blog-card-tag">Responsabilidad del staff</span>
-                    <h3>Mide desempeño de meseros</h3>
-                    <p>Ve quién impulsa reseñas y quién necesita coaching sin convertir la hospitalidad en presión.</p>
-                    <div class="blog-card-meta">
-                        <span>7 min de lectura</span>
-                        <span>Actualizado abril 2026</span>
-                    </div>
+                    <h3>Mide el desempeño de tus meseros</h3>
                 </a>
             </div>
-
             <div style="text-align: center; margin-top: 2rem;">
                 <a class="btn btn-secondary" href="/es/blog/">Explorar todas las guías</a>
             </div>
@@ -357,8 +322,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             <div class="footer-grid">
                 <div class="footer-brand">
                     <img src="../assets/logo-new-small.webp" alt="RateTap" width="225" height="150" decoding="async" loading="eager">
-                    <p style="color: var(--text-secondary); font-size: 0.95rem; line-height: 1.6; max-width: 300px;">El
-                        estándar en gestión de reputación para hotelería premium.</p>
+                    <p style="color: var(--text-secondary); font-size: 0.95rem; line-height: 1.6; max-width: 300px;">El estándar en gestión de reputación para restaurantes premium.</p>
                 </div>
                 <div class="footer-links">
                     <h4>Plataforma</h4>
