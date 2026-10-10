@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { BriefingLocation } from '@/lib/email';
 
 const mocks = vi.hoisted(() => ({
-  sendMail: vi.fn(() => Promise.resolve({ success: true })),
+  sendMail: vi.fn((_args: { subject: string; html: string }) => Promise.resolve({ success: true })),
 }));
 
 vi.mock('@/lib/mailer', () => ({ sendMail: mocks.sendMail }));
