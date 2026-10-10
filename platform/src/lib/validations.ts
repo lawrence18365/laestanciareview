@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { RESOLUTIONS, REVIEWED_VIA } from '@/lib/review-recovery';
+import { QUOTE_STATUSES } from '@/lib/quote-status';
 
 // Review submission — customer taps NFC card, selects stars
 export const submitReviewSchema = z.object({
@@ -190,7 +191,10 @@ export const quoteCreateSchema = z.object({
 });
 
 export const quoteUpdateSchema = quoteCreateSchema.extend({
-  status: z.enum(['draft', 'sent', 'accepted', 'expired']).optional(),
+  // Canonical quote vocabulary (lib/quote-status). 'won' is not settable here:
+  // it needs outcome_at/outcome_amount_mxn (DB CHECK) and is written by the
+  // lead-won flow.
+  status: z.enum(QUOTE_STATUSES.filter((s) => s !== 'won') as ['draft', 'sent', 'declined', 'expired']).optional(),
 });
 
 // Manual event-lead entry from the dashboard (GM adds a walk-in / phone

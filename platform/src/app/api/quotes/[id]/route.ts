@@ -88,7 +88,9 @@ export async function PUT(
   await db
     .update(quotes)
     .set({
-      status: data.status ?? 'draft',
+      // Re-saving from the builder sends no status: undefined leaves the column
+      // alone, so a sent quote stays sent. Only an explicit status moves it.
+      status: data.status,
       clientName: data.clientName,
       clientPhone: data.clientPhone ?? null,
       clientEmail: data.clientEmail ?? null,
