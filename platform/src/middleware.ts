@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifySessionValue } from '@/lib/session';
+import { isRateTapStaff } from '@/lib/admin';
 
 const COOKIE_NAME = 'ratetap_session';
 
@@ -41,6 +42,15 @@ export async function middleware(req: NextRequest) {
     return res;
   };
 
+  // RateTap-internal sales surfaces: prospect phone numbers and our own leads.
+  // Customer sessions (owner/regional included) get a 404, not a redirect, so
+  // the pages do not reveal they exist. Matches /prospects and /prospects-us
+  // but not unrelated paths that merely share the prefix.
+  const isStaffRoute =
+    pathname === '/commercial-leads' || pathname.startsWith('/commercial-leads/') ||
+    pathname === '/prospects' || pathname.startsWith('/prospects/') ||
+    pathname === '/prospects-us' || pathname.startsWith('/prospects-us/');
+
   // Protected app routes — require valid session
   const isAppRoute = pathname.startsWith('/dashboard') ||
     pathname.startsWith('/overview') ||
@@ -53,13 +63,9 @@ export async function middleware(req: NextRequest) {
     pathname.startsWith('/live') ||
     pathname.startsWith('/guests') ||
     pathname.startsWith('/leads') ||
-    pathname.startsWith('/commercial-leads') ||
     pathname.startsWith('/vip-vino') ||
     pathname.startsWith('/admin') ||
-    // Founder prospect board — lists hundreds of prospect phone numbers.
-    // Exact match + trailing slash so the public /prospects-us page stays open.
-    pathname === '/prospects' ||
-    pathname.startsWith('/prospects/');
+    isStaffRoute;
 
   if (isAppRoute) {
     const cookie = req.cookies.get(COOKIE_NAME)?.value;
@@ -73,6 +79,10 @@ export async function middleware(req: NextRequest) {
       const res = NextResponse.redirect(new URL('/login', req.url));
       res.cookies.delete(COOKIE_NAME);
       return addHeaders(res);
+    }
+
+    if (isStaffRoute && !isRateTapStaff(session)) {
+      return addHeaders(new NextResponse('Not Found', { status: 404 }));
     }
   }
 

@@ -1,4 +1,5 @@
 import { verifySession } from '@/lib/session';
+import { isRateTapStaff } from '@/lib/admin';
 import { getRestaurantBySlug, getNewFeedbackCount } from '@/lib/queries';
 import { redirect } from 'next/navigation';
 import { getBrandForSlug } from '@/lib/brands';
@@ -54,6 +55,7 @@ export default async function AppLayout({
         newFeedbackCount={newFeedbackCount}
         isOwner={isMultiView}
         isRegional={isRegional}
+        isStaff={isRateTapStaff(session)}
         slug={session.slug}
         role={session.role}
       >

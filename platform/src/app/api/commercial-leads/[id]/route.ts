@@ -5,6 +5,7 @@ import { db } from '@/db';
 import { commercialLeads } from '@/db/schema';
 import { requireSameOrigin } from '@/lib/origin';
 import { verifySession } from '@/lib/session';
+import { isRateTapStaff } from '@/lib/admin';
 import { CommercialEventName, trackCommercialEvent } from '@/lib/commercial-tracking';
 import { COMMERCIAL_LEAD_STATUSES, CommercialLeadStatus } from '@/lib/commercial-statuses';
 
@@ -49,9 +50,9 @@ export async function PATCH(
   if (csrf) return csrf;
 
   const session = await verifySession();
-  if (!session || session.role !== 'owner') {
-    return Response.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  if (!session) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+  // RateTap-internal sales data: customer sessions must not learn it exists.
+  if (!isRateTapStaff(session)) return Response.json({ error: 'Not found' }, { status: 404 });
 
   const { id } = await params;
   const leadId = Number(id);

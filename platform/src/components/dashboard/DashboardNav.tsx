@@ -20,8 +20,14 @@ const gmLinks = [
 const ownerLinks = [
   { href: '/overview', label: t.nav.overview },
   { href: '/insights', label: 'Insights' },
-  { href: '/commercial-leads', label: 'Comercial' },
   { href: '/settings', label: t.nav.settings },
+];
+
+// RateTap-internal sales tooling: only shown when the server says the session
+// is RateTap staff (isRateTapStaff). Never part of a customer's nav.
+const staffLinks = [
+  { href: '/commercial-leads', label: 'Comercial' },
+  { href: '/prospects', label: 'Prospectos' },
 ];
 
 const regionalLinks = [
@@ -36,6 +42,7 @@ export default function DashboardNav({
   newFeedbackCount,
   isOwner,
   isRegional,
+  isStaff,
   onOpenGuide,
 }: {
   restaurantName: string;
@@ -44,11 +51,13 @@ export default function DashboardNav({
   newFeedbackCount?: number;
   isOwner?: boolean;
   isRegional?: boolean;
+  isStaff?: boolean;
   onOpenGuide?: () => void;
 }) {
   const router = useRouter();
   const pathname = usePathname();
-  const navLinks = isRegional ? regionalLinks : isOwner ? ownerLinks : gmLinks;
+  const baseLinks = isRegional ? regionalLinks : isOwner ? ownerLinks : gmLinks;
+  const navLinks = isStaff ? [...baseLinks, ...staffLinks] : baseLinks;
   const [mobileOpen, setMobileOpen] = useState(false);
 
   async function handleLogout() {

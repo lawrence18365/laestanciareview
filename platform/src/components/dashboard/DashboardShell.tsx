@@ -14,6 +14,7 @@ export default function DashboardShell({
   newFeedbackCount,
   isOwner,
   isRegional,
+  isStaff,
   slug,
   role,
   children,
@@ -24,6 +25,7 @@ export default function DashboardShell({
   newFeedbackCount: number;
   isOwner: boolean;
   isRegional?: boolean;
+  isStaff?: boolean;
   slug: string;
   role: 'gm' | 'owner' | 'regional';
   children: React.ReactNode;
@@ -42,6 +44,7 @@ export default function DashboardShell({
         newFeedbackCount={newFeedbackCount}
         isOwner={isOwner}
         isRegional={isRegional}
+        isStaff={isStaff}
         onOpenGuide={openGuide}
       />
       <FeatureAnnouncementBanner slug={slug} />
