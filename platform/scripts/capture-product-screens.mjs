@@ -10,7 +10,7 @@
  * Safety: refuses a non-local BASE_URL, never reads .env.local, sends no mail
  * (nodemailer is intercepted and the captured HTML is written to disk only).
  */
-import { mkdir, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { createRequire } from 'node:module';
 import os from 'node:os';
 import path from 'node:path';
@@ -29,6 +29,11 @@ const EVIDENCE_DIR = process.env.DEMO_EVIDENCE_DIR ?? path.join(os.tmpdir(), 'ra
 const GM_SLUG = 'casa-demo-polanco';
 const OWNER_SLUG = 'casa-demo-grupo';
 const MAX_BYTES = 250 * 1024;
+// email.ts points the header logo at <NEXT_PUBLIC_BASE_URL>/logos/...; the capture serves that file locally.
+const LOGO_PATH = '/logos/ratetap_logo_transparent_background.png';
+const LOGO_FILE = path.join(platformDir, 'public', LOGO_PATH);
+// Text that must never appear in a shot: the onboarding wizard and the push-permission banner.
+const FORBIDDEN_TEXT = ['Bienvenido', 'Bienvenido a RateTap', 'Notificaciones bloqueadas'];
 
 const DESKTOP = { width: 1440, height: 900, exportWidth: 1600 };
 const MOBILE = { width: 390, height: 844, dpr: 2, exportWidth: 780 };
@@ -60,6 +65,14 @@ async function login(browser, slug, role, password) {
       localStorage.setItem(key, '1');
     } catch {}
   }, onboardingKey);
+  // Grant notifications, then mark the push banner dismissed for this session. The grant alone still
+  // rendered "Notificaciones bloqueadas" in headless Chromium, so the dismiss flag hides it (capture only).
+  await context.grantPermissions(['notifications'], { origin: BASE_URL });
+  await context.addInitScript(() => {
+    try {
+      sessionStorage.setItem('ratetap_push_dismissed', '1');
+    } catch {}
+  });
   // Log in through the same API the /login form posts to. The form's restaurant
   // dropdown never populates in headless Chromium, and the API sets the session
   // cookie on this context's jar.
@@ -83,7 +96,9 @@ async function assertNoOverlay(page, name) {
     text: document.body.innerText,
     modal: Boolean(document.querySelector('[role="dialog"], [aria-modal="true"]')),
   }));
-  if (state.modal || state.text.includes('Bienvenido')) throw new Error(`${name}: onboarding modal or dialog is on screen`);
+  if (state.modal) throw new Error(`${name}: dialog is on screen`);
+  const hit = FORBIDDEN_TEXT.find((t) => state.text.includes(t));
+  if (hit) throw new Error(`${name}: visible text contains "${hit}"`);
 }
 
 /** Desktop: 1440x900 viewport, cropped to the main content height, exported at 1600px. */
@@ -179,7 +194,13 @@ async function screenshotHtml(browser, html, width, dpr) {
   const context = await browser.newContext({ viewport: { width, height: 900 }, deviceScaleFactor: dpr });
   const page = await context.newPage();
   // Email HTML is self-contained; block every network request so the render stays offline.
-  await page.route('**/*', (route) => (route.request().url().startsWith('about:') ? route.continue() : route.fulfill({ status: 204, body: '' })));
+  // The logo is the one exception: serve the local file so the header is not broken.
+  const logo = await readFile(LOGO_FILE);
+  await page.route('**/*', (route) => {
+    const url = route.request().url();
+    if (url.endsWith(LOGO_PATH)) return route.fulfill({ status: 200, contentType: 'image/png', body: logo });
+    return url.startsWith('about:') ? route.continue() : route.fulfill({ status: 204, body: '' });
+  });
   await page.setContent(html, { waitUntil: 'load' });
   const png = await page.screenshot({ type: 'png', fullPage: true });
   await context.close();
