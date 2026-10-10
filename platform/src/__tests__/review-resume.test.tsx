@@ -528,7 +528,7 @@ describe('changing the slug re-mounts the screen', () => {
   async function seedSession(
     page: Page,
     slug: string,
-    overrides: { googleReviewUrl?: string | null } = {},
+    overrides: { googleReviewUrl?: string | null; rating?: number } = {},
   ): Promise<void> {
     await page.evaluate(
       ([key, raw]) => window.localStorage.setItem(key, raw),
@@ -541,7 +541,7 @@ describe('changing the slug re-mounts the screen', () => {
           feedbackToken: TOKEN,
           googleReviewUrl:
             overrides.googleReviewUrl === undefined ? CACHED_GOOGLE_LINK : overrides.googleReviewUrl,
-          rating: 5,
+          rating: overrides.rating ?? 5,
           createdAt: Date.now() - MINUTE,
         }),
       ] as [string, string],
@@ -604,6 +604,26 @@ describe('changing the slug re-mounts the screen', () => {
     // ...and the change itself submits nothing for the new restaurant.
     expect(screen.requests.filter((url) => url.includes('/api/reviews/submit'))).toEqual([]);
   }, 60_000);
+
+  it.each([1, 5])(
+    'shows the same heading, subtext and both buttons for a %i-star rating',
+    async (rating) => {
+      const screen = await openScreen();
+      await seedSession(screen.page, CACHED_SLUG, { rating });
+      await renderScreen(screen.page, CACHED_SLUG, 'Restaurante A');
+      const text = await waitForScreenText(screen.page, CHOICE_GOOGLE);
+
+      // Same encouragement for every rating: no copy that nudges only the happy
+      // guests toward Google.
+      expect(says(text, '¡Gracias por su calificación!')).toBe(true);
+      expect(says(text, '¿Cómo le gustaría compartir su experiencia?')).toBe(true);
+      expect(says(text, '¡Qué gusto!')).toBe(false);
+      expect(says(text, 'ayuda a otros comensales a encontrarnos')).toBe(false);
+      expect(says(text, CHOICE_GOOGLE)).toBe(true);
+      expect(says(text, CHOICE_FEEDBACK)).toBe(true);
+    },
+    60_000,
+  );
 
   it('cancels the previous restaurant\'s pending Google redirect', async () => {
     const screen = await openScreen();

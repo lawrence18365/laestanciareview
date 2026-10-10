@@ -541,12 +541,10 @@ function StarRatingScreen({ restaurantSlug, staffCode, restaurantName }: StarRat
       ) : choice ? (
         <div style={{ textAlign: 'center', width: '100%', animation: 'reviewFadeIn 0.4s ease-out both' }}>
           <p style={{ fontFamily: 'var(--font-serif)', fontSize: '1.25rem', fontWeight: 600, color: '#111', margin: '0 0 0.35rem', letterSpacing: '-0.01em' }}>
-            {selectedStar >= 4 ? '¡Qué gusto!' : '¡Gracias por su calificación!'}
+            ¡Gracias por su calificación!
           </p>
           <p style={{ fontSize: '0.85rem', color: '#666', margin: '0 0 1.1rem', fontFamily: 'var(--font-sans)' }}>
-            {selectedStar >= 4
-              ? 'Su reseña en Google ayuda a otros comensales a encontrarnos.'
-              : '¿Cómo le gustaría compartir su experiencia?'}
+            ¿Cómo le gustaría compartir su experiencia?
           </p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.7rem' }}>
             {choice.googleReviewUrl && (
