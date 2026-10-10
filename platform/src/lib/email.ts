@@ -2,6 +2,7 @@ import { sendMail } from '@/lib/mailer';
 import { inboxLinkFor } from '@/lib/review-recovery';
 import { formatStaffAnomaly, type StaffAnomaly } from '@/lib/anomalies';
 import { RATING_BASELINE_NOTE } from '@/lib/rating-baseline';
+import { PILOT_TRIAL_DAYS } from '@/lib/pilot';
 import {
   classifyReview,
   SEVERITY_COLOR,
@@ -1023,7 +1024,7 @@ export async function sendWelcomeEmail({
   qrDataUrl,
   reviewUrl,
   trialEndsAt,
-  trialDays = 15,
+  trialDays = PILOT_TRIAL_DAYS,
   pilot = false,
 }: WelcomeEmailParams) {
   const trialEndStr = trialEndsAt.toLocaleDateString('es-MX', { day: 'numeric', month: 'long', year: 'numeric' });
