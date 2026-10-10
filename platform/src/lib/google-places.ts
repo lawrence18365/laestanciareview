@@ -102,19 +102,30 @@ export async function refreshAllGoogleRatings(maxAgeMs = 60 * 60 * 1000) {
     .from(restaurants)
     .where(sql`${restaurants.googlePlaceId} is not null`);
 
-  let updated = 0;
+  let refreshed = 0;
+  let failed = 0;
   for (const row of rows) {
     if (!row.placeId) continue;
-    const didUpdate = await refreshGoogleRating(
-      row.id,
-      row.placeId,
-      maxAgeMs,
-      row.lastUpdated,
-    );
-    if (didUpdate) updated++;
+    try {
+      const didUpdate = await refreshGoogleRating(
+        row.id,
+        row.placeId,
+        maxAgeMs,
+        row.lastUpdated,
+      );
+      if (didUpdate) refreshed++;
+    } catch (err) {
+      // Log only the restaurant id and an error code: the request URL carries the API key.
+      failed++;
+      const code = (err as { cause?: { code?: string }; code?: string })?.cause?.code
+        ?? (err as { code?: string })?.code
+        ?? (err as Error)?.name
+        ?? 'unknown';
+      console.error(`[google-ratings] restaurant ${row.id} refresh failed: ${code}`);
+    }
   }
 
-  return { total: rows.length, updated };
+  return { refreshed, failed };
 }
 
 /**
