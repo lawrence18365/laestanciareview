@@ -38,10 +38,13 @@ import QuotesPage from '../app/(app)/quotes/page';
 import NewQuotePage from '../app/(app)/quotes/new/page';
 import EditQuotePage from '../app/(app)/quotes/[id]/page';
 import LeadsPage from '../app/(app)/leads/page';
+import PrintQuotePage from '../app/(print)/quotes/[id]/print/page';
 import { GET as listQuotes, POST as createQuote } from '../app/api/quotes/route';
 import { GET as getQuote, PUT as saveQuote, DELETE as deleteQuote } from '../app/api/quotes/[id]/route';
 import { POST as sendQuote } from '../app/api/quotes/[id]/send/route';
 import { POST as createManualLead } from '../app/api/leads/manual/route';
+import { POST as claimLead } from '../app/api/leads/[id]/claim/route';
+import { POST as setLeadStatus } from '../app/api/leads/[id]/status/route';
 import DashboardNav from '../components/dashboard/DashboardNav';
 
 /** Thenable query-builder stand-in: any chained call returns itself, awaiting yields rows. */
@@ -124,6 +127,7 @@ describe('quote and lead pages', () => {
     expect(await hitsNotFound(() => NewQuotePage({ searchParams: Promise.resolve({}) }))).toBe(true);
     expect(await hitsNotFound(() => EditQuotePage(ctx))).toBe(true);
     expect(await hitsNotFound(() => LeadsPage({ searchParams: Promise.resolve({}) }))).toBe(true);
+    expect(await hitsNotFound(() => PrintQuotePage(ctx))).toBe(true);
     expect(mocks.select).not.toHaveBeenCalled();
   });
 
@@ -150,6 +154,8 @@ describe('quote and manual-lead APIs', () => {
       deleteQuote(req('DELETE', '/api/quotes/9'), ctx),
       sendQuote(req('POST', '/api/quotes/9/send'), ctx),
       createManualLead(req('POST', '/api/leads/manual', '{}')),
+      claimLead(req('POST', '/api/leads/9/claim'), ctx),
+      setLeadStatus(req('POST', '/api/leads/9/status', '{}'), ctx),
     ]);
 
     for (const res of responses) expect(res.status).toBe(404);

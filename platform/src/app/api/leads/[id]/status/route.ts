@@ -13,6 +13,7 @@ import { and, eq, inArray, sql } from 'drizzle-orm';
 import { db } from '@/db';
 import { eventLeads, quotes } from '@/db/schema';
 import { verifySession } from '@/lib/session';
+import { hasEventsQuotes } from '@/lib/brands';
 import { getRestaurantBySlug } from '@/lib/queries';
 import { requireSameOrigin } from '@/lib/origin';
 import { ACTIVE_STATUSES } from '@/lib/quote-status';
@@ -52,6 +53,7 @@ export async function POST(req: NextRequest, ctx: RouteContext) {
   if (!session || session.role !== 'gm') {
     return Response.json({ error: 'Unauthorized' }, { status: 401 });
   }
+  if (!hasEventsQuotes(session.slug)) return Response.json({ error: 'Not found' }, { status: 404 });
 
   const { id } = await ctx.params;
   const leadId = parseInt(id, 10);
