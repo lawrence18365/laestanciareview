@@ -1438,6 +1438,12 @@ body .rt-stat .n {
     max-width: 300px;
 }
 
+.footer-links {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+}
+
 .footer-links h4 {
     font-family: 'Plus Jakarta Sans', sans-serif;
     font-size: 0.8rem;
