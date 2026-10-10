@@ -106,6 +106,8 @@ const MIGRATED_PAGES = [
   'es/blog/restaurante-no-recibe-resenas-google.html',
   'index.html',
   'es/index.html',
+  'product.html',
+  'es/producto.html',
 ];
 
 // Classes toggled or injected by script.js (grep classList / className) plus FA families.
