@@ -1,9 +1,10 @@
-import { redirect } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import { desc, eq } from 'drizzle-orm';
 import { db } from '@/db';
 import { quotes, restaurants } from '@/db/schema';
 import { migrateConfig, computePricing, type QuoteConfig } from '@/lib/quote-data';
 import { verifySession } from '@/lib/session';
+import { hasEventsQuotes } from '@/lib/brands';
 import { getQuoteConversion } from '@/lib/quote-lifecycle';
 import QuoteList from './QuoteList';
 
@@ -24,6 +25,7 @@ export default async function QuotesPage() {
   const session = await verifySession();
   if (!session) redirect('/login');
   if (session.role !== 'gm') redirect('/overview');
+  if (!hasEventsQuotes(session.slug)) notFound();
 
   const restaurant = await db
     .select({ id: restaurants.id, name: restaurants.name })

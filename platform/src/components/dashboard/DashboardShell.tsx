@@ -15,6 +15,7 @@ export default function DashboardShell({
   isOwner,
   isRegional,
   isStaff,
+  showEventsQuotes,
   slug,
   role,
   children,
@@ -26,6 +27,7 @@ export default function DashboardShell({
   isOwner: boolean;
   isRegional?: boolean;
   isStaff?: boolean;
+  showEventsQuotes?: boolean;
   slug: string;
   role: 'gm' | 'owner' | 'regional';
   children: React.ReactNode;
@@ -45,6 +47,7 @@ export default function DashboardShell({
         isOwner={isOwner}
         isRegional={isRegional}
         isStaff={isStaff}
+        showEventsQuotes={showEventsQuotes}
         onOpenGuide={openGuide}
       />
       <FeatureAnnouncementBanner slug={slug} />

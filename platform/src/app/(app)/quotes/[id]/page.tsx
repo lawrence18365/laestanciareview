@@ -1,9 +1,9 @@
-import { redirect } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import { eq, and } from 'drizzle-orm';
 import { db } from '@/db';
 import { quotes, restaurants } from '@/db/schema';
 import { verifySession } from '@/lib/session';
-import { getBrandForSlug } from '@/lib/brands';
+import { getBrandForSlug, hasEventsQuotes } from '@/lib/brands';
 import { isAdminEmail } from '@/lib/admin';
 import QuoteBuilderV2 from '@/components/quotes/QuoteBuilderV2';
 import QuoteMissing from '@/components/quotes/QuoteMissing';
@@ -13,6 +13,7 @@ export default async function EditQuotePage({ params }: { params: Promise<{ id: 
   const session = await verifySession();
   if (!session) redirect('/login');
   if (session.role !== 'gm') redirect('/overview');
+  if (!hasEventsQuotes(session.slug)) notFound();
 
   const { id } = await params;
   const quoteId = parseInt(id, 10);

@@ -3,6 +3,7 @@ import { eq, and } from 'drizzle-orm';
 import { db } from '@/db';
 import { quotes, restaurants } from '@/db/schema';
 import { verifySession } from '@/lib/session';
+import { hasEventsQuotes } from '@/lib/brands';
 import { quoteUpdateSchema } from '@/lib/validations';
 import { requireSameOrigin } from '@/lib/origin';
 
@@ -25,6 +26,7 @@ export async function GET(
   if (!session || session.role !== 'gm') {
     return Response.json({ error: 'Unauthorized' }, { status: 401 });
   }
+  if (!hasEventsQuotes(session.slug)) return Response.json({ error: 'Not found' }, { status: 404 });
 
   const restaurantId = await getRestaurantId(session.slug);
   if (!restaurantId) return Response.json({ error: 'Not found' }, { status: 404 });
@@ -54,6 +56,7 @@ export async function PUT(
   if (!session || session.role !== 'gm') {
     return Response.json({ error: 'Unauthorized' }, { status: 401 });
   }
+  if (!hasEventsQuotes(session.slug)) return Response.json({ error: 'Not found' }, { status: 404 });
 
   const restaurantId = await getRestaurantId(session.slug);
   if (!restaurantId) return Response.json({ error: 'Not found' }, { status: 404 });
@@ -121,6 +124,7 @@ export async function DELETE(
   if (!session || session.role !== 'gm') {
     return Response.json({ error: 'Unauthorized' }, { status: 401 });
   }
+  if (!hasEventsQuotes(session.slug)) return Response.json({ error: 'Not found' }, { status: 404 });
 
   const restaurantId = await getRestaurantId(session.slug);
   if (!restaurantId) return Response.json({ error: 'Not found' }, { status: 404 });

@@ -1,9 +1,9 @@
-import { redirect } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import { and, eq } from 'drizzle-orm';
 import { db } from '@/db';
 import { restaurants, eventLeads } from '@/db/schema';
 import { verifySession } from '@/lib/session';
-import { getBrandForSlug } from '@/lib/brands';
+import { getBrandForSlug, hasEventsQuotes } from '@/lib/brands';
 import { isAdminEmail } from '@/lib/admin';
 import QuoteBuilderV2 from '@/components/quotes/QuoteBuilderV2';
 import { emptyConfig, type QuoteConfig } from '@/lib/quote-data';
@@ -16,6 +16,7 @@ export default async function NewQuotePage({
   const session = await verifySession();
   if (!session) redirect('/login');
   if (session.role !== 'gm') redirect('/overview');
+  if (!hasEventsQuotes(session.slug)) notFound();
 
   const [restaurant] = await db
     .select({ id: restaurants.id, name: restaurants.name, managerEmail: restaurants.managerEmail })

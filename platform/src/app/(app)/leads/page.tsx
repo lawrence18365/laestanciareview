@@ -1,6 +1,7 @@
-import { redirect } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import { desc, eq } from 'drizzle-orm';
 import { verifySession } from '@/lib/session';
+import { hasEventsQuotes } from '@/lib/brands';
 import { getRestaurantBySlug } from '@/lib/queries';
 import { db } from '@/db';
 import { eventLeads } from '@/db/schema';
@@ -20,6 +21,7 @@ export default async function LeadsPage({
   if (session.role === 'owner' || session.role === 'regional') {
     redirect('/overview');
   }
+  if (!hasEventsQuotes(session.slug)) notFound();
 
   const restaurant = await getRestaurantBySlug(session.slug);
   if (!restaurant) redirect('/login');

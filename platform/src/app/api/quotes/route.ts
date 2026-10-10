@@ -3,6 +3,7 @@ import { and, desc, eq, inArray, sql } from 'drizzle-orm';
 import { db } from '@/db';
 import { quotes, restaurants, eventLeads } from '@/db/schema';
 import { verifySession } from '@/lib/session';
+import { hasEventsQuotes } from '@/lib/brands';
 import { DEFAULT_TERMS } from '@/lib/quote-defaults';
 import { quoteCreateSchema } from '@/lib/validations';
 import { requireSameOrigin } from '@/lib/origin';
@@ -14,6 +15,7 @@ export async function GET() {
   if (!session || session.role !== 'gm') {
     return Response.json({ error: 'Unauthorized' }, { status: 401 });
   }
+  if (!hasEventsQuotes(session.slug)) return Response.json({ error: 'Not found' }, { status: 404 });
 
   const restaurant = await db
     .select({ id: restaurants.id })
@@ -39,6 +41,7 @@ export async function POST(req: NextRequest) {
   if (!session || session.role !== 'gm') {
     return Response.json({ error: 'Unauthorized' }, { status: 401 });
   }
+  if (!hasEventsQuotes(session.slug)) return Response.json({ error: 'Not found' }, { status: 404 });
 
   const restaurant = await db
     .select({ id: restaurants.id })

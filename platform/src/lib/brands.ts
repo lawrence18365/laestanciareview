@@ -25,6 +25,15 @@ export function getBrandForSlug(slug: string): BrandInfo {
 }
 
 /**
+ * Quotes and event leads (/quotes, /leads and their APIs) are La Estancia-only
+ * for now: the quote catalog in lib/quote-data.ts is La Estancia's own menu with
+ * real prices, and it would otherwise show for every tenant.
+ */
+export function hasEventsQuotes(slug: string): boolean {
+  return getBrandForSlug(slug) === brands.estancia;
+}
+
+/**
  * Full, guest-facing restaurant names.
  *
  * The `restaurants.name` column holds short operational labels ("Estancia
