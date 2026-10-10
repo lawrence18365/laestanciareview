@@ -5,7 +5,9 @@
 //   node scripts/check-design-system.mjs                    all root + es/ pages, prints a table, exit 0
 //   node scripts/check-design-system.mjs --strict a.html    exit 1 if any listed page has an undefined
 //                                                           CSS var, an undefined class or a style="" attribute
-//   node scripts/check-design-system.mjs -v                 also list the offending names
+//   node scripts/check-design-system.mjs --strict-migrated  same as --strict on MIGRATED_PAGES (list near the top);
+//                                                           the table still covers every page (CI uses this)
+//   node scripts/check-design-system.mjs -v              also list the offending names
 //   node scripts/check-design-system.mjs --json             machine-readable report
 //   node scripts/check-design-system.mjs --strict a.html --budget b.html
 //                                                           flags are independent: each consumes the file
@@ -30,6 +32,14 @@ import { dirname, join, resolve, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+
+// Pages already migrated to the design system. CI runs `--strict-migrated`, which applies --strict to
+// exactly this list. The US-9 migration tickets append their page here, in this one place.
+const MIGRATED_PAGES = [
+  'design-system.html',
+  'nfc-google-review-cards-for-restaurants.html',
+  'es/tarjetas-nfc-restaurantes-mexico.html',
+];
 
 // Classes toggled or injected by script.js (grep classList / className) plus FA families.
 const JS_HOOK_CLASSES = new Set([
@@ -57,9 +67,15 @@ for (const a of args) {
   } else if (currentFlag) flagFiles[currentFlag].push(a);
   else bareFiles.push(a);
 }
-const strict = flagFiles['--strict'] !== null;
+// --strict-migrated adds MIGRATED_PAGES to the strict set. With no other file args the table still covers
+// every page; with file args, the migrated pages are added so they get analysed too.
+const strictMigrated = args.includes('--strict-migrated');
+const strictOwn = flagFiles['--strict'] ?? [];
 const budget = flagFiles['--budget'] !== null;
-const fileArgs = [...new Set([...bareFiles, ...(flagFiles['--strict'] ?? []), ...(flagFiles['--budget'] ?? [])])];
+const explicitFiles = [...bareFiles, ...strictOwn, ...(flagFiles['--budget'] ?? [])];
+const fileArgs = explicitFiles.length ? [...new Set([...explicitFiles, ...(strictMigrated ? MIGRATED_PAGES : [])])] : [];
+if (strictMigrated) flagFiles['--strict'] = [...strictOwn, ...MIGRATED_PAGES];
+const strict = flagFiles['--strict'] !== null;
 
 // ---------- CSS parsing ----------
 const stripCssComments = (css) => css.replace(/\/\*[\s\S]*?\*\//g, '');
