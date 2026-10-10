@@ -51,17 +51,15 @@ async function exportWebp(png, width, outFile) {
 
 async function login(browser, slug, password) {
   const context = await browser.newContext({ viewport: { width: DESKTOP.width, height: DESKTOP.height }, deviceScaleFactor: DESKTOP.exportWidth / DESKTOP.width });
-  const page = await context.newPage();
-  await page.goto(`${BASE_URL}/login`, { waitUntil: 'domcontentloaded', timeout: 180_000 });
-  // The restaurant <select> is filled by a client fetch; wait for our option before choosing it.
-  await page.waitForSelector(`select#restaurant option[value="${slug}"]`, { state: 'attached', timeout: 180_000 });
-  await page.selectOption('select#restaurant', slug);
-  await page.fill('#password', password);
-  await Promise.all([
-    page.waitForURL((u) => !u.pathname.startsWith('/login'), { timeout: 180_000 }),
-    page.click('button[type="submit"]'),
-  ]);
-  await page.close();
+  // Log in through the same API the /login form posts to. The form's restaurant
+  // dropdown never populates in headless Chromium, and the API sets the session
+  // cookie on this context's jar.
+  const res = await context.request.post(`${BASE_URL}/api/auth/login`, {
+    data: { slug, password },
+    headers: { origin: BASE_URL },
+    timeout: 180_000,
+  });
+  if (!res.ok()) throw new Error(`login failed for ${slug}: HTTP ${res.status()}`);
   return context;
 }
 
@@ -150,28 +148,28 @@ async function renderEmails() {
 
   const owner = captured.at(-1);
   if (!owner?.html) throw new Error('owner briefing did not render HTML');
-  await writeFile(path.join(EVIDENCE_DIR, 'owner-briefing-email.html'), owner.html);
-  return { ownerHtml: owner.html };
+  // email.ts hard-codes the real group name in the header. Show the demo brand instead, before anything is written.
+  const ownerHtml = owner.html.replaceAll('Grupo Estancia', 'Casa Demo');
+  await writeFile(path.join(EVIDENCE_DIR, 'owner-briefing-email.html'), ownerHtml);
+  return { ownerHtml };
 }
 
-/** Chef report HTML from the repo's dry-run. It writes <repo>/data/chef-exports and sends nothing. */
+/**
+ * Chef report HTML from runChefReport's dry-run, in-process. The CLI dry-run opens a Neon
+ * WebSocket transaction, which the local HTTP bridge cannot serve, so this passes a pool that
+ * reads over the same neon HTTP path the app uses. Dry-run sends nothing and writes nothing.
+ */
 async function renderChefHtml() {
-  const { execFile } = await import('node:child_process');
-  const dir = path.resolve(platformDir, '..', 'data', 'chef-exports');
-  const before = new Set(await readdir(dir).catch(() => []));
-  await new Promise((resolve, reject) => {
-    execFile(process.execPath, ['--import', 'tsx', 'scripts/chef-weekly-report.ts', '--dry-run'], { cwd: platformDir, env: process.env, maxBuffer: 16 * 1024 * 1024 }, (err, stdout, stderr) => {
-      if (err) reject(new Error(`chef dry-run failed: ${stderr || err.message}`));
-      else resolve(stdout);
-    });
-  });
-  const created = (await readdir(dir)).filter((f) => !before.has(f));
-  const htmlName = created.filter((f) => f.endsWith('.html')).sort().at(-1);
-  if (!htmlName) throw new Error('chef dry-run produced no HTML');
-  const html = await readFile(path.join(dir, htmlName), 'utf8');
+  const { neon } = await import('@neondatabase/serverless');
+  const { runChefReport } = await import('../src/lib/chef-weekly-report.ts');
+  const query = neon(process.env.DATABASE_URL);
+  const pool = {
+    connect: async () => ({ query: async (text, values) => ({ rows: await query.query(text, values) }), release() {} }),
+  };
+  const result = await runChefReport({ mode: 'dry-run', previewTo: [] }, { pool });
+  const html = result.report?.html;
+  if (!html) throw new Error('chef dry-run produced no HTML');
   await writeFile(path.join(EVIDENCE_DIR, 'chef-email.html'), html);
-  // Leave the worktree as found: remove only the files this dry-run created.
-  await Promise.all(created.map((f) => unlink(path.join(dir, f))));
   return { chefHtml: html };
 }
 
