@@ -761,7 +761,8 @@ function standardizePrimaryCtas() {
     const primaryLinkSelector = 'a.btn.btn-primary[href]';
 
     document.querySelectorAll(primaryLinkSelector).forEach(link => {
-        if (link.dataset.preserveLabel === 'true') return;
+        // Pages that author their own CTA (label + href) opt out via these attributes.
+        if (link.dataset.preserveLabel === 'true' || link.hasAttribute('data-funnel-context')) return;
 
         const href = normalizeHref(link.getAttribute('href')).toLowerCase();
         const isDemoOrContactCta = href.includes('demo') || href === '#contact' || href === '/#contact';
@@ -817,16 +818,16 @@ function insertTrustStrip() {
     if (!heroSection) return;
 
     const items = isSpanishPage()
-        ? ['Resultados reales comprobados', 'Crecimiento promedio de 4.8★', 'Sin contratos a largo plazo']
-        : ['Real proven results', '4.8★ average rating growth', 'No long-term contracts'];
+        ? ['23,664 reseñas capturadas', '12 sucursales', '4.5–4.8★ en Google hoy']
+        : ['23,664 reviews captured', '12 locations', '4.5–4.8★ on Google today'];
 
     const trustStrip = document.createElement('section');
     trustStrip.className = 'trust-strip reveal';
     trustStrip.innerHTML = `
         <div class="container trust-strip-inner">
-            <div class="trust-item"><i class="fa-solid fa-store"></i><span>${items[0]}</span></div>
-            <div class="trust-item"><i class="fa-solid fa-star"></i><span>${items[1]}</span></div>
-            <div class="trust-item"><i class="fa-solid fa-shield-halved"></i><span>${items[2]}</span></div>
+            <div class="trust-item"><i class="fa-solid fa-star"></i><span>${items[0]}</span></div>
+            <div class="trust-item"><i class="fa-solid fa-store"></i><span>${items[1]}</span></div>
+            <div class="trust-item"><i class="fa-solid fa-chart-line"></i><span>${items[2]}</span></div>
         </div>
     `;
 
