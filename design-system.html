@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RateTap Design System</title>
+    <meta name="robots" content="noindex,nofollow">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Reference-page only. Not part of the shared system. */
+        .ds-section { padding: var(--space-8) 0; }
+        .ds-block { margin-bottom: var(--space-7); }
+        .ds-block > h3 { margin-bottom: var(--space-2); }
+        .ds-note { color: var(--ink-2); margin-bottom: var(--space-4); }
+        .ds-demo { padding: var(--space-6); border: 1px dashed var(--line); border-radius: var(--radius-lg); background: var(--surface-muted); overflow: hidden; }
+        .ds-code { margin-top: var(--space-3); padding: var(--space-4); border-radius: var(--radius-md); background: var(--surface-dark); color: #E4EDF8; font: 0.78rem/1.55 ui-monospace, SFMono-Regular, Menlo, monospace; overflow-x: auto; }
+        .ds-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: var(--space-4); }
+        .ds-swatch { border: 1px solid var(--line); border-radius: var(--radius-md); overflow: hidden; background: var(--surface); }
+        .ds-chip { height: 64px; border-bottom: 1px solid var(--line); }
+        .ds-chip--ink { background: var(--ink); }
+        .ds-chip--ink-2 { background: var(--ink-2); }
+        .ds-chip--surface { background: var(--surface); }
+        .ds-chip--surface-muted { background: var(--surface-muted); }
+        .ds-chip--surface-dark { background: var(--surface-dark); }
+        .ds-chip--line { background: var(--line); }
+        .ds-chip--accent { background: var(--accent); }
+        .ds-chip--star { background: var(--star); }
+        .ds-meta { display: grid; gap: 2px; padding: var(--space-2) var(--space-3); font-size: var(--fs-small); color: var(--ink-2); }
+        .ds-meta code, .ds-type-row code, .ds-radius-item code { font-size: 0.8rem; color: var(--ink); }
+        .ds-type-row { display: flex; align-items: baseline; gap: var(--space-4); padding: var(--space-2) 0; border-bottom: 1px solid var(--line); }
+        .ds-type-row code { flex: 0 0 8.5rem; }
+        .ds-type { font-weight: 800; letter-spacing: -0.03em; line-height: 1.1; color: var(--ink); }
+        .ds-type--display { font-size: var(--fs-display); }
+        .ds-type--h1 { font-size: var(--fs-h1); }
+        .ds-type--h2 { font-size: var(--fs-h2); }
+        .ds-type--h3 { font-size: var(--fs-h3); }
+        .ds-type--body { font-size: var(--fs-body); font-weight: 400; letter-spacing: normal; }
+        .ds-type--small { font-size: var(--fs-small); font-weight: 400; letter-spacing: normal; }
+        .ds-bar { height: 14px; border-radius: var(--radius-pill); background: var(--accent); }
+        .ds-bar--1 { width: var(--space-1); }
+        .ds-bar--2 { width: var(--space-2); }
+        .ds-bar--3 { width: var(--space-3); }
+        .ds-bar--4 { width: var(--space-4); }
+        .ds-bar--5 { width: var(--space-5); }
+        .ds-bar--6 { width: var(--space-6); }
+        .ds-bar--7 { width: var(--space-7); }
+        .ds-bar--8 { width: var(--space-8); }
+        .ds-row { display: flex; flex-wrap: wrap; gap: var(--space-6); }
+        .ds-radius-item { display: grid; gap: var(--space-2); justify-items: start; }
+        .ds-box { width: 88px; height: 64px; background: var(--surface); border: 1px solid var(--line); }
+        .ds-box--sm { border-radius: var(--radius-sm); }
+        .ds-box--md { border-radius: var(--radius-md); }
+        .ds-box--lg { border-radius: var(--radius-lg); }
+        .ds-box--pill { border-radius: var(--radius-pill); }
+        .ds-box--shadow-sm { border-radius: var(--radius-md); box-shadow: var(--shadow-sm); }
+        .ds-box--shadow-lg { border-radius: var(--radius-md); box-shadow: var(--shadow-lg); }
+    </style>
+</head>
+
+<body>
+    <div class="ambient-canvas"></div>
+
+    <nav class="navbar navbar--hero" id="navbar">
+        <a href="/" class="nav-brand">
+            <span class="nav-wordmark">RateTap</span>
+        </a>
+        <div class="nav-menu" id="nav-menu">
+            <a href="#tokens" class="nav-link">Tokens</a>
+            <a href="#components" class="nav-link">Components</a>
+            <a href="#chrome" class="nav-link">Nav &amp; footer</a>
+        </div>
+        <div class="nav-actions">
+            <a href="/es/" class="nav-lang-toggle"><i class="fa-solid fa-globe"></i> ES</a>
+            <a href="#components" class="btn btn-primary">Components</a>
+        </div>
+    </nav>
+
+    <section class="hero hero--photo hero--restaurant">
+        <div class="container hero-container">
+            <div class="hero-content">
+                <h1>RateTap design system</h1>
+                <p class="hero-subtitle">Tokens and components for every marketing page. Copy the markup.</p>
+                <ul class="stat-pills">
+                    <li class="stat-pill">Plus Jakarta Sans</li>
+                    <li class="stat-pill">Navy, blue, gold</li>
+                    <li class="stat-pill">Pill buttons</li>
+                </ul>
+                <div class="hero-actions">
+                    <a class="btn btn-primary" href="#tokens">See tokens</a>
+                </div>
+                <div class="hero-proof-row" hidden></div>
+            </div>
+        </div>
+    </section>
+
+    <section class="section ds-section" id="tokens">
+        <div class="container">
+            <div class="section-header">
+                <h2>Tokens</h2>
+                <p>Defined once in styles.css :root. Use these, not raw values.</p>
+            </div>
+
+            <div class="ds-block">
+                <h3>Color</h3>
+                <div class="ds-grid">
+          <div class="ds-swatch">
+            <div class="ds-chip ds-chip--ink"></div>
+            <div class="ds-meta"><code>--ink</code><span>Text, headings</span></div>
+          </div>
+          <div class="ds-swatch">
+            <div class="ds-chip ds-chip--ink-2"></div>
+            <div class="ds-meta"><code>--ink-2</code><span>Secondary text</span></div>
+          </div>
+          <div class="ds-swatch">
+            <div class="ds-chip ds-chip--surface"></div>
+            <div class="ds-meta"><code>--surface</code><span>Cards, inputs</span></div>
+          </div>
+          <div class="ds-swatch">
+            <div class="ds-chip ds-chip--surface-muted"></div>
+            <div class="ds-meta"><code>--surface-muted</code><span>Alt sections</span></div>
+          </div>
+          <div class="ds-swatch">
+            <div class="ds-chip ds-chip--surface-dark"></div>
+            <div class="ds-meta"><code>--surface-dark</code><span>CTA band, footer</span></div>
+          </div>
+          <div class="ds-swatch">
+            <div class="ds-chip ds-chip--line"></div>
+            <div class="ds-meta"><code>--line</code><span>Borders</span></div>
+          </div>
+          <div class="ds-swatch">
+            <div class="ds-chip ds-chip--accent"></div>
+            <div class="ds-meta"><code>--accent</code><span>Brand blue</span></div>
+          </div>
+          <div class="ds-swatch">
+            <div class="ds-chip ds-chip--star"></div>
+            <div class="ds-meta"><code>--star</code><span>Stars only</span></div>
+          </div>
+                </div>
+            </div>
+
+            <div class="ds-block">
+                <h3>Type</h3>
+                <p class="ds-note">Plus Jakarta Sans only. Headings bold, tracking -0.03em.</p>
+                <div>
+          <div class="ds-type-row"><code>--fs-display</code><span class="ds-type ds-type--display">Display</span></div>
+          <div class="ds-type-row"><code>--fs-h1</code><span class="ds-type ds-type--h1">Heading 1</span></div>
+          <div class="ds-type-row"><code>--fs-h2</code><span class="ds-type ds-type--h2">Heading 2</span></div>
+          <div class="ds-type-row"><code>--fs-h3</code><span class="ds-type ds-type--h3">Heading 3</span></div>
+          <div class="ds-type-row"><code>--fs-body</code><span class="ds-type ds-type--body">Body text</span></div>
+          <div class="ds-type-row"><code>--fs-small</code><span class="ds-type ds-type--small">Small text</span></div>
+                </div>
+            </div>
+
+            <div class="ds-block">
+                <h3>Spacing</h3>
+                <div>
+          <div class="ds-type-row"><code>--space-1</code><span class="ds-bar ds-bar--1"></span></div>
+          <div class="ds-type-row"><code>--space-2</code><span class="ds-bar ds-bar--2"></span></div>
+          <div class="ds-type-row"><code>--space-3</code><span class="ds-bar ds-bar--3"></span></div>
+          <div class="ds-type-row"><code>--space-4</code><span class="ds-bar ds-bar--4"></span></div>
+          <div class="ds-type-row"><code>--space-5</code><span class="ds-bar ds-bar--5"></span></div>
+          <div class="ds-type-row"><code>--space-6</code><span class="ds-bar ds-bar--6"></span></div>
+          <div class="ds-type-row"><code>--space-7</code><span class="ds-bar ds-bar--7"></span></div>
+          <div class="ds-type-row"><code>--space-8</code><span class="ds-bar ds-bar--8"></span></div>
+                </div>
+            </div>
+
+            <div class="ds-block">
+                <h3>Radius and shadow</h3>
+                <div class="ds-row">
+          <div class="ds-radius-item"><span class="ds-box ds-box--sm"></span><code>--radius-sm</code></div>
+          <div class="ds-radius-item"><span class="ds-box ds-box--md"></span><code>--radius-md</code></div>
+          <div class="ds-radius-item"><span class="ds-box ds-box--lg"></span><code>--radius-lg</code></div>
+          <div class="ds-radius-item"><span class="ds-box ds-box--pill"></span><code>--radius-pill</code></div>
+                    <div class="ds-radius-item"><span class="ds-box ds-box--shadow-sm"></span><code>--shadow-sm</code></div>
+                    <div class="ds-radius-item"><span class="ds-box ds-box--shadow-lg"></span><code>--shadow-lg</code></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="section bg-muted ds-section" id="components">
+        <div class="container">
+            <div class="section-header">
+                <h2>Components</h2>
+                <p>Each demo is live. The snippet below it is the markup.</p>
+            </div>
+
+            <div class="ds-block" id="hero">
+                <h3>Photo hero</h3>
+                <p class="ds-note">Live at the top of this page. H1, subhead, pills and one button fit above the fold at 1440x900 and 390x844. One .hero--* modifier per image.</p>
+                <pre class="ds-code"><code>&lt;section class="hero hero--photo hero--restaurant"&gt;
+  &lt;div class="container hero-container"&gt;
+    &lt;div class="hero-content"&gt;
+      &lt;h1&gt;Headline in one or two lines.&lt;/h1&gt;
+      &lt;p class="hero-subtitle"&gt;One sentence that says what the page does.&lt;/p&gt;
+      &lt;ul class="stat-pills"&gt;
+        &lt;li class="stat-pill"&gt;23,664 reviews&lt;/li&gt;
+        &lt;li class="stat-pill"&gt;12 locations&lt;/li&gt;
+        &lt;li class="stat-pill"&gt;4.5&amp;ndash;4.8&amp;starf;&lt;/li&gt;
+      &lt;/ul&gt;
+      &lt;div class="hero-actions"&gt;
+        &lt;a class="btn btn-primary" href="/demo"&gt;One primary action&lt;/a&gt;
+      &lt;/div&gt;
+    &lt;/div&gt;
+  &lt;/div&gt;
+&lt;/section&gt;</code></pre>
+            </div>
+
+      <div class="ds-block" id="pills">
+        <h3>Stat pills</h3>
+        <p class="ds-note">Three facts, no more. Light on pages, translucent inside .hero and .cta-band.</p>
+        <div class="ds-demo">
+          <ul class="stat-pills">
+            <li class="stat-pill">23,664 reviews</li>
+            <li class="stat-pill">12 locations</li>
+            <li class="stat-pill">4.5&ndash;4.8&starf;</li>
+          </ul>
+        </div>
+        <pre class="ds-code"><code>&lt;ul class="stat-pills"&gt;
+  &lt;li class="stat-pill"&gt;23,664 reviews&lt;/li&gt;
+  &lt;li class="stat-pill"&gt;12 locations&lt;/li&gt;
+  &lt;li class="stat-pill"&gt;4.5&amp;ndash;4.8&amp;starf;&lt;/li&gt;
+&lt;/ul&gt;</code></pre>
+      </div>
+
+      <div class="ds-block" id="header">
+        <h3>Section header</h3>
+        <p class="ds-note">h2 plus a lede of 25 words or fewer. No eyebrow.</p>
+        <div class="ds-demo">
+          <div class="section-header text-center">
+            <h2>Section heading</h2>
+            <p>One short lede that supports the heading.</p>
+          </div>
+        </div>
+        <pre class="ds-code"><code>&lt;div class="section-header text-center"&gt;
+  &lt;h2&gt;Section heading&lt;/h2&gt;
+  &lt;p&gt;One short lede that supports the heading.&lt;/p&gt;
+&lt;/div&gt;</code></pre>
+      </div>
+
+      <div class="ds-block" id="steps">
+        <h3>Icon steps</h3>
+        <p class="ds-note">Three numbered steps.</p>
+        <div class="ds-demo">
+          <ol class="icon-steps">
+            <li class="icon-step">
+              <span class="icon-step__icon"><i class="fa-solid fa-palette"></i><span class="icon-step__num">1</span></span>
+              <h3>Step one</h3>
+              <p>Short line.</p>
+            </li>
+            <li class="icon-step">
+              <span class="icon-step__icon"><i class="fa-solid fa-wifi"></i><span class="icon-step__num">2</span></span>
+              <h3>Step two</h3>
+              <p>Short line.</p>
+            </li>
+            <li class="icon-step">
+              <span class="icon-step__icon"><i class="fa-solid fa-star"></i><span class="icon-step__num">3</span></span>
+              <h3>Step three</h3>
+              <p>Short line.</p>
+            </li>
+          </ol>
+        </div>
+        <pre class="ds-code"><code>&lt;ol class="icon-steps"&gt;
+  &lt;li class="icon-step"&gt;
+    &lt;span class="icon-step__icon"&gt;&lt;i class="fa-solid fa-palette"&gt;&lt;/i&gt;&lt;span class="icon-step__num"&gt;1&lt;/span&gt;&lt;/span&gt;
+    &lt;h3&gt;Step one&lt;/h3&gt;
+    &lt;p&gt;Short line.&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li class="icon-step"&gt;
+    &lt;span class="icon-step__icon"&gt;&lt;i class="fa-solid fa-wifi"&gt;&lt;/i&gt;&lt;span class="icon-step__num"&gt;2&lt;/span&gt;&lt;/span&gt;
+    &lt;h3&gt;Step two&lt;/h3&gt;
+    &lt;p&gt;Short line.&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li class="icon-step"&gt;
+    &lt;span class="icon-step__icon"&gt;&lt;i class="fa-solid fa-star"&gt;&lt;/i&gt;&lt;span class="icon-step__num"&gt;3&lt;/span&gt;&lt;/span&gt;
+    &lt;h3&gt;Step three&lt;/h3&gt;
+    &lt;p&gt;Short line.&lt;/p&gt;
+  &lt;/li&gt;
+&lt;/ol&gt;</code></pre>
+      </div>
+
+      <div class="ds-block" id="compare">
+        <h3>Comparison table</h3>
+        <p class="ds-note">Wrap in .table-scroll. Use .check-icon and .x-icon with an aria-label.</p>
+        <div class="ds-demo">
+          <div class="table-scroll">
+            <table class="compare-table">
+              <thead>
+                <tr><th scope="col">Feature</th><th scope="col">RateTap</th><th scope="col">Other</th></tr>
+              </thead>
+              <tbody>
+                <tr><th scope="row">Row one</th><td><span class="check-icon" role="img" aria-label="Yes"></span></td><td><span class="x-icon" role="img" aria-label="No"></span></td></tr>
+                <tr><th scope="row">Row two</th><td><span class="check-icon" role="img" aria-label="Yes"></span></td><td><span class="check-icon" role="img" aria-label="Yes"></span></td></tr>
+                <tr><th scope="row">Row three</th><td><span class="check-icon" role="img" aria-label="Yes"></span></td><td><span class="x-icon" role="img" aria-label="No"></span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <pre class="ds-code"><code>&lt;div class="table-scroll"&gt;
+  &lt;table class="compare-table"&gt;
+    &lt;thead&gt;
+      &lt;tr&gt;&lt;th scope="col"&gt;Feature&lt;/th&gt;&lt;th scope="col"&gt;RateTap&lt;/th&gt;&lt;th scope="col"&gt;Other&lt;/th&gt;&lt;/tr&gt;
+    &lt;/thead&gt;
+    &lt;tbody&gt;
+      &lt;tr&gt;&lt;th scope="row"&gt;Row one&lt;/th&gt;&lt;td&gt;&lt;span class="check-icon" role="img" aria-label="Yes"&gt;&lt;/span&gt;&lt;/td&gt;&lt;td&gt;&lt;span class="x-icon" role="img" aria-label="No"&gt;&lt;/span&gt;&lt;/td&gt;&lt;/tr&gt;
+      &lt;tr&gt;&lt;th scope="row"&gt;Row two&lt;/th&gt;&lt;td&gt;&lt;span class="check-icon" role="img" aria-label="Yes"&gt;&lt;/span&gt;&lt;/td&gt;&lt;td&gt;&lt;span class="check-icon" role="img" aria-label="Yes"&gt;&lt;/span&gt;&lt;/td&gt;&lt;/tr&gt;
+      &lt;tr&gt;&lt;th scope="row"&gt;Row three&lt;/th&gt;&lt;td&gt;&lt;span class="check-icon" role="img" aria-label="Yes"&gt;&lt;/span&gt;&lt;/td&gt;&lt;td&gt;&lt;span class="x-icon" role="img" aria-label="No"&gt;&lt;/span&gt;&lt;/td&gt;&lt;/tr&gt;
+    &lt;/tbody&gt;
+  &lt;/table&gt;
+&lt;/div&gt;</code></pre>
+      </div>
+
+      <div class="ds-block" id="stats">
+        <h3>Stat cards</h3>
+        <p class="ds-note">Number, label, source line. Only verified figures.</p>
+        <div class="ds-demo">
+          <div class="stat-cards">
+            <div class="stat-card">
+              <div class="stat-card__num">23,664</div>
+              <div class="stat-card__label">Reviews captured</div>
+              <div class="stat-card__source">Source: RateTap data, Aug 19, 2026</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-card__num">12</div>
+              <div class="stat-card__label">Active locations</div>
+              <div class="stat-card__source">Source: RateTap data, Aug 19, 2026</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-card__num">4.5&ndash;4.8&starf;</div>
+              <div class="stat-card__label">Current Google rating</div>
+              <div class="stat-card__source">Source: Google, Aug 19, 2026</div>
+            </div>
+          </div>
+        </div>
+        <pre class="ds-code"><code>&lt;div class="stat-cards"&gt;
+  &lt;div class="stat-card"&gt;
+    &lt;div class="stat-card__num"&gt;23,664&lt;/div&gt;
+    &lt;div class="stat-card__label"&gt;Reviews captured&lt;/div&gt;
+    &lt;div class="stat-card__source"&gt;Source: RateTap data, Aug 19, 2026&lt;/div&gt;
+  &lt;/div&gt;
+  &lt;div class="stat-card"&gt;
+    &lt;div class="stat-card__num"&gt;12&lt;/div&gt;
+    &lt;div class="stat-card__label"&gt;Active locations&lt;/div&gt;
+    &lt;div class="stat-card__source"&gt;Source: RateTap data, Aug 19, 2026&lt;/div&gt;
+  &lt;/div&gt;
+  &lt;div class="stat-card"&gt;
+    &lt;div class="stat-card__num"&gt;4.5&amp;ndash;4.8&amp;starf;&lt;/div&gt;
+    &lt;div class="stat-card__label"&gt;Current Google rating&lt;/div&gt;
+    &lt;div class="stat-card__source"&gt;Source: Google, Aug 19, 2026&lt;/div&gt;
+  &lt;/div&gt;
+&lt;/div&gt;</code></pre>
+      </div>
+
+      <div class="ds-block" id="cards">
+        <h3>Cards and grids</h3>
+        <p class="ds-note">Existing .card, .grid-3 and .card-icon-wrapper.</p>
+        <div class="ds-demo">
+          <div class="grid-3">
+            <div class="card">
+              <div class="card-icon-wrapper"><i class="fa-solid fa-star"></i></div>
+              <h3>Card title</h3>
+              <p>Short line.</p>
+            </div>
+            <div class="card">
+              <div class="card-icon-wrapper"><i class="fa-solid fa-inbox"></i></div>
+              <h3>Card title</h3>
+              <p>Short line.</p>
+            </div>
+          </div>
+        </div>
+        <pre class="ds-code"><code>&lt;div class="grid-3"&gt;
+  &lt;div class="card"&gt;
+    &lt;div class="card-icon-wrapper"&gt;&lt;i class="fa-solid fa-star"&gt;&lt;/i&gt;&lt;/div&gt;
+    &lt;h3&gt;Card title&lt;/h3&gt;
+    &lt;p&gt;Short line.&lt;/p&gt;
+  &lt;/div&gt;
+  &lt;div class="card"&gt;
+    &lt;div class="card-icon-wrapper"&gt;&lt;i class="fa-solid fa-inbox"&gt;&lt;/i&gt;&lt;/div&gt;
+    &lt;h3&gt;Card title&lt;/h3&gt;
+    &lt;p&gt;Short line.&lt;/p&gt;
+  &lt;/div&gt;
+&lt;/div&gt;</code></pre>
+      </div>
+
+      <div class="ds-block" id="buttons">
+        <h3>Buttons</h3>
+        <p class="ds-note">Pill buttons. One primary per screen.</p>
+        <div class="ds-demo">
+          <a class="btn btn-primary" href="/demo">Primary</a>
+          <a class="btn btn-secondary" href="/demo">Secondary</a>
+        </div>
+        <pre class="ds-code"><code>&lt;a class="btn btn-primary" href="/demo"&gt;Primary&lt;/a&gt;
+&lt;a class="btn btn-secondary" href="/demo"&gt;Secondary&lt;/a&gt;</code></pre>
+      </div>
+
+      <div class="ds-block" id="faq">
+        <h3>FAQ</h3>
+        <p class="ds-note">script.js toggles .active on .faq-item. Answers 40 words or fewer.</p>
+        <div class="ds-demo">
+          <div class="faq-item active">
+            <button class="faq-question"><span>Question?</span><i class="fa-solid fa-minus"></i></button>
+            <div class="faq-answer"><p>Short answer.</p></div>
+          </div>
+          <div class="faq-item">
+            <button class="faq-question"><span>Another question?</span><i class="fa-solid fa-plus"></i></button>
+            <div class="faq-answer"><p>Short answer.</p></div>
+          </div>
+        </div>
+        <pre class="ds-code"><code>&lt;div class="faq-item active"&gt;
+  &lt;button class="faq-question"&gt;&lt;span&gt;Question?&lt;/span&gt;&lt;i class="fa-solid fa-minus"&gt;&lt;/i&gt;&lt;/button&gt;
+  &lt;div class="faq-answer"&gt;&lt;p&gt;Short answer.&lt;/p&gt;&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class="faq-item"&gt;
+  &lt;button class="faq-question"&gt;&lt;span&gt;Another question?&lt;/span&gt;&lt;i class="fa-solid fa-plus"&gt;&lt;/i&gt;&lt;/button&gt;
+  &lt;div class="faq-answer"&gt;&lt;p&gt;Short answer.&lt;/p&gt;&lt;/div&gt;
+&lt;/div&gt;</code></pre>
+      </div>
+
+      <div class="ds-block" id="cta">
+        <h3>CTA band</h3>
+        <p class="ds-note">Dark surface, white text, one button.</p>
+        <div class="ds-demo">
+          <section class="cta-band">
+            <div class="container">
+              <h2>One clear ask</h2>
+              <p>One short supporting line.</p>
+              <a class="btn btn-primary" href="/demo">Try it free</a>
+            </div>
+          </section>
+        </div>
+        <pre class="ds-code"><code>&lt;section class="cta-band"&gt;
+  &lt;div class="container"&gt;
+    &lt;h2&gt;One clear ask&lt;/h2&gt;
+    &lt;p&gt;One short supporting line.&lt;/p&gt;
+    &lt;a class="btn btn-primary" href="/demo"&gt;Try it free&lt;/a&gt;
+  &lt;/div&gt;
+&lt;/section&gt;</code></pre>
+      </div>
+
+      <div class="ds-block" id="forms">
+        <h3>Form fields</h3>
+        <p class="ds-note">.form-group wraps a label and a .field. .form-row makes two columns.</p>
+        <div class="ds-demo">
+          <form>
+            <div class="form-row">
+              <div class="form-group"><label for="ds-name">Name</label><input class="field" id="ds-name" type="text"></div>
+              <div class="form-group"><label for="ds-email">Email</label><input class="field" id="ds-email" type="email"></div>
+            </div>
+            <div class="form-group"><label for="ds-note">Note</label><textarea class="field" id="ds-note" rows="2"></textarea></div>
+            <button class="btn btn-primary" type="button">Send</button>
+          </form>
+        </div>
+        <pre class="ds-code"><code>&lt;form&gt;
+  &lt;div class="form-row"&gt;
+    &lt;div class="form-group"&gt;&lt;label for="ds-name"&gt;Name&lt;/label&gt;&lt;input class="field" id="ds-name" type="text"&gt;&lt;/div&gt;
+    &lt;div class="form-group"&gt;&lt;label for="ds-email"&gt;Email&lt;/label&gt;&lt;input class="field" id="ds-email" type="email"&gt;&lt;/div&gt;
+  &lt;/div&gt;
+  &lt;div class="form-group"&gt;&lt;label for="ds-note"&gt;Note&lt;/label&gt;&lt;textarea class="field" id="ds-note" rows="2"&gt;&lt;/textarea&gt;&lt;/div&gt;
+  &lt;button class="btn btn-primary" type="button"&gt;Send&lt;/button&gt;
+&lt;/form&gt;</code></pre>
+      </div>
+        </div>
+    </section>
+
+    <section class="section ds-section" id="chrome">
+        <div class="container">
+            <div class="section-header">
+                <h2>Nav and footer</h2>
+                <p>Copy verbatim. Rendered live on this page.</p>
+            </div>
+            <div class="ds-block">
+                <h3>Nav</h3>
+                <p class="ds-note">The nav is the dark pill. Prefix links with ../ under /es/. Set the language link to the other language.</p>
+                <pre class="ds-code"><code>&lt;nav class="navbar navbar--hero" id="navbar"&gt;
+  &lt;a href="/" class="nav-brand"&gt;
+    &lt;span class="nav-wordmark"&gt;RateTap&lt;/span&gt;
+  &lt;/a&gt;
+  &lt;div class="nav-menu" id="nav-menu"&gt;
+    &lt;a href="#features" class="nav-link"&gt;Features&lt;/a&gt;
+    &lt;a href="#proof" class="nav-link"&gt;Results&lt;/a&gt;
+    &lt;a href="#pricing" class="nav-link"&gt;Pricing&lt;/a&gt;
+    &lt;a href="/blog/" class="nav-link"&gt;Guides&lt;/a&gt;
+  &lt;/div&gt;
+  &lt;div class="nav-actions"&gt;
+    &lt;a href="/es/" class="nav-lang-toggle"&gt;&lt;i class="fa-solid fa-globe"&gt;&lt;/i&gt; ES&lt;/a&gt;
+    &lt;a href="https://app.ratetapmx.com/contacto?offer=trial_checkout&amp;amp;source_page=home&amp;amp;cta_context=nav&amp;amp;language=en" data-funnel-context="nav" class="btn btn-primary"&gt;Try it free&lt;/a&gt;
+  &lt;/div&gt;
+&lt;/nav&gt;</code></pre>
+            </div>
+            <div class="ds-block">
+                <h3>Footer</h3>
+                <pre class="ds-code"><code>&lt;footer class="footer"&gt;
+  &lt;div class="container"&gt;
+    &lt;div class="footer-grid"&gt;
+      &lt;div class="footer-brand"&gt;
+        &lt;img src="assets/logo-new-small.webp" alt="RateTap" width="225" height="150" decoding="async" loading="eager"&gt;
+        &lt;p&gt;The standard in premium hospitality reputation management.&lt;/p&gt;
+      &lt;/div&gt;
+      &lt;div class="footer-links"&gt;
+        &lt;h4&gt;Platform&lt;/h4&gt;
+        &lt;a href="/reputation-recovery"&gt;Guest Feedback&lt;/a&gt;
+        &lt;a href="/track-waiter-performance-dashboard"&gt;Staff Tracking&lt;/a&gt;
+        &lt;a href="/for-multi-location"&gt;Enterprise&lt;/a&gt;
+      &lt;/div&gt;
+      &lt;div class="footer-links"&gt;
+        &lt;h4&gt;Company&lt;/h4&gt;
+        &lt;a href="/blog/"&gt;Playbooks&lt;/a&gt;
+        &lt;a href="/case-studies"&gt;Case Studies&lt;/a&gt;
+        &lt;a href="/roi-calculator"&gt;ROI Calculator&lt;/a&gt;
+        &lt;a href="/demo#demo-form"&gt;Contact&lt;/a&gt;
+      &lt;/div&gt;
+    &lt;/div&gt;
+    &lt;div class="footer-bottom"&gt;
+      &lt;p&gt;&amp;copy; 2026 RateTap. All rights reserved.&lt;/p&gt;
+      &lt;div class="legal-links"&gt;
+        &lt;a href="privacy.html"&gt;Privacy Policy&lt;/a&gt;
+        &lt;a href="terms.html"&gt;Terms of Service&lt;/a&gt;
+        &lt;a href="cookies.html"&gt;Cookie Policy&lt;/a&gt;
+      &lt;/div&gt;
+    &lt;/div&gt;
+  &lt;/div&gt;
+&lt;/footer&gt;</code></pre>
+            </div>
+        </div>
+    </section>
+
+    <footer class="footer">
+      <div class="container">
+        <div class="footer-grid">
+          <div class="footer-brand">
+            <img src="assets/logo-new-small.webp" alt="RateTap" width="225" height="150" decoding="async" loading="eager">
+            <p>The standard in premium hospitality reputation management.</p>
+          </div>
+          <div class="footer-links">
+            <h4>Platform</h4>
+            <a href="/reputation-recovery">Guest Feedback</a>
+            <a href="/track-waiter-performance-dashboard">Staff Tracking</a>
+            <a href="/for-multi-location">Enterprise</a>
+          </div>
+          <div class="footer-links">
+            <h4>Company</h4>
+            <a href="/blog/">Playbooks</a>
+            <a href="/case-studies">Case Studies</a>
+            <a href="/roi-calculator">ROI Calculator</a>
+            <a href="/demo#demo-form">Contact</a>
+          </div>
+        </div>
+        <div class="footer-bottom">
+          <p>&copy; 2026 RateTap. All rights reserved.</p>
+          <div class="legal-links">
+            <a href="privacy.html">Privacy Policy</a>
+            <a href="terms.html">Terms of Service</a>
+            <a href="cookies.html">Cookie Policy</a>
+          </div>
+        </div>
+      </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+
+</html>
