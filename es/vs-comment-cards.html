@@ -76,24 +76,6 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
         }
     }
      </script>
-<style>
-      .vs-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 2rem;
-        }
-        .vs-table th, .vs-table td {
-            padding: 1.5rem;
-            text-align: left;
-            border-bottom: 1px solid var(--border);
-        }
-        .vs-table th {
-            font-size: 1.25rem;
-            font-weight: 800;
-        }
-        .check-icon { color: var(--brand-blue); font-size: 1.25rem; }
-        .x-icon { color: #EF4444; font-size: 1.25rem; } /* Red 500 */
-     </style>
 <!-- Meta Pixel Code -->
 <script>
       !function(f,b,e,v,n,t,s)
@@ -108,7 +90,7 @@ fbq('init', '1578821303344121');
 fbq('track', 'PageView');
      </script>
 <noscript>
-<img height="1" src="https://www.facebook.com/tr?id=1578821303344121&amp;ev=PageView&amp;noscript=1" style="display:none" width="1"/>
+<img height="1" src="https://www.facebook.com/tr?id=1578821303344121&amp;ev=PageView&amp;noscript=1" hidden width="1"/>
 </noscript>
 <!-- End Meta Pixel Code -->
 <link as="style" href="../styles.css" rel="preload"/>
@@ -124,7 +106,7 @@ fbq('track', 'PageView');
 <body>
 <!-- Google Tag Manager (noscript) -->
 <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-P4DTRR6W"
-height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+height="0" width="0" hidden></iframe></noscript>
 <!-- End Google Tag Manager (noscript) -->
 <div class="ambient-canvas"></div>
 <!-- chrome:header -->
@@ -145,134 +127,52 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <button type="button" class="nav-toggle" aria-label="Open navigation menu" aria-controls="nav-menu" aria-expanded="false"><i class="fa-solid fa-bars"></i></button>
     </nav>
     <!-- /chrome:header -->
-<section class="reveal section bg-muted" style="padding-top: 10rem;">
-<div class="container text-center">
-<h1>
-     Tire el Buzón de Sugerencias
-    </h1>
-<p class="reveal" style="max-width: 600px; margin: 0 auto;">
-     Las tarjetas de papel son lentas, privadas e ignoradas. RateTap es rápido, público y poderoso.
-    </p>
-</div>
+
+<main>
+<section class="hero hero--photo hero--restaurant" id="hero">
+    <div class="container hero-container">
+        <div class="hero-content">
+            <h1>Tire el buzón de sugerencias</h1>
+            <p class="hero-subtitle">Las tarjetas de papel son lentas, privadas e ignoradas. RateTap es rápido y público.</p>
+            <div class="hero-actions">
+                <a class="btn btn-primary" data-funnel-context="hero" href="https://app.ratetapmx.com/contacto?offer=trial_checkout&amp;source_page=vs-comment-cards&amp;cta_context=hero&amp;language=es">Pruébalo 30 días gratis</a>
+            </div>
+            <div class="hero-proof-row" hidden></div>
+        </div>
+    </div>
 </section>
-<section class="reveal section">
-<div class="container">
-<div class="card">
-<table class="vs-table">
-<thead>
-<tr>
-<th style="width: 33%;">
-         Característica
-        </th>
-<th style="width: 33%; color: var(--text-secondary);">
-         Papel
-        </th>
-<th style="width: 33%; color: var(--brand-charcoal);">
-         RateTap (NFC)
-        </th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>
-<strong>
-          Visibilidad Pública
-         </strong>
-</td>
-<td>
-<i class="fa-solid fa-xmark x-icon">
-</i>
-         Cero (Solo privado)
-        </td>
-<td>
-<i class="fa-solid fa-check check-icon">
-</i>
-<strong>
-          Instante en Google
-         </strong>
-</td>
-</tr>
-<tr>
-<td>
-<strong>
-          Velocidad
-         </strong>
-</td>
-<td>
-<i class="fa-solid fa-xmark x-icon">
-</i>
-         Requiere Pluma y Esfuerzo
-        </td>
-<td>
-<i class="fa-solid fa-check check-icon">
-</i>
-<strong>
-          Tocar y Listo (3 seg)
-         </strong>
-</td>
-</tr>
-<tr>
-<td>
-<strong>
-          Datos y Análisis
-         </strong>
-</td>
-<td>
-<i class="fa-solid fa-xmark x-icon">
-</i>
-         Entrada manual requerida
-        </td>
-<td>
-<i class="fa-solid fa-check check-icon">
-</i>
-<strong>
-          Panel en Tiempo Real
-         </strong>
-</td>
-</tr>
-<tr>
-<td>
-<strong>
-          Responsabilidad
-         </strong>
-</td>
-<td>
-<i class="fa-solid fa-xmark x-icon">
-</i>
-         Imposible de rastrear
-        </td>
-<td>
-<i class="fa-solid fa-check check-icon">
-</i>
-<strong>
-          Rastrear por Mesero
-         </strong>
-</td>
-</tr>
-<tr>
-<td>
-<strong>
-          Comentarios Negativos
-         </strong>
-</td>
-<td>
-<i class="fa-solid fa-check check-icon">
-</i>
-         Captura en privado
-        </td>
-<td>
-<i class="fa-solid fa-check check-icon">
-</i>
-<strong>
-          Captura en privado
-         </strong>
-</td>
-</tr>
-</tbody>
-</table>
-</div>
-</div>
+
+<section class="section" id="comparacion">
+    <div class="container">
+        <div class="section-header text-center">
+            <h2>Papel contra RateTap</h2>
+        </div>
+        <div class="table-scroll">
+            <table class="compare-table">
+                <thead>
+                    <tr><th scope="col">Característica</th><th scope="col">Papel</th><th scope="col">RateTap (NFC)</th></tr>
+                </thead>
+                <tbody>
+                    <tr><th scope="row">Visibilidad pública</th><td><span class="x-icon" role="img" aria-label="No"></span> Cero (solo privado)</td><td><span class="check-icon" role="img" aria-label="Sí"></span> Instante en Google</td></tr>
+                    <tr><th scope="row">Velocidad</th><td><span class="x-icon" role="img" aria-label="No"></span> Requiere pluma y esfuerzo</td><td><span class="check-icon" role="img" aria-label="Sí"></span> Tocar y listo</td></tr>
+                    <tr><th scope="row">Datos y análisis</th><td><span class="x-icon" role="img" aria-label="No"></span> Entrada manual requerida</td><td><span class="check-icon" role="img" aria-label="Sí"></span> Panel en tiempo real</td></tr>
+                    <tr><th scope="row">Responsabilidad</th><td><span class="x-icon" role="img" aria-label="No"></span> Imposible de rastrear</td><td><span class="check-icon" role="img" aria-label="Sí"></span> Rastrear por mesero</td></tr>
+                    <tr><th scope="row">Comentarios negativos</th><td><span class="check-icon" role="img" aria-label="Sí"></span> Captura en privado</td><td><span class="check-icon" role="img" aria-label="Sí"></span> Captura en privado</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
 </section>
+
+<section class="cta-band" id="contact">
+    <div class="container">
+        <h2>Prueba RateTap 30 días gratis</h2>
+        <p>MX$1,500 de instalación con tarjetas incluidas. Luego MX$700 al mes.</p>
+        <a class="btn btn-primary" data-funnel-context="footer_band" href="https://app.ratetapmx.com/contacto?offer=trial_checkout&amp;source_page=vs-comment-cards&amp;cta_context=footer_band&amp;language=es">Pruébalo 30 días gratis</a>
+    </div>
+</section>
+</main>
+
 <!-- chrome:footer -->
     <footer class="footer">
         <div class="container">
