@@ -9,11 +9,9 @@ const request = (auth = 'Bearer test-secret', query = '') => new NextRequest(`ht
 afterEach(() => { vi.unstubAllEnvs(); run.mockReset(); });
 
 describe('chef weekly cron boundary', () => {
-  // Ships dark: real chef delivery waits for founder preview approval. Re-add
-  // { path: '/api/cron/chef-weekly-report', schedule: '0 14 * * *' } to go live.
-  it('keeps the chef sweep unscheduled without changing the owner weekly schedule', () => {
+  it('configures daily 14 UTC sweep without changing the owner weekly schedule', () => {
     const config = JSON.parse(fs.readFileSync(new URL('../../vercel.json', import.meta.url), 'utf8'));
-    expect(config.crons.find((c: { path: string }) => c.path === '/api/cron/chef-weekly-report')).toBeUndefined();
+    expect(config.crons.find((c: { path: string }) => c.path === '/api/cron/chef-weekly-report').schedule).toBe('0 14 * * *');
     expect(config.crons.find((c: { path: string }) => c.path === '/api/cron/weekly-digest').schedule).toBe('0 14 * * 1');
   });
   it('keeps both sanitized partial outcomes visible and returns failure, not flawless success', async () => {
