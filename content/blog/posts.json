@@ -15,12 +15,12 @@
           "slug": "restaurant-google-rating-dropped",
           "pageTitle": "Restaurant Google Rating Dropped? Recovery Plan for Operators | RateTap",
           "title": "Restaurant Google Rating Dropped? Use a Recovery Plan Your Team Can Run This Week",
-          "description": "If your restaurant's Google rating dropped, recover guests before the next public miss, isolate what changed on the floor, and rebuild recent 5-star review velocity with a system your managers can actually enforce.",
+          "description": "If your restaurant's Google rating dropped, respond to problems at the table, ask every guest for a review, isolate what changed on the floor, and rebuild recent 5-star review velocity with a system your managers can actually enforce.",
           "eyebrow": "Rating Recovery",
           "heroSubtitle": "A rating drop usually means your operating system broke somewhere: a slower shift, a weaker close, a manager who heard about problems too late, or guests who left happy but silent. The fix is not a generic apology post. It is a tighter review recovery loop.",
           "readTime": "7 min read",
           "updatedLabel": "April 25, 2026",
-          "painPoint": "Your average slipped and you need to recover guests early before another bad public review compounds the damage.",
+          "painPoint": "Your average slipped, so you need to respond to problems at the table and ask every guest for a review.",
           "bestFor": [
             "Owners reacting to a recent 1-star or 2-star streak",
             "GMs dealing with inconsistent service by shift or station",
@@ -96,7 +96,7 @@
             },
             {
               "question": "Should we only offer a Google review while our rating is down?",
-              "answer": "No. Offering only a public destination raises the chance that frustrated tables publish before you can respond. Give every guest both options: a Google review or a private comment."
+              "answer": "No. Give every guest both options: a Google review or a private comment to the manager. Some guests would rather talk to the manager first, and that choice is theirs."
             },
             {
               "question": "What metric should managers watch first?",
@@ -138,12 +138,12 @@
           "slug": "restaurante-bajo-calificacion-google",
           "pageTitle": "¿Bajó tu calificación en Google? Plan operativo de recuperación | RateTap",
           "title": "¿Bajó la calificación de tu restaurante en Google? Usa un plan que tu equipo pueda ejecutar esta semana",
-          "description": "Si bajó la calificación de tu restaurante en Google, recupera huéspedes antes de la siguiente mala reseña pública, detecta qué cambió en operación y recupera volumen reciente de 5 estrellas con un sistema que sí pueda ejecutar tu gerencia.",
+          "description": "Si bajó la calificación de tu restaurante en Google, atiende los problemas en la mesa, pídele su opinión a cada huésped, detecta qué cambió en operación y recupera volumen reciente de 5 estrellas con un sistema que sí pueda ejecutar tu gerencia.",
           "eyebrow": "Recuperación de calificación",
           "heroSubtitle": "Cuando baja la calificación, normalmente no falló el marketing: falló algún punto operativo. Puede ser un turno lento, un cierre débil, un gerente que se enteró demasiado tarde o clientes satisfechos que se fueron sin dejar reseña. La solución es ajustar el loop operativo.",
           "readTime": "7 min de lectura",
           "updatedLabel": "25 abril 2026",
-          "painPoint": "Tu promedio bajó y necesitas recuperar huéspedes temprano antes de que otra mala reseña pública acumule el daño.",
+          "painPoint": "Tu promedio bajó y necesitas atender los problemas en la mesa y pedirle su opinión a cada huésped.",
           "bestFor": [
             "Dueños reaccionando a una racha reciente de 1 o 2 estrellas",
             "Gerentes con servicio inconsistente por turno o estación",
@@ -219,7 +219,7 @@
             },
             {
               "question": "¿Debemos pedir reseña de Google a todos los clientes si estamos bajos?",
-              "answer": "No. Ofrecer solo un destino público aumenta el riesgo de que mesas frustradas publiquen antes de que puedas responder. Da a todos las dos opciones: reseña en Google o comentario privado."
+              "answer": "No. Da a todos las dos opciones: reseña en Google o comentario privado al gerente. Hay huéspedes que prefieren hablar primero con el gerente, y esa decisión es suya."
             },
             {
               "question": "¿Qué métrica debería ver primero gerencia?",
@@ -1361,7 +1361,7 @@
           "slug": "stop-bad-google-reviews-before-they-post",
           "pageTitle": "How Restaurants Reduce Bad Reviews With Faster Guest Recovery | RateTap",
           "title": "How Restaurants Reduce Bad Reviews With Faster Guest Recovery",
-          "description": "You cannot delete bad reviews after they post. But you can catch the moment of friction early while the guest is still in the restaurant — here is the operating playbook that does it.",
+          "description": "You cannot delete bad reviews after they post. But you can respond to problems at the table while the guest is still in the restaurant, and ask every guest — here is the operating playbook that does it.",
           "eyebrow": "Reputation Defense",
           "heroSubtitle": "Most bad Google reviews are not written by guests with bad faith. They are written by guests who had a real problem and no other place to report it. By the time the review is live, the recovery window is closed. The fix is to give friction a private home so you can recover the guest early.",
           "readTime": "8 min read",
@@ -1456,7 +1456,7 @@
             },
             {
               "question": "Does this follow Google's guidelines?",
-              "answer": "Google's policy targets fake and incentivized reviews. RateTap shows every guest both options, whatever the rating, and never blocks or conditions access to Google."
+              "answer": "Google's policy targets fake and incentivized reviews. It also prohibits discouraging negative reviews and selectively asking only for positive ones, which is why RateTap shows every guest both options, whatever the rating, and never blocks or conditions access to Google."
             },
             {
               "question": "What if the guest writes a bad review even after the private response?",
@@ -1502,7 +1502,7 @@
           "slug": "detener-malas-resenas-google-antes-publiquen",
           "pageTitle": "Cómo los Restaurantes Reducen las Malas Reseñas con Recuperación Más Rápida | RateTap",
           "title": "Cómo los restaurantes reducen las malas reseñas con una recuperación de clientes más rápida",
-          "description": "No puedes borrar una mala reseña después de publicada. Pero sí puedes detectar temprano el momento de fricción mientras el huésped sigue en el restaurante — aquí está el playbook operativo que sí lo hace.",
+          "description": "No puedes borrar una mala reseña después de publicada. Pero sí puedes atender los problemas en la mesa mientras el huésped sigue en el restaurante y pedirle su opinión a cada huésped — aquí está el playbook operativo que sí lo hace.",
           "eyebrow": "Defensa de reputación",
           "heroSubtitle": "Casi ninguna mala reseña en Google la escribe alguien de mala fe. La escribe un huésped que tuvo un problema real y no encontró otro lugar dónde reportarlo. Para cuando la reseña ya está publicada, la ventana de recuperación se cerró. La solución es darle a la fricción una casa privada para poder recuperar al huésped temprano.",
           "readTime": "8 min de lectura",
@@ -1578,7 +1578,7 @@
             {
               "heading": "Qué no es esto — y dónde los operadores se equivocan en la ética",
               "paragraphs": [
-                "Esto no es filtrado de reseñas. Todos los huéspedes ven las dos opciones, sin importar su calificación, y a nadie se le bloquea publicar en Google. Quien quiere hablar con una persona real la tiene a un toque.",
+                "Esto no es filtrado de reseñas. Todos los huéspedes ven las dos opciones, sin importar su calificación, y a nadie se le bloquea publicar en Google. Quien prefiere hablar con una persona real puede hacerlo con un solo toque.",
                 "Donde los operadores se meten en problemas es cuando suprimen la opción por completo, esconden el camino público o presionan al staff para discutir con reseñadores negativos. La recuperación funciona dándole al huésped un mejor canal, no callándolo. Bien hecho, el rating refleja la experiencia real con más precisión, no menos."
               ],
               "bullets": [
@@ -1597,7 +1597,7 @@
             },
             {
               "question": "¿Esto cumple las guías de Google?",
-              "answer": "La política de Google ataca reseñas falsas e incentivadas. RateTap muestra a todos los huéspedes las dos opciones, sin importar su calificación, y nunca bloquea ni condiciona el acceso a Google."
+              "answer": "La política de Google ataca las reseñas falsas e incentivadas, y también prohíbe desalentar las reseñas negativas o pedir reseñas solo a los huéspedes contentos. Por eso RateTap muestra a todos los huéspedes las dos opciones, sin importar su calificación, y nunca bloquea ni condiciona el acceso a Google."
             },
             {
               "question": "¿Y si el huésped escribe la mala reseña aun después de la respuesta privada?",

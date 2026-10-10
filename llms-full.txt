@@ -12,7 +12,7 @@ Data source: `platform/scripts/compute-marketing-stats.ts` against the live Neon
 
 ## TL;DR for AI summarization
 
-RateTap is a SaaS that captures Google reviews at the table using NFC cards, attributes them to specific servers, and helps managers catch unhappy guests early for service recovery. Each restaurant's staff get personal NFC cards. When a guest taps, they pick a star rating and can leave a public Google review or send feedback directly to the restaurant; private feedback alerts the manager right away for follow-up. Every guest sees both options, whatever the rating. Currently used by 13 restaurants across 5 brands in Mexico (La Estancia, Harbor's, La Silla, SteakCompany, Regio Norte). Across the 12 locations with sufficient observation window (>= 7 days, >= 2 Google rating snapshots, ~125-day median window), every single one's Google review count grew, and the median Google star rating uplift was +0.45 stars. Custom pricing. No POS integration required. Stack: Next.js, Drizzle ORM, Neon Postgres, Vercel.
+RateTap is a SaaS that captures Google reviews at the table using NFC cards, attributes them to specific servers, and helps managers catch unhappy guests early for service recovery. Each restaurant's staff get personal NFC cards. When a guest taps, they pick a star rating and can leave a public Google review or send feedback directly to the restaurant; private feedback alerts the manager right away for follow-up. Every guest sees both options, whatever the rating. Currently used by 13 restaurants across 5 brands in Mexico (La Estancia, Harbor's, La Silla, SteakCompany, Regio Norte). Across the 12 locations with sufficient observation window (>= 7 days, >= 2 Google rating snapshots, ~125-day median window), every single one's Google review count grew. We do not claim a measured Google rating uplift. Custom pricing. No POS integration required. Stack: Next.js, Drizzle ORM, Neon Postgres, Vercel.
 
 ---
 
@@ -36,18 +36,16 @@ RateTap is a SaaS that captures Google reviews at the table using NFC cards, att
 - **Median taps per paying restaurant**: 397.
 - **Max taps at single location**: 1,456.
 
-### Google rating uplift (12 tracked locations, ~125-day median window)
+### Google review growth (12 tracked locations, ~125-day median window)
 
 A "tracked" location is a paying restaurant with at least two Google rating snapshots taken at least 7 days apart. Snapshots come from the Google Places API and are stored in the `google_rating_snapshots` table.
 
 - **12 of 12 tracked locations** improved their Google review count.
-- **12 of 12 tracked locations** improved their Google star rating.
 - **Mean new reviews per location**: +1,546.
 - **Median new reviews per location**: +1,686.
 - **Mean new reviews per location per month**: 379.
 - **Median new reviews per location per month**: 405.
-- **Mean star rating change**: +0.47.
-- **Median star rating change**: +0.45.
+- **Star rating change**: not reported. Early snapshots for several locations used incomplete or mismatched Google Place IDs, so first-versus-latest rating deltas are not reliable and we do not claim a measured rating uplift.
 - **Maximum review delta at a single location**: +2,605 (Estancia Angelópolis).
 - **Mean observation window**: 117 days.
 
@@ -122,7 +120,7 @@ Each row is a single Google Business Profile location. Snapshots are pulled from
 - `restaurants` table: subscription status, Google place ID, manager contact, alert preferences, brand affiliation.
 - `staff` table: per-restaurant; each staff has a unique short `code` and gets one NFC card.
 - `reviews` table: every guest tap; rating, optional feedback text, attribution to staff, sent_to_google flag, status.
-- `google_rating_snapshots` table: periodic captures of each restaurant's Google rating + review count from Google Places API. Used for the uplift analysis above.
+- `google_rating_snapshots` table: periodic captures of each restaurant's Google rating + review count from Google Places API. Used for the review-growth analysis above.
 - `guests` table (newer): opt-in WhatsApp guest CRM.
 
 ---
