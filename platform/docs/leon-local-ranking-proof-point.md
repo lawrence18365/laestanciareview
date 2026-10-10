@@ -48,8 +48,8 @@ Insertar en la sección 4 del playbook, **entre el párrafo 2** ("Aquí viene lo
 
 ## 3. Lo que NO se dice
 
-- Que RateTap causó el #1, ni "gracias a RateTap".
-- Que RateTap generó las ~3.5K reseñas. Los números propios de RateTap en La Estancia León (2,097 capturadas, 1,817 enviadas a Google, corte 2026-08-19) son toques enviados, no reseñas publicadas confirmadas.
+- Que RateTap causó el #1, o cualquier frase que atribuya el lugar a RateTap.
+- Que las ~3.5K reseñas vinieron de RateTap. Los números propios de RateTap en La Estancia León (2,097 capturadas, 1,817 enviadas a Google, corte 2026-08-19) son toques enviados, no reseñas publicadas confirmadas.
 - Que se pueda "ganarle" o "engañar" a Google.
 - Metas, cuotas, rankings o competencias de reseñas por mesero (riesgo con la política de Google).
 - Que Google premia reseñas "frescas".
