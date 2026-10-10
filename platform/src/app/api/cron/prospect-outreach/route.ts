@@ -105,6 +105,9 @@ export async function GET(req: NextRequest) {
   if (!auth || auth !== CRON_SECRET) {
     return Response.json({ error: 'Unauthorized' }, { status: 401 });
   }
+  if (process.env.PROSPECT_SMS_ENABLED !== 'true') {
+    return Response.json({ status: 'disabled' });
+  }
 
   const discovered: string[] = [];
   const queued: string[] = [];

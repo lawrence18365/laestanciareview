@@ -47,6 +47,9 @@ export async function GET(req: NextRequest) {
   if (!auth || auth !== CRON_SECRET) {
     return Response.json({ error: 'Unauthorized' }, { status: 401 });
   }
+  if (process.env.AUDIT_FOLLOWUP_SMS_ENABLED !== 'true') {
+    return Response.json({ status: 'disabled' });
+  }
 
   // Audit views older than 24h that haven't received the prospect follow-up.
   // `lastNotifiedAt` is used for owner notifications from /api/audit/track.
