@@ -24,6 +24,13 @@
     <link rel="preload" href="../../styles.css" as="style"/>
     <link rel="stylesheet" href="../../styles.css"/>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+    <style>
+        /* Offset below the fixed navbar, then tighten the section that follows. */
+        .page-top { padding-top: calc(var(--space-8) * 2 + var(--space-6)); padding-bottom: var(--space-7); }
+        .page-top + .section { padding-top: var(--space-7); }
+        .page-top h1 { font-size: var(--fs-h1); }
+        .section--tight { padding-top: var(--space-6); }
+    </style>
     <!-- chrome:icons -->
     <link rel="icon" href="/favicon.ico" sizes="32x32">
     <link rel="icon" href="/assets/brand/favicon.svg" type="image/svg+xml">
@@ -53,7 +60,8 @@
         <button type="button" class="nav-toggle" aria-label="Open navigation menu" aria-controls="nav-menu" aria-expanded="false"><i class="fa-solid fa-bars"></i></button>
     </nav>
     <!-- /chrome:header -->
-    <section class="section blog-hero" style="padding-top: 10rem;">
+    <main>
+    <section class="section page-top">
         <div class="container blog-shell">
             <h1>Cómo medir el desempeño de meseros en reseñas sin convertir la hospitalidad en presión</h1>
             <p class="blog-hero-copy">El crecimiento de reseñas suele verse como marketing, pero dentro del restaurante se comporta más como ejecución de primera línea. Si no puedes ver quién genera buenos cierres y quién deja ir visitas positivas sin capturar, el coaching se vuelve difuso.</p>
@@ -66,7 +74,7 @@
         </div>
     </section>
 
-    <section class="section" style="padding-top: 2rem;">
+    <section class="section">
         <div class="container blog-shell blog-article-grid">
             <aside class="blog-rail">
                 <div class="blog-rail-card reveal">
@@ -153,50 +161,37 @@
         </div>
     </section>
 
-    <section class="section">
+    <section class="section bg-muted">
         <div class="container blog-shell">
-            <div class="blog-cta-card reveal">
-                <h2>¿Quieres visibilidad por mesero, turno y sucursal?</h2>
-                <p>RateTap le da a cada miembro del staff una ruta distinta de captura para que gerencia vea volumen, quejas y consistencia sin volver el servicio un guion.</p>
-                <div class="blog-cta-actions">
-                    <a class="btn btn-primary" href="../demo">Agendar demo</a>
-                    <a class="btn btn-secondary" href="../track-waiter-performance-dashboard">Ver la plataforma</a>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <section class="section blog-faq-section">
-        <div class="container blog-shell">
-            <div class="section-header" style="margin-bottom: 2rem;">
+            <div class="section-header">
                 <h2>Preguntas sobre responsabilidad del staff</h2>
             </div>
-            <div class="blog-faq-grid">
+            <div class="reveal">
 
-                <div class="blog-faq-card reveal">
-                    <h3>¿El seguimiento por mesero crea competencia tóxica?</h3>
-                    <p>Puede pasar si solo usas un ranking. Se vuelve productivo cuando combinas atribución con coaching, visibilidad de bajo puntaje y estándares de experiencia para el huésped.</p>
+                <div class="faq-item active">
+                    <button class="faq-question" type="button"><span>¿El seguimiento por mesero crea competencia tóxica?</span><i class="fa-solid fa-minus"></i></button>
+                    <div class="faq-answer"><p>Puede pasar si solo usas un ranking. Se vuelve productivo cuando combinas atribución con coaching, visibilidad de bajo puntaje y estándares de experiencia para el huésped.</p></div>
                 </div>
         
 
-                <div class="blog-faq-card reveal">
-                    <h3>¿Qué debería comparar gerencia entre personas?</h3>
-                    <p>Conviene ver volumen de reseñas, detección de problemas de clientes, consistencia por turno y si la solicitud ocurre en el momento correcto. Los conteos solos son superficiales.</p>
+                <div class="faq-item">
+                    <button class="faq-question" type="button"><span>¿Qué debería comparar gerencia entre personas?</span><i class="fa-solid fa-plus"></i></button>
+                    <div class="faq-answer"><p>Conviene ver volumen de reseñas, detección de problemas de clientes, consistencia por turno y si la solicitud ocurre en el momento correcto. Los conteos solos son superficiales.</p></div>
                 </div>
         
 
-                <div class="blog-faq-card reveal">
-                    <h3>¿Esto puede funcionar en varias sucursales?</h3>
-                    <p>Sí, siempre que el flujo esté estandarizado y el dato se amarre a staff, turno y ubicación. Eso deja comparar ejecución sin borrar el contexto local.</p>
+                <div class="faq-item">
+                    <button class="faq-question" type="button"><span>¿Esto puede funcionar en varias sucursales?</span><i class="fa-solid fa-plus"></i></button>
+                    <div class="faq-answer"><p>Sí, siempre que el flujo esté estandarizado y el dato se amarre a staff, turno y ubicación. Eso deja comparar ejecución sin borrar el contexto local.</p></div>
                 </div>
         
             </div>
         </div>
     </section>
 
-    <section class="section" style="padding-top: 2rem;">
+    <section class="section">
         <div class="container blog-shell">
-            <div class="section-header" style="margin-bottom: 2rem;">
+            <div class="section-header">
                 <h2>Construye la capa de accountability</h2>
             </div>
             <div class="blog-related-grid">
@@ -224,6 +219,15 @@
             </div>
         </div>
     </section>
+
+    <section class="cta-band">
+        <div class="container blog-shell">
+            <h2>¿Quieres visibilidad por mesero, turno y sucursal?</h2>
+            <p>RateTap le da a cada miembro del staff una ruta distinta de captura para que gerencia vea volumen, quejas y consistencia sin volver el servicio un guion.</p>
+            <a class="btn btn-primary" href="../demo">Agendar demo</a>
+        </div>
+    </section>
+    </main>
     <!-- chrome:footer -->
     <footer class="footer">
         <div class="container">

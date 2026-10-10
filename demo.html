@@ -82,12 +82,21 @@ fbq('init', '1578821303344121');
 fbq('track', 'PageView');
       </script>
 <noscript>
-<img height="1" src="https://www.facebook.com/tr?id=1578821303344121&amp;ev=PageView&amp;noscript=1" style="display:none" width="1"/>
+<img height="1" src="https://www.facebook.com/tr?id=1578821303344121&amp;ev=PageView&amp;noscript=1" hidden width="1"/>
 </noscript>
 <!-- End Meta Pixel Code -->
 <link as="style" href="styles.css" rel="preload"/>
 <link href="styles.css" rel="stylesheet"/>
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"/>
+        <style>
+    /* Page-level: offset below the fixed navbar. Tokens only. */
+    .page-top { padding-top: calc(var(--space-8) * 2 + var(--space-6)); }
+    .page-top h1 { margin-bottom: var(--space-3); font-size: var(--fs-h1); }
+    /* Two-column utility pages: left-aligned copy, top-aligned columns, compact cards. */
+    .grid-2.two-col { align-items: start; gap: var(--space-7); text-align: left; }
+    .two-col .card { padding: var(--space-6); }
+    .form-note { margin-top: var(--space-4); font-size: var(--fs-small); color: var(--ink-2); text-align: center; }
+    </style>
     <!-- chrome:icons -->
     <link rel="icon" href="/favicon.ico" sizes="32x32">
     <link rel="icon" href="/assets/brand/favicon.svg" type="image/svg+xml">
@@ -98,7 +107,7 @@ fbq('track', 'PageView');
 <body>
 <!-- Google Tag Manager (noscript) -->
 <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-P4DTRR6W"
-height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+height="0" width="0" hidden></iframe></noscript>
 <!-- End Google Tag Manager (noscript) -->
 <div class="ambient-canvas"></div>
 <!-- chrome:header -->
@@ -119,121 +128,78 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <button type="button" class="nav-toggle" aria-label="Open navigation menu" aria-controls="nav-menu" aria-expanded="false"><i class="fa-solid fa-bars"></i></button>
     </nav>
     <!-- /chrome:header -->
-<section class="reveal section">
-<div class="container" style="padding-top: 4rem;">
-<div class="grid-2">
-<div>
-<h1>
-       See RateTap in Action
-      </h1>
-<p class="reveal mb-8">
-       Join a 15-minute walkthrough with our product specialists. We'll show you:
-      </p>
-<div class="feature-list-item">
-<div class="feature-list-icon">
-<i class="fa-solid fa-wand-magic-sparkles">
-</i>
-</div>
-<div>
-<h4>
-         The Dashboard
-        </h4>
-<p class="reveal">
-         How to track staff performance and identify your top servers.
-        </p>
-</div>
-</div>
-<div class="feature-list-item">
-<div class="feature-list-icon">
-<i class="fa-solid fa-shield-cat">
-</i>
-</div>
-<div>
-<h4>
-         Guest Recovery
-        </h4>
-<p class="reveal">
-         A live demo of how we catch unhappy guests before they leave unheard.
-        </p>
-</div>
-</div>
-<div class="feature-list-item">
-<div class="feature-list-icon">
-<i class="fa-solid fa-chart-line">
-</i>
-</div>
-<div>
-<h4>
-         Reporting
-        </h4>
-<p class="reveal">
-         How to generate weekly reports for your management team.
-        </p>
-</div>
-</div>
-</div>
-<div class="card">
-<h3 class="reveal mb-4">
-       Schedule a Time
-      </h3>
-<form action="https://formsubmit.co/hello@ratetapmx.com" id="demo-form" method="POST" style="display: flex; flex-direction: column; gap: 1rem;">
-<input name="_subject" type="hidden" value="New Demo Request"/>
-<input name="_next" type="hidden" value="https://ratetapmx.com/demo?thanks=1"/>
-<div style="display: flex; gap: 1rem;">
-<div style="flex: 1;">
-<label style="font-weight: 600; font-size: 0.9rem;">
-          First Name
-         </label>
-<input class="calc-input" name="first_name" required="" style="margin-bottom: 0; padding: 0.5rem;" type="text"/>
-</div>
-<div style="flex: 1;">
-<label style="font-weight: 600; font-size: 0.9rem;">
-          Last Name
-         </label>
-<input class="calc-input" name="last_name" required="" style="margin-bottom: 0; padding: 0.5rem;" type="text"/>
-</div>
-</div>
-<div>
-<label style="font-weight: 600; font-size: 0.9rem;">
-         Restaurant Name
-        </label>
-<input class="calc-input" name="restaurant_name" required="" style="margin-bottom: 0; padding: 0.5rem;" type="text"/>
-</div>
-<div>
-<label style="font-weight: 600; font-size: 0.9rem;">
-         Email
-        </label>
-	<input class="calc-input" name="email" required="" style="margin-bottom: 0; padding: 0.5rem;" type="email"/>
-	</div>
-	<div>
-	<label style="font-weight: 600; font-size: 0.9rem;">
-	         Phone / WhatsApp
-	        </label>
-	<input class="calc-input" name="phone" required="" style="margin-bottom: 0; padding: 0.5rem;" type="tel"/>
-	</div>
-	<div>
-	<label style="font-weight: 600; font-size: 0.9rem;">
-	         Preferred Date
-	        </label>
-	<input class="calc-input" name="preferred_date" required="" style="margin-bottom: 0; padding: 0.5rem;" type="date"/>
-	</div>
-	<div>
-	<label style="font-weight: 600; font-size: 0.9rem;">
-	         Preferred Time
-	        </label>
-	<input class="calc-input" name="preferred_time" required="" style="margin-bottom: 0; padding: 0.5rem;" type="time"/>
-	</div>
-<button class="btn btn-primary" style="margin-top: 1rem;" type="submit">
-        Confirm Booking
-       </button>
-</form>
-<p class="reveal" style="font-size: 0.8rem; margin-top: 1rem; text-align: center; color: var(--text-secondary);">
-       No credit card required.
-      </p>
-</div>
-</div>
-</div>
+<main>
+<section class="section page-top">
+    <div class="container">
+        <div class="grid-2 two-col">
+            <div>
+                <h1>See RateTap in Action</h1>
+                <p class="reveal mb-8">Join a 15-minute walkthrough with our product specialists. We'll show you:</p>
+                    <div class="feature-list-item">
+                        <div class="feature-list-icon"><i class="fa-solid fa-wand-magic-sparkles"></i></div>
+                        <div>
+                            <h4>The Dashboard</h4>
+                            <p class="reveal">How to track staff performance and identify your top servers.</p>
+                        </div>
+                    </div>
+                    <div class="feature-list-item">
+                        <div class="feature-list-icon"><i class="fa-solid fa-shield-cat"></i></div>
+                        <div>
+                            <h4>Guest Recovery</h4>
+                            <p class="reveal">A live demo of how we catch unhappy guests before they leave unheard.</p>
+                        </div>
+                    </div>
+                    <div class="feature-list-item">
+                        <div class="feature-list-icon"><i class="fa-solid fa-chart-line"></i></div>
+                        <div>
+                            <h4>Reporting</h4>
+                            <p class="reveal">How to generate weekly reports for your management team.</p>
+                        </div>
+                    </div>
+            </div>
+            <div class="card">
+                <h3 class="reveal mb-4">Schedule a Time</h3>
+                <form action="https://formsubmit.co/hello@ratetapmx.com" id="demo-form" method="POST">
+                    <input name="_subject" type="hidden" value="New Demo Request"/>
+                    <input name="_next" type="hidden" value="https://ratetapmx.com/demo?thanks=1"/>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="demo-first_name">First Name</label>
+                            <input class="field" id="demo-first_name" name="first_name" required="" type="text"/>
+                        </div>
+                        <div class="form-group">
+                            <label for="demo-last_name">Last Name</label>
+                            <input class="field" id="demo-last_name" name="last_name" required="" type="text"/>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                            <label for="demo-restaurant_name">Restaurant Name</label>
+                            <input class="field" id="demo-restaurant_name" name="restaurant_name" required="" type="text"/>
+                        </div>
+                    <div class="form-group">
+                            <label for="demo-email">Email</label>
+                            <input class="field" id="demo-email" name="email" required="" type="email"/>
+                        </div>
+                    <div class="form-group">
+                            <label for="demo-phone">Phone / WhatsApp</label>
+                            <input class="field" id="demo-phone" name="phone" required="" type="tel"/>
+                        </div>
+                    <div class="form-group">
+                            <label for="demo-preferred_date">Preferred Date</label>
+                            <input class="field" id="demo-preferred_date" name="preferred_date" required="" type="date"/>
+                        </div>
+                    <div class="form-group">
+                            <label for="demo-preferred_time">Preferred Time</label>
+                            <input class="field" id="demo-preferred_time" name="preferred_time" required="" type="time"/>
+                        </div>
+                    <button class="btn btn-primary" type="submit">Confirm Booking</button>
+                </form>
+                <p class="form-note">No credit card required.</p>
+            </div>
+        </div>
+    </div>
 </section>
+</main>
 <!-- chrome:footer -->
     <footer class="footer">
         <div class="container">

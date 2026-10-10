@@ -24,6 +24,13 @@
     <link rel="preload" href="../styles.css" as="style"/>
     <link rel="stylesheet" href="../styles.css"/>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+    <style>
+        /* Offset below the fixed navbar, then tighten the section that follows. */
+        .page-top { padding-top: calc(var(--space-8) * 2 + var(--space-6)); padding-bottom: var(--space-7); }
+        .page-top + .section { padding-top: var(--space-7); }
+        .page-top h1 { font-size: var(--fs-h1); }
+        .section--tight { padding-top: var(--space-6); }
+    </style>
     <!-- chrome:icons -->
     <link rel="icon" href="/favicon.ico" sizes="32x32">
     <link rel="icon" href="/assets/brand/favicon.svg" type="image/svg+xml">
@@ -54,7 +61,8 @@
     </nav>
     <!-- /chrome:header -->
 
-    <section class="section blog-index-hero" style="padding-top: 10rem;">
+    <main>
+    <section class="section page-top">
         <div class="container blog-shell">
             <h1>Restaurant operator playbooks built around real review pain.</h1>
             <p class="blog-hero-copy">Practical guides for owners and GMs trying to recover ratings, capture more Google reviews, and make staff accountability measurable.</p>
@@ -64,7 +72,7 @@
         </div>
     </section>
 
-    <section class="section" style="padding-top: 2rem;">
+    <section class="section">
         <div class="container blog-shell">
             <div class="blog-featured-card reveal">
                 <div>
@@ -83,7 +91,7 @@
         </div>
     </section>
 
-    <section class="section">
+    <section class="section section--tight">
         <div class="container blog-shell">
             <div class="blog-card-grid">
 
@@ -181,9 +189,9 @@
         </div>
     </section>
 
-    <section class="section">
+    <section class="section bg-muted">
         <div class="container blog-shell">
-            <div class="section-header" style="margin-bottom: 2rem;">
+            <div class="section-header">
                 <h2>What this library is built to solve</h2>
             </div>
             <div class="blog-cluster-grid">
@@ -209,18 +217,14 @@
         </div>
     </section>
 
-    <section class="section">
+    <section class="cta-band">
         <div class="container blog-shell">
-            <div class="blog-cta-card reveal">
-                <h2>Want the software behind these playbooks?</h2>
-                <p>RateTap turns the advice into an operating system: instant private feedback, an easy Google review option for every guest, and server-level accountability.</p>
-                <div class="blog-cta-actions">
-                    <a class="btn btn-primary" href="../demo">Book a demo</a>
-                    <a class="btn btn-secondary" href="../restaurant-review-management-software">See the platform</a>
-                </div>
-            </div>
+            <h2>Want the software behind these playbooks?</h2>
+            <p>RateTap turns the advice into an operating system: instant private feedback, an easy Google review option for every guest, and server-level accountability.</p>
+            <a class="btn btn-primary" href="../demo">Book a demo</a>
         </div>
     </section>
+    </main>
     <!-- chrome:footer -->
     <footer class="footer">
         <div class="container">

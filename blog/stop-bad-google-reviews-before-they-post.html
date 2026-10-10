@@ -24,6 +24,13 @@
     <link rel="preload" href="../styles.css" as="style"/>
     <link rel="stylesheet" href="../styles.css"/>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+    <style>
+        /* Offset below the fixed navbar, then tighten the section that follows. */
+        .page-top { padding-top: calc(var(--space-8) * 2 + var(--space-6)); padding-bottom: var(--space-7); }
+        .page-top + .section { padding-top: var(--space-7); }
+        .page-top h1 { font-size: var(--fs-h1); }
+        .section--tight { padding-top: var(--space-6); }
+    </style>
     <!-- chrome:icons -->
     <link rel="icon" href="/favicon.ico" sizes="32x32">
     <link rel="icon" href="/assets/brand/favicon.svg" type="image/svg+xml">
@@ -53,7 +60,8 @@
         <button type="button" class="nav-toggle" aria-label="Open navigation menu" aria-controls="nav-menu" aria-expanded="false"><i class="fa-solid fa-bars"></i></button>
     </nav>
     <!-- /chrome:header -->
-    <section class="section blog-hero" style="padding-top: 10rem;">
+    <main>
+    <section class="section page-top">
         <div class="container blog-shell">
             <h1>How Restaurants Reduce Bad Reviews With Faster Guest Recovery</h1>
             <p class="blog-hero-copy">Most bad Google reviews are not written by guests with bad faith. They are written by guests who had a real problem and no other place to report it. By the time the review is live, the recovery window is closed. The fix is to give friction a private home so you can recover the guest early.</p>
@@ -66,7 +74,7 @@
         </div>
     </section>
 
-    <section class="section" style="padding-top: 2rem;">
+    <section class="section">
         <div class="container blog-shell blog-article-grid">
             <aside class="blog-rail">
                 <div class="blog-rail-card reveal">
@@ -183,56 +191,43 @@
         </div>
     </section>
 
-    <section class="section">
+    <section class="section bg-muted">
         <div class="container blog-shell">
-            <div class="blog-cta-card reveal">
-                <h2>Want private feedback live in your restaurant this week?</h2>
-                <p>We set up the guest choice screen, the manager alerts, and the recovery dashboard. Most operators see the first recovered guest issue within 48 hours of going live.</p>
-                <div class="blog-cta-actions">
-                    <a class="btn btn-primary" href="../stop-bad-restaurant-reviews?offer=protect-pilot&amp;source_page=blog-stop-bad-reviews&amp;source_cluster=reputation-defense#contact">Set up reputation defense</a>
-                    <a class="btn btn-secondary" href="../restaurant-review-management-software">See how it works</a>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <section class="section blog-faq-section">
-        <div class="container blog-shell">
-            <div class="section-header" style="margin-bottom: 2rem;">
+            <div class="section-header">
                 <h2>Common questions about preventing bad reviews</h2>
             </div>
-            <div class="blog-faq-grid">
+            <div class="reveal">
 
-                <div class="blog-faq-card reveal">
-                    <h3>Is it ethical to offer a private feedback option?</h3>
-                    <p>Yes. Every guest sees both a Google review button and a private comment button, whatever the rating. Nothing is blocked, and the private option leads to a real response.</p>
+                <div class="faq-item active">
+                    <button class="faq-question" type="button"><span>Is it ethical to offer a private feedback option?</span><i class="fa-solid fa-minus"></i></button>
+                    <div class="faq-answer"><p>Yes. Every guest sees both a Google review button and a private comment button, whatever the rating. Nothing is blocked, and the private option leads to a real response.</p></div>
                 </div>
         
 
-                <div class="blog-faq-card reveal">
-                    <h3>Does this follow Google&#x27;s guidelines?</h3>
-                    <p>Google&#x27;s policy targets fake and incentivized reviews. It also prohibits discouraging negative reviews and selectively asking only for positive ones, which is why RateTap shows every guest both options, whatever the rating, and never blocks or conditions access to Google.</p>
+                <div class="faq-item">
+                    <button class="faq-question" type="button"><span>Does this follow Google&#x27;s guidelines?</span><i class="fa-solid fa-plus"></i></button>
+                    <div class="faq-answer"><p>Google&#x27;s policy targets fake and incentivized reviews. It also prohibits discouraging negative reviews and selectively asking only for positive ones, which is why RateTap shows every guest both options, whatever the rating, and never blocks or conditions access to Google.</p></div>
                 </div>
         
 
-                <div class="blog-faq-card reveal">
-                    <h3>What if the guest writes a bad review even after the private response?</h3>
-                    <p>It happens. Guests can always post on Google. You will have a documented record of the recovery attempt to reference in your public reply if you choose to respond.</p>
+                <div class="faq-item">
+                    <button class="faq-question" type="button"><span>What if the guest writes a bad review even after the private response?</span><i class="fa-solid fa-plus"></i></button>
+                    <div class="faq-answer"><p>It happens. Guests can always post on Google. You will have a documented record of the recovery attempt to reference in your public reply if you choose to respond.</p></div>
                 </div>
         
 
-                <div class="blog-faq-card reveal">
-                    <h3>Do we need a dedicated person to monitor the private inbox?</h3>
-                    <p>Not full-time, but the inbox needs a clear owner per shift. Most operators assign it to the manager on duty with escalation rules for complaints that need executive attention.</p>
+                <div class="faq-item">
+                    <button class="faq-question" type="button"><span>Do we need a dedicated person to monitor the private inbox?</span><i class="fa-solid fa-plus"></i></button>
+                    <div class="faq-answer"><p>Not full-time, but the inbox needs a clear owner per shift. Most operators assign it to the manager on duty with escalation rules for complaints that need executive attention.</p></div>
                 </div>
         
             </div>
         </div>
     </section>
 
-    <section class="section" style="padding-top: 2rem;">
+    <section class="section">
         <div class="container blog-shell">
-            <div class="section-header" style="margin-bottom: 2rem;">
+            <div class="section-header">
                 <h2>Build the rest of the defense</h2>
             </div>
             <div class="blog-related-grid">
@@ -260,6 +255,15 @@
             </div>
         </div>
     </section>
+
+    <section class="cta-band">
+        <div class="container blog-shell">
+            <h2>Want private feedback live in your restaurant this week?</h2>
+            <p>We set up the guest choice screen, the manager alerts, and the recovery dashboard. Most operators see the first recovered guest issue within 48 hours of going live.</p>
+            <a class="btn btn-primary" href="../stop-bad-restaurant-reviews?offer=protect-pilot&amp;source_page=blog-stop-bad-reviews&amp;source_cluster=reputation-defense#contact">Set up reputation defense</a>
+        </div>
+    </section>
+    </main>
     <!-- chrome:footer -->
     <footer class="footer">
         <div class="container">

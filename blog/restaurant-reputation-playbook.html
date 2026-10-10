@@ -24,6 +24,13 @@
     <link rel="preload" href="../styles.css" as="style"/>
     <link rel="stylesheet" href="../styles.css"/>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+    <style>
+        /* Offset below the fixed navbar, then tighten the section that follows. */
+        .page-top { padding-top: calc(var(--space-8) * 2 + var(--space-6)); padding-bottom: var(--space-7); }
+        .page-top + .section { padding-top: var(--space-7); }
+        .page-top h1 { font-size: var(--fs-h1); }
+        .section--tight { padding-top: var(--space-6); }
+    </style>
     <!-- chrome:icons -->
     <link rel="icon" href="/favicon.ico" sizes="32x32">
     <link rel="icon" href="/assets/brand/favicon.svg" type="image/svg+xml">
@@ -53,7 +60,8 @@
         <button type="button" class="nav-toggle" aria-label="Open navigation menu" aria-controls="nav-menu" aria-expanded="false"><i class="fa-solid fa-bars"></i></button>
     </nav>
     <!-- /chrome:header -->
-    <section class="section blog-hero" style="padding-top: 10rem;">
+    <main>
+    <section class="section page-top">
         <div class="container blog-shell">
             <h1>The 2026 Restaurant Reputation Playbook: Operations, Not Marketing</h1>
             <p class="blog-hero-copy">Reviews are the outcome of operational systems. When a restaurant tries to fix a bad rating with marketing or apologies, they fail. You need a playbook that fixes the service loop on the floor.</p>
@@ -66,7 +74,7 @@
         </div>
     </section>
 
-    <section class="section" style="padding-top: 2rem;">
+    <section class="section">
         <div class="container blog-shell blog-article-grid">
             <aside class="blog-rail">
                 <div class="blog-rail-card reveal">
@@ -145,44 +153,31 @@
         </div>
     </section>
 
-    <section class="section">
+    <section class="section bg-muted">
         <div class="container blog-shell">
-            <div class="blog-cta-card reveal">
-                <h2>Need the right tool for your playbook?</h2>
-                <p>RateTap provides the exact hardware and software needed to execute a modern, operations-first reputation strategy.</p>
-                <div class="blog-cta-actions">
-                    <a class="btn btn-primary" href="../demo">Book a demo</a>
-                    <a class="btn btn-secondary" href="../restaurant-review-management-software">Explore the platform</a>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <section class="section blog-faq-section">
-        <div class="container blog-shell">
-            <div class="section-header" style="margin-bottom: 2rem;">
+            <div class="section-header">
                 <h2>Playbook implementation questions</h2>
             </div>
-            <div class="blog-faq-grid">
+            <div class="reveal">
 
-                <div class="blog-faq-card reveal">
-                    <h3>How long does it take to implement this playbook?</h3>
-                    <p>With the right tools, you can implement an in-moment capture and guest recovery system in a single pre-shift meeting.</p>
+                <div class="faq-item active">
+                    <button class="faq-question" type="button"><span>How long does it take to implement this playbook?</span><i class="fa-solid fa-minus"></i></button>
+                    <div class="faq-answer"><p>With the right tools, you can implement an in-moment capture and guest recovery system in a single pre-shift meeting.</p></div>
                 </div>
         
 
-                <div class="blog-faq-card reveal">
-                    <h3>Should we reward staff for review counts?</h3>
-                    <p>Avoid rewards tied to review counts. Google prohibits incentivized reviews. Make asking every guest a standard part of service instead.</p>
+                <div class="faq-item">
+                    <button class="faq-question" type="button"><span>Should we reward staff for review counts?</span><i class="fa-solid fa-plus"></i></button>
+                    <div class="faq-answer"><p>Avoid rewards tied to review counts. Google prohibits incentivized reviews. Make asking every guest a standard part of service instead.</p></div>
                 </div>
         
             </div>
         </div>
     </section>
 
-    <section class="section" style="padding-top: 2rem;">
+    <section class="section">
         <div class="container blog-shell">
-            <div class="section-header" style="margin-bottom: 2rem;">
+            <div class="section-header">
                 <h2>Execute the playbook</h2>
             </div>
             <div class="blog-related-grid">
@@ -203,6 +198,15 @@
             </div>
         </div>
     </section>
+
+    <section class="cta-band">
+        <div class="container blog-shell">
+            <h2>Need the right tool for your playbook?</h2>
+            <p>RateTap provides the exact hardware and software needed to execute a modern, operations-first reputation strategy.</p>
+            <a class="btn btn-primary" href="../demo">Book a demo</a>
+        </div>
+    </section>
+    </main>
     <!-- chrome:footer -->
     <footer class="footer">
         <div class="container">

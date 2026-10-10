@@ -24,6 +24,13 @@
     <link rel="preload" href="../styles.css" as="style"/>
     <link rel="stylesheet" href="../styles.css"/>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+    <style>
+        /* Offset below the fixed navbar, then tighten the section that follows. */
+        .page-top { padding-top: calc(var(--space-8) * 2 + var(--space-6)); padding-bottom: var(--space-7); }
+        .page-top + .section { padding-top: var(--space-7); }
+        .page-top h1 { font-size: var(--fs-h1); }
+        .section--tight { padding-top: var(--space-6); }
+    </style>
     <!-- chrome:icons -->
     <link rel="icon" href="/favicon.ico" sizes="32x32">
     <link rel="icon" href="/assets/brand/favicon.svg" type="image/svg+xml">
@@ -53,7 +60,8 @@
         <button type="button" class="nav-toggle" aria-label="Open navigation menu" aria-controls="nav-menu" aria-expanded="false"><i class="fa-solid fa-bars"></i></button>
     </nav>
     <!-- /chrome:header -->
-    <section class="section blog-hero" style="padding-top: 10rem;">
+    <main>
+    <section class="section page-top">
         <div class="container blog-shell">
             <h1>How to Track Server Review Performance Without Turning Hospitality Into Pressure</h1>
             <p class="blog-hero-copy">Review growth is often treated like marketing, but inside the restaurant it behaves more like frontline execution. If you cannot see which team members create strong close-outs and which ones leak guest sentiment, you cannot coach the problem well.</p>
@@ -66,7 +74,7 @@
         </div>
     </section>
 
-    <section class="section" style="padding-top: 2rem;">
+    <section class="section">
         <div class="container blog-shell blog-article-grid">
             <aside class="blog-rail">
                 <div class="blog-rail-card reveal">
@@ -153,50 +161,37 @@
         </div>
     </section>
 
-    <section class="section">
+    <section class="section bg-muted">
         <div class="container blog-shell">
-            <div class="blog-cta-card reveal">
-                <h2>Want visibility by server, shift, and location?</h2>
-                <p>RateTap gives each staff member a distinct review capture path so managers can see volume, complaints, and consistency without turning hospitality into a script.</p>
-                <div class="blog-cta-actions">
-                    <a class="btn btn-primary" href="../demo">Book a demo</a>
-                    <a class="btn btn-secondary" href="../track-waiter-performance-dashboard">See the software</a>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <section class="section blog-faq-section">
-        <div class="container blog-shell">
-            <div class="section-header" style="margin-bottom: 2rem;">
+            <div class="section-header">
                 <h2>Questions about staff accountability</h2>
             </div>
-            <div class="blog-faq-grid">
+            <div class="reveal">
 
-                <div class="blog-faq-card reveal">
-                    <h3>Will server-level review tracking create unhealthy competition?</h3>
-                    <p>It can if you only use a leaderboard. It becomes productive when you pair attribution with coaching, private feedback visibility, and guest-experience standards.</p>
+                <div class="faq-item active">
+                    <button class="faq-question" type="button"><span>Will server-level review tracking create unhealthy competition?</span><i class="fa-solid fa-minus"></i></button>
+                    <div class="faq-answer"><p>It can if you only use a leaderboard. It becomes productive when you pair attribution with coaching, private feedback visibility, and guest-experience standards.</p></div>
                 </div>
         
 
-                <div class="blog-faq-card reveal">
-                    <h3>What should managers compare across staff members?</h3>
-                    <p>Look at review volume, guest issue detection, shift consistency, and whether the ask is happening at the right moment. Counts alone are too shallow.</p>
+                <div class="faq-item">
+                    <button class="faq-question" type="button"><span>What should managers compare across staff members?</span><i class="fa-solid fa-plus"></i></button>
+                    <div class="faq-answer"><p>Look at review volume, guest issue detection, shift consistency, and whether the ask is happening at the right moment. Counts alone are too shallow.</p></div>
                 </div>
         
 
-                <div class="blog-faq-card reveal">
-                    <h3>Can this work across multiple locations?</h3>
-                    <p>Yes, as long as the workflow is standardized and the data is tied to staff, shift, and location. That lets ownership compare execution without flattening local context.</p>
+                <div class="faq-item">
+                    <button class="faq-question" type="button"><span>Can this work across multiple locations?</span><i class="fa-solid fa-plus"></i></button>
+                    <div class="faq-answer"><p>Yes, as long as the workflow is standardized and the data is tied to staff, shift, and location. That lets ownership compare execution without flattening local context.</p></div>
                 </div>
         
             </div>
         </div>
     </section>
 
-    <section class="section" style="padding-top: 2rem;">
+    <section class="section">
         <div class="container blog-shell">
-            <div class="section-header" style="margin-bottom: 2rem;">
+            <div class="section-header">
                 <h2>Build the accountability layer</h2>
             </div>
             <div class="blog-related-grid">
@@ -224,6 +219,15 @@
             </div>
         </div>
     </section>
+
+    <section class="cta-band">
+        <div class="container blog-shell">
+            <h2>Want visibility by server, shift, and location?</h2>
+            <p>RateTap gives each staff member a distinct review capture path so managers can see volume, complaints, and consistency without turning hospitality into a script.</p>
+            <a class="btn btn-primary" href="../demo">Book a demo</a>
+        </div>
+    </section>
+    </main>
     <!-- chrome:footer -->
     <footer class="footer">
         <div class="container">

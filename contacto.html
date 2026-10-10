@@ -70,263 +70,34 @@ fbq('init', '1578821303344121');
 fbq('track', 'PageView');
 </script>
 <noscript>
-<img height="1" src="https://www.facebook.com/tr?id=1578821303344121&ev=PageView&noscript=1" style="display:none" width="1"/>
+<img height="1" src="https://www.facebook.com/tr?id=1578821303344121&ev=PageView&noscript=1" hidden width="1"/>
 </noscript>
 <!-- End Meta Pixel Code -->
 <link as="style" href="styles.css" rel="preload"/>
 <link href="styles.css" rel="stylesheet"/>
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"/>
 <style>
-  /* Contacto-specific overrides */
-  .contacto-hero {
-    min-height: 100dvh;
-    display: flex;
-    align-items: center;
-    padding: 7rem 0 4rem;
-  }
-  .contacto-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 4rem;
-    align-items: center;
-  }
-  .contacto-stats {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 1.5rem;
-    margin-top: 2.5rem;
-  }
-  .contacto-stat {
-    text-align: center;
-    padding: 1rem;
-    background: rgba(255,255,255,0.6);
-    border-radius: 16px;
-    border: 1px solid rgba(255,255,255,0.9);
-  }
-  .contacto-stat strong {
-    display: block;
-    font-family: 'Instrument Serif', serif;
-    font-size: 2rem;
-    font-weight: 400;
-    color: var(--brand-charcoal);
-    line-height: 1.2;
-  }
-  .contacto-stat span {
-    font-size: 0.8rem;
-    color: var(--text-secondary);
-    font-weight: 600;
-  }
-  .form-card {
-    padding: 2.5rem;
-    background: rgba(255,255,255,0.85);
-    backdrop-filter: blur(16px);
-    border-radius: 24px;
-    border: 1px solid rgba(255,255,255,0.9);
-    box-shadow: 0 20px 50px -12px rgba(0,0,0,0.08);
-  }
-  .form-card h3 {
-    font-size: 1.8rem;
-    margin-bottom: 0.5rem;
-  }
-  .form-card .form-subtitle {
-    color: var(--text-secondary);
-    font-size: 0.95rem;
-    margin-bottom: 1.5rem;
-  }
-  .form-group {
-    margin-bottom: 1rem;
-  }
-  .form-group label {
-    display: block;
-    font-weight: 600;
-    font-size: 0.85rem;
-    margin-bottom: 0.35rem;
-    color: var(--text-primary);
-  }
-  .form-group input {
-    width: 100%;
-    padding: 0.75rem 1rem;
-    border: 1px solid rgba(0,0,0,0.1);
-    border-radius: 12px;
-    font-size: 1rem;
-    font-family: inherit;
-    background: white;
-    transition: border-color 0.2s, box-shadow 0.2s;
-  }
-  .form-group input:focus {
-    outline: none;
-    border-color: var(--brand-blue);
-    box-shadow: 0 0 0 3px rgba(45,156,219,0.15);
-  }
-  .form-group input::placeholder {
-    color: #94a3b8;
-  }
-  .form-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 1rem;
-  }
-  .form-submit {
-    width: 100%;
-    padding: 1rem;
-    margin-top: 0.5rem;
-    background: var(--brand-charcoal);
-    color: white;
-    border: none;
-    border-radius: 999px;
-    font-size: 1rem;
-    font-weight: 700;
-    font-family: inherit;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    box-shadow: 0 10px 20px -5px rgba(15,23,42,0.3);
-  }
-  .form-submit:hover {
-    background: #000;
-    transform: translateY(-2px);
-    box-shadow: 0 15px 25px -5px rgba(15,23,42,0.4);
-  }
-  .form-submit:disabled {
-    opacity: 0.7;
-    cursor: not-allowed;
-    transform: none;
-  }
-  .form-trust {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-    margin-top: 1rem;
-    font-size: 0.8rem;
-    color: var(--text-secondary);
-  }
-	  .form-trust i {
-	    color: var(--brand-blue);
-	  }
-	  .trial-link {
-	    display: block;
-	    margin-top: 0.9rem;
-	    text-align: center;
-	    color: var(--brand-charcoal);
-	    font-weight: 800;
-	    font-size: 0.9rem;
-	    text-decoration: underline;
-	    text-underline-offset: 3px;
-	  }
+    /* Page-level: offset below the fixed navbar. Tokens only. */
+    .page-top { padding-top: calc(var(--space-8) * 2 + var(--space-6)); }
+    .page-top h1 { margin-bottom: var(--space-3); font-size: var(--fs-h1); }
+    /* Two-column utility pages: left-aligned copy, top-aligned columns, compact cards. */
+    .grid-2.two-col { align-items: start; gap: var(--space-7); text-align: left; }
+    .two-col .card { padding: var(--space-6); }
+    .btn-block { width: 100%; }
+    .form-subtitle { margin-bottom: var(--space-5); font-size: var(--fs-small); color: var(--ink-2); }
+    .form-error { display: none; margin-top: var(--space-4); font-size: var(--fs-small); font-weight: 700; color: #B91C1C; }
+    .form-trust { display: flex; align-items: center; justify-content: center; gap: var(--space-2); margin-top: var(--space-4); font-size: var(--fs-small); color: var(--ink-2); }
+    .form-trust i { color: var(--accent); }
+    .trial-link { display: block; margin-top: var(--space-3); text-align: center; font-size: var(--fs-small); font-weight: 800; color: var(--ink); text-decoration: underline; text-underline-offset: 3px; }
 
-  /* Success state */
-  .form-success {
-    display: none;
-    text-align: center;
-    padding: 3rem 1.5rem;
-  }
-  .form-success.show {
-    display: block;
-  }
-  .form-success .success-icon {
-    width: 72px;
-    height: 72px;
-    background: linear-gradient(135deg, #10b981, #059669);
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin: 0 auto 1.5rem;
-    color: white;
-    font-size: 2rem;
-  }
-  .form-success h3 {
-    margin-bottom: 0.75rem;
-  }
-  .form-success p {
-    color: var(--text-secondary);
-    line-height: 1.6;
-  }
-  .form-wrapper.submitted form {
-    display: none;
-  }
-  .form-wrapper.submitted .form-subtitle {
-    display: none;
-  }
-
-  /* Benefits section */
-  .benefits-section {
-    padding: 5rem 0;
-  }
-  .benefits-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 2rem;
-    margin-top: 3rem;
-  }
-  .benefit-card {
-    padding: 2rem;
-    background: rgba(255,255,255,0.7);
-    backdrop-filter: blur(10px);
-    border-radius: 20px;
-    border: 1px solid rgba(255,255,255,0.9);
-    box-shadow: 0 4px 20px -8px rgba(0,0,0,0.04);
-    text-align: center;
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-  }
-  .benefit-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 12px 30px -8px rgba(0,0,0,0.08);
-  }
-  .benefit-icon {
-    width: 56px;
-    height: 56px;
-    background: linear-gradient(135deg, rgba(45,156,219,0.12), rgba(45,156,219,0.06));
-    border-radius: 16px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin: 0 auto 1.25rem;
-    color: var(--brand-blue);
-    font-size: 1.4rem;
-  }
-  .benefit-card h4 {
-    font-family: 'Plus Jakarta Sans', sans-serif;
-    font-weight: 700;
-    font-size: 1.05rem;
-    margin-bottom: 0.5rem;
-    color: var(--brand-charcoal);
-  }
-  .benefit-card p {
-    font-size: 0.9rem;
-    color: var(--text-secondary);
-    line-height: 1.5;
-  }
-
-  /* Responsive */
-  @media (max-width: 768px) {
-    .contacto-hero {
-      padding: 6.5rem 0 3rem;
-    }
-    .contacto-grid {
-      grid-template-columns: 1fr;
-      gap: 2.5rem;
-    }
-    .contacto-stats {
-      grid-template-columns: repeat(2, 1fr);
-      gap: 0.75rem;
-    }
-    .contacto-stat strong {
-      font-size: 1.5rem;
-    }
-    .contacto-stat span {
-      font-size: 0.7rem;
-    }
-    .form-card {
-      padding: 1.75rem;
-    }
-    .form-row {
-      grid-template-columns: 1fr;
-    }
-    .benefits-grid {
-      grid-template-columns: 1fr;
-    }
-  }
+    /* Success state (toggled by the page script) */
+    .form-success { display: none; padding: var(--space-7) var(--space-4); text-align: center; }
+    .form-success.show { display: block; }
+    .success-icon { display: flex; align-items: center; justify-content: center; width: 72px; height: 72px; margin: 0 auto var(--space-5); border-radius: 50%; background: var(--accent); color: #fff; font-size: 2rem; }
+    .form-success h3 { margin-bottom: var(--space-3); }
+    .form-success p { color: var(--ink-2); line-height: 1.6; }
+    .form-wrapper.submitted form,
+    .form-wrapper.submitted .form-subtitle { display: none; }
 </style>
     <!-- chrome:icons -->
     <link rel="icon" href="/favicon.ico" sizes="32x32">
@@ -339,7 +110,7 @@ fbq('track', 'PageView');
 <body>
 <!-- Google Tag Manager (noscript) -->
 <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-P4DTRR6W"
-height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+height="0" width="0" hidden></iframe></noscript>
 <!-- End Google Tag Manager (noscript) -->
 
 <div class="ambient-canvas"></div>
@@ -363,17 +134,16 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     </nav>
     <!-- /chrome:header -->
 
-<!-- Hero + Form -->
-<section class="contacto-hero">
+<main>
+<!-- Copy + form -->
+<section class="section page-top">
   <div class="container">
-    <div class="contacto-grid">
+    <div class="grid-2 two-col">
 
       <!-- Left: Copy -->
-      <div class="hero-content">
-        <h1 style="font-size: clamp(2.8rem, 5.5vw, 5rem); margin-bottom: 1.25rem;">
-          Más reseñas<br>en Google.<br><span class="serif-italic">Sin esfuerzo.</span>
-        </h1>
-        <p class="hero-subtitle" style="margin-bottom: 2rem;">
+      <div>
+        <h1>Más reseñas en Google. Sin esfuerzo.</h1>
+        <p class="hero-subtitle">
           Tus meseros presentan una tarjeta NFC al cliente. Cada cliente elige: dejar su reseña en Google o enviarte un comentario privado.
         </p>
 
@@ -382,8 +152,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             <i class="fa-solid fa-credit-card"></i>
           </div>
           <div>
-            <h4 style="font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 700; font-size: 1rem;">Tarjetas NFC personalizadas</h4>
-            <p style="color: var(--text-secondary); font-size: 0.9rem;">Cada mesero tiene su propia tarjeta. Un toque y el cliente deja su reseña.</p>
+            <h4>Tarjetas NFC personalizadas</h4>
+            <p>Cada mesero tiene su propia tarjeta. Un toque y el cliente deja su reseña.</p>
           </div>
         </div>
 
@@ -392,81 +162,75 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             <i class="fa-solid fa-shield-halved"></i>
           </div>
           <div>
-            <h4 style="font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 700; font-size: 1rem;">Comentarios privados al gerente</h4>
-            <p style="color: var(--text-secondary); font-size: 0.9rem;">Cualquier cliente puede enviarte un comentario privado en la mesa.</p>
+            <h4>Comentarios privados al gerente</h4>
+            <p>Cualquier cliente puede enviarte un comentario privado en la mesa.</p>
           </div>
         </div>
 
-        <div class="feature-list-item" style="margin-bottom: 0;">
+        <div class="feature-list-item">
           <div class="feature-list-icon">
             <i class="fa-solid fa-chart-line"></i>
           </div>
           <div>
-            <h4 style="font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 700; font-size: 1rem;">Panel en tiempo real</h4>
-            <p style="color: var(--text-secondary); font-size: 0.9rem;">Mide el rendimiento de cada mesero y ubicación al instante.</p>
+            <h4>Panel en tiempo real</h4>
+            <p>Mide el rendimiento de cada mesero y ubicación al instante.</p>
           </div>
         </div>
 
-        <div class="contacto-stats">
-          <div class="contacto-stat">
-            <strong>12</strong>
-            <span>Sucursales activas</span>
-          </div>
-          <div class="contacto-stat">
-            <strong>23,664</strong>
-            <span>Reseñas capturadas</span>
-          </div>
-        </div>
+        <ul class="stat-pills">
+          <li class="stat-pill">12 sucursales activas</li>
+          <li class="stat-pill">23,664 reseñas capturadas</li>
+        </ul>
       </div>
 
       <!-- Right: Form -->
-      <div class="form-card form-wrapper" id="contacto-form">
-        <h3>Solicita tu auditoría gratis</h3>
+      <div class="card form-wrapper" id="contacto-form">
+        <h3 class="mb-4">Solicita tu auditoría gratis</h3>
         <p class="form-subtitle">Completa el formulario y revisamos tu ficha de Google para detectar oportunidades de más reseñas.</p>
 
         <form id="lead-form" data-lead-form="true" data-default-context="contacto" data-default-offer="google-review-audit" data-source-cluster="spanish-bofu" data-source-page="contacto" novalidate>
           <div class="form-group">
             <label for="name">Nombre completo *</label>
-            <input type="text" id="name" name="name" placeholder="Ej. Juan Pérez" required />
+            <input class="field" type="text" id="name" name="name" placeholder="Ej. Juan Pérez" required />
           </div>
 
           <div class="form-group">
             <label for="restaurant">Restaurante *</label>
-            <input type="text" id="restaurant" name="restaurant" placeholder="Nombre de tu restaurante" required />
+            <input class="field" type="text" id="restaurant" name="restaurant" placeholder="Nombre de tu restaurante" required />
           </div>
 
           <div class="form-row">
             <div class="form-group">
               <label for="city">Ciudad *</label>
-              <input type="text" id="city" name="city" placeholder="Ej. Monterrey" required />
+              <input class="field" type="text" id="city" name="city" placeholder="Ej. Monterrey" required />
             </div>
             <div class="form-group">
               <label for="phone">Teléfono / WhatsApp *</label>
-              <input type="tel" id="phone" name="phone" placeholder="Ej. 81 1234 5678" required />
+              <input class="field" type="tel" id="phone" name="phone" placeholder="Ej. 81 1234 5678" required />
             </div>
           </div>
 
           <div class="form-group">
             <label for="email">Correo electrónico</label>
-            <input type="email" id="email" name="email" placeholder="tu@correo.com" />
+            <input class="field" type="email" id="email" name="email" placeholder="tu@correo.com" />
           </div>
 
-          <button type="submit" class="form-submit" id="submit-btn">
+          <button type="submit" class="btn btn-primary btn-block" id="submit-btn">
             Solicitar Auditoría Gratis
           </button>
 
-          <div id="form-error" role="alert" style="display:none; margin-top: 1rem; color: #b91c1c; font-weight: 700; font-size: 0.9rem;">
+          <div id="form-error" class="form-error" role="alert">
             No pudimos enviar tu solicitud. Intenta de nuevo o escríbenos a hello@ratetapmx.com.
           </div>
 
-	          <div class="form-trust">
-	            <i class="fa-solid fa-lock"></i>
-	            Prueba de 30 días · Hoy pagas $1,500 MXN de setup/NFC · Después $700 MXN/mes · Respuesta en 24h
-	          </div>
-	          <a class="trial-link" href="https://app.ratetapmx.com/contacto?offer=trial_checkout&amp;source_page=contacto&amp;cta_context=contact_form_secondary&amp;language=es">
-	            ¿Ya estás listo? Inicia la prueba de 30 días
-	          </a>
-	        </form>
+          <div class="form-trust">
+            <i class="fa-solid fa-lock"></i>
+            Prueba de 30 días · Hoy pagas $1,500 MXN de setup/NFC · Después $700 MXN/mes · Respuesta en 24h
+          </div>
+          <a class="trial-link" href="https://app.ratetapmx.com/contacto?offer=trial_checkout&amp;source_page=contacto&amp;cta_context=contact_form_secondary&amp;language=es">
+            ¿Ya estás listo? Inicia la prueba de 30 días
+          </a>
+        </form>
 
         <div class="form-success" id="form-success">
           <div class="success-icon">
@@ -482,36 +246,32 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 </section>
 
 <!-- Benefits -->
-<section class="benefits-section">
+<section class="section bg-muted">
   <div class="container">
-    <h2 style="text-align: center; font-size: clamp(2rem, 4vw, 3rem); margin-bottom: 0.5rem;">¿Por qué RateTap?</h2>
-    <p style="text-align: center; color: var(--text-secondary); max-width: 560px; margin: 0 auto;">Lo que otros software prometen, nosotros lo entregamos — resultados en la primera semana.</p>
-
-    <div class="benefits-grid">
-      <div class="benefit-card">
-        <div class="benefit-icon">
-          <i class="fa-solid fa-star"></i>
-        </div>
-        <h4>Captura reseñas en la mesa</h4>
-        <p>Todos los clientes pueden ir a Google; los comentarios privados llegan al gerente para dar seguimiento a tiempo.</p>
-      </div>
-      <div class="benefit-card">
-        <div class="benefit-icon">
-          <i class="fa-solid fa-bell"></i>
-        </div>
-        <h4>Alertas instantáneas</h4>
-        <p>Recibe alertas por push y email cuando un cliente envía un comentario privado.</p>
-      </div>
-      <div class="benefit-card">
-        <div class="benefit-icon">
-          <i class="fa-solid fa-chart-line"></i>
-        </div>
-        <h4>Actividad por mesero</h4>
-        <p>Ve qué meseros piden opinión en cada mesa y detecta áreas de mejora con datos reales.</p>
-      </div>
+    <div class="section-header text-center">
+      <h2>¿Por qué RateTap?</h2>
     </div>
+
+    <ul class="icon-steps">
+      <li class="icon-step">
+        <span class="icon-step__icon"><i class="fa-solid fa-star" aria-hidden="true"></i></span>
+        <h3>Captura reseñas en la mesa</h3>
+        <p>Todos los clientes pueden ir a Google; los comentarios privados llegan al gerente para dar seguimiento a tiempo.</p>
+      </li>
+      <li class="icon-step">
+        <span class="icon-step__icon"><i class="fa-solid fa-bell" aria-hidden="true"></i></span>
+        <h3>Alertas instantáneas</h3>
+        <p>Recibe alertas por push y email cuando un cliente envía un comentario privado.</p>
+      </li>
+      <li class="icon-step">
+        <span class="icon-step__icon"><i class="fa-solid fa-chart-line" aria-hidden="true"></i></span>
+        <h3>Actividad por mesero</h3>
+        <p>Ve qué meseros piden opinión en cada mesa y detecta áreas de mejora con datos reales.</p>
+      </li>
+    </ul>
   </div>
 </section>
+</main>
 
 <!-- chrome:footer -->
     <footer class="footer">

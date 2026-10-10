@@ -58,32 +58,19 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     }
      </script>
 <style>
-      .calc-input {
-            width: 100%;
-            padding: 1rem;
-            border: 2px solid var(--border);
-            border-radius: var(--radius-md);
-            font-size: 1.1rem;
-            font-family: inherit;
-            margin-bottom: 1.5rem;
-        }
-        .calc-input:focus {
-            outline: none;
-            border-color: var(--brand-charcoal);
-        }
-        .result-box {
-            background: var(--brand-charcoal);
-            color: white;
-            padding: 2rem;
-            border-radius: 24px;
-            text-align: center;
-        }
-        .result-value {
-            font-size: 3rem;
-            font-weight: 800;
-            margin: 0.5rem 0;
-        }
-     </style>
+    /* Page-level: offset below the fixed navbar. Tokens only. */
+    .page-top { padding-top: calc(var(--space-8) * 2 + var(--space-6)); }
+    .page-top h1 { margin-bottom: var(--space-3); font-size: var(--fs-h1); }
+    /* Two-column utility pages: left-aligned copy, top-aligned columns, compact cards. */
+    .grid-2.two-col { align-items: start; gap: var(--space-7); text-align: left; }
+    .two-col .card { padding: var(--space-6); }
+    /* Calculator output panel: the one page-unique visual. */
+    .result-box { padding: var(--space-6); border-radius: var(--radius-lg); background: var(--surface-dark); color: #fff; text-align: center; }
+    .result-label { font-size: var(--fs-small); font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: rgba(255, 255, 255, 0.82); }
+    .result-value { margin: var(--space-2) 0; font-size: 3rem; font-weight: 800; letter-spacing: -0.04em; }
+    .result-box p { margin-bottom: 0; color: rgba(255, 255, 255, 0.82); }
+    .btn-block { width: 100%; }
+</style>
 <!-- Meta Pixel Code -->
 <script>
       !function(f,b,e,v,n,t,s)
@@ -98,7 +85,7 @@ fbq('init', '1578821303344121');
 fbq('track', 'PageView');
      </script>
 <noscript>
-<img height="1" src="https://www.facebook.com/tr?id=1578821303344121&amp;ev=PageView&amp;noscript=1" style="display:none" width="1"/>
+<img height="1" src="https://www.facebook.com/tr?id=1578821303344121&amp;ev=PageView&amp;noscript=1" hidden width="1"/>
 </noscript>
 <!-- End Meta Pixel Code -->
 </meta>
@@ -115,7 +102,7 @@ fbq('track', 'PageView');
 <body>
 <!-- Google Tag Manager (noscript) -->
 <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-P4DTRR6W"
-height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+height="0" width="0" hidden></iframe></noscript>
 <!-- End Google Tag Manager (noscript) -->
 <div class="ambient-canvas"></div>
 <!-- chrome:header -->
@@ -136,76 +123,62 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <button type="button" class="nav-toggle" aria-label="Open navigation menu" aria-controls="nav-menu" aria-expanded="false"><i class="fa-solid fa-bars"></i></button>
     </nav>
     <!-- /chrome:header -->
-<section class="reveal section bg-muted" style="padding-top: 10rem;">
-<div class="container text-center">
-<h1>
-     Calculate Your ROI
-    </h1>
-<p class="reveal" style="max-width: 600px; margin: 0 auto;">
-     Estimate what a better rating could be worth to your business.
-    </p>
-</div>
+<main>
+<section class="section page-top bg-muted">
+    <div class="container section-header text-center">
+        <h1>Calculate Your ROI</h1>
+        <p>Estimate what a better rating could be worth to your business.</p>
+    </div>
 </section>
-<section class="reveal section">
-<div class="container">
-<div class="grid-2" style="align-items: flex-start;">
-<!-- Inputs -->
-<div class="card">
-<h3 class="reveal mb-8">
-       Your Numbers
-      </h3>
-<label style="font-weight: 600; display: block; margin-bottom: 0.5rem;">
-       Average Table Spend ($)
-      </label>
-<input class="calc-input" id="ticket" oninput="calculateROI()" type="number" value="65"/>
-<label style="font-weight: 600; display: block; margin-bottom: 0.5rem;">
-       Tables Served per Month
-      </label>
-<input class="calc-input" id="tables" oninput="calculateROI()" type="number" value="1200"/>
-<label style="font-weight: 600; display: block; margin-bottom: 0.5rem;">
-       Current Star Rating
-      </label>
-<input class="calc-input" id="rating" max="5" oninput="calculateROI()" step="0.1" type="number" value="4.2"/>
-</div>
-<!-- Results -->
-<div>
-<div class="result-box mb-8">
-<div style="text-transform: uppercase; font-size: 0.9rem; opacity: 0.9;">
-        Your Estimate: Monthly Revenue Gain
-       </div>
-<div class="result-value" id="revenue-gain">
-        $4,680
-       </div>
-<p class="reveal" style="color: rgba(255,255,255,0.8); margin-bottom: 0;">
-        If your rating rises 0.5 stars and revenue lifts 6%. An assumption, not a RateTap result.
+<section class="section">
+    <div class="container">
+        <div class="grid-2 two-col">
+            <!-- Inputs -->
+            <div class="card">
+                <h3 class="mb-8">Your Numbers</h3>
+                <div class="form-group">
+                    <label for="ticket">Average Table Spend ($)</label>
+                    <input class="field" id="ticket" oninput="calculateROI()" type="number" value="65"/>
+                </div>
+                <div class="form-group">
+                    <label for="tables">Tables Served per Month</label>
+                    <input class="field" id="tables" oninput="calculateROI()" type="number" value="1200"/>
+                </div>
+                <div class="form-group">
+                    <label for="rating">Current Star Rating</label>
+                    <input class="field" id="rating" max="5" oninput="calculateROI()" step="0.1" type="number" value="4.2"/>
+                </div>
+            </div>
+            <!-- Results -->
+            <div>
+                <div class="result-box mb-8">
+                    <div class="result-label">Your Estimate: Monthly Revenue Gain</div>
+                    <div class="result-value" id="revenue-gain">$4,680</div>
+                    <p>If your rating rises 0.5 stars and revenue lifts 6%. An assumption, not a RateTap result.</p>
+                </div>
+                <div class="card">
+                    <h3 class="mb-4">How it works</h3>
+<p class="reveal">
+Harvard Business School research shows that a
+<strong>
+1-star increase
+</strong>
+in Yelp/Google rating leads to a
+<strong>
+5-9% increase in revenue
+</strong>
+.
 </p>
-</div>
-<div class="card">
-<h3 class="reveal mb-4">
-        How it works
-       </h3>
 <p class="reveal">
-        Harvard Business School research shows that a
-        <strong>
-         1-star increase
-        </strong>
-        in Yelp/Google rating leads to a
-        <strong>
-         5-9% increase in revenue
-        </strong>
-        .
-       </p>
-<p class="reveal">
-        RateTap helps you ask more guests and hear from unhappy ones early. We do not promise a rating change.
-       </p>
-<a class="btn btn-primary" href="/demo#demo-form" style="width: 100%;">
-        Start Growing Revenue
-       </a>
-</div>
-</div>
-</div>
-</div>
+RateTap helps you ask more guests and hear from unhappy ones early. We do not promise a rating change.
+</p>
+                    <a class="btn btn-primary btn-block" href="/demo#demo-form">Start Growing Revenue</a>
+                </div>
+            </div>
+        </div>
+    </div>
 </section>
+</main>
 <!-- chrome:footer -->
     <footer class="footer">
         <div class="container">

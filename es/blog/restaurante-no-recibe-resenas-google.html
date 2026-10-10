@@ -24,6 +24,13 @@
     <link rel="preload" href="../../styles.css" as="style"/>
     <link rel="stylesheet" href="../../styles.css"/>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+    <style>
+        /* Offset below the fixed navbar, then tighten the section that follows. */
+        .page-top { padding-top: calc(var(--space-8) * 2 + var(--space-6)); padding-bottom: var(--space-7); }
+        .page-top + .section { padding-top: var(--space-7); }
+        .page-top h1 { font-size: var(--fs-h1); }
+        .section--tight { padding-top: var(--space-6); }
+    </style>
     <!-- chrome:icons -->
     <link rel="icon" href="/favicon.ico" sizes="32x32">
     <link rel="icon" href="/assets/brand/favicon.svg" type="image/svg+xml">
@@ -53,7 +60,8 @@
         <button type="button" class="nav-toggle" aria-label="Open navigation menu" aria-controls="nav-menu" aria-expanded="false"><i class="fa-solid fa-bars"></i></button>
     </nav>
     <!-- /chrome:header -->
-    <section class="section blog-hero" style="padding-top: 10rem;">
+    <main>
+    <section class="section page-top">
         <div class="container blog-shell">
             <h1>¿Tu restaurante no recibe reseñas en Google? El problema casi siempre está en el sistema de solicitud</h1>
             <p class="blog-hero-copy">La mayoría de restaurantes no tienen un problema de demanda. Tienen un problema de captura. Los clientes salen contentos, prometen dejar reseña luego y nunca regresan al tema. Un mejor flujo corrige el momento, la fricción y la responsabilidad.</p>
@@ -66,7 +74,7 @@
         </div>
     </section>
 
-    <section class="section" style="padding-top: 2rem;">
+    <section class="section">
         <div class="container blog-shell blog-article-grid">
             <aside class="blog-rail">
                 <div class="blog-rail-card reveal">
@@ -153,50 +161,37 @@
         </div>
     </section>
 
-    <section class="section">
+    <section class="section bg-muted">
         <div class="container blog-shell">
-            <div class="blog-cta-card reveal">
-                <h2>¿Quieres que más mesas felices sí publiquen?</h2>
-                <p>RateTap le da al staff una ruta limpia y repetible para pedir la reseña en mesa, y da a cada huésped una opción privada para que gerencia se entere de los problemas a tiempo.</p>
-                <div class="blog-cta-actions">
-                    <a class="btn btn-primary" href="../demo">Agendar demo</a>
-                    <a class="btn btn-secondary" href="../get-more-google-reviews-restaurants">Ver la plataforma</a>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <section class="section blog-faq-section">
-        <div class="container blog-shell">
-            <div class="section-header" style="margin-bottom: 2rem;">
+            <div class="section-header">
                 <h2>Preguntas sobre bajo volumen de reseñas</h2>
             </div>
-            <div class="blog-faq-grid">
+            <div class="reveal">
 
-                <div class="blog-faq-card reveal">
-                    <h3>¿El correo sigue sirviendo para conseguir reseñas en Google?</h3>
-                    <p>Puede servir como apoyo, pero no debería ser tu vía principal si el problema es volumen bajo. El momento de mayor intención normalmente ocurre antes de que el huésped salga del restaurante.</p>
+                <div class="faq-item active">
+                    <button class="faq-question" type="button"><span>¿El correo sigue sirviendo para conseguir reseñas en Google?</span><i class="fa-solid fa-minus"></i></button>
+                    <div class="faq-answer"><p>Puede servir como apoyo, pero no debería ser tu vía principal si el problema es volumen bajo. El momento de mayor intención normalmente ocurre antes de que el huésped salga del restaurante.</p></div>
                 </div>
         
 
-                <div class="blog-faq-card reveal">
-                    <h3>¿Quién debe pedir la reseña: host, mesero o gerente?</h3>
-                    <p>Usa el rol que naturalmente controla el último momento positivo. En muchos restaurantes es el mesero, pero gerencia debe diseñar el proceso y monitorear consistencia.</p>
+                <div class="faq-item">
+                    <button class="faq-question" type="button"><span>¿Quién debe pedir la reseña: host, mesero o gerente?</span><i class="fa-solid fa-plus"></i></button>
+                    <div class="faq-answer"><p>Usa el rol que naturalmente controla el último momento positivo. En muchos restaurantes es el mesero, pero gerencia debe diseñar el proceso y monitorear consistencia.</p></div>
                 </div>
         
 
-                <div class="blog-faq-card reveal">
-                    <h3>¿Cuál es la forma más segura de subir volumen?</h3>
-                    <p>Reduce fricción para todas las mesas y agrega un canal privado para quien quiera compartir un problema. Así proteges la experiencia y mantienes honesto el flujo público.</p>
+                <div class="faq-item">
+                    <button class="faq-question" type="button"><span>¿Cuál es la forma más segura de subir volumen?</span><i class="fa-solid fa-plus"></i></button>
+                    <div class="faq-answer"><p>Reduce fricción para todas las mesas y agrega un canal privado para quien quiera compartir un problema. Así proteges la experiencia y mantienes honesto el flujo público.</p></div>
                 </div>
         
             </div>
         </div>
     </section>
 
-    <section class="section" style="padding-top: 2rem;">
+    <section class="section">
         <div class="container blog-shell">
-            <div class="section-header" style="margin-bottom: 2rem;">
+            <div class="section-header">
                 <h2>Construye el flujo completo de captura</h2>
             </div>
             <div class="blog-related-grid">
@@ -224,6 +219,15 @@
             </div>
         </div>
     </section>
+
+    <section class="cta-band">
+        <div class="container blog-shell">
+            <h2>¿Quieres que más mesas felices sí publiquen?</h2>
+            <p>RateTap le da al staff una ruta limpia y repetible para pedir la reseña en mesa, y da a cada huésped una opción privada para que gerencia se entere de los problemas a tiempo.</p>
+            <a class="btn btn-primary" href="../demo">Agendar demo</a>
+        </div>
+    </section>
+    </main>
     <!-- chrome:footer -->
     <footer class="footer">
         <div class="container">
