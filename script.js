@@ -1120,7 +1120,9 @@ function ensureMobileMenuToggle() {
     if (document.body.dataset.mobileNavOutsideBound !== 'true') {
         document.addEventListener('click', (event) => {
             if (!document.body.classList.contains('nav-open')) return;
-            if (!navbar.contains(event.target)) {
+            // composedPath() is captured at dispatch, so it still holds the navbar
+            // when the toggle click replaced its icon child (event.target detached).
+            if (!event.composedPath().includes(navbar)) {
                 closeMobileMenu();
             }
         });
