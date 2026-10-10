@@ -12,7 +12,7 @@ Production data snapshot used in claims below: 2026-04-25.
 - **12 of 12 tracked locations** improved their Google review count over the observation window.
 - **~400 new Google reviews / location / month** (median).
 - **470 guest feedback responses captured** for manager follow-up.
-- **95% of guest taps** are attributed to a specific staff member via their unique NFC card (n=6,161 taps).
+- **More than 9 in 10 guest taps** are attributed to a specific staff member via their unique NFC card.
 - All numbers above are pulled directly from the production database; methodology at /methodology.
 
 ## What RateTap is

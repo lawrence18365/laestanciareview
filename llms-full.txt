@@ -56,7 +56,7 @@ A "tracked" location is a paying restaurant with at least two Google rating snap
 
 - **142 total staff records** across paying restaurants.
 - **138 active staff**.
-- **5,861 reviews (95.1% of all 6,161 taps)** attributed to a specific staff member.
+- **5,861 of 6,161 taps (more than 9 in 10)** attributed to a specific staff member.
 - **Mean reviews per active staff member**: 44.4.
 - **Median reviews per active staff member**: 34.
 - **Top performer**: 404 reviews attributed to a single server's card.
@@ -73,22 +73,22 @@ A "tracked" location is a paying restaurant with at least two Google rating snap
 
 ## Per-location detail (production data)
 
-Each row is a single Google Business Profile location. Snapshots are pulled from Google Places API at signup (first) and most recently (latest). Observation window varies by signup date.
+Each row is a single Google Business Profile location. Current rating is the latest Google Places API snapshot. Rating change is not reported. Observation window varies by signup date.
 
-| Location | Rating start | Rating now | Rating Δ | Reviews start unknown — Δ shown | Window (days) |
-|---|---|---|---|---|---|
-| Estancia Angelópolis | 4.2 | 4.7 | +0.5 | +2,605 | 125 |
-| Estancia Veracruz | 4.3 | 4.6 | +0.3 | +2,234 | 125 |
-| Estancia Juárez | 4.0 | 4.7 | +0.7 | +2,191 | 125 |
-| Harbor's Veracruz | 4.2 | 4.6 | +0.4 | +1,831 | 125 |
-| La Silla Juárez | 4.0 | 4.6 | +0.6 | +1,826 | 125 |
-| La Silla Huexotitla | 3.9 | 4.6 | +0.7 | +1,725 | 125 |
-| Harbor's Angelópolis | 4.3 | 4.7 | +0.4 | +1,646 | 125 |
-| Estancia Querétaro | 4.4 | 4.6 | +0.2 | +1,517 | 125 |
-| SteakCompany Querétaro | 4.1 | 4.5 | +0.4 | +1,436 | 125 |
-| Regio Norte | 4.0 | 4.8 | +0.8 | +1,212 | 125 |
-| Estancia Xalapa | 4.1 | 4.6 | +0.5 | +178 | 125 |
-| Estancia León | 4.6 | 4.7 | +0.1 | +154 | 37 |
+| Location | Rating now | Review count Δ | Window (days) |
+|---|---|---|---|
+| Estancia Angelópolis | 4.7 | +2,605 | 125 |
+| Estancia Veracruz | 4.6 | +2,234 | 125 |
+| Estancia Juárez | 4.7 | +2,191 | 125 |
+| Harbor's Veracruz | 4.6 | +1,831 | 125 |
+| La Silla Juárez | 4.6 | +1,826 | 125 |
+| La Silla Huexotitla | 4.6 | +1,725 | 125 |
+| Harbor's Angelópolis | 4.7 | +1,646 | 125 |
+| Estancia Querétaro | 4.6 | +1,517 | 125 |
+| SteakCompany Querétaro | 4.5 | +1,436 | 125 |
+| Regio Norte | 4.8 | +1,212 | 125 |
+| Estancia Xalapa | 4.6 | +178 | 125 |
+| Estancia León | 4.7 | +154 | 37 |
 
 ---
 
