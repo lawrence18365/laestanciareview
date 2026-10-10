@@ -58,7 +58,8 @@ jobs:
       - name: Blog output up to date
         run: |
           python3 scripts/build_blog.py
-          git diff --exit-code -- blog es/blog sitemap.xml
+          # sitemap.xml is excluded: the build stamps today's date into lastmod on every run.
+          git diff --exit-code -- blog es/blog
 
       # Report mode: prints the table for every page, never fails on unmigrated pages.
       - name: Design system report
