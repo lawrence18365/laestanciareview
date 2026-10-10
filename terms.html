@@ -9,7 +9,7 @@
   <link rel="stylesheet" href="styles.css">
   <style>
     body { background: #f5f0eb; color: #1c1917; }
-    .legal-shell { max-width: 900px; margin: 0 auto; padding: 48px 20px; }
+    .legal-shell { max-width: 900px; margin: 0 auto; padding: 112px 20px 48px; }
     .legal-card { background: #fff; border: 1px solid #1c1917; padding: clamp(28px, 6vw, 64px); box-shadow: 8px 8px 0 rgba(28,25,23,.08); }
     .legal-home { color: #57534e; font-size: .85rem; font-weight: 800; text-decoration: none; }
     .legal-card h1 { font-size: clamp(2.4rem, 7vw, 4.5rem); line-height: .95; margin: 1.5rem 0 .75rem; }
@@ -17,11 +17,37 @@
     .legal-card h2 { font-size: 1.2rem; margin: 0 0 .75rem; }
     .legal-card section { border-top: 1px solid #e7e5e4; padding-top: 1.5rem; margin-top: 1.5rem; }
     .legal-card p { color: #44403c; line-height: 1.75; margin: 0 0 .85rem; }
-    .legal-links { display: flex; gap: 1rem; flex-wrap: wrap; margin-top: 2rem; }
-    .legal-links a { color: #1c1917; font-weight: 700; }
+    .legal-card .legal-links { display: flex; gap: 1rem; flex-wrap: wrap; margin-top: 2rem; }
+    .legal-card .legal-links a { color: #1c1917; font-weight: 700; }
   </style>
+    <!-- chrome:icons -->
+    <link rel="icon" href="/favicon.ico" sizes="32x32">
+    <link rel="icon" href="/assets/brand/favicon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+    <meta name="theme-color" content="#0F172A">
+    <!-- /chrome:icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
+    <!-- chrome:header -->
+    <nav class="navbar navbar--hero" id="navbar">
+        <a href="/es/" class="nav-brand">
+            <span class="nav-wordmark">RateTap</span>
+        </a>
+        <div class="nav-menu" id="nav-menu">
+            <a href="/es/#features" class="nav-link">Capacidades</a>
+            <a href="/es/#proof" class="nav-link">Casos</a>
+            <a href="/es/#pricing" class="nav-link">Precios</a>
+            <a href="/es/blog/" class="nav-link">Guías</a>
+        </div>
+        <div class="nav-actions">
+            <a href="/" class="nav-lang-toggle" hreflang="en" lang="en"><i class="fa-solid fa-globe" aria-hidden="true"></i> EN</a>
+            <a href="https://app.ratetapmx.com/contacto?offer=trial_checkout&amp;source_page=terms&amp;cta_context=nav&amp;language=es" data-funnel-context="nav" class="btn btn-primary">Pruébalo gratis</a>
+        </div>
+        <button type="button" class="nav-toggle" aria-label="Open navigation menu" aria-controls="nav-menu" aria-expanded="false"><i class="fa-solid fa-bars"></i></button>
+    </nav>
+    <!-- /chrome:header -->
+
   <main class="legal-shell">
     <article class="legal-card">
       <a class="legal-home" href="index.html">RateTap</a>
@@ -60,5 +86,39 @@
       </nav>
     </article>
   </main>
+    <!-- chrome:footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-brand">
+                    <img src="/assets/logo-new-small.webp" alt="RateTap" width="225" height="150" decoding="async" loading="lazy">
+                    <p>El estándar en gestión de reputación para restaurantes premium.</p>
+                </div>
+                <div class="footer-links">
+                    <h4>Plataforma</h4>
+                    <a href="/es/reputation-recovery">Opiniones de clientes</a>
+                    <a href="/es/medir-desempeno-meseros">Seguimiento de Staff</a>
+                    <a href="/es/for-multi-location">Empresas</a>
+                </div>
+                <div class="footer-links">
+                    <h4>Compañía</h4>
+                    <a href="/es/blog/">Guías</a>
+                    <a href="/es/case-studies">Casos de Éxito</a>
+                    <a href="/es/roi-calculator">Calculadora de ROI</a>
+                    <a href="/es/demo#demo-form">Contacto</a>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2026 RateTap. Todos los derechos reservados.</p>
+                <div class="legal-links">
+                    <a href="/privacy">Política de Privacidad</a>
+                    <a href="/terms">Términos de Servicio</a>
+                    <a href="/cookies">Política de Cookies</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+    <!-- /chrome:footer -->
+    <script src="/script.js"></script>
 </body>
 </html>

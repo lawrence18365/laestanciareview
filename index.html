@@ -100,6 +100,12 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     <!-- Gizmo analytics -->
     <script defer src="https://a.178-105-145-93.sslip.io/g.js" data-website-id="23f10698-01a8-4da3-b991-f6e57c14d2d4"></script>
     <script defer src="https://a.178-105-145-93.sslip.io/c.js"></script>
+    <!-- chrome:icons -->
+    <link rel="icon" href="/favicon.ico" sizes="32x32">
+    <link rel="icon" href="/assets/brand/favicon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+    <meta name="theme-color" content="#0F172A">
+    <!-- /chrome:icons -->
 </head>
 
 <body>
@@ -111,26 +117,24 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
     <div class="ambient-canvas"></div>
 
-    <!-- Navigation -->
+    <!-- chrome:header -->
     <nav class="navbar navbar--hero" id="navbar">
         <a href="/" class="nav-brand">
             <span class="nav-wordmark">RateTap</span>
         </a>
-
         <div class="nav-menu" id="nav-menu">
-            <a href="#features" class="nav-link">Features</a>
-            <a href="#proof" class="nav-link">Results</a>
-            <a href="#pricing" class="nav-link">Pricing</a>
+            <a href="/#features" class="nav-link">Features</a>
+            <a href="/#proof" class="nav-link">Results</a>
+            <a href="/#pricing" class="nav-link">Pricing</a>
             <a href="/blog/" class="nav-link">Guides</a>
         </div>
-
         <div class="nav-actions">
-            <a href="/es/" class="nav-lang-toggle" style="margin-right: 1.5rem; color: var(--text-secondary); text-decoration: none; font-weight: 700; font-size: 0.95rem; transition: color 0.2s; display: flex; align-items: center; gap: 0.5rem;">
-                <i class="fa-solid fa-globe"></i> ES
-            </a>
-            <a href="https://app.ratetapmx.com/contacto?offer=trial_checkout&amp;source_page=home&amp;cta_context=nav&amp;language=en" data-funnel-context="nav" class="btn btn-primary" style="padding: 0.7rem 1.8rem; font-size: 0.9rem;">Try it free</a>
+            <a href="/es/" class="nav-lang-toggle" hreflang="es" lang="es"><i class="fa-solid fa-globe" aria-hidden="true"></i> ES</a>
+            <a href="https://app.ratetapmx.com/contacto?offer=trial_checkout&amp;source_page=home&amp;cta_context=nav&amp;language=en" data-funnel-context="nav" class="btn btn-primary">Try it free</a>
         </div>
+        <button type="button" class="nav-toggle" aria-label="Open navigation menu" aria-controls="nav-menu" aria-expanded="false"><i class="fa-solid fa-bars"></i></button>
     </nav>
+    <!-- /chrome:header -->
 
 
     <!-- Hero Section -->
@@ -321,14 +325,13 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         </div>
     </section>
 
-    <!-- Footer -->
+    <!-- chrome:footer -->
     <footer class="footer">
         <div class="container">
             <div class="footer-grid">
                 <div class="footer-brand">
-                    <img src="assets/logo-new-small.webp" alt="RateTap" width="225" height="150" decoding="async" loading="eager">
-                    <p style="color: var(--text-secondary); font-size: 0.95rem; line-height: 1.6; max-width: 300px;">The
-                        standard in premium hospitality reputation management.</p>
+                    <img src="/assets/logo-new-small.webp" alt="RateTap" width="225" height="150" decoding="async" loading="lazy">
+                    <p>The standard in premium hospitality reputation management.</p>
                 </div>
                 <div class="footer-links">
                     <h4>Platform</h4>
@@ -347,13 +350,14 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             <div class="footer-bottom">
                 <p>&copy; 2026 RateTap. All rights reserved.</p>
                 <div class="legal-links">
-                    <a href="privacy.html">Privacy Policy</a>
-                    <a href="terms.html">Terms of Service</a>
-                    <a href="cookies.html">Cookie Policy</a>
+                    <a href="/privacy">Privacy Policy</a>
+                    <a href="/terms">Terms of Service</a>
+                    <a href="/cookies">Cookie Policy</a>
                 </div>
             </div>
         </div>
     </footer>
+    <!-- /chrome:footer -->
 
     <script src="script.js"></script>
 </body>

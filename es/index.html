@@ -101,6 +101,12 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     <!-- Gizmo analytics -->
     <script defer src="https://a.178-105-145-93.sslip.io/g.js" data-website-id="23f10698-01a8-4da3-b991-f6e57c14d2d4"></script>
     <script defer src="https://a.178-105-145-93.sslip.io/c.js"></script>
+    <!-- chrome:icons -->
+    <link rel="icon" href="/favicon.ico" sizes="32x32">
+    <link rel="icon" href="/assets/brand/favicon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+    <meta name="theme-color" content="#0F172A">
+    <!-- /chrome:icons -->
 </head>
 
 <body>
@@ -111,24 +117,24 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
     <div class="ambient-canvas"></div>
     <div class="ambient-background"></div>
-    <!-- Navigation -->
+    <!-- chrome:header -->
     <nav class="navbar navbar--hero" id="navbar">
-        <a class="nav-brand" href="/es/">
+        <a href="/es/" class="nav-brand">
             <span class="nav-wordmark">RateTap</span>
         </a>
         <div class="nav-menu" id="nav-menu">
-            <a class="nav-link" href="#features">Capacidades</a>
-            <a class="nav-link" href="#proof">Casos</a>
-            <a class="nav-link" href="#pricing">Precios</a>
-            <a class="nav-link" href="/es/blog/">Guías</a>
+            <a href="/es/#features" class="nav-link">Capacidades</a>
+            <a href="/es/#proof" class="nav-link">Casos</a>
+            <a href="/es/#pricing" class="nav-link">Precios</a>
+            <a href="/es/blog/" class="nav-link">Guías</a>
         </div>
         <div class="nav-actions">
-            <a href="/" class="nav-lang-toggle" style="margin-right: 1.5rem; color: var(--text-secondary); text-decoration: none; font-weight: 700; font-size: 0.95rem; transition: color 0.2s; display: flex; align-items: center; gap: 0.5rem;">
-                <i class="fa-solid fa-globe"></i> EN
-            </a>
-            <a data-funnel-context="nav" class="btn btn-primary" href="https://app.ratetapmx.com/contacto?offer=trial_checkout&amp;source_page=home&amp;cta_context=nav&amp;language=es" style="padding: 0.7rem 1.8rem; font-size: 0.9rem;">Pruébalo gratis</a>
+            <a href="/" class="nav-lang-toggle" hreflang="en" lang="en"><i class="fa-solid fa-globe" aria-hidden="true"></i> EN</a>
+            <a href="https://app.ratetapmx.com/contacto?offer=trial_checkout&amp;source_page=home&amp;cta_context=nav&amp;language=es" data-funnel-context="nav" class="btn btn-primary">Pruébalo gratis</a>
         </div>
+        <button type="button" class="nav-toggle" aria-label="Open navigation menu" aria-controls="nav-menu" aria-expanded="false"><i class="fa-solid fa-bars"></i></button>
     </nav>
+    <!-- /chrome:header -->
     <!-- Hero Section -->
     <section class="hero" data-photo-hero id="hero">
         <div class="container hero-container">
@@ -317,13 +323,13 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         </div>
     </section>
 
-    <!-- Footer -->
+    <!-- chrome:footer -->
     <footer class="footer">
         <div class="container">
             <div class="footer-grid">
                 <div class="footer-brand">
-                    <img src="../assets/logo-new-small.webp" alt="RateTap" width="225" height="150" decoding="async" loading="eager">
-                    <p style="color: var(--text-secondary); font-size: 0.95rem; line-height: 1.6; max-width: 300px;">El estándar en gestión de reputación para restaurantes premium.</p>
+                    <img src="/assets/logo-new-small.webp" alt="RateTap" width="225" height="150" decoding="async" loading="lazy">
+                    <p>El estándar en gestión de reputación para restaurantes premium.</p>
                 </div>
                 <div class="footer-links">
                     <h4>Plataforma</h4>
@@ -342,13 +348,14 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             <div class="footer-bottom">
                 <p>&copy; 2026 RateTap. Todos los derechos reservados.</p>
                 <div class="legal-links">
-                    <a href="../privacy.html">Política de Privacidad</a>
-                    <a href="../terms.html">Términos de Servicio</a>
-                    <a href="../cookies.html">Política de Cookies</a>
+                    <a href="/privacy">Política de Privacidad</a>
+                    <a href="/terms">Términos de Servicio</a>
+                    <a href="/cookies">Política de Cookies</a>
                 </div>
             </div>
         </div>
     </footer>
+    <!-- /chrome:footer -->
     <script src="../script.js"></script>
     <script>
         let isAnnual = true;
