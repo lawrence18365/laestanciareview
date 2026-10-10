@@ -130,7 +130,7 @@
             "secondaryLabel": "See the software",
             "secondaryHref": "../restaurant-review-management-software"
           },
-          "cardSummary": "A practical recovery workflow for operators who need to recover unhappy guests early and rebuild recent positive volume quickly.",
+          "cardSummary": "A practical recovery workflow for operators who need to recover unhappy guests early and rebuild recent review volume quickly.",
           "datePublished": "2026-04-25",
           "dateModified": "2026-04-25"
         },
@@ -253,7 +253,7 @@
             "secondaryLabel": "Ver la página de recuperación",
             "secondaryHref": "../mejorar-calificacion-google-restaurante"
           },
-          "cardSummary": "Un flujo práctico para operadores que necesitan recuperar temprano a los huéspedes inconformes y volumen positivo reciente rápido.",
+          "cardSummary": "Un flujo práctico para operadores que necesitan recuperar temprano a los huéspedes inconformes y volumen reciente de reseñas rápido.",
           "datePublished": "2026-04-25",
           "dateModified": "2026-04-25"
         }
@@ -786,7 +786,7 @@
             {
               "heading": "Conversion: why scan friction quietly cuts your review volume in half",
               "paragraphs": [
-                "Internal benchmarks across operators we have worked with consistently show NFC tap interactions convert at roughly 2–3x the rate of QR scans for the same restaurant, same shift, same staff. The difference is not magic — it is removed steps.",
+                "In our experience, NFC taps convert better than QR scans for the same restaurant, same shift, same staff. The difference is not magic — it is removed steps.",
                 "QR conversion suffers most when the table is busy. The guest is mid-conversation, finishing a drink, paying the bill. Adding 'unlock phone, open camera, aim, tap notification' is enough to push the request into the 'maybe later' bucket. Later rarely comes.",
                 "Tap removes that decision tree entirely. The card is on the table or in the bill folder. The guest already has their phone in hand. Tap, page loads, prompt appears."
               ],
@@ -927,7 +927,7 @@
             {
               "heading": "Conversión: por qué la fricción del escaneo te corta el volumen casi a la mitad",
               "paragraphs": [
-                "Los benchmarks internos en operadores con los que hemos trabajado muestran consistentemente que el NFC convierte aproximadamente 2 a 3 veces más que el QR en el mismo restaurante, mismo turno, mismo staff. La diferencia no es magia — son pasos eliminados.",
+                "En nuestra experiencia, el NFC convierte mejor que el QR en el mismo restaurante, mismo turno, mismo staff. La diferencia no es magia — son pasos eliminados.",
                 "La conversión por QR sufre más en noches pesadas. El huésped está a media conversación, terminando una bebida, pagando la cuenta. Agregar 'desbloqueo, abrir cámara, apuntar, tocar notificación' es suficiente para mandar la solicitud a la canasta de 'al rato'. Ese al rato casi nunca llega.",
                 "El tap elimina ese árbol de decisiones. La tarjeta está en mesa o en la portafolio de la cuenta. El huésped ya tiene el teléfono en la mano. Tap, página carga, prompt aparece."
               ],
@@ -1125,7 +1125,7 @@
             {
               "heading": "Step 5 — Coach the staff handoff (this is the missing 60 percent)",
               "paragraphs": [
-                "QR codes alone do almost nothing. The card needs a one-sentence handoff from the server. Something specific: 'If you have ten seconds, this would mean a lot to me — tap when you get a chance.' That single sentence often doubles conversion compared to a silent card.",
+                "QR codes alone do almost nothing. The card needs a one-sentence handoff from the server. Something specific: 'If you have ten seconds, this would mean a lot to me — tap when you get a chance.' That single sentence often lifts conversion compared to a silent card.",
                 "Standardize the line so every server uses it. Track who consistently delivers the handoff. The card and the handoff are one system; you cannot ship one without the other and expect results."
               ]
             },
@@ -1133,7 +1133,7 @@
               "heading": "Where QR caps out — and the upgrade most operators end up making",
               "paragraphs": [
                 "Even with all five steps right, QR-based capture has a ceiling. Busy nights kill conversion because the scan moment competes with everything else. Older guests skip it. Mid-meal momentum eats the request before it lands.",
-                "The pattern we see consistently: operators run QR for a few months, hit the conversion ceiling, then graduate to NFC tap cards. Same physical card format, same staff workflow, just a chip embedded so the guest taps instead of scans. Conversion typically jumps 2–3x with no other changes.",
+                "The pattern we see consistently: operators run QR for a few months, hit the conversion ceiling, then graduate to NFC tap cards. Same physical card format, same staff workflow, just a chip embedded so the guest taps instead of scans. Conversion typically rises with no other changes.",
                 "The other reason operators upgrade: per-card attribution. Generic QR codes are anonymous. NFC cards can carry a unique identifier per server, which is the unlock for real per-staff coaching."
               ],
               "bullets": [
@@ -1274,7 +1274,7 @@
             {
               "heading": "Paso 5 — Capacita el handoff del staff (este es el 60 por ciento que falta)",
               "paragraphs": [
-                "El QR solo no hace casi nada. La tarjeta necesita una frase de entrega del mesero. Algo específico: 'Si tienes diez segundos, esto significaría mucho para mí — tócala cuando puedas.' Esa sola frase muchas veces duplica la conversión comparado con una tarjeta callada.",
+                "El QR solo no hace casi nada. La tarjeta necesita una frase de entrega del mesero. Algo específico: 'Si tienes diez segundos, esto significaría mucho para mí — tócala cuando puedas.' Esa sola frase muchas veces mejora la conversión comparado con una tarjeta callada.",
                 "Estandariza la frase para que todo mesero la use. Mide quién la entrega de forma consistente. La tarjeta y el handoff son un mismo sistema; no puedes lanzar uno sin el otro y esperar resultados."
               ]
             },
@@ -1282,7 +1282,7 @@
               "heading": "Donde el QR llega a su techo — y el upgrade que la mayoría termina haciendo",
               "paragraphs": [
                 "Aun con los cinco pasos bien hechos, la captura por QR tiene un techo. Las noches pesadas matan la conversión porque el momento de escaneo compite con todo lo demás. Los huéspedes mayores lo saltan. El momentum a media comida se come la solicitud antes de aterrizar.",
-                "El patrón que vemos consistentemente: los operadores corren QR unos meses, llegan al techo de conversión y se mueven a tarjetas NFC tap. Mismo formato físico de tarjeta, mismo flujo del staff, solo un chip embebido para que el huésped haga tap en lugar de escanear. La conversión típicamente sube 2 a 3 veces sin otros cambios.",
+                "El patrón que vemos consistentemente: los operadores corren QR unos meses, llegan al techo de conversión y se mueven a tarjetas NFC tap. Mismo formato físico de tarjeta, mismo flujo del staff, solo un chip embebido para que el huésped haga tap en lugar de escanear. La conversión típicamente sube sin otros cambios.",
                 "La otra razón del upgrade: atribución por tarjeta. Los QR genéricos son anónimos. Las tarjetas NFC pueden llevar identificador único por mesero, que es lo que desbloquea el coaching real por persona."
               ],
               "bullets": [
@@ -1387,7 +1387,7 @@
               ],
               "callout": {
                 "title": "The math nobody talks about",
-                "body": "One avoided 1-star review is worth roughly 4–5 new 5-star reviews in average impact. Defense compounds harder than offense."
+                "body": "One avoided 1-star review is worth several new 5-star reviews in average impact. Defense compounds harder than offense."
               }
             },
             {
@@ -1528,7 +1528,7 @@
               ],
               "callout": {
                 "title": "La matemática que casi nadie menciona",
-                "body": "Una reseña de 1 estrella evitada vale aproximadamente 4 a 5 reseñas nuevas de 5 estrellas en impacto sobre el promedio. La defensa compone más fuerte que la ofensa."
+                "body": "Una reseña de 1 estrella evitada vale varias reseñas nuevas de 5 estrellas en impacto sobre el promedio. La defensa compone más fuerte que la ofensa."
               }
             },
             {
@@ -1696,7 +1696,7 @@
               "heading": "3. Recent Review Velocity: Pushing down bad history",
               "paragraphs": [
                 "Your overall average moves slowly, but customers look at your most recent reviews to judge your current quality. Recent Review Velocity tracks how many Google reviews you generate per week.",
-                "High velocity ensures that even if a rare bad review slips through, it gets buried quickly by genuine, positive feedback."
+                "High velocity ensures that even if a rare bad review slips through, it gets buried quickly by genuine new reviews."
               ]
             },
             {
@@ -1803,7 +1803,7 @@
               "heading": "3. Velocidad Reciente de Reseñas: Sepultando el mal historial",
               "paragraphs": [
                 "Tu promedio general se mueve lento, pero los clientes miran tus reseñas más recientes para juzgar tu calidad actual. La Velocidad de Reseñas mide cuántas reseñas generas por semana.",
-                "Una velocidad alta asegura que incluso si se cuela una mala reseña, esta sea sepultada rápidamente por comentarios genuinos y positivos."
+                "Una velocidad alta asegura que incluso si se cuela una mala reseña, esta sea sepultada rápidamente por nuevas reseñas genuinas."
               ]
             },
             {
@@ -2324,7 +2324,7 @@
               ],
               "callout": {
                 "title": "The Cost of Doing Nothing",
-                "body": "It's not just about gaining revenue; it's about protecting it. A single unresolved 1-star review can deter dozens of potential customers over its lifetime."
+                "body": "It's not just about gaining revenue; it's about protecting it. A single unresolved 1-star review can deter potential customers over its lifetime."
               }
             },
             {
@@ -2409,7 +2409,7 @@
               ],
               "callout": {
                 "title": "El costo de no hacer nada",
-                "body": "No se trata solo de ganar dinero; se trata de protegerlo. Una sola reseña de 1 estrella sin resolver puede alejar a docenas de clientes a lo largo del año."
+                "body": "No se trata solo de ganar dinero; se trata de protegerlo. Una sola reseña de 1 estrella sin resolver puede alejar clientes a lo largo del año."
               }
             },
             {

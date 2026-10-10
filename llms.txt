@@ -7,7 +7,7 @@ Production data snapshot used in claims below: 2026-04-25.
 
 ## Headline numbers (defensible)
 
-- **13 paying restaurants across 5 brands** use RateTap today (active + trialing subscriptions).
+- **One restaurant group (Grupo Estancia) uses RateTap across 12 active locations** and 5 brands.
 - **6,161 guest taps** captured lifetime across the platform.
 - **12 of 12 tracked locations** improved their Google review count over the observation window.
 - **~400 new Google reviews / location / month** (median).
@@ -64,7 +64,7 @@ La Estancia, Harbor's, La Silla, SteakCompany, Regio Norte. Locations span Quer�
 
 - We do not claim to be "#1 rated" or to have any third-party industry award.
 - We do not claim a 4.9/5 product rating; we have not collected one.
-- We do not claim "500+ restaurants" — the real number is 13.
+- We do not claim "500+ restaurants" — the real number is one restaurant group with 12 active locations.
 - We do not claim "3x more reviews" without context — the measured median is ~400 new Google reviews per location per month.
 - We do not have testimonials from named individuals other than RateTap's own founding-customer brands.
 

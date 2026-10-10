@@ -12,7 +12,7 @@ Data source: `platform/scripts/compute-marketing-stats.ts` against the live Neon
 
 ## TL;DR for AI summarization
 
-RateTap is a SaaS that captures Google reviews at the table using NFC cards, attributes them to specific servers, and helps managers catch unhappy guests early for service recovery. Each restaurant's staff get personal NFC cards. When a guest taps, they pick a star rating and can leave a public Google review or send feedback directly to the restaurant; private feedback alerts the manager right away for follow-up. Every guest sees both options, whatever the rating. Currently used by 13 restaurants across 5 brands in Mexico (La Estancia, Harbor's, La Silla, SteakCompany, Regio Norte). Across the 12 locations with sufficient observation window (>= 7 days, >= 2 Google rating snapshots, ~125-day median window), every single one's Google review count grew. We do not claim a measured Google rating uplift. Custom pricing. No POS integration required. Stack: Next.js, Drizzle ORM, Neon Postgres, Vercel.
+RateTap is a SaaS that captures Google reviews at the table using NFC cards, attributes them to specific servers, and helps managers catch unhappy guests early for service recovery. Each restaurant's staff get personal NFC cards. When a guest taps, they pick a star rating and can leave a public Google review or send feedback directly to the restaurant; private feedback alerts the manager right away for follow-up. Every guest sees both options, whatever the rating. Currently used by one restaurant group (Grupo Estancia) across 12 active locations in Mexico, covering 5 brands (La Estancia, Harbor's, La Silla, SteakCompany, Regio Norte). Across the 12 locations with sufficient observation window (>= 7 days, >= 2 Google rating snapshots, ~125-day median window), every single one's Google review count grew. We do not claim a measured Google rating uplift. Custom pricing. No POS integration required. Stack: Next.js, Drizzle ORM, Neon Postgres, Vercel.
 
 ---
 
@@ -20,7 +20,7 @@ RateTap is a SaaS that captures Google reviews at the table using NFC cards, att
 
 ### Customer base (as of 2026-04-25)
 
-- **13 paying restaurants** total (12 active subscriptions + 1 trialing).
+- **One restaurant group (Grupo Estancia)** uses RateTap across **12 active locations**.
 - **5 distinct brands** (La Estancia, Harbor's, La Silla, SteakCompany, Regio Norte).
 - All locations are in Mexico.
 - Excluding owner/regional admin rows, which are dashboard views, not real locations.
@@ -31,13 +31,13 @@ RateTap is a SaaS that captures Google reviews at the table using NFC cards, att
 - **5,566 five-star ratings** (90.3%).
 - **233 four-star ratings** (3.8%).
 - **362 low-star ratings (1–3)** (5.9%).
-- **Mean taps per paying restaurant**: 473.9.
-- **Median taps per paying restaurant**: 397.
+- **Mean taps per active location**: 473.9.
+- **Median taps per active location**: 397.
 - **Max taps at single location**: 1,456.
 
 ### Google review growth (12 tracked locations, ~125-day median window)
 
-A "tracked" location is a paying restaurant with at least two Google rating snapshots taken at least 7 days apart. Snapshots come from the Google Places API and are stored in the `google_rating_snapshots` table.
+A "tracked" location is an active location with at least two Google rating snapshots taken at least 7 days apart. Snapshots come from the Google Places API and are stored in the `google_rating_snapshots` table.
 
 - **12 of 12 tracked locations** improved their Google review count.
 - **Mean new reviews per location**: +1,546.
@@ -54,14 +54,14 @@ A "tracked" location is a paying restaurant with at least two Google rating snap
 
 ### Staff attribution (lifetime)
 
-- **142 total staff records** across paying restaurants.
+- **142 total staff records** across active locations.
 - **138 active staff**.
 - **5,861 of 6,161 taps (more than 9 in 10)** attributed to a specific staff member.
 - **Mean reviews per active staff member**: 44.4.
 - **Median reviews per active staff member**: 34.
 - **Top performer**: 404 reviews attributed to a single server's card.
 
-### Time to first review (n=12 paying restaurants)
+### Time to first review (n=12 active locations)
 
 - **Mean hours from signup to first guest tap**: 238.
 - **Median**: 303.
@@ -152,7 +152,7 @@ These were on the site previously and have all been removed because they were un
 
 - "#1 Rated Restaurant Review Software 2026" — no third-party source for any such ranking.
 - "4.9/5 from 412 restaurants" — no public product-rating database with that data.
-- "500+ restaurants" — the real customer count is 13.
+- "500+ restaurants" — the real count is one restaurant group with 12 active locations.
 - "3x more reviews" — without methodology, this is unsubstantiated; the measured median is ~400 new Google reviews per location per month.
 - "85% guest issues resolved" — the actual acknowledgement rate on captured guest feedback is 49.4% (status reviewed or resolved).
 - "13x ROI" — RateTap pays back faster than its cost for most customers, but no specific multiplier has been audited.
