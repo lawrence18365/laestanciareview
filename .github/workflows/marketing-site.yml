@@ -1,0 +1,105 @@
+name: Marketing site
+
+# Root marketing site (GitHub Pages). The platform/ app is covered by ci.yml.
+on:
+  push:
+    branches: [main]
+    paths:
+      - '*.html'
+      - 'es/**'
+      - 'blog/**'
+      - 'partials/**'
+      - 'styles.css'
+      - 'script.js'
+      - 'assets/**'
+      - 'scripts/check-design-system.mjs'
+      - 'scripts/sync-chrome.mjs'
+      - 'scripts/build_blog.py'
+      - 'scripts/screenshot-pages.mjs'
+      - '.github/workflows/marketing-site.yml'
+  pull_request:
+    paths:
+      - '*.html'
+      - 'es/**'
+      - 'blog/**'
+      - 'partials/**'
+      - 'styles.css'
+      - 'script.js'
+      - 'assets/**'
+      - 'scripts/check-design-system.mjs'
+      - 'scripts/sync-chrome.mjs'
+      - 'scripts/build_blog.py'
+      - 'scripts/screenshot-pages.mjs'
+      - '.github/workflows/marketing-site.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    name: Checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Header/footer in sync with partials
+        run: node scripts/sync-chrome.mjs --check
+
+      - name: Blog content valid
+        run: python3 scripts/build_blog.py --check
+
+      # build_blog.py --check only validates content. Rebuild and fail if generated pages drifted.
+      - name: Blog output up to date
+        run: |
+          python3 scripts/build_blog.py
+          git diff --exit-code -- blog es/blog sitemap.xml
+
+      # Report mode: prints the table for every page, never fails on unmigrated pages.
+      - name: Design system report
+        run: node scripts/check-design-system.mjs
+
+      # Strict on MIGRATED_PAGES (top of scripts/check-design-system.mjs).
+      - name: Design system strict (migrated pages)
+        run: node scripts/check-design-system.mjs --strict-migrated
+
+      - name: script.js parses
+        run: node --check script.js
+
+  preview:
+    name: Screenshot preview
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      # Playwright lives outside the repo: no package.json dependency at the root.
+      - name: Install Playwright Chromium
+        run: |
+          npm install --prefix "$RUNNER_TEMP/pw" --no-audit --no-fund playwright@1
+          "$RUNNER_TEMP/pw/node_modules/.bin/playwright" install --with-deps chromium
+
+      # Fails on a 404 for any same-origin asset or horizontal scroll at 390px.
+      - name: Serve site and screenshot pages
+        env:
+          PLAYWRIGHT_DIR: ${{ runner.temp }}/pw
+        run: |
+          python3 -m http.server 8080 >/dev/null 2>&1 &
+          for i in $(seq 1 20); do curl -sf http://localhost:8080/ >/dev/null && break; sleep 0.5; done
+          node scripts/screenshot-pages.mjs --base http://localhost:8080 --out site-preview
+
+      - name: Upload screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: site-preview
+          path: site-preview
+          if-no-files-found: warn
