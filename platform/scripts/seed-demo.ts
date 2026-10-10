@@ -2,7 +2,8 @@
  * Synthetic demo data for product screenshots (SQ-144 / US-11).
  *
  * Brand "Casa Demo": 1 group owner + 3 locations, 8 servers each, ~600 reviews
- * over 8 weeks, ~120 guests, 1 WhatsApp campaign, 6 event leads, 2 quotes,
+ * over 8 weeks plus 16 live-feed reviews from the last 6 hours, ~120 guests,
+ * 1 WhatsApp campaign, 6 event leads, 2 quotes,
  * Google rating snapshots 4.5 -> 4.7 and product_events.
  *
  * Safety:
@@ -258,6 +259,26 @@ async function main(): Promise<void> {
       }
     }
   }
+  // Live feed: 16 reviews in the 2-6 hours before this run, at the captured location (Polanco),
+  // from the first four servers. One private 3-star note stays open; the rest are 4-5 stars, a
+  // third sent to Google. Own RNG stream and wall-clock times, so the 600-review history above is unchanged.
+  const live = locationRows[0];
+  const liveTeam = staffFor(live.id).slice(0, 4);
+  const liveRng = mulberry32(2144);
+  for (let n = 0; n < 16; n++) {
+    const server = liveTeam[Math.floor(liveRng() * liveTeam.length)];
+    const createdAt = new Date(Date.now() - (2 + liveRng() * 4) * 3_600_000);
+    const base = { restaurantId: live.id, staffId: server.id, staffCode: server.code, staffName: server.name, createdAt };
+    if (n === 0) {
+      reviewValues.push({ ...base, rating: 3, sentToGoogle: false, feedback: 'La sopa llegó tibia y tardaron en cambiarla.', status: 'new' });
+      continue;
+    }
+    const rating = liveRng() < 0.6 ? 5 : 4;
+    const toGoogle = n % 3 === 1;
+    const note = PRIVATE_POSITIVE[Math.floor(liveRng() * PRIVATE_POSITIVE.length)];
+    reviewValues.push({ ...base, rating, sentToGoogle: toGoogle, feedback: toGoogle ? null : note, status: 'reviewed' });
+  }
+
   for (let i = 0; i < reviewValues.length; i += 150) {
     await db.insert(reviews).values(reviewValues.slice(i, i + 150));
   }
