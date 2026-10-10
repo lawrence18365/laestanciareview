@@ -22,5 +22,7 @@ export async function GET(req: NextRequest) {
   // Force refresh all (ignore cache age - it's a daily cron)
   const result = await refreshAllGoogleRatings(0);
 
-  return Response.json({ ok: true, ...result });
+  // Partial failure still succeeds; 500 only when every restaurant failed.
+  const allFailed = result.failed > 0 && result.refreshed === 0;
+  return Response.json({ ok: !allFailed, ...result }, { status: allFailed ? 500 : 200 });
 }
