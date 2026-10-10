@@ -1,11 +1,12 @@
 import { Metadata } from 'next';
-import { redirect } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import { readFileSync } from 'fs';
 import path from 'path';
 import { and, desc, eq, sql, type SQL } from 'drizzle-orm';
 import { db } from '@/db';
 import { prospectQueue } from '@/db/schema';
 import { verifySession } from '@/lib/session';
+import { isRateTapStaff } from '@/lib/admin';
 import { buildProspectWhatsappUrl } from '@/lib/prospect-whatsapp';
 import { ProspectActions } from './ProspectActions';
 
@@ -94,8 +95,8 @@ export default async function ProspectsPage({
 }) {
   const session = await verifySession();
   if (!session) redirect('/login');
-  // Founder/owner-only board — mirrors /overview's role gate.
-  if (session.role !== 'owner' && session.role !== 'regional') redirect('/dashboard');
+  // RateTap-staff-only board: customer owner/regional sessions get a 404.
+  if (!isRateTapStaff(session)) notFound();
 
   const { ciudad = '', estado = '', nivel = '', p = '' } = await searchParams;
   const soloGrupos = nivel === 'grupo';

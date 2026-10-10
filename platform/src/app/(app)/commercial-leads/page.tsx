@@ -1,8 +1,9 @@
 import { desc } from 'drizzle-orm';
-import { redirect } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import { db } from '@/db';
 import { commercialEvents, commercialLeads } from '@/db/schema';
 import { verifySession } from '@/lib/session';
+import { isRateTapStaff } from '@/lib/admin';
 import type { CommercialLeadStatus } from '@/lib/commercial-statuses';
 import CommercialLeadsTable from './CommercialLeadsTable';
 import type { CommercialLeadRow } from './CommercialLeadsTable';
@@ -24,7 +25,8 @@ function toIso(date: Date | string | null) {
 export default async function CommercialLeadsPage() {
   const session = await verifySession();
   if (!session) redirect('/login');
-  if (session.role !== 'owner') redirect('/overview');
+  // RateTap-internal sales data: customer owner/regional sessions get a 404.
+  if (!isRateTapStaff(session)) notFound();
 
   const leads = await db
     .select()

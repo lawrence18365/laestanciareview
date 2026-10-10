@@ -1,9 +1,9 @@
 /**
  * Founder prospect board — one-tap status advancement.
  *
- * Auth: requires a valid ratetap_session cookie with role owner/regional
- * (same gate as the /prospects page, enforced here because middleware only
- * guards page routes).
+ * Auth: requires a valid ratetap_session cookie for a RateTap staff slug
+ * (isRateTapStaff, same gate as the /prospects page; customer sessions get
+ * 404).
  *
  * CRON SAFETY: every action moves the row to 'sent' / 'replied' / 'booked'
  * / 'won' / 'lost' — none of which are in the prospect-outreach cron's
@@ -15,6 +15,7 @@ import { eq, sql } from 'drizzle-orm';
 import { db } from '@/db';
 import { prospectQueue } from '@/db/schema';
 import { verifySession } from '@/lib/session';
+import { isRateTapStaff } from '@/lib/admin';
 
 export const runtime = 'nodejs';
 
@@ -23,9 +24,9 @@ const VALID_ACTIONS = new Set<Action>(['contacted', 'replied', 'demo', 'won', 'l
 
 export async function POST(req: NextRequest) {
   const session = await verifySession();
-  if (!session || (session.role !== 'owner' && session.role !== 'regional')) {
-    return Response.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  if (!session) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+  // RateTap-internal sales data: customer sessions must not learn it exists.
+  if (!isRateTapStaff(session)) return Response.json({ error: 'Not found' }, { status: 404 });
 
   let body: { placeId?: unknown; action?: unknown };
   try {

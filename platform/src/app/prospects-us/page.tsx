@@ -2,6 +2,9 @@
 import { Metadata } from 'next';
 import * as fs from 'fs';
 import * as path from 'path';
+import { notFound, redirect } from 'next/navigation';
+import { verifySession } from '@/lib/session';
+import { isRateTapStaff } from '@/lib/admin';
 
 export const metadata: Metadata = {
   title: 'Key West Prospects — RateTap',
@@ -50,7 +53,14 @@ function makeEmailUrl(p: Prospect): string | null {
   return p.website;
 }
 
-export default function KeyWestProspectsPage() {
+export const dynamic = 'force-dynamic';
+
+export default async function KeyWestProspectsPage() {
+  // RateTap-staff only: phone numbers + pitch links. Middleware also gates this.
+  const session = await verifySession();
+  if (!session) redirect('/login');
+  if (!isRateTapStaff(session)) notFound();
+
   const prospects = loadProspects();
   const withPhone = prospects.filter((p) => p.phone);
   const withoutPhone = prospects.filter((p) => !p.phone);
