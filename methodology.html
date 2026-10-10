@@ -117,7 +117,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <dd style="margin-left: 0; color: var(--text-secondary);">An active location with at least two Google rating snapshots in the <code>google_rating_snapshots</code> table, with a gap of at least 7 days between the earliest and latest. Locations below this threshold are excluded from rating statistics because their observation window is too short to draw conclusions from.</dd>
 
 <dt style="font-weight: 700; margin-top: 1.5rem;">Guest tap</dt>
-<dd style="margin-left: 0; color: var(--text-secondary);">A row in the <code>reviews</code> table representing one guest rating submission through a restaurant's RateTap flow. Each tap captures a star rating, optional feedback, optional staff attribution, and whether the guest chose Google's review form.</dd>
+<dd style="margin-left: 0; color: var(--text-secondary);">A row in the <code>reviews</code> table representing one guest rating submission through a restaurant's RateTap flow. Each tap captures a star rating, optional feedback, and optional staff attribution.</dd>
 
 <dt style="font-weight: 700; margin-top: 1.5rem;">Guest issue detection</dt>
 <dd style="margin-left: 0; color: var(--text-secondary);">Every guest is offered the same choice between Google's review form and private feedback; the platform does not route guests by a star threshold. When feedback is submitted, <code>classifyReview()</code> classifies its written content as praise, mixed, complaint, or urgent. Ratings at or below 2 are urgent regardless of the text, and ratings at or below 3 are never praise. Any result other than praise is actionable: it is something a human needs to act on, and this is what the site's "guest issue" counts mean.</dd>
@@ -146,7 +146,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <li>18,726 guest reviews captured.</li>
 <li>all 12 locations currently between 4.5 and 4.8 stars on Google (average 4.65), pulled from each location's Google Business Profile.</li>
 
-<li>16,604 guests invited to leave a Google review. Every guest chooses between a Google review and private feedback, whatever the rating; private feedback alerts the manager in real time.</li>
+<li>Before July 8, 2026 the flow routed guests by rating; since then every guest chooses between a Google review and private feedback, whatever the rating. Private feedback alerts the manager in real time.</li>
 <li>every review carries the staff code that was tapped; 92% map to a specific named staff member.</li>
 </ul>
 <p class="reveal">
@@ -170,7 +170,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <ul class="reveal">
 <li><strong>Sample size is small.</strong> 12 tracked locations is enough to describe RateTap's installed base accurately, but it is not large enough to claim industry-wide effect sizes. Any reader extrapolating these results to "all restaurants will see the same outcome" is over-reaching the data.</li>
 <li><strong>Selection bias.</strong> The 12 tracked locations are the operating restaurants of the founder's group, plus early adopters. They were highly motivated to deploy RateTap correctly. Outcomes for less-motivated operators may differ.</li>
-<li><strong>We do not claim a measured rating uplift.</strong> Early Google snapshots for several locations reflected incomplete or mismatched Google Place IDs that were later corrected, so first-versus-latest rating deltas are not reliable and we do not publish them. We report only what we can verify directly: reviews captured by the platform, guests who chose Google's review form, and each location's current Google rating. We do not claim RateTap is the sole driver of any rating.</li>
+<li><strong>We do not claim a measured rating uplift.</strong> Early Google snapshots for several locations reflected incomplete or mismatched Google Place IDs that were later corrected, so first-versus-latest rating deltas are not reliable and we do not publish them. We report only what we can verify directly: reviews captured by the platform and each location's current Google rating. We do not claim RateTap is the sole driver of any rating.</li>
 <li><strong>Attribution rate counts taps, not reviews on Google.</strong> The 92% staff attribution rate is for in-platform reviews (100% carry the staff code tapped; 92% map to a current staff record). Once a guest opens Google's review form, the eventual Google review (if posted) is attributed via Google's own systems, not RateTap's.</li>
 <li><strong>"Captured" means a guest completed a rating in the platform, not a confirmed Google review.</strong> Every guest is offered Google's review form, but whether the guest then posts on Google is outside our measurement.</li>
 </ul>

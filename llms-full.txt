@@ -31,7 +31,6 @@ RateTap is a SaaS that captures Google reviews at the table using NFC cards, att
 - **5,566 five-star ratings** (90.3%).
 - **233 four-star ratings** (3.8%).
 - **362 low-star ratings (1–3)** (5.9%).
-- **5,581 routed to Google review form** (90.6%).
 - **Mean taps per paying restaurant**: 473.9.
 - **Median taps per paying restaurant**: 397.
 - **Max taps at single location**: 1,456.
@@ -51,8 +50,7 @@ A "tracked" location is a paying restaurant with at least two Google rating snap
 
 ### Guest feedback recovery (lifetime)
 
-- **470 guest feedback responses** sent privately to the manager by guests who chose that option (every guest is also offered the Google review form).
-- **49.4%** of those responses have been acknowledged (status: reviewed or resolved).
+- **49.4%** of private feedback responses have been acknowledged (status: reviewed or resolved).
 
 ### Staff attribution (lifetime)
 
