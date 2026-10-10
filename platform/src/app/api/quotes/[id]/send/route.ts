@@ -88,7 +88,7 @@ export async function POST(req: NextRequest, ctx: RouteContext) {
     .update(quotes)
     .set({
       publicToken: token,
-      // Advance draft → sent; never downgrade an accepted/expired quote.
+      // Advance draft → sent; never downgrade a won/expired quote.
       status: quote.status === 'draft' ? 'sent' : quote.status,
       sentAt: quote.sentAt ?? new Date(),
       updatedAt: new Date(),
