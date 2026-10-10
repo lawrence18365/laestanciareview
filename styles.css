@@ -2302,6 +2302,115 @@ body:has(.hero:is([data-photo-hero], .hero--photo)).has-mobile-sticky-cta { padd
     .cta-band { padding: var(--space-7) 0; }
 }
 
+/* --- Product shot: a real screenshot inside a CSS device frame (no extra image files).
+       Browser frame: <figure class="shot"><img width height loading="lazy" alt></figure>
+       Phone frame:   add .shot--phone (max 260px). Two phones side by side: wrap them in .shot-pair.
+       Tall capture:  add .shot--crop to show the top of the image and fade the rest. --- */
+.shot {
+    position: relative;
+    margin: 0;
+    overflow: hidden;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-lg);
+}
+.shot::before {
+    content: '';
+    display: block;
+    height: 30px;
+    border-bottom: 1px solid var(--line);
+    background:
+        radial-gradient(circle at 16px 50%, rgba(15, 23, 42, 0.16) 4px, transparent 5px),
+        radial-gradient(circle at 32px 50%, rgba(15, 23, 42, 0.16) 4px, transparent 5px),
+        radial-gradient(circle at 48px 50%, rgba(15, 23, 42, 0.16) 4px, transparent 5px),
+        var(--surface-muted);
+}
+.shot img { display: block; width: 100%; height: auto; }
+
+.shot--phone {
+    width: 100%;
+    max-width: 260px;
+    margin-inline: auto;
+    padding: 0.6rem;
+    border: 0;
+    border-radius: 2.4rem;
+    background: var(--ink);
+}
+.shot--phone::before {
+    width: 3.5rem;
+    height: 0.3rem;
+    margin: 0.1rem auto 0.55rem;
+    border: 0;
+    border-radius: var(--radius-pill);
+    background: rgba(255, 255, 255, 0.28);
+}
+.shot--phone img { border-radius: 1.8rem; }
+
+.shot--crop { max-height: 34rem; }
+.shot--crop::after {
+    content: '';
+    position: absolute;
+    inset: auto 0 0;
+    height: 5rem;
+    background: linear-gradient(to bottom, transparent, var(--surface));
+    pointer-events: none;
+}
+
+.shot-pair { display: flex; align-items: flex-start; justify-content: center; gap: var(--space-5); }
+.shot-pair .shot--phone { flex: 1 1 0; min-width: 0; max-width: 240px; margin-inline: 0; }
+.shot-pair .shot--phone + .shot--phone { margin-top: var(--space-7); }
+.icon-steps + .shot-pair { margin-top: var(--space-7); }
+
+/* --- Feature row: outcome heading + one line of how, beside a .shot. Add .feature-row--flip to put the
+       shot on the left at desktop. Rows stack (text first) below 768px. --- */
+.feature-row {
+    display: grid;
+    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+    gap: var(--space-8);
+    align-items: center;
+}
+.feature-row + .feature-row { margin-top: var(--space-8); }
+.feature-row--flip { grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); }
+.feature-row--flip .feature-row__text { order: 2; }
+.feature-row__text h3 {
+    margin-bottom: var(--space-3);
+    font-size: clamp(1.4rem, 2.2vw, 1.9rem);
+    letter-spacing: -0.02em;
+    line-height: 1.15;
+}
+.feature-row__text p { color: var(--ink-2); font-size: var(--fs-body); line-height: 1.6; }
+
+/* --- Included list: two-column checklist. --- */
+.included { margin-top: var(--space-8); }
+.included-list {
+    list-style: none;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.9rem var(--space-6);
+    max-width: 880px;
+    margin: 0 auto;
+    padding: 0;
+}
+.included-list li { display: flex; align-items: center; gap: var(--space-3); font-weight: 600; }
+
+/* --- Section note (small print under a section) and section action (one button under a section). --- */
+.section-note { max-width: 640px; margin: var(--space-5) auto 0; text-align: center; color: var(--ink-2); font-size: var(--fs-small); }
+.section-action { margin-top: var(--space-6); text-align: center; }
+.stat-card__source a { color: inherit; text-decoration: underline; }
+
+/* --- FAQ list: centers .faq-item rows in a readable column. --- */
+.faq-list { max-width: 760px; margin-inline: auto; }
+
+@media (max-width: 768px) {
+    .feature-row,
+    .feature-row--flip { grid-template-columns: minmax(0, 1fr); gap: var(--space-5); }
+    .feature-row--flip .feature-row__text { order: 0; }
+    .feature-row + .feature-row { margin-top: var(--space-7); }
+    .included-list { grid-template-columns: minmax(0, 1fr); }
+    .shot--crop { max-height: 26rem; }
+}
+
 /* =========================================
    LEGACY MAP: classes unmigrated pages still use, mapped onto the components above.
    Wave 3 pages are rebuilt on the components; delete this block when none remain.

@@ -324,7 +324,7 @@
 
       <div class="ds-block" id="stats">
         <h3>Stat cards</h3>
-        <p class="ds-note">Number, label, source line. Only verified figures.</p>
+        <p class="ds-note">Number, label, source line. Only verified figures. Internal figures link their source line to /methodology; external figures name the author, institution and year.</p>
         <div class="ds-demo">
           <div class="stat-cards">
             <div class="stat-card">
@@ -407,8 +407,8 @@
 
       <div class="ds-block" id="faq">
         <h3>FAQ</h3>
-        <p class="ds-note">script.js toggles .active on .faq-item. Answers 40 words or fewer.</p>
-        <div class="ds-demo">
+        <p class="ds-note">script.js toggles .active on .faq-item. Answers 40 words or fewer. Wrap the items in .faq-list for a centered, readable column.</p>
+        <div class="ds-demo faq-list">
           <div class="faq-item active">
             <button class="faq-question"><span>Question?</span><i class="fa-solid fa-minus"></i></button>
             <div class="faq-answer"><p>Short answer.</p></div>
@@ -426,6 +426,71 @@
   &lt;button class="faq-question"&gt;&lt;span&gt;Another question?&lt;/span&gt;&lt;i class="fa-solid fa-plus"&gt;&lt;/i&gt;&lt;/button&gt;
   &lt;div class="faq-answer"&gt;&lt;p&gt;Short answer.&lt;/p&gt;&lt;/div&gt;
 &lt;/div&gt;</code></pre>
+      </div>
+
+      <div class="ds-block" id="shots">
+        <h3>Product shots</h3>
+        <p class="ds-note">A real screenshot in a CSS frame. Always set width and height from the file. Lazy-load everything except an above-the-fold image.</p>
+        <div class="ds-demo">
+          <figure class="shot"><img src="assets/product/overview.webp" width="1600" height="1000" loading="lazy" alt="Overview of all locations"></figure>
+        </div>
+        <pre class="ds-code"><code>&lt;figure class="shot"&gt;&lt;img src="assets/product/overview.webp" width="1600" height="1000" loading="lazy" alt="..."&gt;&lt;/figure&gt;</code></pre>
+        <p class="ds-note">Phones: add .shot--phone (260px max). Two phones side by side go in .shot-pair. Tall captures: add .shot--crop.</p>
+        <div class="ds-demo">
+          <div class="shot-pair">
+            <figure class="shot shot--phone"><img src="assets/product/guest-rate-mobile.webp" width="780" height="1688" loading="lazy" alt="Guest rating screen"></figure>
+            <figure class="shot shot--phone"><img src="assets/product/guest-choice-mobile.webp" width="780" height="1688" loading="lazy" alt="Guest choice screen"></figure>
+          </div>
+        </div>
+        <pre class="ds-code"><code>&lt;div class="shot-pair"&gt;
+  &lt;figure class="shot shot--phone"&gt;&lt;img src="assets/product/guest-rate-mobile.webp" width="780" height="1688" loading="lazy" alt="..."&gt;&lt;/figure&gt;
+  &lt;figure class="shot shot--phone"&gt;&lt;img src="assets/product/guest-choice-mobile.webp" width="780" height="1688" loading="lazy" alt="..."&gt;&lt;/figure&gt;
+&lt;/div&gt;
+&lt;figure class="shot shot--crop"&gt;&lt;img src="assets/product/owner-briefing-email.webp" width="1600" height="3440" loading="lazy" alt="..."&gt;&lt;/figure&gt;</code></pre>
+      </div>
+
+      <div class="ds-block" id="feature-row">
+        <h3>Feature row</h3>
+        <p class="ds-note">Outcome heading, one line of how, then the shot. Add .feature-row--flip to alternate sides. Rows stack on phones.</p>
+        <div class="ds-demo">
+          <div class="feature-row">
+            <div class="feature-row__text">
+              <h3>Outcome heading</h3>
+              <p>One line that says how.</p>
+            </div>
+            <figure class="shot"><img src="assets/product/inbox.webp" width="1600" height="1000" loading="lazy" alt="Inbox with complaints"></figure>
+          </div>
+          <div class="feature-row feature-row--flip">
+            <div class="feature-row__text">
+              <h3>Flipped row</h3>
+              <p>Shot on the left at desktop.</p>
+            </div>
+            <figure class="shot"><img src="assets/product/live.webp" width="1600" height="1000" loading="lazy" alt="Live feed"></figure>
+          </div>
+        </div>
+        <pre class="ds-code"><code>&lt;div class="feature-row"&gt;
+  &lt;div class="feature-row__text"&gt;&lt;h3&gt;Outcome heading&lt;/h3&gt;&lt;p&gt;One line that says how.&lt;/p&gt;&lt;/div&gt;
+  &lt;figure class="shot"&gt;...&lt;/figure&gt;
+&lt;/div&gt;
+&lt;div class="feature-row feature-row--flip"&gt;...&lt;/div&gt;</code></pre>
+      </div>
+
+      <div class="ds-block" id="included">
+        <h3>Included list, note and action</h3>
+        <p class="ds-note">Two-column checklist. .section-note is small print under a section. .section-action holds one button.</p>
+        <div class="ds-demo">
+          <ul class="included-list">
+            <li><span class="check-icon" role="img" aria-label="Included"></span>First item</li>
+            <li><span class="check-icon" role="img" aria-label="Included"></span>Second item</li>
+          </ul>
+          <p class="section-note">Small print with a date and a source.</p>
+          <div class="section-action"><a class="btn btn-secondary" href="/product">Secondary action</a></div>
+        </div>
+        <pre class="ds-code"><code>&lt;ul class="included-list"&gt;
+  &lt;li&gt;&lt;span class="check-icon" role="img" aria-label="Included"&gt;&lt;/span&gt;First item&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p class="section-note"&gt;Small print with a date and a source.&lt;/p&gt;
+&lt;div class="section-action"&gt;&lt;a class="btn btn-secondary" href="/product"&gt;Secondary action&lt;/a&gt;&lt;/div&gt;</code></pre>
       </div>
 
       <div class="ds-block" id="cta">

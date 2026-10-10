@@ -17,7 +17,7 @@
 //
 // Word budgets (--budget), counted on visible body text with <nav>, <footer>, <script>, <style>,
 // <noscript>, <svg>, JSON-LD and the <!-- chrome:header --> / <!-- chrome:footer --> regions removed:
-//   total <= 550 words | hero <= 30 | each <h2> <= 8 | each .faq-answer <= 40
+//   total <= 550 words (600 for index.html and es/index.html) | hero <= 30 | each <h2> <= 8 | each .faq-answer <= 40
 //   hero = first element with class hero / hero--photo or a data-photo-hero attribute, else first <section>.
 //
 // Columns: undefined CSS vars | undefined classes | style="" attributes | visible words.
@@ -265,6 +265,8 @@ function analyze(file) {
 
 // ---------- word budgets ----------
 const BUDGET = { total: 550, hero: 30, h2: 8, faq: 40 };
+// The two homepages may run longer: they carry the pricing and proof sections the other pages do not.
+const TOTAL_OVERRIDES = { 'index.html': 600, 'es/index.html': 600 };
 
 const countWords = (html) => decode(html.replace(/<[^>]+>/g, ' '))
   .split(/\s+/).filter((w) => /[\p{L}\p{N}]/u.test(w)).length;
@@ -305,7 +307,8 @@ const hasClass = (tag, ...names) => {
 };
 const plainText = (html) => decode(html.replace(/<[^>]+>/g, ' ')).replace(/\s+/g, ' ').trim();
 
-function budgetCheck(rawHtml) {
+function budgetCheck(rawHtml, rel = '') {
+  const totalLimit = TOTAL_OVERRIDES[rel] ?? BUDGET.total;
   const body = stripNonContent(rawHtml);
   const total = countWords(body);
 
@@ -323,7 +326,7 @@ function budgetCheck(rawHtml) {
   });
 
   const violations = [];
-  if (total > BUDGET.total) violations.push(`total visible words ${total} > ${BUDGET.total}`);
+  if (total > totalLimit) violations.push(`total visible words ${total} > ${totalLimit}`);
   if (hero > BUDGET.hero) violations.push(`hero words ${hero} > ${BUDGET.hero}`);
   for (const h of h2) if (h.words > BUDGET.h2) violations.push(`h2 "${h.text}" has ${h.words} words > ${BUDGET.h2}`);
   for (const f of faq) if (f.words > BUDGET.faq) violations.push(`faq answer "${f.text}..." has ${f.words} words > ${BUDGET.faq}`);
@@ -386,7 +389,7 @@ const budgetResults = budget
     const html = readFileSync(abs, 'utf8');
     const rel = relative(ROOT, abs);
     if (/<meta[^>]+http-equiv=["']?refresh/i.test(html)) return { file: rel, skipped: 'redirect' };
-    return { file: rel, ...budgetCheck(html) };
+    return { file: rel, ...budgetCheck(html, rel) };
   })
   : [];
 

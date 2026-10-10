@@ -12,9 +12,9 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RateTap - More Google Reviews, Credited to Each Server</title>
+    <title>RateTap - Every Table Rated, Every Location in View</title>
     <meta name="description"
-        content="RateTap credits Google reviews to each server, alerts your GM when a guest complains, and shows every location in one view. Try it free for 30 days.">
+        content="One card per server. Guests rate the visit and choose Google or a private note. Your GM is alerted when a guest complains. Try it free for 30 days.">
     <!-- Canonical & Hreflang -->
     <link href="https://ratetapmx.com/" rel="canonical"/>
     <link href="https://ratetapmx.com/" hreflang="en-US" rel="alternate"/>
@@ -24,7 +24,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     <meta property="og:type" content="website"/>
     <meta property="og:url" content="https://ratetapmx.com/"/>
     <meta property="og:title" content="RateTap - Restaurant Reputation Software"/>
-    <meta property="og:description" content="Turn great experiences into Google reviews and get alerts when something went wrong."/>
+    <meta property="og:description" content="Every table rated, every location in view. Get alerts when a guest complains."/>
     <meta property="og:image" content="https://ratetapmx.com/assets/og-image.png"/>
     <meta property="og:locale" content="en_US"/>
     <meta property="og:locale:alternate" content="es_MX"/>
@@ -32,7 +32,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image"/>
     <meta name="twitter:title" content="RateTap - Restaurant Reputation Software"/>
-    <meta name="twitter:description" content="Turn great experiences into Google reviews and get alerts when something went wrong."/>
+    <meta name="twitter:description" content="Every table rated, every location in view. Get alerts when a guest complains."/>
     <meta name="twitter:image" content="https://ratetapmx.com/assets/og-image.png"/>
     <script type="application/ld+json">
     {
@@ -43,7 +43,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
       "operatingSystem": "Web",
       "inLanguage": "en-US",
       "url": "https://ratetapmx.com/",
-      "description": "Restaurant reputation software: turns great experiences into Google reviews and sends alerts to follow up when something went wrong.",
+      "description": "Restaurant guest feedback software: one card per server, guests choose Google or a private note, and managers get alerts when something goes wrong.",
       "offers": {
         "@type": "Offer",
         "price": "700",
@@ -53,9 +53,9 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     }
     </script>
 
-    <link rel="preload" href="styles.css?v=866417b9" as="style">
+    <link rel="preload" href="styles.css?v=87321aa7" as="style">
     <link rel="preload" href="assets/hero-restaurant.webp" as="image" type="image/webp" fetchpriority="high">
-    <link rel="stylesheet" href="styles.css?v=866417b9">
+    <link rel="stylesheet" href="styles.css?v=87321aa7">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <style>
@@ -65,8 +65,6 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
         .rt-loc h3 { font-size: 1.25rem; margin-bottom: 0.4rem; }
         .rt-loc__rate { color: #b8860b; font-weight: 700; margin-bottom: 0.6rem; }
         .rt-loc p { color: var(--text-secondary); font-size: 0.95rem; line-height: 1.5; margin: 0; }
-        .rt-note { text-align: center; color: var(--text-secondary); font-size: 0.85rem; max-width: 640px; margin: 1.75rem auto 0; }
-        .rt-more { margin-top: 2rem; }
         .rt-d1 { transition-delay: 100ms; }
         .rt-d2 { transition-delay: 200ms; }
         .rt-two { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2rem; max-width: 900px; margin: 0 auto; align-items: stretch; }
@@ -131,8 +129,8 @@ height="0" width="0" hidden></iframe></noscript>
     <section class="hero hero--photo hero--restaurant" id="hero">
         <div class="container hero-container">
             <div class="hero-content">
-                <h1>More Google reviews, credited to each server.</h1>
-                <p class="hero-subtitle">Guests tap a server&rsquo;s card. See who asks, and get complaint alerts.</p>
+                <h1>Every table rated. Every location in view.</h1>
+                <p class="hero-subtitle">One card per server. You get alerted when something goes wrong.</p>
                 <ul class="stat-pills">
                     <li class="stat-pill">23,664 reviews</li>
                     <li class="stat-pill">12 locations</li>
@@ -151,23 +149,45 @@ height="0" width="0" hidden></iframe></noscript>
     <section id="features" class="section bg-muted">
         <div class="container">
             <div class="section-header text-center">
-                <h2>What RateTap does</h2>
+                <h2>Know what happened at every table.</h2>
             </div>
-            <div class="grid-3">
-                <div class="card reveal">
-                    <div class="card-icon-wrapper"><i class="fa-solid fa-user-check" aria-hidden="true"></i></div>
-                    <h3>Reviews credited to each server</h3>
+            <div class="feature-row reveal">
+                <div class="feature-row__text">
+                    <h3>Ratings by server</h3>
                     <p>Every card belongs to one server. See who asks at every table, by shift and location.</p>
                 </div>
-                <div class="card reveal">
-                    <div class="card-icon-wrapper"><i class="fa-solid fa-bell" aria-hidden="true"></i></div>
+                <figure class="shot"><img src="assets/product/dashboard.webp" width="1600" height="1000" loading="lazy" alt="RateTap dashboard with ratings by server and location"></figure>
+            </div>
+            <div class="feature-row feature-row--flip reveal">
+                <div class="feature-row__text">
                     <h3>An alert when a guest complains</h3>
                     <p>Private feedback reaches your GM right away. Open complaints escalate to you after a few hours.</p>
                 </div>
-                <div class="card reveal">
-                    <div class="card-icon-wrapper"><i class="fa-solid fa-building" aria-hidden="true"></i></div>
+                <figure class="shot"><img src="assets/product/inbox.webp" width="1600" height="1000" loading="lazy" alt="RateTap inbox listing guest complaints"></figure>
+            </div>
+            <div class="feature-row reveal">
+                <div class="feature-row__text">
                     <h3>Every location in one view</h3>
                     <p>A group dashboard and a Monday briefing show which location needs attention.</p>
+                </div>
+                <figure class="shot"><img src="assets/product/overview.webp" width="1600" height="1000" loading="lazy" alt="RateTap overview of all locations"></figure>
+            </div>
+            <div class="included">
+                <div class="section-header text-center">
+                    <h2>Everything included</h2>
+                </div>
+                <ul class="included-list">
+                    <li><span class="check-icon" role="img" aria-label="Included"></span>NFC cards for every server</li>
+                    <li><span class="check-icon" role="img" aria-label="Included"></span>Live feed and push alerts</li>
+                    <li><span class="check-icon" role="img" aria-label="Included"></span>Complaint inbox with escalation</li>
+                    <li><span class="check-icon" role="img" aria-label="Included"></span>Weekly owner and chef reports</li>
+                    <li><span class="check-icon" role="img" aria-label="Included"></span>Guest list with birthdays and VIPs</li>
+                    <li><span class="check-icon" role="img" aria-label="Included"></span>WhatsApp campaigns to your guests</li>
+                    <li><span class="check-icon" role="img" aria-label="Included"></span>Server cards and QR codes</li>
+                    <li><span class="check-icon" role="img" aria-label="Included"></span>Multi-location group view</li>
+                </ul>
+                <div class="section-action">
+                    <a class="btn btn-secondary" href="/product">See every feature →</a>
                 </div>
             </div>
         </div>
@@ -180,9 +200,21 @@ height="0" width="0" hidden></iframe></noscript>
                 <h2>Real results across 12 restaurants.</h2>
             </div>
             <div class="stat-cards">
-                <div class="stat-card reveal"><div class="stat-card__num">23,664</div><div class="stat-card__label">Reviews captured</div></div>
-                <div class="stat-card reveal"><div class="stat-card__num">12</div><div class="stat-card__label">Active locations</div></div>
-                <div class="stat-card reveal"><div class="stat-card__num">4.5&ndash;4.8&starf;</div><div class="stat-card__label">Current Google rating</div></div>
+                <div class="stat-card reveal">
+                    <div class="stat-card__num">5,128</div>
+                    <div class="stat-card__label">Reviews captured in 30 days</div>
+                    <div class="stat-card__source">Source: <a href="/methodology">RateTap data</a>, Sep 10&ndash;Oct 10, 2026</div>
+                </div>
+                <div class="stat-card reveal">
+                    <div class="stat-card__num">65%</div>
+                    <div class="stat-card__label">of guests choose Google</div>
+                    <div class="stat-card__source">Source: <a href="/methodology">RateTap data</a>, Jul 8&ndash;Oct 10, 2026</div>
+                </div>
+                <div class="stat-card reveal">
+                    <div class="stat-card__num">4.5&ndash;4.8&starf;</div>
+                    <div class="stat-card__label">Google rating today, 12 locations</div>
+                    <div class="stat-card__source">Source: <a href="/methodology">Google Business Profiles</a>, Aug 19, 2026</div>
+                </div>
             </div>
             <div class="rt-locs">
                 <div class="rt-loc reveal">
@@ -201,8 +233,8 @@ height="0" width="0" hidden></iframe></noscript>
                     <p>746 reviews captured</p>
                 </div>
             </div>
-            <p class="rt-note">Data as of August 19, 2026. Ratings show today&rsquo;s status, not an effect of RateTap.</p>
-            <div class="text-center rt-more">
+            <p class="section-note">Location data as of August 19, 2026. Ratings show today&rsquo;s status, not an effect of RateTap.</p>
+            <div class="section-action">
                 <a class="btn btn-secondary" href="/case-studies">See all case studies</a>
             </div>
         </div>
@@ -260,7 +292,7 @@ height="0" width="0" hidden></iframe></noscript>
     <!-- CTA band -->
     <section class="cta-band">
         <div class="container">
-            <h2>Ready for more Google reviews?</h2>
+            <h2>Ready to see every table?</h2>
             <a href="https://app.ratetapmx.com/contacto?offer=trial_checkout&amp;source_page=home&amp;cta_context=closing&amp;language=en" data-funnel-context="closing" class="btn btn-primary">Try it free for 30 days</a>
         </div>
     </section>
@@ -282,7 +314,7 @@ height="0" width="0" hidden></iframe></noscript>
                     <h3>Track Service Recovery Coverage</h3>
                 </a>
             </div>
-            <div class="text-center rt-more">
+            <div class="section-action">
                 <a class="btn btn-secondary" href="/blog/">Explore all guides</a>
             </div>
         </div>

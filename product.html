@@ -15,8 +15,8 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 <title>
    Everything RateTap does | RateTap
   </title>
-<meta content="Everything RateTap does: one review card per server, complaint alerts, a guest list, private events and weekly reports. 30-day free trial." name="description"/>
-<meta content="ratetap features, restaurant review software features, server review cards, restaurant guest list, restaurant event quotes" name="keywords"/>
+<meta content="Everything RateTap does: one review card per server, complaint alerts, every location in one view, a guest list and weekly reports. 30-day free trial." name="description"/>
+<meta content="ratetap features, restaurant review software features, server review cards, restaurant guest list, restaurant group dashboard" name="keywords"/>
 <!-- Canonical & Hreflang -->
 <link href="https://ratetapmx.com/product" rel="canonical"/>
 <link href="https://ratetapmx.com/product" hreflang="en-US" rel="alternate"/>
@@ -28,7 +28,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 <meta content="website" property="og:type"/>
 <meta content="https://ratetapmx.com/product" property="og:url"/>
 <meta content="Everything RateTap does | RateTap" property="og:title"/>
-<meta content="One review card per server, complaint alerts, a guest list, private events and weekly reports. 30-day free trial." property="og:description"/>
+<meta content="One review card per server, complaint alerts, every location in one view, a guest list and weekly reports. 30-day free trial." property="og:description"/>
 <meta content="https://ratetapmx.com/assets/og-image.png" property="og:image"/>
 <meta content="en_US" property="og:locale"/>
 <meta content="es_MX" property="og:locale:alternate"/>
@@ -37,7 +37,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 <meta content="summary_large_image" name="twitter:card"/>
 <meta content="@ratetap" name="twitter:site"/>
 <meta content="Everything RateTap does | RateTap" name="twitter:title"/>
-<meta content="One review card per server, complaint alerts, a guest list, private events and weekly reports. 30-day free trial." name="twitter:description"/>
+<meta content="One review card per server, complaint alerts, every location in one view, a guest list and weekly reports. 30-day free trial." name="twitter:description"/>
 <meta content="https://ratetapmx.com/assets/og-image.png" name="twitter:image"/>
 <!-- Meta Pixel Code -->
 <script>
@@ -59,11 +59,6 @@ fbq('track', 'PageView');
 <link as="style" href="styles.css" rel="preload"/>
 <link href="styles.css" rel="stylesheet"/>
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"/>
-<style>
-  /* Product screenshots: keep them inside their card at phone width. */
-  .card img { display: block; width: 100%; height: auto; max-width: 100%; border-radius: 12px; margin-bottom: 1.5rem; }
-  .card img[src*="-mobile."] { max-width: 260px; margin-left: auto; margin-right: auto; }
-</style>
     <!-- chrome:icons -->
     <link rel="icon" href="/favicon.ico" sizes="32x32">
     <link rel="icon" href="/assets/brand/favicon.svg" type="image/svg+xml">
@@ -100,90 +95,83 @@ height="0" width="0" hidden></iframe></noscript>
         <div class="container hero-container">
             <div class="hero-content">
                 <h1>Everything RateTap does</h1>
-                <p class="hero-subtitle">One card per server, alerts, guest list, events, and reports.</p>
+                <p class="hero-subtitle">One card per server. Alerts, reports, and every location in view.</p>
                 <div class="hero-actions">
                     <a class="btn btn-primary" data-funnel-context="hero" href="https://app.ratetapmx.com/contacto?offer=trial_checkout&amp;source_page=product&amp;cta_context=hero&amp;language=en">Try it free for 30 days</a>
                 </div>
+                <div class="hero-proof-row" hidden></div>
             </div>
         </div>
     </section>
 
-    <section class="section">
+    <section class="section" id="proof">
         <div class="container">
         <div class="section-header text-center">
-            <h2>Google reviews, credited to each server</h2>
+            <h2>What guests do at our 12 restaurants</h2>
         </div>
-        <div class="grid-2">
-            <div class="card">
-                <img src="/assets/product/guest-rate-mobile.webp" width="390" height="844" alt="Guest rating screen after tapping a server card" loading="lazy">
-                <h3>Guests tap a server's card</h3>
-                <p>Guests tap the card, then rate one to five stars.</p>
+        <div class="stat-cards">
+            <div class="stat-card reveal">
+                <div class="stat-card__num">65%</div>
+                <div class="stat-card__label">of guests choose Google</div>
+                <div class="stat-card__source">Source: <a href="/methodology">RateTap data</a>, Jul 8&ndash;Oct 10, 2026</div>
             </div>
-            <div class="card">
-                <img src="/assets/product/guest-choice-mobile.webp" width="390" height="844" alt="Choice screen offering Google or private feedback" loading="lazy">
-                <h3>Guests choose their next step</h3>
-                <p>Every rating gets the same choice: Google, or private feedback to managers.</p>
+            <div class="stat-card reveal">
+                <div class="stat-card__num">23%</div>
+                <div class="stat-card__label">of 1&ndash;3&starf; guests choose Google too</div>
+                <div class="stat-card__source">Source: <a href="/methodology">RateTap data</a>, Jul 8&ndash;Oct 10, 2026, n=414</div>
             </div>
-            <div class="card">
-                <img src="/assets/product/scoreboard-mobile.webp" width="390" height="844" alt="Personal scoreboard for one server" loading="lazy">
-                <h3>Servers see their own scoreboard</h3>
-                <p>Each server checks their results from a personal link or QR code.</p>
-            </div>
-            <div class="card">
-                <img src="/assets/product/staff.webp" width="1280" height="800" alt="Staff page listing servers and their card codes" loading="lazy">
-                <h3>Manage servers and their cards</h3>
-                <p>Add, edit, or deactivate servers, and download their QR codes.</p>
+            <div class="stat-card reveal">
+                <div class="stat-card__num">+5&ndash;9%</div>
+                <div class="stat-card__label">revenue per extra Yelp star, independent restaurants</div>
+                <div class="stat-card__source">Source: Luca, Harvard Business School, 2016. Not a RateTap result.</div>
             </div>
         </div>
         </div>
     </section>
 
     <section class="section bg-muted">
+        <div class="container">
+        <div class="section-header text-center">
+            <h2>Know how every table rates you</h2>
+        </div>
+        <div class="feature-row reveal">
+            <div class="feature-row__text">
+                <h3>Guests rate in two taps</h3>
+                <p>Tap a server&rsquo;s card, give one to five stars, then choose Google or a private note.</p>
+            </div>
+            <div class="shot-pair">
+                <figure class="shot shot--phone"><img src="/assets/product/guest-rate-mobile.webp" width="780" height="1688" alt="Guest rating screen after tapping a server card" loading="lazy"></figure>
+                <figure class="shot shot--phone"><img src="/assets/product/guest-choice-mobile.webp" width="780" height="1688" alt="Choice screen offering Google or private feedback" loading="lazy"></figure>
+            </div>
+        </div>
+        <div class="feature-row feature-row--flip reveal">
+            <div class="feature-row__text">
+                <h3>One card per server</h3>
+                <p>Add servers, download their QR codes, and see ratings by server and location.</p>
+            </div>
+            <figure class="shot"><img src="/assets/product/staff.webp" width="1600" height="868" alt="Staff page listing servers and their card codes" loading="lazy"></figure>
+        </div>
+        </div>
+    </section>
+
+    <section class="section">
         <div class="container">
         <div class="section-header text-center">
             <h2>Know the moment a guest complains</h2>
         </div>
-        <div class="grid-2">
-            <div class="card">
-                <img src="/assets/product/inbox.webp" width="1280" height="800" alt="Inbox with complaints ready for triage" loading="lazy">
-                <h3>Triage every complaint</h3>
+        <div class="feature-row reveal">
+            <div class="feature-row__text">
+                <h3>Every complaint in one inbox</h3>
                 <p>Mark it reviewed, record the outcome, and reply by email.</p>
             </div>
-            <div class="card">
-                <img src="/assets/product/live.webp" width="1280" height="800" alt="Live feed of new reviews" loading="lazy">
-                <h3>A live feed for GMs</h3>
-                <p>New reviews appear every 15 seconds. The GM is alerted first. Open complaints escalate to the owner after a few hours.</p>
-            </div>
+            <figure class="shot"><img src="/assets/product/inbox.webp" width="1600" height="1000" alt="Inbox with complaints ready for triage" loading="lazy"></figure>
         </div>
-        </div>
-    </section>
-
-    <section class="section">
-        <div class="container">
-        <div class="section-header text-center">
-            <h2>Every location, one view</h2>
-        </div>
-        <div class="grid-2">
-            <div class="card">
-                <img src="/assets/product/overview.webp" width="1280" height="800" alt="Overview of all locations on one page" loading="lazy">
-                <h3>All locations on one page</h3>
-                <p>See Google trends, open complaints, and response times for every location.</p>
+        <div class="feature-row feature-row--flip reveal">
+            <div class="feature-row__text">
+                <h3>The GM hears first</h3>
+                <p>A live feed updates every 15 seconds. Open complaints escalate to the owner after a few hours.</p>
             </div>
-            <div class="card">
-                <img src="/assets/product/dashboard.webp" width="1280" height="800" alt="Dashboard with reviews and staff ranking" loading="lazy">
-                <h3>Reviews and staff ranking</h3>
-                <p>Weekly and monthly reviews, staff ranking, and Google conversion per location.</p>
-            </div>
-            <div class="card">
-                <img src="/assets/product/owner-briefing-email.webp" width="1280" height="800" alt="Weekly owner briefing email" loading="lazy">
-                <h3>A Monday email for owners</h3>
-                <p>Every Monday at 8:00, owners get scans, complaints, and Google trends per location.</p>
-            </div>
-            <div class="card">
-                <img src="/assets/product/chef-email.webp" width="1280" height="800" alt="Weekly kitchen report email for the chef" loading="lazy">
-                <h3>A weekly kitchen report for your chef</h3>
-                <p>Every Monday your chef gets the kitchen issues guests mention, by location. No guest names.</p>
-            </div>
+            <figure class="shot"><img src="/assets/product/live.webp" width="1600" height="1000" alt="Live feed of new reviews" loading="lazy"></figure>
         </div>
         </div>
     </section>
@@ -191,18 +179,39 @@ height="0" width="0" hidden></iframe></noscript>
     <section class="section bg-muted">
         <div class="container">
         <div class="section-header text-center">
-            <h2>Bring guests back</h2>
+            <h2>Every location, one view</h2>
         </div>
-        <div class="grid-2">
+        <div class="feature-row reveal">
+            <div class="feature-row__text">
+                <h3>All locations on one page</h3>
+                <p>Google trends, open complaints, and response times for every location.</p>
+            </div>
+            <figure class="shot"><img src="/assets/product/overview.webp" width="1600" height="1000" alt="Overview of all locations on one page" loading="lazy"></figure>
+        </div>
+        <div class="feature-row feature-row--flip reveal">
+            <div class="feature-row__text">
+                <h3>Ratings by server and location</h3>
+                <p>Weekly and monthly ratings, plus how often guests choose Google, per location.</p>
+            </div>
+            <figure class="shot"><img src="/assets/product/dashboard.webp" width="1600" height="1000" alt="Dashboard with ratings by server and location" loading="lazy"></figure>
+        </div>
+        <div class="feature-row reveal">
+            <div class="feature-row__text">
+                <h3>A Monday email for owners</h3>
+                <p>Every Monday at 8:00, owners get complaints, Google trends, and server activity by location.</p>
+            </div>
+            <figure class="shot shot--crop"><img src="/assets/product/owner-briefing-email.webp" width="1600" height="3440" alt="Weekly owner briefing email" loading="lazy"></figure>
+        </div>
+        <div class="grid-3 reveal">
             <div class="card">
-                <img src="/assets/product/guests.webp" width="1280" height="800" alt="Guest list with birthday and VIP filters" loading="lazy">
-                <h3>Guest list with consent</h3>
-                <p>Guests join with WhatsApp and promo consent. Filter birthdays, VIPs, and guests absent 60 days.</p>
+                <div class="card-icon-wrapper"><i class="fa-solid fa-utensils" aria-hidden="true"></i></div>
+                <h3>A weekly kitchen report</h3>
+                <p>Every Monday your chef gets the kitchen issues guests mention, by location. No guest names.</p>
             </div>
             <div class="card">
-                <img src="/assets/product/campaigns.webp" width="1280" height="800" alt="Campaign screen with per-contact WhatsApp sends" loading="lazy">
-                <h3>WhatsApp messages from your phone</h3>
-                <p>Send event messages to consented guests one at a time, and track each status.</p>
+                <div class="card-icon-wrapper"><i class="fa-solid fa-qrcode" aria-hidden="true"></i></div>
+                <h3>Servers see their own ratings</h3>
+                <p>Each server checks results from a personal link or QR code.</p>
             </div>
         </div>
         </div>
@@ -211,19 +220,21 @@ height="0" width="0" hidden></iframe></noscript>
     <section class="section">
         <div class="container">
         <div class="section-header text-center">
-            <h2>Sell private events</h2>
+            <h2>Bring guests back</h2>
         </div>
-        <div class="grid-2">
-            <div class="card">
-                <img src="/assets/product/leads.webp" width="1280" height="800" alt="Event leads list with stages" loading="lazy">
-                <h3>Every event lead in one list</h3>
-                <p>Leads from the WhatsApp bot or manual entry move from new to won or lost.</p>
+        <div class="feature-row reveal">
+            <div class="feature-row__text">
+                <h3>A guest list with consent</h3>
+                <p>Guests join with WhatsApp and promo consent. Filter birthdays, VIPs, and guests absent 60 days.</p>
             </div>
-            <div class="card">
-                <img src="/assets/product/quote.webp" width="1280" height="800" alt="Quote builder with share link" loading="lazy">
-                <h3>Quotes you can share</h3>
-                <p>Build the quote, print it, or send a link by WhatsApp.</p>
+            <figure class="shot"><img src="/assets/product/guests.webp" width="1600" height="1000" alt="Guest list with birthday and VIP filters" loading="lazy"></figure>
+        </div>
+        <div class="feature-row feature-row--flip reveal">
+            <div class="feature-row__text">
+                <h3>WhatsApp from your phone</h3>
+                <p>Message consented guests one at a time, and track each status.</p>
             </div>
+            <figure class="shot"><img src="/assets/product/campaigns.webp" width="1600" height="898" alt="Campaign screen with per-contact WhatsApp sends" loading="lazy"></figure>
         </div>
         </div>
     </section>
@@ -233,6 +244,32 @@ height="0" width="0" hidden></iframe></noscript>
         <div class="section-header text-center">
             <h2>One simple price per location</h2>
             <p>MX$700 per month plus a MX$1,500 setup fee. Cards included. 30-day free trial.</p>
+        </div>
+        </div>
+    </section>
+
+    <section class="section" id="faq">
+        <div class="container">
+        <div class="section-header text-center">
+            <h2>Questions owners ask</h2>
+        </div>
+        <div class="faq-list reveal">
+            <div class="faq-item active">
+                <button class="faq-question" type="button"><span>What is included?</span><i class="fa-solid fa-minus"></i></button>
+                <div class="faq-answer"><p>NFC cards for every server, the dashboard, complaint inbox, alerts, and weekly reports. Setup is MX$1,500 once. The software is MX$700 a month.</p></div>
+            </div>
+            <div class="faq-item">
+                <button class="faq-question" type="button"><span>How does setup work?</span><i class="fa-solid fa-plus"></i></button>
+                <div class="faq-answer"><p>We print your cards and set up your locations and servers. There is nothing to install, and guests need no app.</p></div>
+            </div>
+            <div class="faq-item">
+                <button class="faq-question" type="button"><span>Do servers need training?</span><i class="fa-solid fa-plus"></i></button>
+                <div class="faq-answer"><p>Very little. A server hands the card to the table. Guests rate and choose on their own phone, with no pressure.</p></div>
+            </div>
+            <div class="faq-item">
+                <button class="faq-question" type="button"><span>Is it allowed by Google?</span><i class="fa-solid fa-plus"></i></button>
+                <div class="faq-answer"><p>Built for Google&rsquo;s review policy. Every guest is asked the same way and chooses Google or a private note. No incentives, no pressure, no review quotas for servers.</p></div>
+            </div>
         </div>
         </div>
     </section>
