@@ -150,7 +150,7 @@ LOCALE_CONFIG = {
         "faq_title": "Preguntas que suelen venir después",
         "related_title": "Sigue leyendo",
         "related_link_label": "Explorar",
-        "footer_tagline": "El estándar en gestión de reputación para hotelería premium.",
+        "footer_tagline": "El estándar en gestión de reputación para restaurantes premium.",
         "footer_platform": "Plataforma",
         "footer_company": "Compañía",
         "footer_connect": "Conectar",
