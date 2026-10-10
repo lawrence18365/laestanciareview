@@ -4,7 +4,8 @@ import { RESOLUTIONS, REVIEWED_VIA } from '@/lib/review-recovery';
 // Review submission — customer taps NFC card, selects stars
 export const submitReviewSchema = z.object({
   restaurantSlug: z.string().min(1).max(100),
-  staffCode: z.string().min(1).max(50),
+  // Empty or missing = a /r/<slug> scan without ?card=CODE: no server, not invalid.
+  staffCode: z.string().max(50).optional(),
   rating: z.number().int().min(1).max(5),
 });
 

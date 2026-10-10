@@ -70,7 +70,7 @@ export async function POST(req: NextRequest) {
   }
 
   const { restaurantSlug, staffCode, rating } = parsed.data;
-  const normalizedStaffCode = normalizeStaffCode(staffCode);
+  const normalizedStaffCode = normalizeStaffCode(staffCode ?? '');
 
   const restaurant = await getRestaurantBySlug(restaurantSlug);
   if (!restaurant) {
@@ -109,7 +109,10 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  const staffMember = await getStaffByCode(restaurant.id, normalizedStaffCode);
+  // No card scanned: no server to look up, and nothing to store as attribution.
+  const staffMember = normalizedStaffCode
+    ? await getStaffByCode(restaurant.id, normalizedStaffCode)
+    : null;
 
   // Compliant flow: capture the rating for internal analytics + waiter
   // attribution, but do NOT route the guest by it. Every guest is offered the
@@ -124,8 +127,8 @@ export async function POST(req: NextRequest) {
     .values({
       restaurantId: restaurant.id,
       staffId: staffMember?.id ?? null,
-      staffCode: normalizedStaffCode,
-      staffName: staffMember?.name ?? normalizedStaffCode,
+      staffCode: normalizedStaffCode || null,
+      staffName: staffMember?.name ?? (normalizedStaffCode || null),
       rating,
       feedbackTokenHash,
       deviceHash,
