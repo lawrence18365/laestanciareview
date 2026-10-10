@@ -15,16 +15,16 @@
           "slug": "restaurant-google-rating-dropped",
           "pageTitle": "Restaurant Google Rating Dropped? Recovery Plan for Operators | RateTap",
           "title": "Restaurant Google Rating Dropped? Use a Recovery Plan Your Team Can Run This Week",
-          "description": "If your restaurant's Google rating dropped, stop the next public miss, isolate what changed on the floor, and rebuild recent 5-star review velocity with a system your managers can actually enforce.",
+          "description": "If your restaurant's Google rating dropped, recover guests before the next public miss, isolate what changed on the floor, and rebuild recent 5-star review velocity with a system your managers can actually enforce.",
           "eyebrow": "Rating Recovery",
           "heroSubtitle": "A rating drop usually means your operating system broke somewhere: a slower shift, a weaker close, a manager who heard about problems too late, or guests who left happy but silent. The fix is not a generic apology post. It is a tighter review recovery loop.",
           "readTime": "7 min read",
           "updatedLabel": "April 25, 2026",
-          "painPoint": "Your average slipped and you need to stop another bad public review before it compounds the damage.",
+          "painPoint": "Your average slipped and you need to recover guests early before another bad public review compounds the damage.",
           "bestFor": [
             "Owners reacting to a recent 1-star or 2-star streak",
             "GMs dealing with inconsistent service by shift or station",
-            "Multi-location teams that need faster visibility before feedback goes public"
+            "Multi-location teams that need faster visibility into guest feedback"
           ],
           "chips": [
             "Google rating drop",
@@ -53,12 +53,12 @@
             {
               "heading": "Create a same-shift recovery path for unhappy guests",
               "paragraphs": [
-                "If management only learns about a bad table from Google the next morning, the recovery window is already closed. Your team needs a private channel that catches low-intent feedback while the guest is still in the building.",
-                "That means the review request cannot be one path for everyone. Happy tables can be guided toward Google. Guests signaling friction need a private route that alerts the floor or manager immediately so the restaurant can respond in real time."
+                "If management only learns about a bad table from Google the next morning, the recovery window is already closed. Your team needs a private channel that hears feedback while the guest is still in the building.",
+                "That means the review request cannot be only a public page. Offer every guest two options: a Google review or a private comment. A private comment alerts the floor or manager immediately so the restaurant can respond in real time."
               ],
               "bullets": [
                 "Give unhappy guests a fast private way to be heard before they leave",
-                "Route low ratings directly to the manager inbox",
+                "Send private comments directly to the manager inbox",
                 "Require managers to close the loop before end of shift",
                 "Track unresolved complaints by shift so coaching is specific"
               ]
@@ -78,13 +78,13 @@
               "heading": "Avoid the panic moves that make the problem worse",
               "paragraphs": [
                 "When ratings fall, restaurants often respond with the wrong playbook: generic owner replies, pressure on staff to beg for reviews, or a blast email to every past guest. Those moves add noise but rarely repair the operating issue.",
-                "The better approach is disciplined and local. Fix the broken service moment. Give guests a private recovery route. Standardize the ask for the tables that genuinely finished happy."
+                "The better approach is disciplined and local. Fix the broken service moment. Give guests a private recovery option. Standardize the ask at every table."
               ],
               "bullets": [
                 "Do not buy reviews or offer incentives for public praise",
-                "Do not send every guest to the same public review page regardless of sentiment",
+                "Do not offer only a public review page; give every guest a private option too",
                 "Do not coach staff with vanity metrics alone",
-                "Do not treat the problem as solved until managers can see fewer low-intent alerts in real time"
+                "Do not treat the problem as solved until managers can see fewer private-feedback alerts in real time"
               ]
             }
           ],
@@ -95,19 +95,19 @@
               "answer": "Recovery speed depends on how quickly you remove the recurring service issue and start capturing more recent positive reviews. Operators move faster when they fix the floor problem first and tighten the review request flow in the same week."
             },
             {
-              "question": "Should we ask every guest for a Google review while our rating is down?",
-              "answer": "No. Sending every guest to the same public destination increases the chance that frustrated tables publish before you can respond. Route high-intent positive experiences to Google and give unhappy guests a private response path."
+              "question": "Should we only offer a Google review while our rating is down?",
+              "answer": "No. Offering only a public destination raises the chance that frustrated tables publish before you can respond. Give every guest both options: a Google review or a private comment."
             },
             {
               "question": "What metric should managers watch first?",
-              "answer": "Start with the volume and theme of low-intent private feedback by shift. That tells you where service is breaking before the public review average lags again."
+              "answer": "Start with the volume and theme of private feedback by shift. That tells you where service is breaking before the public review average lags again."
             }
           ],
           "relatedHeading": "Next steps for recovery",
           "relatedLinks": [
             {
               "label": "Reduce bad reviews with faster guest recovery",
-              "description": "The structural way to catch unhappy guests early and recover the service issue before it turns into a public review.",
+              "description": "The structural way to hear unhappy guests early and recover the service issue while they are still at the table.",
               "href": "stop-bad-google-reviews-before-they-post"
             },
             {
@@ -124,13 +124,13 @@
           "cta": {
             "eyebrow": "Fix the operating loop",
             "title": "Need a faster way to stop public misses?",
-            "body": "RateTap gives each table a clean path: happy guests are invited to post on Google, unhappy guests can reach a manager privately, and managers see the signal while the shift is still live.",
+            "body": "RateTap gives each table a clean path: every guest can post on Google or reach a manager privately, and managers see the signal while the shift is still live.",
             "primaryLabel": "Book a demo",
             "primaryHref": "../demo",
             "secondaryLabel": "See the software",
             "secondaryHref": "../restaurant-review-management-software"
           },
-          "cardSummary": "A practical recovery workflow for operators who need to stop the next bad public review and rebuild recent positive volume quickly.",
+          "cardSummary": "A practical recovery workflow for operators who need to recover unhappy guests early and rebuild recent positive volume quickly.",
           "datePublished": "2026-04-25",
           "dateModified": "2026-04-25"
         },
@@ -138,23 +138,23 @@
           "slug": "restaurante-bajo-calificacion-google",
           "pageTitle": "¿Bajó tu calificación en Google? Plan operativo de recuperación | RateTap",
           "title": "¿Bajó la calificación de tu restaurante en Google? Usa un plan que tu equipo pueda ejecutar esta semana",
-          "description": "Si bajó la calificación de tu restaurante en Google, detén la siguiente mala reseña pública, detecta qué cambió en operación y recupera volumen reciente de 5 estrellas con un sistema que sí pueda ejecutar tu gerencia.",
+          "description": "Si bajó la calificación de tu restaurante en Google, recupera huéspedes antes de la siguiente mala reseña pública, detecta qué cambió en operación y recupera volumen reciente de 5 estrellas con un sistema que sí pueda ejecutar tu gerencia.",
           "eyebrow": "Recuperación de calificación",
           "heroSubtitle": "Cuando baja la calificación, normalmente no falló el marketing: falló algún punto operativo. Puede ser un turno lento, un cierre débil, un gerente que se enteró demasiado tarde o clientes satisfechos que se fueron sin dejar reseña. La solución es ajustar el loop operativo.",
           "readTime": "7 min de lectura",
           "updatedLabel": "25 abril 2026",
-          "painPoint": "Tu promedio bajó y necesitas evitar otra mala reseña pública antes de que el daño se acumule.",
+          "painPoint": "Tu promedio bajó y necesitas recuperar huéspedes temprano antes de que otra mala reseña pública acumule el daño.",
           "bestFor": [
             "Dueños reaccionando a una racha reciente de 1 o 2 estrellas",
             "Gerentes con servicio inconsistente por turno o estación",
-            "Grupos con varias sucursales que necesitan visibilidad antes de que el feedback se haga público"
+            "Grupos con varias sucursales que necesitan visibilidad temprana del feedback de los huéspedes"
           ],
           "chips": [
             "Caída en Google",
             "Recuperación de reseñas",
             "Respuesta por turno"
           ],
-          "quickSummary": "Trata la baja de calificación como un incidente operativo, no como un problema de branding. Identifica dónde falló el servicio, crea una ruta privada para huéspedes inconformes durante el mismo turno y aumenta el volumen reciente de 5 estrellas pidiendo la reseña en mesa, no después.",
+          "quickSummary": "Trata la baja de calificación como un incidente operativo, no como un problema de branding. Identifica dónde falló el servicio, ofrece una opción privada a los huéspedes durante el mismo turno y aumenta el volumen reciente de 5 estrellas pidiendo la reseña en mesa, no después.",
           "sections": [
             {
               "heading": "Empieza por lo que cambió esta semana, no por lo que pasó hace meses",
@@ -176,12 +176,12 @@
             {
               "heading": "Crea una ruta de recuperación dentro del mismo turno",
               "paragraphs": [
-                "Si gerencia solo se entera de una mala mesa hasta la mañana siguiente por Google, la ventana de recuperación ya se cerró. Tu equipo necesita un canal privado que capture el malestar mientras el huésped sigue en el restaurante.",
-                "Eso implica que la solicitud de reseña no puede tener un solo camino para todos. Mesas contentas pueden ir hacia Google. Mesas con fricción necesitan una ruta privada que alerte al gerente en tiempo real."
+                "Si gerencia solo se entera de una mala mesa hasta la mañana siguiente por Google, la ventana de recuperación ya se cerró. Tu equipo necesita un canal privado que escuche el malestar mientras el huésped sigue en el restaurante.",
+                "Eso implica que la solicitud de reseña no puede ser solo una página pública. Ofrece a todos dos opciones: reseña en Google o comentario privado. El comentario privado alerta al gerente en tiempo real."
               ],
               "bullets": [
                 "Da al huésped inconforme una vía privada rápida para ser escuchado antes de irse",
-                "Envía calificaciones bajas directo al inbox del gerente",
+                "Envía los comentarios privados directo al inbox del gerente",
                 "Exige cierre del caso antes de terminar el turno",
                 "Revisa temas no resueltos por turno para que el coaching sea específico"
               ]
@@ -201,13 +201,13 @@
               "heading": "Evita los movimientos de pánico que empeoran el problema",
               "paragraphs": [
                 "Cuando baja la calificación, muchos restaurantes responden con el playbook equivocado: respuestas genéricas del dueño, presión para que el staff ruegue por reseñas o correos masivos a toda la base. Eso genera ruido, no recuperación.",
-                "El mejor enfoque es local y disciplinado. Corrige el momento de servicio roto. Da al huésped una ruta privada. Estandariza la solicitud solo cuando la mesa terminó realmente satisfecha."
+                "El mejor enfoque es local y disciplinado. Corrige el momento de servicio roto. Da al huésped una opción privada. Estandariza la solicitud en todas las mesas."
               ],
               "bullets": [
                 "No compres reseñas ni ofrezcas incentivos por alabanza pública",
                 "No mandes a todos los huéspedes al mismo destino público sin importar su experiencia",
                 "No evalúes al staff solo con métricas vanity",
-                "No asumas que ya se resolvió hasta ver menos alertas privadas de bajo puntaje en tiempo real"
+                "No asumas que ya se resolvió hasta ver menos alertas de feedback privado en tiempo real"
               ]
             }
           ],
@@ -219,18 +219,18 @@
             },
             {
               "question": "¿Debemos pedir reseña de Google a todos los clientes si estamos bajos?",
-              "answer": "No. Mandar a todos al mismo destino público aumenta el riesgo de que mesas frustradas publiquen antes de que puedas responder. Conviene dirigir experiencias claramente positivas a Google y dar una salida privada a las negativas."
+              "answer": "No. Ofrecer solo un destino público aumenta el riesgo de que mesas frustradas publiquen antes de que puedas responder. Da a todos las dos opciones: reseña en Google o comentario privado."
             },
             {
               "question": "¿Qué métrica debería ver primero gerencia?",
-              "answer": "Empieza por el volumen y tema del feedback privado de bajo puntaje por turno. Esa señal te dice dónde se rompe el servicio antes de que el promedio público vuelva a rezagarse."
+              "answer": "Empieza por el volumen y tema del feedback privado por turno. Esa señal te dice dónde se rompe el servicio antes de que el promedio público vuelva a rezagarse."
             }
           ],
           "relatedHeading": "Siguientes pasos para recuperar reputación",
           "relatedLinks": [
             {
               "label": "Reducir malas reseñas con recuperación más rápida",
-              "description": "La forma estructural de detectar temprano a los huéspedes inconformes y recuperar el problema de servicio antes de que se convierta en reseña pública.",
+              "description": "La forma estructural de escuchar temprano a los huéspedes inconformes y recuperar el problema de servicio mientras siguen en la mesa.",
               "href": "detener-malas-resenas-google-antes-publiquen"
             },
             {
@@ -247,13 +247,13 @@
           "cta": {
             "eyebrow": "Pruébalo en una sucursal",
             "title": "¿Quieres activar un piloto gratis para recuperar tu calificación?",
-            "body": "Empieza con una sucursal y valida el flujo completo: mesas satisfechas hacia Google, huéspedes inconformes a privado y señal en tiempo real para gerencia.",
+            "body": "Empieza con una sucursal y valida el flujo completo: cada huésped elige entre Google o feedback privado, con señal en tiempo real para gerencia.",
             "primaryLabel": "Activar piloto gratis",
             "primaryHref": "../mejorar-calificacion-google-restaurante?offer=rating-recovery-pilot&source_page=blog-restaurante-bajo-calificacion-google&source_cluster=rating-recovery#contact",
             "secondaryLabel": "Ver la página de recuperación",
             "secondaryHref": "../mejorar-calificacion-google-restaurante"
           },
-          "cardSummary": "Un flujo práctico para operadores que necesitan detener la siguiente mala reseña pública y recuperar volumen positivo reciente rápido.",
+          "cardSummary": "Un flujo práctico para operadores que necesitan recuperar temprano a los huéspedes inconformes y volumen positivo reciente rápido.",
           "datePublished": "2026-04-25",
           "dateModified": "2026-04-25"
         }
@@ -333,7 +333,7 @@
               "heading": "Protect the public channel by separating praise from complaints",
               "paragraphs": [
                 "Restaurants sometimes push every guest toward the same public review destination because they want more volume fast. That creates risk. The same shortcut that catches happy tables also catches the frustrated ones.",
-                "A stronger system keeps the public path clean for clearly positive experiences and gives unhappy guests a private escalation route that management can act on instantly."
+                "A stronger system offers every guest both a public review and a private comment, and gives management a private channel it can act on instantly."
               ]
             }
           ],
@@ -349,7 +349,7 @@
             },
             {
               "question": "What is the safest way to increase review volume?",
-              "answer": "Reduce friction for clearly satisfied tables and add a private channel for negative sentiment. That protects the guest experience while giving you a cleaner public review stream."
+              "answer": "Reduce friction for every table and add a private channel for guests who want to share a problem. That protects the guest experience while keeping the public review stream honest."
             }
           ],
           "relatedHeading": "Build the full capture flow",
@@ -373,7 +373,7 @@
           "cta": {
             "eyebrow": "Fix the ask",
             "title": "Want more happy guests to actually post?",
-            "body": "RateTap gives staff a clean, repeatable request path at the table and sends low-intent feedback somewhere private before it becomes a public surprise.",
+            "body": "RateTap gives staff a clean, repeatable request path at the table and gives every guest a private option, so management hears problems early.",
             "primaryLabel": "Book a demo",
             "primaryHref": "../demo",
             "secondaryLabel": "See the software",
@@ -446,7 +446,7 @@
               "heading": "Protege el canal público separando elogio de queja",
               "paragraphs": [
                 "A veces el restaurante manda a todos los huéspedes al mismo destino público porque quiere volumen rápido. Eso también manda a los frustrados. El atajo que captura mesas felices captura también las que tuvieron fricción.",
-                "El sistema más sólido mantiene limpio el camino público para experiencias claramente positivas y da a los huéspedes inconformes una ruta privada que gerencia puede atender de inmediato."
+                "El sistema más sólido ofrece a todos los huéspedes una reseña pública o un comentario privado, y da a gerencia un canal privado que puede atender de inmediato."
               ]
             }
           ],
@@ -462,7 +462,7 @@
             },
             {
               "question": "¿Cuál es la forma más segura de subir volumen?",
-              "answer": "Reduce fricción para mesas claramente satisfechas y agrega un canal privado para sentimiento negativo. Así proteges la experiencia y mantienes más limpio el flujo público."
+              "answer": "Reduce fricción para todas las mesas y agrega un canal privado para quien quiera compartir un problema. Así proteges la experiencia y mantienes honesto el flujo público."
             }
           ],
           "relatedHeading": "Construye el flujo completo de captura",
@@ -486,7 +486,7 @@
           "cta": {
             "eyebrow": "Corrige la solicitud",
             "title": "¿Quieres que más mesas felices sí publiquen?",
-            "body": "RateTap le da al staff una ruta limpia y repetible para pedir la reseña en mesa, y manda el feedback de baja intención a privado antes de que se convierta en una sorpresa pública.",
+            "body": "RateTap le da al staff una ruta limpia y repetible para pedir la reseña en mesa, y da a cada huésped una opción privada para que gerencia se entere de los problemas a tiempo.",
             "primaryLabel": "Agendar demo",
             "primaryHref": "../demo",
             "secondaryLabel": "Ver la plataforma",
@@ -529,7 +529,7 @@
             "Review accountability",
             "Manager coaching"
           ],
-          "quickSummary": "The right system tracks review capture by staff member, but it does not stop at counts. Operators need visibility into conversion quality, low-rating alerts, and consistency by shift so coaching stays useful and guest-first.",
+          "quickSummary": "The right system tracks review capture by staff member, but it does not stop at counts. Operators need visibility into conversion quality, private feedback alerts, and consistency by shift so coaching stays useful and guest-first.",
           "sections": [
             {
               "heading": "Start by measuring the close-out behavior, not just the total review count",
@@ -539,7 +539,7 @@
               ],
               "bullets": [
                 "Public review outcomes tied to each staff member",
-                "Private low-rating alerts tied to the same visit flow",
+                "Private feedback alerts tied to the same visit flow",
                 "Consistency of asks across similar shift volume",
                 "Whether a staff member creates clean handoffs at the end of service"
               ]
@@ -580,7 +580,7 @@
           "faqs": [
             {
               "question": "Will server-level review tracking create unhealthy competition?",
-              "answer": "It can if you only use a leaderboard. It becomes productive when you pair attribution with coaching, low-rating visibility, and guest-experience standards."
+              "answer": "It can if you only use a leaderboard. It becomes productive when you pair attribution with coaching, private feedback visibility, and guest-experience standards."
             },
             {
               "question": "What should managers compare across staff members?",
@@ -652,7 +652,7 @@
               ],
               "bullets": [
                 "Resultados públicos asociados a cada miembro del staff",
-                "Alertas privadas de bajo puntaje ligadas al mismo flujo de visita",
+                "Alertas de feedback privado ligadas al mismo flujo de visita",
                 "Consistencia de la solicitud frente a un volumen parecido de turno",
                 "Capacidad del mesero para cerrar bien la experiencia"
               ]
@@ -769,7 +769,7 @@
             "QR codes",
             "Comment cards"
           ],
-          "quickSummary": "QR codes are cheap but introduce a deliberate scan moment that high-volume tables skip. Paper comment cards generate private feedback with no public review impact and zero per-server attribution. NFC cards are tap-fast and let each card carry an identifier — which is what makes server-level coaching and clean Google routing possible.",
+          "quickSummary": "QR codes are cheap but introduce a deliberate scan moment that high-volume tables skip. Paper comment cards generate private feedback with no public review impact and zero per-server attribution. NFC cards are tap-fast and let each card carry an identifier — which is what makes server-level coaching and a clean Google review option possible.",
           "sections": [
             {
               "heading": "What each tool actually does at the table",
@@ -810,11 +810,11 @@
               }
             },
             {
-              "heading": "Routing: catching unhappy tables early so you can recover the service",
+              "heading": "Private feedback: catching unhappy tables early so you can recover the service",
               "paragraphs": [
-                "All three formats can be wired to a sentiment-routed flow, but the experience is dramatically different. A QR code that lands on a vague 'how was your visit' page is asking the guest to do work. A paper comment card never reaches the manager during the shift.",
-                "An NFC tap that opens a one-tap rating prompt — a great experience is invited to leave a public Google review, while a lower score also pings the manager so the team can follow up — is the format that operationally works in real restaurants. The guest does not feel routed. They feel asked.",
-                "This is the part that helps you recover service issues. The same shortcut that captures happy tables also surfaces frustrated ones, which is why priority routing by feedback score matters. NFC plus priority routing by feedback score is the combination that compounds correctly over time."
+                "All three formats can be paired with a private feedback option, but the experience is dramatically different. A QR code that lands on a vague 'how was your visit' page is asking the guest to do work. A paper comment card never reaches the manager during the shift.",
+                "An NFC tap that opens a one-tap rating prompt — every guest can leave a public Google review or send private feedback that pings the manager so the team can follow up — is the format that operationally works in real restaurants. The guest does not feel routed. They feel asked.",
+                "This is the part that helps you recover service issues. The same shortcut that captures happy tables also surfaces frustrated ones, which is why a private feedback option matters. NFC plus a private feedback option is the combination that compounds correctly over time."
               ]
             },
             {
@@ -880,13 +880,13 @@
           "cta": {
             "eyebrow": "Stop guessing on capture tools",
             "title": "Ready to roll out NFC cards for one location?",
-            "body": "Start with a single-location pilot. We ship the cards, wire the per-server attribution, and route unhappy tables to a private inbox so your team can recover the service issue in real time.",
+            "body": "Start with a single-location pilot. We ship the cards, wire the per-server attribution, and give every table a private feedback option that reaches your inbox so your team can recover the service issue in real time.",
             "primaryLabel": "Start a pilot",
             "primaryHref": "../nfc-google-review-cards-for-restaurants?offer=nfc-pilot&source_page=blog-nfc-vs-qr&source_cluster=tools-comparison#contact",
             "secondaryLabel": "See the platform",
             "secondaryHref": "../restaurant-review-management-software"
           },
-          "cardSummary": "A side-by-side breakdown of NFC tap cards, QR codes, and paper comment cards — conversion, attribution, routing, and the real cost math.",
+          "cardSummary": "A side-by-side breakdown of NFC tap cards, QR codes, and paper comment cards — conversion, attribution, private feedback, and the real cost math.",
           "datePublished": "2026-04-27",
           "dateModified": "2026-04-27"
         },
@@ -910,7 +910,7 @@
             "Códigos QR",
             "Tarjetas de comentario"
           ],
-          "quickSummary": "El QR es barato pero introduce un momento explícito de escaneo que las mesas con prisa se saltan. La tarjeta de comentario en papel genera feedback privado sin impacto en el rating público y sin atribución por mesero. La tarjeta NFC se activa con un tap y cada tarjeta puede llevar un identificador único — lo que vuelve posible el coaching por persona y el routing limpio hacia Google.",
+          "quickSummary": "El QR es barato pero introduce un momento explícito de escaneo que las mesas con prisa se saltan. La tarjeta de comentario en papel genera feedback privado sin impacto en el rating público y sin atribución por mesero. La tarjeta NFC se activa con un tap y cada tarjeta puede llevar un identificador único — lo que vuelve posible el coaching por persona y una opción limpia de reseña en Google.",
           "sections": [
             {
               "heading": "Qué hace cada herramienta realmente en mesa",
@@ -951,11 +951,11 @@
               }
             },
             {
-              "heading": "Routing: detectar temprano a las mesas inconformes para recuperar el servicio",
+              "heading": "Feedback privado: detectar temprano a las mesas inconformes para recuperar el servicio",
               "paragraphs": [
-                "Los tres formatos se pueden conectar a un flujo con routing por puntuación de feedback, pero la experiencia es dramáticamente distinta. Un QR que aterriza en una página vaga de '¿cómo te fue?' está pidiéndole trabajo al huésped. Una tarjeta de papel nunca llega al gerente durante el turno.",
-                "Un tap NFC que abre un prompt de calificación de un toque — una gran experiencia recibe la invitación a dejar una reseña pública en Google, mientras que una puntuación baja también le pinga al gerente para que el equipo dé seguimiento — es el formato que sí funciona operativamente en restaurantes reales. El huésped no se siente enrutado. Se siente preguntado.",
-                "Esta es la parte que te ayuda a recuperar problemas de servicio. El mismo atajo que captura mesas felices también saca a la luz a las frustradas, por eso importa el routing por puntuación de feedback. NFC + routing por puntuación de feedback es la combinación que sí compone bien con el tiempo."
+                "Los tres formatos se pueden combinar con una opción de feedback privado, pero la experiencia es dramáticamente distinta. Un QR que aterriza en una página vaga de '¿cómo te fue?' está pidiéndole trabajo al huésped. Una tarjeta de papel nunca llega al gerente durante el turno.",
+                "Un tap NFC que abre un prompt de calificación de un toque — todo huésped puede dejar una reseña pública en Google o enviar feedback privado que le avisa al gerente para que el equipo dé seguimiento — es el formato que sí funciona operativamente en restaurantes reales. El huésped no se siente enrutado. Se siente preguntado.",
+                "Esta es la parte que te ayuda a recuperar problemas de servicio. El mismo atajo que captura mesas felices también saca a la luz a las frustradas, por eso importa una opción de feedback privado. NFC + feedback privado es la combinación que sí compone bien con el tiempo."
               ]
             },
             {
@@ -1021,13 +1021,13 @@
           "cta": {
             "eyebrow": "Deja de adivinar con herramientas de captura",
             "title": "¿Listo para activar NFC en una sucursal?",
-            "body": "Empieza con un piloto en una sola sucursal. Mandamos las tarjetas, conectamos la atribución por mesero y mandamos a privado a las mesas inconformes para que tu equipo pueda recuperar el problema de servicio en tiempo real.",
+            "body": "Empieza con un piloto en una sola sucursal. Mandamos las tarjetas, conectamos la atribución por mesero y damos a cada mesa una opción de feedback privado para que tu equipo pueda recuperar el problema de servicio en tiempo real.",
             "primaryLabel": "Activar piloto NFC",
             "primaryHref": "../nfc-google-review-cards-for-restaurants?offer=nfc-pilot&source_page=blog-nfc-vs-qr-es&source_cluster=tools-comparison#contact",
             "secondaryLabel": "Ver la plataforma",
             "secondaryHref": "../software-gestion-resenas-restaurantes"
           },
-          "cardSummary": "Comparativa lado a lado de tarjetas NFC, códigos QR y tarjetas de comentario en papel — conversión, atribución, routing y la matemática real del costo.",
+          "cardSummary": "Comparativa lado a lado de tarjetas NFC, códigos QR y tarjetas de comentario en papel — conversión, atribución, feedback privado y la matemática real del costo.",
           "datePublished": "2026-04-27",
           "dateModified": "2026-04-27"
         }
@@ -1184,7 +1184,7 @@
           "cta": {
             "eyebrow": "Skip the QR plateau",
             "title": "Want NFC tap cards instead of printing more QR tents?",
-            "body": "We ship pre-coded NFC cards, set up per-server attribution, and route unhappy guests to a private inbox. Most operators stop using their QR cards within two weeks of switching.",
+            "body": "We ship pre-coded NFC cards, set up per-server attribution, and give every guest a private feedback option that reaches your inbox. Most operators stop using their QR cards within two weeks of switching.",
             "primaryLabel": "Get NFC cards",
             "primaryHref": "../nfc-google-review-cards-for-restaurants?offer=nfc-upgrade&source_page=blog-qr-setup&source_cluster=qr-table-setup#contact",
             "secondaryLabel": "Run the ROI math",
@@ -1333,7 +1333,7 @@
           "cta": {
             "eyebrow": "Salta el techo del QR",
             "title": "¿Quieres tarjetas NFC en lugar de imprimir más tents con QR?",
-            "body": "Te mandamos las tarjetas NFC pre-codificadas, configuramos atribución por mesero y enrutamos a privado a las mesas inconformes. La mayoría de operadores deja de usar el QR a las dos semanas del cambio.",
+            "body": "Te mandamos las tarjetas NFC pre-codificadas, configuramos atribución por mesero y damos a cada mesa una opción de feedback privado. La mayoría de operadores deja de usar el QR a las dos semanas del cambio.",
             "primaryLabel": "Pedir tarjetas NFC",
             "primaryHref": "../nfc-google-review-cards-for-restaurants?offer=nfc-upgrade&source_page=blog-qr-setup-es&source_cluster=qr-table-setup#contact",
             "secondaryLabel": "Calcular ROI",
@@ -1374,16 +1374,16 @@
           ],
           "chips": [
             "Reputation defense",
-            "Private feedback route",
+            "Private feedback option",
             "Manager alerts"
           ],
-          "quickSummary": "You reduce bad reviews by catching unhappy guests early and inviting happy guests to review publicly. Priority routing by feedback score in the review prompt, instant manager alerts, a service recovery script the team can run during the same shift, and follow-through tracking so the issue actually closes.",
+          "quickSummary": "You reduce bad reviews by recovering unhappy guests early. Offer every guest a Google review or private feedback, send instant manager alerts, run a service recovery script during the same shift, and track follow-through so the issue actually closes.",
           "sections": [
             {
-              "heading": "Bad reviews are a routing problem, not a marketing problem",
+              "heading": "Bad reviews start as unheard problems",
               "paragraphs": [
                 "When operators try to 'fix bad reviews' with marketing — generic owner replies, polished email campaigns, brand voice work — they are treating a downstream symptom. The reality is upstream: the guest had a frustrating moment and the only public channel they could find was Google.",
-                "The defense is structural. Give the guest a faster, easier private route to express dissatisfaction the moment they feel it, and a meaningful share of negative reviews never get written. Operators we work with consistently see 60–80 percent of would-be public negatives land in private instead, where the manager can fix the problem in real time."
+                "The defense is structural. Give every guest a fast, easy private way to tell you about a problem the moment they feel it. Many guests who want to be heard will take it, and the manager can fix the problem in real time."
               ],
               "callout": {
                 "title": "The math nobody talks about",
@@ -1391,22 +1391,22 @@
               }
             },
             {
-              "heading": "Priority routing by feedback score — the single most important mechanism",
+              "heading": "Let every guest choose: Google or private",
               "paragraphs": [
-                "The mechanism that does the work: when a guest opens the review prompt, ask for a star rating first. A great rating leads to an invitation to post publicly on Google. A lower rating opens a private feedback form that goes straight to the manager so the team can respond.",
-                "This is not about hiding negative feedback from Google. The guest can still go to Google manually if they want. The point is that giving the unhappy guest a faster, more responsive path means most of them take it — because what they actually want is for someone to acknowledge the problem, not to publicly punish you."
+                "The mechanism that does the work: after a guest taps, ask for a star rating. Then show every guest, at any rating, two buttons: leave a review on Google or send a private comment to the manager. A private comment goes straight to the manager so the team can respond.",
+                "This is not about hiding or filtering feedback. Nothing is blocked, hidden or redirected based on the rating. A fast, responsive private option means many guests take it, because what they want is for someone to acknowledge the problem."
               ],
               "bullets": [
                 "Star rating captured before the next step",
-                "Happy guests are invited to post on Google, no friction",
-                "Lower ratings open a private form, manager alert, response within the shift",
+                "Every guest sees both options: a Google review or a private comment",
+                "A private comment opens a form, triggers a manager alert, and gets a response within the shift",
                 "Optional contact field so the manager can call or make it right before the guest is even home"
               ]
             },
             {
               "heading": "Make the manager alert real-time, not next-morning",
               "paragraphs": [
-                "Routing a complaint to an inbox the manager checks tomorrow morning is barely better than letting it post on Google. The point of catching the friction early is to act on it while the guest is still on premises or still emotionally connected to the experience.",
+                "Sending a complaint to an inbox the manager checks tomorrow morning is barely better than letting it post on Google. The point of catching the friction early is to act on it while the guest is still on premises or still emotionally connected to the experience.",
                 "Push notifications, SMS, or a live dashboard the floor manager keeps open during shifts. The alert needs a name (server, table, time of visit) so the manager can find the guest physically before they leave."
               ],
               "bullets": [
@@ -1437,30 +1437,30 @@
             {
               "heading": "What this is not — and where operators get the ethics wrong",
               "paragraphs": [
-                "Priority routing by feedback score is not review filtering. The unhappy guest is never blocked from posting publicly. They are simply offered a faster path to a real human first. If they still want to publish on Google, the option is one tap away.",
-                "Where operators get into trouble is when they suppress the option entirely, hide the public path, or pressure staff to argue with negative reviewers. Defense works by giving guests a better channel, not by silencing them. Done right, the rating reflects the real experience more accurately, not less."
+                "This is not review filtering. Every guest sees both options, whatever the rating, and no one is blocked from posting on Google. A guest who wants a real human can reach one in one tap.",
+                "Where operators get into trouble is when they suppress the option entirely, hide the public path, or pressure staff to argue with negative reviewers. Recovery works by giving guests a better channel, not by silencing them. Done right, the rating reflects the real experience more accurately, not less."
               ],
               "bullets": [
                 "Never block the path to Google",
-                "Never offer incentives in exchange for taking the private route",
+                "Never offer incentives in exchange for choosing the private option",
                 "Always log the complaint and the resolution",
-                "Always staff the inbox — a private route nobody monitors is worse than no route at all"
+                "Always staff the inbox — a private option nobody monitors is worse than no option at all"
               ]
             }
           ],
           "faqHeading": "Common questions about preventing bad reviews",
           "faqs": [
             {
-              "question": "Is it ethical to route unhappy guests to a private channel?",
-              "answer": "Yes, as long as the public option is still available and the private path leads to a real response. The guest is being offered a faster, more responsive route — not blocked from anything."
+              "question": "Is it ethical to offer a private feedback option?",
+              "answer": "Yes. Every guest sees both a Google review button and a private comment button, whatever the rating. Nothing is blocked, and the private option leads to a real response."
             },
             {
-              "question": "Can Google detect and penalize priority routing by feedback score?",
-              "answer": "Google's policy targets fake reviews and incentivized reviews, not the offering of a private feedback option. Priority routing by feedback score is widely used by operators of every size and is consistent with Google's guidelines as long as you do not block or condition access to the public option."
+              "question": "Does this follow Google's guidelines?",
+              "answer": "Google's policy targets fake and incentivized reviews. RateTap shows every guest both options, whatever the rating, and never blocks or conditions access to Google."
             },
             {
               "question": "What if the guest writes a bad review even after the private response?",
-              "answer": "It happens. The number is dramatically smaller than without the private path, and you have a documented record of the recovery attempt that you can reference in your public reply if you choose to respond."
+              "answer": "It happens. Guests can always post on Google. You will have a documented record of the recovery attempt to reference in your public reply if you choose to respond."
             },
             {
               "question": "Do we need a dedicated person to monitor the private inbox?",
@@ -1471,7 +1471,7 @@
           "relatedLinks": [
             {
               "label": "Reduce bad restaurant reviews",
-              "description": "The full product page for the private recovery routing used by the operators in this article.",
+              "description": "The full product page for the private feedback option used by the operators in this article.",
               "href": "../stop-bad-restaurant-reviews"
             },
             {
@@ -1487,14 +1487,14 @@
           ],
           "cta": {
             "eyebrow": "Defend the public rating",
-            "title": "Want a private route live in your restaurant this week?",
-            "body": "We set up the priority routing by feedback score, the manager alerts, and the recovery dashboard. Most operators see the first recovered guest issue within 48 hours of going live.",
+            "title": "Want private feedback live in your restaurant this week?",
+            "body": "We set up the guest choice screen, the manager alerts, and the recovery dashboard. Most operators see the first recovered guest issue within 48 hours of going live.",
             "primaryLabel": "Set up reputation defense",
             "primaryHref": "../stop-bad-restaurant-reviews?offer=protect-pilot&source_page=blog-stop-bad-reviews&source_cluster=reputation-defense#contact",
-            "secondaryLabel": "See how routing works",
+            "secondaryLabel": "See how it works",
             "secondaryHref": "../restaurant-review-management-software"
           },
-          "cardSummary": "An operating playbook for catching unhappy guests early and recovering the service — priority routing by feedback score, real-time alerts, recovery scripts, and follow-through tracking.",
+          "cardSummary": "An operating playbook for catching unhappy guests early and recovering the service — a private feedback option for every guest, real-time alerts, recovery scripts, and follow-through tracking.",
           "datePublished": "2026-04-27",
           "dateModified": "2026-04-27"
         },
@@ -1515,16 +1515,16 @@
           ],
           "chips": [
             "Defensa de reputación",
-            "Ruta privada de feedback",
+            "Opción de feedback privado",
             "Alertas a gerencia"
           ],
-          "quickSummary": "Reduces las malas reseñas detectando temprano a los huéspedes inconformes e invitando a los satisfechos a reseñar en público. Routing por puntuación de feedback en el prompt, alertas instantáneas a gerencia, un script de recuperación que el equipo pueda correr en el mismo turno y seguimiento para que el caso realmente cierre.",
+          "quickSummary": "Reduces las malas reseñas recuperando temprano a los huéspedes inconformes. Ofrece a cada huésped reseña en Google o feedback privado, con alertas instantáneas a gerencia, un script de recuperación que el equipo pueda correr en el mismo turno y seguimiento para que el caso realmente cierre.",
           "sections": [
             {
-              "heading": "Las malas reseñas son un problema de routing, no de marketing",
+              "heading": "Las malas reseñas empiezan como problemas sin escuchar",
               "paragraphs": [
                 "Cuando los operadores intentan 'arreglar las malas reseñas' con marketing — respuestas genéricas del dueño, campañas de correo bonitas, trabajo de tono de marca — están atacando un síntoma río abajo. La realidad está río arriba: el huésped tuvo un momento de fricción y el único canal público que encontró fue Google.",
-                "La defensa es estructural. Dale al huésped una ruta privada más rápida y más fácil para expresar la inconformidad en el momento que la siente, y una parte importante de las reseñas negativas nunca se escriben. Los operadores con los que trabajamos consistentemente ven que entre 60 y 80 por ciento del negativo público potencial aterriza en privado, donde el gerente sí puede arreglar en tiempo real."
+                "La defensa es estructural. Dale a cada huésped una forma privada, rápida y fácil de contarte el problema en el momento que lo siente. Muchos huéspedes que quieren ser escuchados la usarán, y el gerente puede arreglarlo en tiempo real."
               ],
               "callout": {
                 "title": "La matemática que casi nadie menciona",
@@ -1532,22 +1532,22 @@
               }
             },
             {
-              "heading": "Routing por puntuación de feedback — el mecanismo más importante",
+              "heading": "Que cada cliente elija: Google o privado",
               "paragraphs": [
-                "El mecanismo que sí mueve la aguja: cuando el huésped abre el prompt de reseña, primero le pides una calificación de estrellas. Una calificación alta recibe la invitación a publicar en Google. Una calificación baja abre un formulario privado que llega directo al gerente para que el equipo pueda responder.",
-                "Esto no se trata de esconder el feedback negativo de Google. El huésped sigue pudiendo ir a Google manualmente si quiere. El punto es que darle al huésped inconforme una ruta más rápida y receptiva hace que la mayoría la tome — porque lo que en realidad quieren es que alguien reconozca el problema, no castigarte públicamente."
+                "El mecanismo que sí mueve la aguja: después del tap, le pides al huésped una calificación de estrellas. Luego le muestras a todos, con cualquier calificación, dos botones: dejar su reseña en Google o enviar un comentario privado al gerente. El comentario privado llega directo al gerente para que el equipo pueda responder.",
+                "Esto no se trata de esconder ni filtrar feedback. Nada se bloquea, oculta ni redirige según la calificación. Una opción privada rápida y receptiva hace que muchos huéspedes la tomen, porque lo que quieren es que alguien reconozca el problema."
               ],
               "bullets": [
                 "Calificación capturada antes del siguiente paso",
-                "Los huéspedes satisfechos reciben la invitación a publicar en Google, sin fricción",
-                "Las calificaciones bajas abren un formulario privado, alerta a gerencia, respuesta dentro del turno",
+                "Todos los huéspedes ven las dos opciones: reseña en Google o comentario privado",
+                "Un comentario privado abre un formulario, activa una alerta a gerencia y recibe respuesta dentro del turno",
                 "Campo opcional de contacto para que el gerente llame o lo resuelva antes de que el huésped llegue a casa"
               ]
             },
             {
               "heading": "Haz que la alerta a gerencia sea en tiempo real, no para la mañana siguiente",
               "paragraphs": [
-                "Enrutar una queja a un inbox que el gerente revisa hasta mañana es apenas mejor que dejar que se publique en Google. El punto de detectar temprano la fricción es actuar mientras el huésped sigue en sitio o sigue emocionalmente conectado a la experiencia.",
+                "Mandar una queja a un inbox que el gerente revisa hasta mañana es apenas mejor que dejar que se publique en Google. El punto de detectar temprano la fricción es actuar mientras el huésped sigue en sitio o sigue emocionalmente conectado a la experiencia.",
                 "Notificaciones push, SMS o un dashboard en vivo que el gerente de piso mantenga abierto durante el turno. La alerta necesita nombre (mesero, mesa, hora de la visita) para que el gerente pueda encontrar al huésped físicamente antes de que se vaya."
               ],
               "bullets": [
@@ -1578,30 +1578,30 @@
             {
               "heading": "Qué no es esto — y dónde los operadores se equivocan en la ética",
               "paragraphs": [
-                "El routing por puntuación de feedback no es filtrado de reseñas. Al huésped inconforme nunca se le bloquea publicar. Simplemente se le ofrece primero una ruta más rápida hacia una persona real. Si aun así quiere publicar en Google, la opción está a un toque.",
-                "Donde los operadores se meten en problemas es cuando suprimen la opción por completo, esconden el camino público o presionan al staff para discutir con reseñadores negativos. La defensa funciona dándole al huésped un mejor canal, no callándolo. Bien hecho, el rating refleja la experiencia real con más precisión, no menos."
+                "Esto no es filtrado de reseñas. Todos los huéspedes ven las dos opciones, sin importar su calificación, y a nadie se le bloquea publicar en Google. Quien quiere hablar con una persona real la tiene a un toque.",
+                "Donde los operadores se meten en problemas es cuando suprimen la opción por completo, esconden el camino público o presionan al staff para discutir con reseñadores negativos. La recuperación funciona dándole al huésped un mejor canal, no callándolo. Bien hecho, el rating refleja la experiencia real con más precisión, no menos."
               ],
               "bullets": [
                 "Nunca bloquees el camino a Google",
-                "Nunca ofrezcas incentivos a cambio de tomar la ruta privada",
+                "Nunca ofrezcas incentivos a cambio de elegir la opción privada",
                 "Siempre registra la queja y la resolución",
-                "Siempre asigna dueño al inbox — una ruta privada que nadie monitorea es peor que no tener ruta"
+                "Siempre asigna dueño al inbox — una opción privada que nadie monitorea es peor que no tenerla"
               ]
             }
           ],
           "faqHeading": "Preguntas comunes sobre prevenir malas reseñas",
           "faqs": [
             {
-              "question": "¿Es ético enrutar a huéspedes inconformes a un canal privado?",
-              "answer": "Sí, mientras la opción pública siga disponible y la ruta privada lleve a una respuesta real. Le estás ofreciendo al huésped una ruta más rápida y receptiva — no le estás bloqueando nada."
+              "question": "¿Es ético ofrecer una opción de feedback privado?",
+              "answer": "Sí. Todos los huéspedes ven un botón de reseña en Google y uno de comentario privado, sin importar su calificación. No se bloquea nada y la opción privada lleva a una respuesta real."
             },
             {
-              "question": "¿Google puede detectar y penalizar el routing por puntuación de feedback?",
-              "answer": "La política de Google ataca reseñas falsas y reseñas incentivadas, no la oferta de una opción privada de feedback. El routing por puntuación de feedback lo usan operadores de todos los tamaños y es consistente con las guías de Google mientras no bloquees ni condiciones el acceso a la opción pública."
+              "question": "¿Esto cumple las guías de Google?",
+              "answer": "La política de Google ataca reseñas falsas e incentivadas. RateTap muestra a todos los huéspedes las dos opciones, sin importar su calificación, y nunca bloquea ni condiciona el acceso a Google."
             },
             {
               "question": "¿Y si el huésped escribe la mala reseña aun después de la respuesta privada?",
-              "answer": "Pasa. El número es dramáticamente menor que sin la ruta privada, y tienes un registro documentado del intento de recuperación que puedes referenciar en tu respuesta pública si decides responder."
+              "answer": "Pasa. Los huéspedes siempre pueden publicar en Google. Tendrás un registro documentado del intento de recuperación para referenciar en tu respuesta pública si decides responder."
             },
             {
               "question": "¿Necesitamos a alguien dedicado a monitorear el inbox privado?",
@@ -1612,7 +1612,7 @@
           "relatedLinks": [
             {
               "label": "Evitar malas reseñas en restaurantes",
-              "description": "La página de producto del sistema de routing privado que usan los operadores de este artículo.",
+              "description": "La página de producto de la opción de feedback privado que usan los operadores de este artículo.",
               "href": "../evitar-malas-resenas-restaurante"
             },
             {
@@ -1628,14 +1628,14 @@
           ],
           "cta": {
             "eyebrow": "Defiende el rating público",
-            "title": "¿Quieres una ruta privada activa en tu restaurante esta semana?",
-            "body": "Configuramos el routing por puntuación de feedback, las alertas a gerencia y el dashboard de recuperación. La mayoría de operadores ven el primer problema de cliente recuperado dentro de las 48 horas de ir en vivo.",
+            "title": "¿Quieres feedback privado activo en tu restaurante esta semana?",
+            "body": "Configuramos la pantalla de elección del huésped, las alertas a gerencia y el dashboard de recuperación. La mayoría de operadores ven el primer problema de cliente recuperado dentro de las 48 horas de ir en vivo.",
             "primaryLabel": "Activar defensa de reputación",
             "primaryHref": "../evitar-malas-resenas-restaurante?offer=protect-pilot&source_page=blog-detener-malas-resenas-es&source_cluster=reputation-defense#contact",
-            "secondaryLabel": "Ver cómo funciona el routing",
+            "secondaryLabel": "Ver cómo funciona",
             "secondaryHref": "../software-gestion-resenas-restaurantes"
           },
-          "cardSummary": "Un playbook operativo para detectar temprano a huéspedes inconformes y recuperar el servicio — routing por puntuación de feedback, alertas en tiempo real, scripts de recuperación y seguimiento del caso.",
+          "cardSummary": "Un playbook operativo para detectar temprano a huéspedes inconformes y recuperar el servicio — feedback privado para cada huésped, alertas en tiempo real, scripts de recuperación y seguimiento del caso.",
           "datePublished": "2026-04-27",
           "dateModified": "2026-04-27"
         }
@@ -1672,7 +1672,7 @@
             "Review Velocity",
             "Guest Issue Detection"
           ],
-          "quickSummary": "Stop staring at your average star rating. Start tracking Review Capture Rate, Guest Issue Detection Rate, Staff Attribution Volume, and Recent 5-Star Velocity to fix service issues before they go public.",
+          "quickSummary": "Stop staring at your average star rating. Start tracking Review Capture Rate, Guest Issue Detection Rate, Staff Attribution Volume, and Recent 5-Star Velocity to fix service issues while guests are still at the table.",
           "sections": [
             {
               "heading": "1. Review Capture Rate: Are you converting happy guests?",
@@ -1688,7 +1688,7 @@
             {
               "heading": "2. Guest Issue Detection Rate: Catching issues early",
               "paragraphs": [
-                "A 1-star review on Google means a guest left angry and had no other outlet. Your Guest Issue Detection Rate tracks how many low-score or unhappy guests share their feedback through a private channel so your team hears it directly.",
+                "A 1-star review on Google means a guest left angry and had no other outlet. Your Guest Issue Detection Rate tracks how many guests share their feedback through a private channel so your team hears it directly.",
                 "High detection means your managers are getting the chance to make it right before the shift ends."
               ]
             },
@@ -1725,7 +1725,7 @@
             },
             {
               "question": "How do we track Guest Issue Detection Rate?",
-              "answer": "You need a review platform that offers a dual-path workflow: routing happy guests to Google and unhappy guests to a private manager inbox."
+              "answer": "You need a review platform that gives every guest two options: a Google review or a private message to the manager inbox."
             }
           ],
           "relatedHeading": "Take action on your metrics",
@@ -1779,7 +1779,7 @@
             "Velocidad de Reseñas",
             "Detección de Problemas"
           ],
-          "quickSummary": "Deja de mirar solo tu calificación promedio. Empieza a medir la Tasa de Captura de Reseñas, Tasa de Detección de Problemas de Clientes, Desempeño por Mesero y Velocidad de 5 Estrellas para arreglar el servicio antes de que el problema se haga público.",
+          "quickSummary": "Deja de mirar solo tu calificación promedio. Empieza a medir la Tasa de Captura de Reseñas, Tasa de Detección de Problemas de Clientes, Desempeño por Mesero y Velocidad de 5 Estrellas para arreglar el servicio mientras el cliente sigue en la mesa.",
           "sections": [
             {
               "heading": "1. Tasa de Captura de Reseñas: ¿Estás convirtiendo a los clientes felices?",
@@ -1795,7 +1795,7 @@
             {
               "heading": "2. Tasa de Detección de Problemas de Clientes: Detectando problemas temprano",
               "paragraphs": [
-                "Una reseña de 1 estrella en Google significa que un cliente se fue enojado y no tuvo otra vía de escape. Tu Tasa de Detección mide cuántos clientes con baja puntuación comparten su feedback por un canal privado para que tu equipo lo escuche directamente.",
+                "Una reseña de 1 estrella en Google significa que un cliente se fue enojado y no tuvo otra vía de escape. Tu Tasa de Detección mide cuántos clientes comparten su feedback por un canal privado para que tu equipo lo escuche directamente.",
                 "Una detección alta significa que tus gerentes están teniendo la oportunidad de resolver el problema antes de que termine el turno."
               ]
             },
@@ -1832,7 +1832,7 @@
             },
             {
               "question": "¿Cómo podemos medir la Tasa de Detección de Problemas de Clientes?",
-              "answer": "Necesitas un sistema de reseñas que ofrezca un flujo de doble vía: clientes felices hacia Google y quejas privadas hacia el inbox del gerente."
+              "answer": "Necesitas un sistema de reseñas que dé a cada cliente dos opciones: reseña en Google o mensaje privado al inbox del gerente."
             }
           ],
           "relatedHeading": "Toma acción sobre tus métricas",
@@ -1899,7 +1899,7 @@
             "Platform Comparison",
             "Guest Experience"
           ],
-          "quickSummary": "Ovation focuses heavily on SMS surveys and CRM features. RateTap focuses purely on the point of sale: capturing Google reviews instantly via NFC, routing negative feedback to managers privately, and giving servers true attribution.",
+          "quickSummary": "Ovation focuses heavily on SMS surveys and CRM features. RateTap focuses purely on the point of sale: capturing Google reviews instantly via NFC, private feedback to managers, and giving servers true attribution.",
           "sections": [
             {
               "heading": "What do Ovation reviews say?",
@@ -1918,7 +1918,7 @@
             {
               "heading": "Why RateTap is the ultimate Ovation alternative",
               "paragraphs": [
-                "RateTap bypasses the SMS entirely. Instead of collecting data for a later text, the server presents an NFC card at the end of the meal. The guest taps their phone, and if they had a 5-star experience, they are taken directly to Google.",
+                "RateTap bypasses the SMS entirely. Instead of collecting data for a later text, the server presents an NFC card at the end of the meal. The guest taps their phone, rates the visit, and chooses to leave a review on Google or send private feedback.",
                 "This in-moment capture boasts a significantly higher conversion rate for public reviews."
               ],
               "bullets": [
@@ -1932,7 +1932,7 @@
               "heading": "Catching guest issues: A shared feature with a different approach",
               "paragraphs": [
                 "Both platforms allow you to catch negative feedback privately. Ovation does this through their text survey. RateTap does it directly on the guest's phone during the tap.",
-                "With RateTap, a guest who flags a lower score is invited to share a private feedback form that alerts the manager instantly—allowing the manager to fix the issue before the guest even leaves the table, while happy guests are invited to review on Google."
+                "With RateTap, every guest can choose a private feedback form that alerts the manager instantly—allowing the manager to fix the issue before the guest even leaves the table—or leave a review on Google."
               ]
             }
           ],
@@ -1993,7 +1993,7 @@
             "Comparativa",
             "Experiencia del Cliente"
           ],
-          "quickSummary": "Ovation se enfoca mucho en encuestas por SMS y CRM. RateTap se enfoca puramente en el punto de venta: capturar reseñas de Google al instante vía NFC, desviar quejas a gerentes en privado y atribuir resultados al mesero.",
+          "quickSummary": "Ovation se enfoca mucho en encuestas por SMS y CRM. RateTap se enfoca puramente en el punto de venta: capturar reseñas de Google al instante vía NFC, feedback privado para gerentes y atribuir resultados al mesero.",
           "sections": [
             {
               "heading": "¿Qué dicen las reseñas sobre Ovation?",
@@ -2012,7 +2012,7 @@
             {
               "heading": "Por qué RateTap es la mejor alternativa a Ovation",
               "paragraphs": [
-                "RateTap elimina los SMS por completo. En lugar de pedir datos para enviar textos, el mesero presenta una tarjeta NFC al final de la comida. El huésped acerca su teléfono, y si su experiencia fue de 5 estrellas, es llevado directo a Google.",
+                "RateTap elimina los SMS por completo. En lugar de pedir datos para enviar textos, el mesero presenta una tarjeta NFC al final de la comida. El huésped acerca su teléfono, califica su visita y elige: dejar su reseña en Google o enviar feedback privado.",
                 "Esta captura 'en el momento' logra una tasa de conversión muchísimo mayor."
               ],
               "bullets": [
@@ -2026,7 +2026,7 @@
               "heading": "Detectar problemas de clientes: Una función compartida con distinto enfoque",
               "paragraphs": [
                 "Ambas plataformas permiten detectar problemas de clientes en privado. Ovation lo hace por su encuesta SMS. RateTap lo hace directo en el teléfono del cliente durante el 'tap'.",
-                "Con RateTap, un cliente que marca una puntuación baja recibe la invitación a compartir un formulario privado que alerta al gerente al instante, permitiendo resolver el problema antes de que el cliente salga por la puerta, mientras que los clientes satisfechos reciben la invitación a reseñar en Google."
+                "Con RateTap, todo cliente puede elegir un formulario privado que alerta al gerente al instante, permitiendo resolver el problema antes de que el cliente salga por la puerta, o dejar su reseña en Google."
               ]
             }
           ],
@@ -2117,7 +2117,7 @@
               "heading": "Rule 2: Catch guest issues early, before the shift ends",
               "paragraphs": [
                 "Not every guest leaves happy, but almost every guest is willing to complain privately if you give them a fast, easy way to do so.",
-                "A core part of your playbook must be a 'recovery layer.' You need a system that detects a low rating in the moment, routes it to a private form, and alerts a manager immediately so the team can make it right."
+                "A core part of your playbook must be a 'recovery layer.' You need a system that gives every guest a private form in the moment and alerts a manager immediately so the team can make it right."
               ]
             },
             {
@@ -2214,7 +2214,7 @@
               "heading": "Regla 2: Detecta los problemas temprano, antes de que termine el turno",
               "paragraphs": [
                 "No todos los clientes salen felices, pero casi todos están dispuestos a quejarse en privado si les das una forma rápida y fácil de hacerlo.",
-                "Una parte central de tu playbook debe ser una 'capa de recuperación'. Necesitas un sistema que detecte una calificación baja en el momento, la envíe a un formulario privado y alerte a un gerente de inmediato para que el equipo lo resuelva."
+                "Una parte central de tu playbook debe ser una 'capa de recuperación'. Necesitas un sistema que dé a cada cliente un formulario privado en el momento y alerte a un gerente de inmediato para que el equipo lo resuelva."
               ]
             },
             {
