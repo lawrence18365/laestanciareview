@@ -60,7 +60,7 @@ LOCALE_CONFIG = {
         "hub_cta_title": "Want the software behind these playbooks?",
         "hub_cta_body": (
             "RateTap turns the advice into an operating system: instant private feedback, "
-            "clean Google review routing, and server-level accountability."
+            "an easy Google review option for every guest, and server-level accountability."
         ),
         "hub_cta_primary": "Book a demo",
         "hub_cta_secondary": "See the platform",
@@ -136,7 +136,7 @@ LOCALE_CONFIG = {
         "hub_cta_title": "¿Quieres el software detrás de estas guías?",
         "hub_cta_body": (
             "RateTap convierte la estrategia en operación: feedback privado en tiempo real, "
-            "ruta limpia hacia Google y seguimiento por mesero."
+            "opción fácil de reseña en Google para todos y seguimiento por mesero."
         ),
         "hub_cta_primary": "Agendar demo",
         "hub_cta_secondary": "Ver la plataforma",

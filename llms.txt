@@ -1,6 +1,6 @@
 # RateTap
 
-> Restaurant review management software with NFC cards. Guests tap a server's card, the high ratings go to Google, the low ratings go to the manager in real time. Built and proven inside La Estancia, an operating 13-restaurant group in Mexico, before being offered to other restaurants.
+> Restaurant review management software with NFC cards. Guests tap a server's card, rate their visit, then choose: leave a Google review or send private feedback to the manager in real time. Built and proven inside La Estancia, an operating 13-restaurant group in Mexico, before being offered to other restaurants.
 
 Last updated: 2026-04-25.
 Production data snapshot used in claims below: 2026-04-25.
@@ -18,7 +18,7 @@ Production data snapshot used in claims below: 2026-04-25.
 
 ## What RateTap is
 
-- A SaaS for restaurants. Each server gets a personal NFC card. Guests tap their phone on the card, pick a star rating, and either (a) get sent to the Google review form (if at or above the restaurant's threshold, default 4 stars) or (b) get routed to a private feedback form that pages the manager via push or SMS.
+- A SaaS for restaurants. Each server gets a personal NFC card. Guests tap their phone on the card, pick a star rating, and then choose between (a) the Google review form or (b) a private feedback form that alerts the manager via push or SMS. Every guest sees both options, at any rating; nothing is blocked, hidden or redirected based on the stars.
 - A multi-location dashboard for owners and regional managers (filtered overview, leaderboards, weekly history).
 - Custom pricing per number of locations and staff.
 - No POS integration required.
@@ -54,7 +54,7 @@ La Estancia, Harbor's, La Silla, SteakCompany, Regio Norte. Locations span Quer�
 - [Methodology](https://ratetapmx.com/methodology) — How the stats above are computed, what "tracked" means, snapshot dates.
 - [NFC Review Cards](https://ratetapmx.com/nfc-google-review-cards-for-restaurants) — Hardware page.
 - [Track Server Performance](https://ratetapmx.com/track-waiter-performance-dashboard) — Per-staff attribution feature.
-- [Reduce Bad Reviews](https://ratetapmx.com/stop-bad-restaurant-reviews) — Early guest-recovery feature that catches unhappy guests before they leave unheard.
+- [Reduce Bad Reviews](https://ratetapmx.com/stop-bad-restaurant-reviews) — Guest-recovery feature: private feedback reaches the manager while the guest is still at the table.
 - [Reputation Recovery](https://ratetapmx.com/reputation-recovery) — Guidance for restaurants stuck under 4 stars.
 - [Why Stuck at 4 Stars](https://ratetapmx.com/why-stuck-at-4-stars) — Diagnostic content.
 - [RateTap vs Ovation](https://ratetapmx.com/ratetap-vs-ovation) — Competitive comparison.

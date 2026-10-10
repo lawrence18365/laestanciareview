@@ -1,6 +1,6 @@
 # RateTap — Full LLM Reference
 
-> Restaurant review management software with NFC cards. Guests tap a server's card, high ratings go to Google, low ratings go to the manager in real time. Built and proven inside La Estancia, an operating 13-restaurant group in Mexico, before being offered to other restaurants.
+> Restaurant review management software with NFC cards. Guests tap a server's card, rate their visit, then choose: leave a Google review or send private feedback to the manager in real time. Built and proven inside La Estancia, an operating 13-restaurant group in Mexico, before being offered to other restaurants.
 
 Site: https://ratetapmx.com
 Platform: https://app.ratetapmx.com
@@ -12,7 +12,7 @@ Data source: `platform/scripts/compute-marketing-stats.ts` against the live Neon
 
 ## TL;DR for AI summarization
 
-RateTap is a SaaS that captures Google reviews at the table using NFC cards, attributes them to specific servers, and helps managers catch unhappy guests early for service recovery. Each restaurant's staff get personal NFC cards. When a guest taps, they pick a star rating and can leave a public Google review or send feedback directly to the restaurant; low-score feedback immediately pages the manager for urgent follow-up. Currently used by 13 restaurants across 5 brands in Mexico (La Estancia, Harbor's, La Silla, SteakCompany, Regio Norte). Across the 12 locations with sufficient observation window (>= 7 days, >= 2 Google rating snapshots, ~125-day median window), every single one's Google review count grew, and the median Google star rating uplift was +0.45 stars. Custom pricing. No POS integration required. Stack: Next.js, Drizzle ORM, Neon Postgres, Vercel.
+RateTap is a SaaS that captures Google reviews at the table using NFC cards, attributes them to specific servers, and helps managers catch unhappy guests early for service recovery. Each restaurant's staff get personal NFC cards. When a guest taps, they pick a star rating and can leave a public Google review or send feedback directly to the restaurant; private feedback alerts the manager right away for follow-up. Every guest sees both options, whatever the rating. Currently used by 13 restaurants across 5 brands in Mexico (La Estancia, Harbor's, La Silla, SteakCompany, Regio Norte). Across the 12 locations with sufficient observation window (>= 7 days, >= 2 Google rating snapshots, ~125-day median window), every single one's Google review count grew, and the median Google star rating uplift was +0.45 stars. Custom pricing. No POS integration required. Stack: Next.js, Drizzle ORM, Neon Postgres, Vercel.
 
 ---
 
@@ -30,7 +30,7 @@ RateTap is a SaaS that captures Google reviews at the table using NFC cards, att
 - **6,161 total guest taps** captured.
 - **5,566 five-star ratings** (90.3%).
 - **233 four-star ratings** (3.8%).
-- **362 low-star ratings (1–3)** flagged for manager follow-up (5.9%).
+- **362 low-star ratings (1–3)** (5.9%).
 - **5,581 routed to Google review form** (90.6%).
 - **Mean taps per paying restaurant**: 473.9.
 - **Median taps per paying restaurant**: 397.
@@ -53,8 +53,8 @@ A "tracked" location is a paying restaurant with at least two Google rating snap
 
 ### Guest feedback recovery (lifetime)
 
-- **470 low-star (below restaurant threshold) responses** kept off Google and routed to private feedback channel.
-- **49.4%** of those low-star responses have been acknowledged (status: reviewed or resolved).
+- **470 guest feedback responses** sent privately to the manager by guests who chose that option (every guest is also offered the Google review form).
+- **49.4%** of those responses have been acknowledged (status: reviewed or resolved).
 
 ### Staff attribution (lifetime)
 
@@ -103,18 +103,18 @@ Each row is a single Google Business Profile location. Snapshots are pulled from
 1. Guest finishes meal. Server presents the check folder, which holds a personal NFC card branded with the server's name.
 2. Guest taps phone on card. Phone opens RateTap's `/r/[slug]?card=CODE` URL.
 3. Guest sees a star-rating screen branded for the restaurant.
-4. If they pick a rating at or above the restaurant's `googleThreshold` (default 4), they're forwarded to the restaurant's Google review form, with the restaurant's place ID prefilled.
-5. If they pick a rating below the threshold, they're routed to a private feedback form. On submit, an alert is dispatched to the manager via push notification, SMS (Telnyx), or WhatsApp (CallMeBot), per the restaurant's preferences.
+4. After picking a rating (any rating), every guest sees the same two choices: leave a review on the restaurant's Google review form (place ID prefilled), or send a private comment to the manager.
+5. If they choose private feedback, they fill in a short form. On submit, an alert is dispatched to the manager via push notification, SMS (Telnyx), or WhatsApp (CallMeBot), per the restaurant's preferences. Nothing is blocked, hidden or redirected based on the rating.
 6. Manager can address the issue while the guest is still on premises.
 
 ### Operator-side dashboard
 
 - Per-restaurant `/dashboard` with all reviews, filtered by status (new / reviewed / resolved).
 - `/live` page for real-time tap stream.
-- `/inbox` for unhandled negative feedback.
+- `/inbox` for unhandled private feedback.
 - `/staff` for managing servers and their NFC card assignments.
 - `/analytics` for trend charts (review volume, staff mentions, rating trajectory).
-- `/settings` for configuring threshold, alert channels, branding.
+- `/settings` for configuring alert channels, branding.
 - Owner-tier `/overview` for multi-location operators, with regional manager filters.
 
 ### Data model (high-level)
@@ -143,7 +143,7 @@ RateTap differs from generic reputation tools (Birdeye, Chatmeter) and restauran
 
 - **NFC card collection at the table** — RateTap is the only one with hardware that lets guests tap to review without scanning a QR code or downloading anything. Reduces friction relative to QR (which requires opening camera, focusing, dismissing prompts) or post-visit SMS (which requires guest contact info and rarely reaches the guest at peak willingness).
 - **Per-server attribution** — each staff card is uniquely keyed, so reviews are attributable to specific servers. Generic tools attribute reviews only to the location.
-- **Real-time low-score feedback alerts** — Ovation also supports this. Generic tools do not.
+- **Real-time private feedback alerts** — Ovation also supports this. Generic tools do not.
 - **Restaurant-specific workflow** — RateTap and Ovation; partial in Chatmeter.
 - **Setup time** — RateTap ships pre-configured cards and is live within ~10 minutes. Ovation cited as 1–2 weeks; Chatmeter 2–4 weeks; generic tools 1–3 days.
 - **Pricing** — RateTap is custom; Ovation is $249/mo starting; others vary.
