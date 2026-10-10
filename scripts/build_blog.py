@@ -273,9 +273,6 @@ def render_footer(locale: str) -> str:
                 <div class="footer-links">
                     <h4>{escape(cfg['footer_connect'])}</h4>
                     <div class="social-links">
-                        <a href="#"><i class="fa-brands fa-twitter"></i></a>
-                        <a href="#"><i class="fa-brands fa-instagram"></i></a>
-                        <a href="#"><i class="fa-brands fa-linkedin"></i></a>
                     </div>
                 </div>
             </div>
