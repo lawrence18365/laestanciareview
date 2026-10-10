@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Captures the 14 product images in assets/product/ (US-11 asset contract) from
+ * Captures the 11 product images in assets/product/ (US-11 asset contract) from
  * the demo platform seeded by scripts/seed-demo.ts. See docs/demo-screenshots.md.
  *
  * Run with the demo env file loaded and the TypeScript loader (email renders
@@ -10,8 +10,9 @@
  * Safety: refuses a non-local BASE_URL, never reads .env.local, sends no mail
  * (nodemailer is intercepted and the captured HTML is written to disk only).
  */
-import { mkdir, readFile, readdir, unlink, writeFile } from 'node:fs/promises';
+import { mkdir, writeFile } from 'node:fs/promises';
 import { createRequire } from 'node:module';
+import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright';
@@ -23,7 +24,8 @@ const require = createRequire(import.meta.url);
 
 const BASE_URL = process.env.DEMO_BASE_URL ?? 'http://localhost:3051';
 const ASSET_DIR = path.resolve(platformDir, '..', 'assets', 'product');
-const EVIDENCE_DIR = process.env.DEMO_EVIDENCE_DIR ?? path.resolve(platformDir, '..', 'data', 'demo-capture');
+// Evidence (raw PNGs, rendered HTML, contact sheet) stays out of the repo unless a dir is given.
+const EVIDENCE_DIR = process.env.DEMO_EVIDENCE_DIR ?? path.join(os.tmpdir(), 'ratetap-demo-capture');
 const GM_SLUG = 'casa-demo-polanco';
 const OWNER_SLUG = 'casa-demo-grupo';
 const MAX_BYTES = 250 * 1024;
@@ -49,8 +51,15 @@ async function exportWebp(png, width, outFile) {
   }
 }
 
-async function login(browser, slug, password) {
+async function login(browser, slug, role, password) {
   const context = await browser.newContext({ viewport: { width: DESKTOP.width, height: DESKTOP.height }, deviceScaleFactor: DESKTOP.exportWidth / DESKTOP.width });
+  // Mark the first-run onboarding wizard as done for this slug and role, so it never covers the screen.
+  const onboardingKey = `ratetap_onboarding_${slug}_${role}`;
+  await context.addInitScript((key) => {
+    try {
+      localStorage.setItem(key, '1');
+    } catch {}
+  }, onboardingKey);
   // Log in through the same API the /login form posts to. The form's restaurant
   // dropdown never populates in headless Chromium, and the API sets the session
   // cookie on this context's jar.
@@ -68,11 +77,22 @@ async function gotoSettled(page, pathname) {
   await page.waitForTimeout(800);
 }
 
+/** Fails the shot if the onboarding wizard or any modal is on screen. */
+async function assertNoOverlay(page, name) {
+  const state = await page.evaluate(() => ({
+    text: document.body.innerText,
+    modal: Boolean(document.querySelector('[role="dialog"], [aria-modal="true"]')),
+  }));
+  if (state.modal || state.text.includes('Bienvenido')) throw new Error(`${name}: onboarding modal or dialog is on screen`);
+}
+
 /** Desktop: 1440x900 viewport, cropped to the main content height, exported at 1600px. */
-async function captureDesktop(context, pathname) {
+async function captureDesktop(context, pathname, name) {
   const page = await context.newPage();
   await page.setViewportSize({ width: DESKTOP.width, height: DESKTOP.height });
   await gotoSettled(page, pathname);
+  await page.waitForSelector('main', { state: 'visible', timeout: 60_000 });
+  await assertNoOverlay(page, name);
   const bottom = await page.evaluate(() => {
     const el = document.querySelector('main') ?? document.body;
     return Math.ceil(el.getBoundingClientRect().bottom);
@@ -84,12 +104,13 @@ async function captureDesktop(context, pathname) {
 }
 
 /** Mobile: 390x844 at 2x, exported at 780px. */
-async function captureMobile(browser, pathname, prepare) {
+async function captureMobile(browser, pathname, name, prepare) {
   const context = await browser.newContext({ viewport: { width: MOBILE.width, height: MOBILE.height }, deviceScaleFactor: MOBILE.dpr, isMobile: true, hasTouch: true });
   const page = await context.newPage();
   // Keep the capture offline: any external link (e.g. a Google review URL) is answered locally.
   await page.route((u) => !u.href.startsWith(BASE_URL) && !u.href.startsWith('data:'), (route) => route.fulfill({ status: 204, body: '' }));
   await gotoSettled(page, pathname);
+  await assertNoOverlay(page, name);
   if (prepare) await prepare(page);
   const png = await page.screenshot({ type: 'png' });
   await context.close();
@@ -154,25 +175,6 @@ async function renderEmails() {
   return { ownerHtml };
 }
 
-/**
- * Chef report HTML from runChefReport's dry-run, in-process. The CLI dry-run opens a Neon
- * WebSocket transaction, which the local HTTP bridge cannot serve, so this passes a pool that
- * reads over the same neon HTTP path the app uses. Dry-run sends nothing and writes nothing.
- */
-async function renderChefHtml() {
-  const { neon } = await import('@neondatabase/serverless');
-  const { runChefReport } = await import('../src/lib/chef-weekly-report.ts');
-  const query = neon(process.env.DATABASE_URL);
-  const pool = {
-    connect: async () => ({ query: async (text, values) => ({ rows: await query.query(text, values) }), release() {} }),
-  };
-  const result = await runChefReport({ mode: 'dry-run', previewTo: [] }, { pool });
-  const html = result.report?.html;
-  if (!html) throw new Error('chef dry-run produced no HTML');
-  await writeFile(path.join(EVIDENCE_DIR, 'chef-email.html'), html);
-  return { chefHtml: html };
-}
-
 async function screenshotHtml(browser, html, width, dpr) {
   const context = await browser.newContext({ viewport: { width, height: 900 }, deviceScaleFactor: dpr });
   const page = await context.newPage();
@@ -224,8 +226,8 @@ async function main() {
   };
 
   try {
-    const gm = await login(browser, GM_SLUG, password);
-    const owner = await login(browser, OWNER_SLUG, password);
+    const gm = await login(browser, GM_SLUG, 'gm', password);
+    const owner = await login(browser, OWNER_SLUG, 'owner', password);
 
     const desktop = [
       ['dashboard', gm, '/dashboard'],
@@ -236,28 +238,23 @@ async function main() {
       ['guests', gm, '/guests'],
       ['campaigns', gm, '/campaigns'],
       ['leads', gm, '/leads'],
-      ['quote', gm, '/quotes/1'],
     ];
     for (const [name, ctx, pathname] of desktop) {
-      await save(name, await captureDesktop(ctx, pathname), DESKTOP.exportWidth);
+      await save(name, await captureDesktop(ctx, pathname, name), DESKTOP.exportWidth);
     }
 
-    await save('guest-rate-mobile', await captureMobile(browser, `/r/${GM_SLUG}?card=101`), MOBILE.exportWidth);
+    await save('guest-rate-mobile', await captureMobile(browser, `/r/${GM_SLUG}?card=101`, 'guest-rate-mobile'), MOBILE.exportWidth);
     await save(
       'guest-choice-mobile',
-      await captureMobile(browser, `/r/${GM_SLUG}?card=101`, async (page) => {
+      await captureMobile(browser, `/r/${GM_SLUG}?card=101`, 'guest-choice-mobile', async (page) => {
         await page.locator('button[aria-label*="5"], [role="radio"][aria-label*="5"]').first().click();
         await page.waitForTimeout(1200);
       }),
       MOBILE.exportWidth,
     );
-    await save('scoreboard-mobile', await captureMobile(browser, `/m/${GM_SLUG}/101`), MOBILE.exportWidth);
 
     const { ownerHtml } = await renderEmails();
     await save('owner-briefing-email', await screenshotHtml(browser, ownerHtml, 800, 2), 1600);
-
-    const { chefHtml } = await renderChefHtml();
-    await save('chef-email', await screenshotHtml(browser, chefHtml, 800, 2), 1600);
   } finally {
     await browser.close();
   }
