@@ -81,6 +81,11 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
         .rt-upsell__sub { font-size: 1.2rem; color: var(--text-secondary); max-width: 520px; margin-bottom: 1.75rem; }
         .rt-checks { list-style: none; padding: 0; margin: 0; display: grid; gap: 0.8rem; font-weight: 700; font-size: 1.05rem; }
         .rt-checks i { color: var(--brand-blue); margin-right: 0.5rem; }
+        .rt-shot { display: block; width: 100%; height: auto; aspect-ratio: 16 / 10; object-fit: cover; object-position: top left; border-radius: 14px; border: 1px solid var(--line); margin-bottom: 1.5rem; }
+        .rt-included { margin-top: 4rem; }
+        .rt-included__list { list-style: none; padding: 0; margin: 0 auto; max-width: 880px; display: grid; grid-template-columns: 1fr; gap: 0.9rem 2rem; }
+        .rt-included__list li { display: flex; align-items: center; gap: 0.75rem; font-weight: 600; }
+        @media (min-width: 761px) { .rt-included__list { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
         @media (max-width: 960px) {
             .rt-locs, .rt-two, .rt-upsell { grid-template-columns: 1fr; }
             .rt-upsell { gap: 2.5rem; }
@@ -155,19 +160,37 @@ height="0" width="0" hidden></iframe></noscript>
             </div>
             <div class="grid-3">
                 <div class="card reveal">
-                    <div class="card-icon-wrapper"><i class="fa-solid fa-user-check" aria-hidden="true"></i></div>
+                    <img class="rt-shot" src="assets/product/dashboard.webp" width="640" height="400" loading="lazy" alt="RateTap dashboard screenshot">
                     <h3>Reviews credited to each server</h3>
                     <p>Every card belongs to one server. See who asks at every table, by shift and location.</p>
                 </div>
                 <div class="card reveal">
-                    <div class="card-icon-wrapper"><i class="fa-solid fa-bell" aria-hidden="true"></i></div>
+                    <img class="rt-shot" src="assets/product/inbox.webp" width="640" height="400" loading="lazy" alt="RateTap inbox screenshot">
                     <h3>An alert when a guest complains</h3>
                     <p>Private feedback reaches your GM right away. Open complaints escalate to you after a few hours.</p>
                 </div>
                 <div class="card reveal">
-                    <div class="card-icon-wrapper"><i class="fa-solid fa-building" aria-hidden="true"></i></div>
+                    <img class="rt-shot" src="assets/product/overview.webp" width="640" height="400" loading="lazy" alt="RateTap overview screenshot">
                     <h3>Every location in one view</h3>
                     <p>A group dashboard and a Monday briefing show which location needs attention.</p>
+                </div>
+            </div>
+            <div class="rt-included">
+                <div class="section-header text-center">
+                    <h2>Everything included</h2>
+                </div>
+                <ul class="rt-included__list">
+                    <li><span class="check-icon" role="img" aria-label="Included"></span>NFC cards for every server</li>
+                    <li><span class="check-icon" role="img" aria-label="Included"></span>Live feed and push alerts</li>
+                    <li><span class="check-icon" role="img" aria-label="Included"></span>Complaint inbox with escalation</li>
+                    <li><span class="check-icon" role="img" aria-label="Included"></span>Weekly owner and chef reports</li>
+                    <li><span class="check-icon" role="img" aria-label="Included"></span>Guest list with birthdays and VIPs</li>
+                    <li><span class="check-icon" role="img" aria-label="Included"></span>WhatsApp campaigns to your guests</li>
+                    <li><span class="check-icon" role="img" aria-label="Included"></span>Event leads and quote builder</li>
+                    <li><span class="check-icon" role="img" aria-label="Included"></span>Multi-location group view</li>
+                </ul>
+                <div class="text-center rt-more">
+                    <a class="btn btn-secondary" href="/product">See every feature →</a>
                 </div>
             </div>
         </div>
