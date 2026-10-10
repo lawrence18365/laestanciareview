@@ -79,7 +79,7 @@ LOCALE_CONFIG = {
         "footer_company": "Company",
         "footer_connect": "Connect",
         "footer_platform_links": [
-            ("Sentiment Flow", "#"),
+            ("Guest Feedback", "/reputation-recovery"),
             ("Staff Tracking", "#"),
             ("Enterprise", "#"),
         ],
@@ -155,7 +155,7 @@ LOCALE_CONFIG = {
         "footer_company": "Compañía",
         "footer_connect": "Conectar",
         "footer_platform_links": [
-            ("Flujo de sentimiento", "#"),
+            ("Opiniones de clientes", "/es/reputation-recovery"),
             ("Seguimiento de staff", "#"),
             ("Empresas", "#"),
         ],
