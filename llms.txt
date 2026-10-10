@@ -18,7 +18,7 @@ Production data snapshot used in claims below: 2026-04-25.
 ## What RateTap is
 
 - A SaaS for restaurants. Each server gets a personal NFC card. Guests tap their phone on the card, pick a star rating, and then choose between (a) the Google review form or (b) a private feedback form that alerts the manager via push or SMS. Every guest sees both options, at any rating; nothing is blocked, hidden or redirected based on the stars.
-- A multi-location dashboard for owners and regional managers (filtered overview, leaderboards, weekly history).
+- A multi-location dashboard for owners and regional managers (filtered overview, staff activity, weekly history).
 - Custom pricing per number of locations and staff.
 - No POS integration required.
 - Stack: Next.js + Drizzle ORM + Neon Postgres + Vercel. Email via Resend. SMS via Telnyx. Google Places API for rating snapshots.

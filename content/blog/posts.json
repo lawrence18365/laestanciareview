@@ -15,7 +15,7 @@
           "slug": "restaurant-google-rating-dropped",
           "pageTitle": "Restaurant Google Rating Dropped? Recovery Plan for Operators | RateTap",
           "title": "Restaurant Google Rating Dropped? Use a Recovery Plan Your Team Can Run This Week",
-          "description": "If your restaurant's Google rating dropped, respond to problems at the table, ask every guest for a review, isolate what changed on the floor, and rebuild recent 5-star review velocity with a system your managers can actually enforce.",
+          "description": "If your restaurant's Google rating dropped, respond to problems at the table, ask every guest for a review, isolate what changed on the floor, and rebuild recent Google review volume with a system your managers can actually enforce.",
           "eyebrow": "Rating Recovery",
           "heroSubtitle": "A rating drop usually means your operating system broke somewhere: a slower shift, a weaker close, a manager who heard about problems too late, or guests who left happy but silent. The fix is not a generic apology post. It is a tighter review recovery loop.",
           "readTime": "7 min read",
@@ -31,7 +31,7 @@
             "Negative review recovery",
             "Shift-level response"
           ],
-          "quickSummary": "Treat a rating drop like an operations incident, not a branding problem. Find where service broke, create a same-shift recovery path for unhappy guests, and increase recent 5-star review volume by asking at the table instead of after the guest is gone.",
+          "quickSummary": "Treat a rating drop like an operations incident, not a branding problem. Find where service broke, create a same-shift recovery path for unhappy guests, and increase recent Google review volume by asking every guest at the table instead of after the guest is gone.",
           "sections": [
             {
               "heading": "Start with what changed this week, not what happened last quarter",
@@ -64,9 +64,9 @@
               ]
             },
             {
-              "heading": "Rebuild recent 5-star volume without adding more friction",
+              "heading": "Rebuild recent review volume without adding more friction",
               "paragraphs": [
-                "A drop in average rating becomes harder to reverse when happy guests still leave silently. You need more recent positive reviews, but not through a delayed email campaign that depends on memory and follow-through.",
+                "A drop in average rating becomes harder to reverse when happy guests still leave silently. You need more recent reviews from every guest, but not through a delayed email campaign that depends on memory and follow-through.",
                 "Ask at the moment of satisfaction: when the table is settled, the bill lands cleanly, and the staff member knows the experience ended well. The request should be one tap, one prompt, and one obvious next step."
               ],
               "callout": {
@@ -92,7 +92,7 @@
           "faqs": [
             {
               "question": "How fast can a restaurant recover after a rating drop?",
-              "answer": "Recovery speed depends on how quickly you remove the recurring service issue and start capturing more recent positive reviews. Operators move faster when they fix the floor problem first and tighten the review request flow in the same week."
+              "answer": "Recovery speed depends on how quickly you remove the recurring service issue and start capturing more recent reviews from every guest. Operators move faster when they fix the floor problem first and tighten the review request flow in the same week."
             },
             {
               "question": "Should we only offer a Google review while our rating is down?",
@@ -138,7 +138,7 @@
           "slug": "restaurante-bajo-calificacion-google",
           "pageTitle": "¿Bajó tu calificación en Google? Plan operativo de recuperación | RateTap",
           "title": "¿Bajó la calificación de tu restaurante en Google? Usa un plan que tu equipo pueda ejecutar esta semana",
-          "description": "Si bajó la calificación de tu restaurante en Google, atiende los problemas en la mesa, pídele su opinión a cada huésped, detecta qué cambió en operación y recupera volumen reciente de 5 estrellas con un sistema que sí pueda ejecutar tu gerencia.",
+          "description": "Si bajó la calificación de tu restaurante en Google, atiende los problemas en la mesa, pídele su opinión a cada huésped, detecta qué cambió en operación y recupera volumen reciente de reseñas en Google con un sistema que sí pueda ejecutar tu gerencia.",
           "eyebrow": "Recuperación de calificación",
           "heroSubtitle": "Cuando baja la calificación, normalmente no falló el marketing: falló algún punto operativo. Puede ser un turno lento, un cierre débil, un gerente que se enteró demasiado tarde o clientes satisfechos que se fueron sin dejar reseña. La solución es ajustar el loop operativo.",
           "readTime": "7 min de lectura",
@@ -154,7 +154,7 @@
             "Recuperación de reseñas",
             "Respuesta por turno"
           ],
-          "quickSummary": "Trata la baja de calificación como un incidente operativo, no como un problema de branding. Identifica dónde falló el servicio, ofrece una opción privada a los huéspedes durante el mismo turno y aumenta el volumen reciente de 5 estrellas pidiendo la reseña en mesa, no después.",
+          "quickSummary": "Trata la baja de calificación como un incidente operativo, no como un problema de branding. Identifica dónde falló el servicio, ofrece una opción privada a los huéspedes durante el mismo turno y aumenta el volumen reciente de reseñas en Google pidiendo la reseña en mesa, no después.",
           "sections": [
             {
               "heading": "Empieza por lo que cambió esta semana, no por lo que pasó hace meses",
@@ -187,9 +187,9 @@
               ]
             },
             {
-              "heading": "Recupera volumen reciente de 5 estrellas sin agregar fricción",
+              "heading": "Recupera volumen reciente de reseñas sin agregar fricción",
               "paragraphs": [
-                "La baja en promedio se vuelve más difícil de revertir cuando los clientes satisfechos siguen saliendo en silencio. Necesitas más reseñas positivas recientes, pero no por medio de campañas tardías por correo que dependen de la memoria del cliente.",
+                "La baja en promedio se vuelve más difícil de revertir cuando los clientes satisfechos siguen saliendo en silencio. Necesitas más reseñas recientes de todos los huéspedes, pero no por medio de campañas tardías por correo que dependen de la memoria del cliente.",
                 "Pide la reseña en el momento correcto: cuando la mesa ya cerró bien, la cuenta llegó limpia y el mesero sabe que la experiencia terminó positiva. La solicitud debe ser un toque, un prompt y un siguiente paso evidente."
               ],
               "callout": {
@@ -215,7 +215,7 @@
           "faqs": [
             {
               "question": "¿Qué tan rápido puede recuperarse un restaurante después de una baja?",
-              "answer": "Depende de qué tan rápido elimines la causa operativa y empieces a capturar más reseñas positivas recientes. El avance es más rápido cuando arreglas el problema de piso primero y ajustas el flujo de reseñas esa misma semana."
+              "answer": "Depende de qué tan rápido elimines la causa operativa y empieces a capturar más reseñas recientes de todos los huéspedes. El avance es más rápido cuando arreglas el problema de piso primero y ajustas el flujo de reseñas esa misma semana."
             },
             {
               "question": "¿Debemos pedir reseña de Google a todos los clientes si estamos bajos?",
@@ -828,7 +828,7 @@
                 "QR cost is upfront-cheap, ongoing-expensive in lost volume",
                 "NFC cost is upfront-real, ongoing-cheap as cards last and travel with staff",
                 "Paper cost is operational, not financial — manager hours that go nowhere",
-                "The right comparison is dollars per recent 5-star review, not dollars per card"
+                "The right comparison is dollars per recent Google review, not dollars per card"
               ]
             },
             {
@@ -969,7 +969,7 @@
                 "El QR cuesta poco al inicio, mucho en el largo plazo por volumen perdido",
                 "El NFC cuesta real al inicio, barato en el largo plazo: las tarjetas duran y viajan con el staff",
                 "El papel cuesta operativo, no financiero — horas de gerencia que no llegan a nada",
-                "La comparación correcta es dólares por reseña reciente de 5 estrellas, no dólares por tarjeta"
+                "La comparación correcta es dólares por reseña reciente en Google, no dólares por tarjeta"
               ]
             },
             {
@@ -1658,7 +1658,7 @@
           "title": "5 Restaurant Reputation Metrics You Should Actually Track (Beyond the Average Score)",
           "description": "If you only watch your average star rating, you are missing the operational signals that actually drive reputation. Discover the 5 metrics that matter most.",
           "eyebrow": "Restaurant Metrics",
-          "heroSubtitle": "The average star rating is a vanity metric. It tells you where you ended up, but not why. Real operational change happens when you track the velocity of positive reviews and the detection rate of private guest issues.",
+          "heroSubtitle": "The average star rating is a vanity metric. It tells you where you ended up, but not why. Real operational change happens when you track the velocity of new reviews and the detection rate of private guest issues.",
           "readTime": "6 min read",
           "updatedLabel": "June 26, 2026",
           "painPoint": "You track your overall Google rating, but by the time it drops, the damage is already done and the operational breakdown has been happening for weeks.",
@@ -1672,7 +1672,7 @@
             "Review Velocity",
             "Guest Issue Detection"
           ],
-          "quickSummary": "Stop staring at your average star rating. Start tracking Review Capture Rate, Guest Issue Detection Rate, Staff Attribution Volume, and Recent 5-Star Velocity to fix service issues while guests are still at the table.",
+          "quickSummary": "Stop staring at your average star rating. Start tracking Review Capture Rate, Guest Issue Detection Rate, Staff Attribution Volume, and Recent Review Velocity to fix service issues while guests are still at the table.",
           "sections": [
             {
               "heading": "1. Review Capture Rate: Are you converting happy guests?",
@@ -1693,19 +1693,19 @@
               ]
             },
             {
-              "heading": "3. Recent 5-Star Velocity: Pushing down bad history",
+              "heading": "3. Recent Review Velocity: Pushing down bad history",
               "paragraphs": [
-                "Your overall average moves slowly, but customers look at your most recent reviews to judge your current quality. Recent 5-Star Velocity tracks how many 5-star reviews you generate per week.",
+                "Your overall average moves slowly, but customers look at your most recent reviews to judge your current quality. Recent Review Velocity tracks how many Google reviews you generate per week.",
                 "High velocity ensures that even if a rare bad review slips through, it gets buried quickly by genuine, positive feedback."
               ]
             },
             {
               "heading": "4. Staff Attribution: Who is driving your reputation?",
               "paragraphs": [
-                "If you can't tell which server prompted a 5-star review, you can't coach your team. Tracking review generation by staff member shows you exactly who owns the positive close-out and who might be rushing the final touchpoint."
+                "If you can't tell which server prompted a review, you can't coach your team. Tracking review generation by staff member shows you exactly who owns the review ask and who might be rushing the final touchpoint."
               ],
               "bullets": [
-                "Reward staff who consistently generate positive feedback",
+                "Coach staff and support those who miss the ask",
                 "Identify patterns where certain shifts lag behind",
                 "Keep accountability fair without relying on aggressive quotas"
               ]
@@ -1765,7 +1765,7 @@
           "title": "5 Métricas en Restauración que Realmente Debes Medir (Más Allá de las Estrellas)",
           "description": "Si solo vigilas tu calificación promedio, estás perdiendo las señales operativas clave. Descubre las 5 métricas en restauración que realmente importan.",
           "eyebrow": "Métricas en restauración",
-          "heroSubtitle": "La calificación promedio en Google es una métrica de vanidad. Te dice cómo terminaste, pero no por qué. El verdadero cambio operativo ocurre cuando mides la velocidad de reseñas positivas y la tasa de detección de problemas de clientes en privado.",
+          "heroSubtitle": "La calificación promedio en Google es una métrica de vanidad. Te dice cómo terminaste, pero no por qué. El verdadero cambio operativo ocurre cuando mides la velocidad de reseñas nuevas y la tasa de detección de problemas de clientes en privado.",
           "readTime": "6 min de lectura",
           "updatedLabel": "26 junio 2026",
           "painPoint": "Revisas tu calificación de Google, pero para cuando baja, el daño ya está hecho y la falla operativa lleva semanas ocurriendo en el piso.",
@@ -1779,7 +1779,7 @@
             "Velocidad de Reseñas",
             "Detección de Problemas"
           ],
-          "quickSummary": "Deja de mirar solo tu calificación promedio. Empieza a medir la Tasa de Captura de Reseñas, Tasa de Detección de Problemas de Clientes, Desempeño por Mesero y Velocidad de 5 Estrellas para arreglar el servicio mientras el cliente sigue en la mesa.",
+          "quickSummary": "Deja de mirar solo tu calificación promedio. Empieza a medir la Tasa de Captura de Reseñas, Tasa de Detección de Problemas de Clientes, Desempeño por Mesero y Velocidad de Reseñas para arreglar el servicio mientras el cliente sigue en la mesa.",
           "sections": [
             {
               "heading": "1. Tasa de Captura de Reseñas: ¿Estás convirtiendo a los clientes felices?",
@@ -1800,19 +1800,19 @@
               ]
             },
             {
-              "heading": "3. Velocidad Reciente de 5 Estrellas: Sepultando el mal historial",
+              "heading": "3. Velocidad Reciente de Reseñas: Sepultando el mal historial",
               "paragraphs": [
-                "Tu promedio general se mueve lento, pero los clientes miran tus reseñas más recientes para juzgar tu calidad actual. La Velocidad de 5 Estrellas mide cuántas reseñas excelentes generas por semana.",
+                "Tu promedio general se mueve lento, pero los clientes miran tus reseñas más recientes para juzgar tu calidad actual. La Velocidad de Reseñas mide cuántas reseñas generas por semana.",
                 "Una velocidad alta asegura que incluso si se cuela una mala reseña, esta sea sepultada rápidamente por comentarios genuinos y positivos."
               ]
             },
             {
               "heading": "4. Atribución por Mesero: ¿Quién impulsa tu reputación?",
               "paragraphs": [
-                "Si no sabes qué mesero generó una reseña de 5 estrellas, no puedes hacer coaching. Medir la generación de reseñas por persona te muestra exactamente quién domina el cierre de la experiencia y quién necesita ayuda."
+                "Si no sabes qué mesero generó una reseña, no puedes hacer coaching. Medir la generación de reseñas por persona te muestra exactamente quién domina el cierre de la experiencia y quién necesita ayuda."
               ],
               "bullets": [
-                "Recompensa al staff que genera reseñas consistentes",
+                "Da coaching y apoyo al staff que omite la solicitud",
                 "Identifica turnos o estaciones con bajo rendimiento",
                 "Mantén responsabilidad sin caer en cuotas agresivas"
               ]
@@ -2147,8 +2147,8 @@
               "answer": "With the right tools, you can implement an in-moment capture and guest recovery system in a single pre-shift meeting."
             },
             {
-              "question": "Should we incentivize staff for getting reviews?",
-              "answer": "Small incentives can kickstart the process, but the long-term playbook relies on making review capture a standard operational requirement, not an optional bonus activity."
+              "question": "Should we reward staff for review counts?",
+              "answer": "Avoid rewards tied to review counts. Google prohibits incentivized reviews. Make asking every guest a standard part of service instead."
             }
           ],
           "relatedHeading": "Execute the playbook",
@@ -2173,7 +2173,7 @@
             "secondaryLabel": "Explore the platform",
             "secondaryHref": "../restaurant-review-management-software"
           },
-          "cardSummary": "The ultimate operations manual for managing restaurant reputation, capturing 5-star reviews, and recovering guest issues early.",
+          "cardSummary": "The ultimate operations manual for managing restaurant reputation, capturing Google reviews from every guest, and recovering guest issues early.",
           "datePublished": "2026-06-26",
           "dateModified": "2026-06-26"
         },
@@ -2244,8 +2244,8 @@
               "answer": "Con las herramientas correctas, puedes implementar un sistema de captura en el momento en una sola junta de pre-turno."
             },
             {
-              "question": "¿Debemos dar incentivos al staff por lograr reseñas?",
-              "answer": "Pequeños incentivos pueden arrancar el proceso, pero el playbook a largo plazo se basa en hacer que la captura sea un estándar operativo, no un bono opcional."
+              "question": "¿Debemos premiar al staff por el número de reseñas?",
+              "answer": "Evita premios ligados al número de reseñas. Google prohíbe las reseñas incentivadas. Mejor haz que pedir opinión a cada huésped sea parte del servicio."
             }
           ],
           "relatedHeading": "Ejecuta el playbook",
@@ -2270,7 +2270,7 @@
             "secondaryLabel": "Explorar la plataforma",
             "secondaryHref": "../es/software-gestion-resenas-restaurantes"
           },
-          "cardSummary": "El manual operativo definitivo para gestionar la reputación de tu restaurante, capturar 5 estrellas y recuperar problemas de clientes a tiempo.",
+          "cardSummary": "El manual operativo definitivo para gestionar la reputación de tu restaurante, capturar reseñas en Google de cada huésped y recuperar problemas de clientes a tiempo.",
           "datePublished": "2026-06-26",
           "dateModified": "2026-06-26"
         }
