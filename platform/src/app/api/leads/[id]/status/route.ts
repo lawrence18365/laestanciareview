@@ -1,7 +1,7 @@
 /**
  * Move an event lead through its pipeline: new → claimed → quoted → won | lost.
  * Transitions are validated server-side (illegal jumps rejected) and tenant-
- * scoped. Winning a lead also accepts any quote linked to it (coherence).
+ * scoped. Winning a lead also marks any open quote linked to it won (coherence).
  *
  * The dedicated /claim route still handles the atomic first-tap-wins claim;
  * this route covers the rest of the lifecycle.
@@ -9,12 +9,13 @@
 
 import { NextRequest } from 'next/server';
 import { z } from 'zod';
-import { and, eq } from 'drizzle-orm';
+import { and, eq, inArray, sql } from 'drizzle-orm';
 import { db } from '@/db';
 import { eventLeads, quotes } from '@/db/schema';
 import { verifySession } from '@/lib/session';
 import { getRestaurantBySlug } from '@/lib/queries';
 import { requireSameOrigin } from '@/lib/origin';
+import { ACTIVE_STATUSES } from '@/lib/quote-status';
 
 export const runtime = 'nodejs';
 
@@ -109,12 +110,29 @@ export async function POST(req: NextRequest, ctx: RouteContext) {
     .where(and(eq(eventLeads.id, leadId), eq(eventLeads.restaurantId, restaurant.id)))
     .returning();
 
-  // Coherence: winning the lead accepts any quote linked to it.
+  // Coherence: winning the lead wins any open quote linked to it. 'won' is the
+  // canonical quote status (QUOTE_STATUSES); the conversion readout counts it by
+  // outcomeAt, and the quotes_won_needs_outcome CHECK requires both outcome
+  // columns, so stamp the date and keep any amount the GM already entered (0 =
+  // not entered yet; it adds nothing to pesos collected). Declined/expired
+  // quotes keep their own outcome.
   if (next === 'won') {
+    const now = new Date();
     await db
       .update(quotes)
-      .set({ status: 'accepted', updatedAt: new Date() })
-      .where(and(eq(quotes.leadId, leadId), eq(quotes.restaurantId, restaurant.id)));
+      .set({
+        status: 'won',
+        outcomeAt: now,
+        outcomeAmountMxn: sql`coalesce(${quotes.outcomeAmountMxn}, 0)`,
+        updatedAt: now,
+      })
+      .where(
+        and(
+          eq(quotes.leadId, leadId),
+          eq(quotes.restaurantId, restaurant.id),
+          inArray(quotes.status, ACTIVE_STATUSES),
+        ),
+      );
   }
 
   return Response.json({ lead: serializeLead(updated) });
