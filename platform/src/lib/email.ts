@@ -1579,12 +1579,15 @@ export async function sendOwnerBriefing({
   weekStart,
   locations,
   dashboardUrl,
+  groupName,
 }: {
   to: string;
   weekStart: Date;
   locations: BriefingLocation[];
   dashboardUrl: string;
+  groupName?: string;
 }) {
+  const group = groupName?.trim() || 'Tu grupo';
   const activeCount = locations.filter((l) => l.scansThisWeek > 0).length;
   const scans = locations.reduce((s, l) => s + l.scansThisWeek, 0);
   const complaints = locations.reduce((s, l) => s + l.complaintsThisWeek, 0);
@@ -1682,7 +1685,7 @@ export async function sendOwnerBriefing({
   const content = `
     <div style="padding: 28px 28px 8px;">
       <p style="margin: 0 0 4px; font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: #D97706;">Resumen semanal · ${escapeHtml(briefingWeekLabel(weekStart))}</p>
-      <h1 style="margin: 0 0 4px; font-family: 'Playfair Display', Georgia, 'Times New Roman', serif; font-size: 28px; font-weight: 700; color: #111111;">Grupo Estancia</h1>
+      <h1 style="margin: 0 0 4px; font-family: 'Playfair Display', Georgia, 'Times New Roman', serif; font-size: 28px; font-weight: 700; color: #111111;">${escapeHtml(group)}</h1>
       <p style="margin: 0; font-size: 14px; color: #666666;">${locations.length} ubicaciones</p>
     </div>
 
@@ -1760,7 +1763,7 @@ export async function sendOwnerBriefing({
   return sendMail({
     from: FROM,
     to,
-    subject: `Grupo Estancia · ${activeCount} de ${locations.length} ubicaciones activas, ${complaints} quejas esta semana`,
+    subject: `${group} · ${activeCount} de ${locations.length} ubicaciones activas, ${complaints} quejas esta semana`,
     html: emailLayout(content, metricNote(['calificaciones'])),
   });
 }

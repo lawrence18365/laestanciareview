@@ -140,5 +140,6 @@ describe('weekly digest skippedNoEmail reporting', () => {
     expect(warn).toHaveBeenCalledWith('[digest] no email for owner-no-email');
     expect(mocks.sendWeeklyDigest).toHaveBeenCalledTimes(1);
     expect(mocks.sendOwnerBriefing).toHaveBeenCalledTimes(1);
+    expect(mocks.sendOwnerBriefing).toHaveBeenCalledWith(expect.objectContaining({ groupName: 'Dueño OK' }));
   });
 });

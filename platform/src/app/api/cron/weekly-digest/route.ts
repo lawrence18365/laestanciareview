@@ -192,6 +192,7 @@ export async function GET(req: NextRequest) {
         weekStart: briefingWeekStart,
         locations: allSignals.map(toBriefingLocation),
         dashboardUrl: `${baseUrl}/overview`,
+        groupName: owner.name,
       });
       if (result.success === false || result.skipped) ownerFailed++;
       else ownerSent++;
