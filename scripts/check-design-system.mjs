@@ -7,6 +7,16 @@
 //                                                           CSS var, an undefined class or a style="" attribute
 //   node scripts/check-design-system.mjs -v                 also list the offending names
 //   node scripts/check-design-system.mjs --json             machine-readable report
+//   node scripts/check-design-system.mjs --strict a.html --budget b.html
+//                                                           flags are independent: each consumes the file
+//                                                           args after it until the next flag
+//   node scripts/check-design-system.mjs --budget a.html    exit 1 if a page breaks a word budget (below)
+//   node scripts/check-design-system.mjs --self-test        run the budget rules on inline fixtures, exit 0
+//
+// Word budgets (--budget), counted on visible body text with <nav>, <footer>, <script>, <style>,
+// <noscript>, <svg>, JSON-LD and the <!-- chrome:header --> / <!-- chrome:footer --> regions removed:
+//   total <= 550 words | hero <= 30 | each <h2> <= 8 | each .faq-answer <= 40
+//   hero = first element with class hero / hero--photo or a data-photo-hero attribute, else first <section>.
 //
 // Columns: undefined CSS vars | undefined classes | style="" attributes | visible words.
 // "Visible words" excludes <head>, scripts, styles, nav and footer. It is measured, never enforced.
@@ -33,10 +43,23 @@ const isAllowedClass = (c) => JS_HOOK_CLASSES.has(c) || /^fa(-|$)/.test(c) || /^
 
 // ---------- args ----------
 const args = process.argv.slice(2);
-const strict = args.includes('--strict');
 const verbose = args.includes('-v') || args.includes('--verbose');
 const asJson = args.includes('--json');
-const fileArgs = args.filter((a) => !a.startsWith('-'));
+const selfTest = args.includes('--self-test');
+// --strict / --budget each take the file args that follow them, up to the next flag.
+const flagFiles = { '--strict': null, '--budget': null }; // null = flag absent
+const bareFiles = [];
+let currentFlag = null;
+for (const a of args) {
+  if (a.startsWith('-')) {
+    currentFlag = a in flagFiles ? a : null;
+    if (currentFlag && !flagFiles[currentFlag]) flagFiles[currentFlag] = [];
+  } else if (currentFlag) flagFiles[currentFlag].push(a);
+  else bareFiles.push(a);
+}
+const strict = flagFiles['--strict'] !== null;
+const budget = flagFiles['--budget'] !== null;
+const fileArgs = [...new Set([...bareFiles, ...(flagFiles['--strict'] ?? []), ...(flagFiles['--budget'] ?? [])])];
 
 // ---------- CSS parsing ----------
 const stripCssComments = (css) => css.replace(/\/\*[\s\S]*?\*\//g, '');
@@ -155,7 +178,105 @@ function analyze(file) {
   };
 }
 
+// ---------- word budgets ----------
+const BUDGET = { total: 550, hero: 30, h2: 8, faq: 40 };
+
+const countWords = (html) => decode(html.replace(/<[^>]+>/g, ' '))
+  .split(/\s+/).filter((w) => /[\p{L}\p{N}]/u.test(w)).length;
+
+/** Drop non-content markup. The chrome regions go first, while their comment markers still exist. */
+function stripNonContent(html) {
+  return html
+    .replace(/<!--\s*chrome:(header|footer)\b[^>]*-->[\s\S]*?<!--\s*(?:\/\s*chrome:\1|chrome:\1:end|end\s+chrome:\1)\b[^>]*-->/gi, '')
+    .replace(/<!--[\s\S]*?-->/g, '')
+    .replace(/<(script|style|noscript|nav|footer|svg|head)\b[\s\S]*?<\/\1>/gi, '');
+}
+
+/** Inner HTML of the element whose opening tag starts at `start`, balanced on the same tag name. */
+function elementInner(html, start) {
+  const open = html.slice(start).match(/^<([a-z][a-z0-9]*)\b[^>]*>/i);
+  if (!open) return '';
+  const re = new RegExp(`<(/?)${open[1]}\\b[^>]*>`, 'gi');
+  re.lastIndex = start + open[0].length;
+  let depth = 1;
+  let m;
+  while ((m = re.exec(html))) {
+    depth += m[1] ? -1 : 1;
+    if (depth === 0) return html.slice(start + open[0].length, m.index);
+  }
+  return html.slice(start + open[0].length);
+}
+
+/** Start indices of opening tags for which `pred(tagText)` holds, in document order. */
+function findOpenTags(html, pred) {
+  const out = [];
+  for (const m of html.matchAll(/<[a-z][a-z0-9]*\b[^>]*>/gi)) if (pred(m[0])) out.push(m.index);
+  return out;
+}
+const hasClass = (tag, ...names) => {
+  const c = tag.match(/\sclass\s*=\s*(?:"([^"]*)"|'([^']*)')/i) || [];
+  const list = (c[1] ?? c[2] ?? '').split(/\s+/);
+  return names.some((n) => list.includes(n));
+};
+const plainText = (html) => decode(html.replace(/<[^>]+>/g, ' ')).replace(/\s+/g, ' ').trim();
+
+function budgetCheck(rawHtml) {
+  const body = stripNonContent(rawHtml);
+  const total = countWords(body);
+
+  let heroStart = findOpenTags(body, (t) => hasClass(t, 'hero', 'hero--photo') || /\sdata-photo-hero\b/i.test(t))[0];
+  if (heroStart === undefined) heroStart = findOpenTags(body, (t) => /^<section\b/i.test(t))[0];
+  const hero = heroStart === undefined ? 0 : countWords(elementInner(body, heroStart));
+
+  const h2 = findOpenTags(body, (t) => /^<h2\b/i.test(t)).map((i) => {
+    const text = plainText(elementInner(body, i));
+    return { text, words: countWords(text) };
+  });
+  const faq = findOpenTags(body, (t) => hasClass(t, 'faq-answer')).map((i) => {
+    const text = plainText(elementInner(body, i));
+    return { text: text.slice(0, 40), words: countWords(text) };
+  });
+
+  const violations = [];
+  if (total > BUDGET.total) violations.push(`total visible words ${total} > ${BUDGET.total}`);
+  if (hero > BUDGET.hero) violations.push(`hero words ${hero} > ${BUDGET.hero}`);
+  for (const h of h2) if (h.words > BUDGET.h2) violations.push(`h2 "${h.text}" has ${h.words} words > ${BUDGET.h2}`);
+  for (const f of faq) if (f.words > BUDGET.faq) violations.push(`faq answer "${f.text}..." has ${f.words} words > ${BUDGET.faq}`);
+  return { total, hero, h2, faq, violations };
+}
+
+// ---------- self-test ----------
+function runSelfTest() {
+  const w = (n) => Array.from({ length: n }, () => 'word').join(' ');
+  const page = (inner, beforeMain = '') => `<html><head><title>${w(99)}</title>`
+    + `<script type="application/ld+json">{"a":"${w(99)}"}</script></head><body>${beforeMain}${inner}</body></html>`;
+  const hero = '<section class="hero"><h1>Hi</h1></section>';
+  const cases = [
+    ['clean page passes', page(`${hero}<section><h2>Three word title</h2><div class="faq-answer"><p>Short answer.</p></div></section>`), []],
+    ['nav, footer, script, style, JSON-LD and chrome regions are not counted',
+      page(`${hero}<footer>${w(300)}</footer><script>${w(300)}</script><style>${w(300)}</style>`,
+        `<nav>${w(300)}</nav><!-- chrome:header -->${w(300)}<!-- /chrome:header -->`), []],
+    ['total over 550 fails', page(`${hero}<p>${w(551)}</p>`), ['total']],
+    ['hero over 30 fails', page(`<section class="hero hero--photo"><h1>${w(31)}</h1></section>`), ['hero']],
+    ['data-photo-hero element is the hero', page(`<section><p>ok</p></section><div data-photo-hero><p>${w(31)}</p></div>`), ['hero']],
+    ['first section is the hero when no hero class', page(`<section><p>${w(31)}</p></section>`), ['hero']],
+    ['h2 over 8 fails', page(`${hero}<h2>${w(9)}</h2>`), ['h2']],
+    ['h2 of exactly 8 passes', page(`${hero}<h2>${w(8)}</h2>`), []],
+    ['faq answer over 40 fails', page(`${hero}<div class="faq-answer"><div><p>${w(41)}</p></div></div><p>after</p>`), ['faq']],
+    ['faq answer of exactly 40 passes', page(`${hero}<div class="faq-answer"><p>${w(40)}</p></div>`), []],
+  ];
+  let failed = 0;
+  for (const [name, html, expect] of cases) {
+    const got = budgetCheck(html).violations.map((v) => v.split(' ')[0]);
+    if (got.join() !== expect.join()) { failed++; console.error(`self-test FAIL: ${name}: expected [${expect}] got [${got}]`); }
+  }
+  if (failed) { console.error(`self-test: ${failed} of ${cases.length} failed`); process.exit(1); }
+  console.log(`self-test: ${cases.length} budget cases OK`);
+  process.exit(0);
+}
+
 // ---------- main ----------
+if (selfTest) runSelfTest();
 function defaultFiles() {
   const list = [];
   for (const dir of ['.', 'es']) {
@@ -173,8 +294,19 @@ const results = files.map(analyze);
 const sheet = loadCss(join(ROOT, 'styles.css'));
 const sheetUndefVars = sheet ? [...usedVars(sheet.css)].filter((v) => !sheet.defined.has(v)).sort() : [];
 
+// --budget: word budgets on the files listed after it (all default pages if none).
+const budgetResults = budget
+  ? (flagFiles['--budget'].length ? flagFiles['--budget'] : defaultFiles()).map((f) => {
+    const abs = resolve(ROOT, f);
+    const html = readFileSync(abs, 'utf8');
+    const rel = relative(ROOT, abs);
+    if (/<meta[^>]+http-equiv=["']?refresh/i.test(html)) return { file: rel, skipped: 'redirect' };
+    return { file: rel, ...budgetCheck(html) };
+  })
+  : [];
+
 if (asJson) {
-  console.log(JSON.stringify({ results, stylesCssUndefinedVars: sheetUndefVars }, null, 2));
+  console.log(JSON.stringify({ results, budget: budgetResults, stylesCssUndefinedVars: sheetUndefVars }, null, 2));
 } else {
   const pad = (s, n) => String(s).padEnd(n);
   const num = (s, n) => String(s).padStart(n);
@@ -196,14 +328,27 @@ if (asJson) {
   console.log(`styles.css undefined vars: ${sheetUndefVars.length}${sheetUndefVars.length ? ' (' + sheetUndefVars.join(' ') + ')' : ''}`);
 }
 
+let failed = false;
+
 if (strict) {
-  const bad = results.filter((r) => !r.skipped && (r.undefVars.length || r.undefClasses.length || r.inlineStyles));
+  // --strict with no files of its own checks the bare files, else every page.
+  const strictFiles = flagFiles['--strict'].length ? flagFiles['--strict'] : files;
+  const strictSet = new Set(strictFiles.map((f) => relative(ROOT, resolve(ROOT, f))));
+  const bad = results.filter((r) => strictSet.has(r.file) && !r.skipped && (r.undefVars.length || r.undefClasses.length || r.inlineStyles));
   if (bad.length || sheetUndefVars.length) {
     for (const r of bad) {
       console.error(`FAIL ${r.file}: vars=[${r.undefVars}] classes=[${r.undefClasses}] style=${r.inlineStyles}`);
     }
     if (sheetUndefVars.length) console.error(`FAIL styles.css: undefined vars [${sheetUndefVars}]`);
-    process.exit(1);
-  }
-  if (!asJson) console.log('strict: OK');
+    failed = true;
+  } else if (!asJson) console.log('strict: OK');
 }
+
+if (budget) {
+  const over = budgetResults.filter((r) => !r.skipped && r.violations.length);
+  for (const r of over) for (const v of r.violations) console.error(`BUDGET FAIL ${r.file}: ${v}`);
+  if (over.length) failed = true;
+  else if (!asJson) console.log(`budget: OK (${budgetResults.filter((r) => !r.skipped).length} pages)`);
+}
+
+if (failed) process.exit(1);

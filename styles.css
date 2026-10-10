@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap');
 @import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css');
 
 /* =========================================
@@ -147,13 +147,13 @@ h3 {
     line-height: 1.1;
 }
 
-/* LEGACY (temporary): the current homepages (identified by their .rt-chips hero pills) still
-   render h1-h3 in Instrument Serif. Remove this block when the homepages are migrated. */
-:where(body:has(.rt-chips)) :is(h1, h2, h3) {
-    font-family: 'Instrument Serif', serif;
-    font-weight: 400;
-    letter-spacing: normal;
-    line-height: 1;
+/* Homepage stat numbers: the page's inline <style> still sets a serif on .rt-stat .n.
+   The extra `body` raises specificity so the shared sans heading style wins. Drop the
+   `body` prefix when that inline block moves into this file. */
+body .rt-stat .n {
+    font-family: var(--font-sans);
+    font-weight: 800;
+    letter-spacing: -0.03em;
 }
 
 .serif-italic {
@@ -840,8 +840,9 @@ h3 {
     display: block;
     margin-top: 0.25rem;
     font-size: 1.1rem;
-    font-family: 'Instrument Serif', serif;
-    font-weight: 400;
+    font-family: var(--font-sans);
+    font-weight: 800;
+    letter-spacing: -0.03em;
     color: white;
 }
 
@@ -858,7 +859,9 @@ h3 {
 }
 
 .screen-title {
-    font-family: 'Instrument Serif', serif;
+    font-family: var(--font-sans);
+    font-weight: 800;
+    letter-spacing: -0.03em;
     font-size: 2.2rem;
     margin-bottom: 1.5rem;
     color: var(--brand-charcoal);
@@ -1744,7 +1747,9 @@ h3 {
 }
 
 .pricing-card__price {
-    font-family: 'Instrument Serif', serif;
+    font-family: var(--font-sans);
+    font-weight: 800;
+    letter-spacing: -0.03em;
     font-size: clamp(3.5rem, 5vw, 4.5rem);
     line-height: 1;
     margin-bottom: 0.5rem;
@@ -1856,9 +1861,10 @@ h3 {
 }
 
 .pricing-examples td:nth-child(3) {
-    font-family: 'Instrument Serif', serif;
+    font-family: var(--font-sans);
     font-size: 1.2rem;
-    font-weight: 400;
+    font-weight: 800;
+    letter-spacing: -0.03em;
     color: var(--brand-charcoal);
 }
 
