@@ -88,7 +88,7 @@ function getPrimaryCtaLabel() {
         return funnelConfig.primaryCtaLabel;
     }
 
-    return isSpanishPage() ? 'Agendar demo' : 'Book a demo';
+    return isSpanishPage() ? 'Pruébalo gratis' : 'Try it free';
 }
 
 function getDemoPageHref() {
@@ -97,10 +97,6 @@ function getDemoPageHref() {
     }
 
     return isSpanishPage() ? '/es/demo' : '/demo';
-}
-
-function getPrimaryCtaFallbackHref() {
-    return getDemoPageHref();
 }
 
 function getTrialSignupUrl(link) {
@@ -948,44 +944,52 @@ function simplifyLeadForm(form) {
     form.classList.add('lead-form-simplified');
 }
 
-function resolveStickyCtaHref() {
-    if (document.getElementById('contact')) return '#contact';
-    if (document.getElementById('contact-form')) return '#contact-form';
-    if (document.getElementById('demo-form')) return '#demo-form';
+function getNavCtaLink() {
+    return document.querySelector('.nav-actions a.btn.btn-primary[href]');
+}
 
-    const candidate = document.querySelector('.nav-actions a.btn.btn-primary[href]')
-        || document.querySelector('.hero a.btn.btn-primary[href]')
-        || document.querySelector('a.btn.btn-primary[href]');
-    if (!candidate) return `${getPrimaryCtaFallbackHref()}#demo-form`;
+// Pages with a real on-page lead form keep the sticky bar anchored to it.
+function getLeadFormAnchor() {
+    const formId = ['contact-form', 'contacto-form'].find(id => document.getElementById(id));
+    return formId ? `#${formId}` : '';
+}
 
-    const href = normalizeHref(candidate.getAttribute('href'));
-    const lowerHref = href.toLowerCase();
-    if (!href || href === '#') return `${getPrimaryCtaFallbackHref()}#demo-form`;
-    if ((lowerHref === '#contact' || lowerHref === '/#contact') && !document.getElementById('contact')) {
-        return `${getPrimaryCtaFallbackHref()}#demo-form`;
+// Mirrors the header CTA: same href, with cta_context swapped to mobile_sticky.
+function getMirroredCtaHref(sourceLink) {
+    const rawHref = sourceLink?.getAttribute('href') || '';
+    if (!rawHref || rawHref.startsWith('#')) return rawHref;
+
+    try {
+        const url = new URL(rawHref, window.location.href);
+        url.searchParams.set('cta_context', 'mobile_sticky');
+        return url.origin === window.location.origin ? normalizeHref(url.toString()) : url.toString();
+    } catch (error) {
+        return rawHref;
     }
-    if (lowerHref === '/demo' || lowerHref === '/es/demo') return getPrimaryCtaFallbackHref();
-    return href;
 }
 
 function injectMobileStickyCta() {
     if (document.querySelector('.mobile-sticky-cta')) return;
     if (window.location.pathname.endsWith('/demo') || window.location.pathname.endsWith('/demo.html')) return;
 
+    const sourceLink = getNavCtaLink()
+        || document.querySelector('.hero a.btn.btn-primary[href]')
+        || document.querySelector('a.btn.btn-primary[href]');
+    const funnelConfig = getActiveFunnelConfig();
+    const label = funnelConfig?.primaryCtaLabel
+        || (sourceLink?.textContent || '').trim()
+        || getPrimaryCtaLabel();
+
     const ctaBar = document.createElement('div');
     ctaBar.className = 'mobile-sticky-cta';
-    ctaBar.innerHTML = `
-        <a class="btn btn-primary mobile-sticky-cta-btn" href="${resolveStickyCtaHref()}">${getPrimaryCtaLabel()}</a>
-    `;
-
+    ctaBar.innerHTML = '<a class="btn btn-primary mobile-sticky-cta-btn"></a>';
     document.body.appendChild(ctaBar);
     document.body.classList.add('has-mobile-sticky-cta');
 
     const stickyLink = ctaBar.querySelector('a');
-    const sourceLink = document.querySelector('.nav-actions a.btn.btn-primary[href]')
-        || document.querySelector('.hero a.btn.btn-primary[href]')
-        || document.querySelector('a.btn.btn-primary[href]');
-    if (stickyLink && sourceLink) {
+    stickyLink.textContent = label;
+    stickyLink.dataset.funnelContext = 'mobile_sticky';
+    if (sourceLink) {
         ['funnelOffer', 'sourcePage', 'sourceCluster', 'language'].forEach(key => {
             if (sourceLink.dataset[key]) {
                 stickyLink.dataset[key] = sourceLink.dataset[key];
@@ -995,6 +999,13 @@ function injectMobileStickyCta() {
             stickyLink.dataset.preserveLabel = 'true';
         }
     }
+
+    stickyLink.setAttribute(
+        'href',
+        getLeadFormAnchor()
+            || getMirroredCtaHref(sourceLink)
+            || getTrialSignupUrl(stickyLink).toString()
+    );
 }
 
 // Form handling
