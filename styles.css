@@ -1424,11 +1424,19 @@ body .rt-stat .n {
     align-items: start;
 }
 
-.footer-brand img {
-    filter: brightness(0) invert(1);
+.footer-brand .footer-wordmark {
+    display: inline-block;
     margin-bottom: 1rem;
-    width: min(160px, 100%);
-    height: auto;
+    color: #fff;
+    text-decoration: none;
+}
+
+.footer-brand .nav-wordmark {
+    font-family: var(--font-sans);
+    font-size: 1.5rem;
+    font-weight: 800;
+    letter-spacing: -0.075em;
+    line-height: 1;
 }
 
 .footer-brand p {
@@ -1578,10 +1586,6 @@ body .rt-stat .n {
         grid-template-columns: 1fr;
         gap: 1.6rem;
         text-align: center;
-    }
-
-    .footer-brand img {
-        margin-inline: auto;
     }
 
     .footer-brand p {
