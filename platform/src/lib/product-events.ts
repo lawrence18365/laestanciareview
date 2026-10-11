@@ -49,6 +49,10 @@ export const PRODUCT_EVENT_NAMES = [
   'feedback_email_reply_click',
   'csv_export',
   'mesero_qr_generated',
+  // Per-waiter QR codes in the GM panel: the card QR is downloaded to the
+  // waiter's phone or shared to it (WhatsApp, AirDrop) instead of printed.
+  'card_qr_downloaded',
+  'card_qr_shared',
   // Client-side crashes. Until this existed, a browser exception was recorded
   // NOWHERE: global-error.tsx calls Sentry.captureException, and
   // NEXT_PUBLIC_SENTRY_DSN is set in no environment, so the SDK disables itself

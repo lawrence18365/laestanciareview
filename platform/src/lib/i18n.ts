@@ -32,6 +32,7 @@ export const t = {
     leads: 'Leads',
     quotes: 'Cotizaciones',
     staff: 'Personal',
+    qrCodes: 'Códigos QR',
     analytics: 'Analíticas',
     settings: 'Ajustes',
     overview: 'Resumen',
