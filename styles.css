@@ -2238,6 +2238,8 @@ body:has(.hero:is([data-photo-hero], .hero--photo)).has-mobile-sticky-cta { padd
     line-height: 1;
     color: var(--ink);
 }
+/* A range such as "0.4-0.9 -> 3.0-7.8" is longer than one number: smaller type, wraps instead of overflowing. */
+.stat-card__num--range { font-size: clamp(1.7rem, 2.6vw, 2.4rem); overflow-wrap: anywhere; }
 .stat-card__label { margin-top: var(--space-3); font-weight: 700; color: var(--accent); line-height: 1.35; }
 .stat-card__source { margin-top: var(--space-2); font-size: var(--fs-small); color: var(--ink-2); }
 
