@@ -20,6 +20,12 @@ const mocks = vi.hoisted(() => ({
   sendPushToRestaurant: vi.fn(),
   getComplaintSlaStats: vi.fn(),
   getOverdueComplaintPreviews: vi.fn(),
+  getMapsRankSummary: vi.fn(),
+  getWeeklySignals: vi.fn(),
+}));
+
+vi.mock('@/lib/maps-rank', () => ({
+  getMapsRankSummary: mocks.getMapsRankSummary,
 }));
 
 vi.mock('@/lib/queries', () => ({
@@ -68,7 +74,7 @@ vi.mock('@/lib/complaint-sla', () => ({
 vi.mock('@/lib/weekly-signal', () => ({
   TELEMETRY_START: new Date('2026-08-21T00:00:00.000Z'),
   lastCompleteWeekStart: () => new Date('2026-08-31T00:00:00.000Z'),
-  getWeeklySignals: async () => [],
+  getWeeklySignals: mocks.getWeeklySignals,
   getGuestSignals: async () => new Map(),
   getServiceSignals: async () => new Map(),
   getUpcomingBirthdays: async () => [],
@@ -114,10 +120,13 @@ describe('weekly digest skippedNoEmail reporting', () => {
       avgHoursToResolve: null,
     });
     mocks.getOverdueComplaintPreviews.mockResolvedValue([]);
+    mocks.getWeeklySignals.mockResolvedValue([]);
+    mocks.getMapsRankSummary.mockResolvedValue([]);
   });
 
   afterEach(() => {
     delete process.env.CRON_SECRET;
+    delete process.env.MAPS_RANK_EMAIL_ENABLED;
     vi.restoreAllMocks();
   });
 
@@ -141,5 +150,106 @@ describe('weekly digest skippedNoEmail reporting', () => {
     expect(mocks.sendWeeklyDigest).toHaveBeenCalledTimes(1);
     expect(mocks.sendOwnerBriefing).toHaveBeenCalledTimes(1);
     expect(mocks.sendOwnerBriefing).toHaveBeenCalledWith(expect.objectContaining({ groupName: 'Dueño OK' }));
+  });
+});
+
+const signal = (restaurantId: number, name: string) => ({
+  restaurantId,
+  name,
+  region: 'centro',
+  scansThisWeek: 1,
+  scansLastWeek: 1,
+  staffAskingThisWeek: 0,
+  staffAskingLastWeek: 0,
+  gmActiveDays: 3,
+  signal: { summary: 'Activo', signal: 'mixed', actionable: false },
+});
+
+const summary = {
+  keyword: 'restaurante centro',
+  measured: 9,
+  top3: 2,
+  top10: 4,
+  found: 6,
+  bestRank: 1,
+  prevTop3: null,
+  runDate: '2026-10-05',
+  prevRunDate: null,
+};
+
+const get = () => GET(new NextRequest(
+  'http://localhost/api/cron/weekly-digest',
+  { headers: { authorization: 'Bearer test-cron-secret' } },
+));
+
+describe('weekly digest maps rank', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    process.env.CRON_SECRET = 'test-cron-secret';
+    mocks.getRestaurantsWithEmail.mockResolvedValue([]);
+    mocks.getOwnerAccounts.mockResolvedValue([
+      { id: 4, slug: 'owner-ok', name: 'Dueño OK', managerEmail: 'owner@example.com', isOwner: true },
+    ]);
+    mocks.getOperationalRestaurants.mockResolvedValue([]);
+    mocks.getRegionalAccounts.mockResolvedValue([]);
+    mocks.getStaffAnomalies.mockResolvedValue([]);
+    mocks.getLastWeekStats.mockResolvedValue(weekStats);
+    mocks.getWeekBeforeLastStats.mockResolvedValue(weekStats);
+    mocks.getLastWeekLeaderboard.mockResolvedValue([]);
+    mocks.getNewFeedbackCount.mockResolvedValue(0);
+    mocks.getOverviewStats.mockResolvedValue([]);
+    mocks.getGoogleRatingTrend.mockResolvedValue(null);
+    mocks.sendOwnerBriefing.mockResolvedValue({ success: true });
+    mocks.getComplaintSlaStats.mockResolvedValue({
+      received: 0, reviewedWithin2h: 0, resolvedWithin24h: 0, overdueOpen: 0, avgHoursToReview: null, avgHoursToResolve: null,
+    });
+    mocks.getOverdueComplaintPreviews.mockResolvedValue([]);
+    mocks.getWeeklySignals.mockResolvedValue([signal(1, 'Centro'), signal(2, 'Norte')]);
+    mocks.getMapsRankSummary.mockResolvedValue([summary]);
+  });
+
+  afterEach(() => {
+    delete process.env.CRON_SECRET;
+    delete process.env.MAPS_RANK_EMAIL_ENABLED;
+    vi.restoreAllMocks();
+  });
+
+  it('does not call getMapsRankSummary when the flag is off', async () => {
+    await get();
+
+    expect(mocks.getMapsRankSummary).not.toHaveBeenCalled();
+    expect(mocks.sendOwnerBriefing).toHaveBeenCalledWith(expect.not.objectContaining({ mapsRank: expect.anything() }));
+  });
+
+  it('passes per-location summaries to the owner briefing when the flag is on', async () => {
+    process.env.MAPS_RANK_EMAIL_ENABLED = 'true';
+
+    await get();
+
+    expect(mocks.getMapsRankSummary).toHaveBeenCalledWith(1);
+    expect(mocks.getMapsRankSummary).toHaveBeenCalledWith(2);
+    expect(mocks.sendOwnerBriefing).toHaveBeenCalledWith(expect.objectContaining({
+      mapsRank: [
+        { locationName: 'Centro', summaries: [summary] },
+        { locationName: 'Norte', summaries: [summary] },
+      ],
+    }));
+  });
+
+  it('skips a location whose lookup throws and still sends the briefing', async () => {
+    process.env.MAPS_RANK_EMAIL_ENABLED = 'true';
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    mocks.getMapsRankSummary.mockImplementation(async (id: number) => {
+      if (id === 1) throw new Error('places down');
+      return [summary];
+    });
+
+    const response = await get();
+    const body = await response.json();
+
+    expect(body.owner.sent).toBe(1);
+    expect(mocks.sendOwnerBriefing).toHaveBeenCalledWith(expect.objectContaining({
+      mapsRank: [{ locationName: 'Norte', summaries: [summary] }],
+    }));
   });
 });

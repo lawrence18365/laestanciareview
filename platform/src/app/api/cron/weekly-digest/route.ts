@@ -14,7 +14,7 @@ import {
   getStaffAnomalies,
 } from '@/lib/anomalies';
 import { getGoogleRatingTrend } from '@/lib/google-places';
-import { sendWeeklyDigest, sendOwnerBriefing, sendRegionalBriefing, type BriefingLocation } from '@/lib/email';
+import { sendWeeklyDigest, sendOwnerBriefing, sendRegionalBriefing, type BriefingLocation, type MapsRankLocation } from '@/lib/email';
 import {
   getWeeklySignals,
   getGuestSignals,
@@ -180,6 +180,21 @@ export async function GET(req: NextRequest) {
     };
   };
 
+  // Maps rank is opt-in. A failing location is skipped so the briefing still sends.
+  let mapsRank: MapsRankLocation[] | undefined;
+  if (process.env.MAPS_RANK_EMAIL_ENABLED === 'true') {
+    // Dynamic import: maps-rank pulls in the DB client, which needs DATABASE_URL at load time.
+    const { getMapsRankSummary } = await import('@/lib/maps-rank');
+    mapsRank = [];
+    for (const sig of allSignals) {
+      try {
+        mapsRank.push({ locationName: sig.name, summaries: await getMapsRankSummary(sig.restaurantId) });
+      } catch (err) {
+        console.error(`[digest] maps rank failed for ${sig.name}:`, err);
+      }
+    }
+  }
+
   for (const owner of owners) {
     if (!owner.managerEmail) {
       console.warn(`[digest] no email for ${owner.slug}`);
@@ -193,6 +208,7 @@ export async function GET(req: NextRequest) {
         locations: allSignals.map(toBriefingLocation),
         dashboardUrl: `${baseUrl}/overview`,
         groupName: owner.name,
+        mapsRank,
       });
       if (result.success === false || result.skipped) ownerFailed++;
       else ownerSent++;

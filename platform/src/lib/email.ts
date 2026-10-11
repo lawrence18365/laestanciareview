@@ -2,6 +2,7 @@ import { sendMail } from '@/lib/mailer';
 import { inboxLinkFor } from '@/lib/review-recovery';
 import { formatStaffAnomaly, type StaffAnomaly } from '@/lib/anomalies';
 import { RATING_BASELINE_NOTE } from '@/lib/rating-baseline';
+import type { KeywordSummary } from '@/lib/maps-rank';
 import { PILOT_TRIAL_DAYS } from '@/lib/pilot';
 import {
   classifyReview,
@@ -1506,6 +1507,42 @@ export interface BriefingLocation {
   actionable: boolean;
 }
 
+export interface MapsRankLocation {
+  locationName: string;
+  summaries: KeywordSummary[];
+}
+
+/** Bands only: never an exact rank. */
+function mapsRankText(s: KeywordSummary): string {
+  if (s.found === 0) return 'no aparece en los primeros 20';
+  if (s.top3 > 0) {
+    return `top 3 en ${s.top3} de ${s.measured} puntos${s.prevTop3 != null ? ` (antes ${s.prevTop3})` : ''}`;
+  }
+  if (s.top10 > 0) return `top 10 en ${s.top10} de ${s.measured} puntos`;
+  return `top 20 en ${s.found} de ${s.measured} puntos`;
+}
+
+/** Empty string when there is nothing to show, so existing briefings are unchanged. */
+function mapsRankBlock(mapsRank?: MapsRankLocation[]): string {
+  const rows = (mapsRank ?? []).flatMap((loc) =>
+    loc.summaries
+      .filter((s) => s.measured > 0)
+      .map((s) => `
+        <tr>
+          <td style="padding: 9px 0; font-size: 14px; color: #111111;">${escapeHtml(loc.locationName)}</td>
+          <td style="padding: 9px 0; font-size: 13px; color: #111111;">${escapeHtml(s.keyword)}: ${mapsRankText(s)}</td>
+        </tr>`));
+  if (rows.length === 0) return '';
+  return `
+    <div style="margin: 0 28px 22px; padding: 18px; background: #ffffff; border: 1px solid #111111; border-radius: 0;">
+      ${sectionHeading('5', 'Tu visibilidad en Google Maps')}
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+        ${rows.join('')}
+      </table>
+      <p style="margin: 12px 0 0; font-size: 11px; line-height: 1.5; color: #A3A3A3;">Medido en 9 puntos alrededor de cada sucursal. Google puede ordenar distinto para cada persona.</p>
+    </div>`;
+}
+
 export interface BirthdayEntry {
   locationName: string;
   guestName: string;
@@ -1580,12 +1617,14 @@ export async function sendOwnerBriefing({
   locations,
   dashboardUrl,
   groupName,
+  mapsRank,
 }: {
   to: string;
   weekStart: Date;
   locations: BriefingLocation[];
   dashboardUrl: string;
   groupName?: string;
+  mapsRank?: MapsRankLocation[];
 }) {
   const group = groupName?.trim() || 'Tu grupo';
   const activeCount = locations.filter((l) => l.scansThisWeek > 0).length;
@@ -1754,7 +1793,7 @@ export async function sendOwnerBriefing({
         ${ratingRows}
       </table>
       <p style="margin: 12px 0 0; font-size: 11px; line-height: 1.5; color: #A3A3A3;">${RATING_BASELINE_NOTE}</p>
-    </div>
+    </div>${mapsRankBlock(mapsRank)}
 
     <div style="text-align: center; margin: 24px 0 30px;">
       <a href="${dashboardUrl}" style="display: inline-block; padding: 14px 36px; background: #111111; color: #ffffff; border-radius: 0; text-decoration: none; font-size: 15px; font-weight: 600; letter-spacing: 0.02em;">Abrir panel</a>
