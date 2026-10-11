@@ -96,6 +96,18 @@ export const t = {
     interceptedChart: 'bajo el umbral sin clic a Google',
   },
 
+  mapsRank: {
+    title: 'Google Maps',
+    top3: (top3: number, measured: number) => `top 3 en ${top3} de ${measured} puntos`,
+    top10: (top10: number, measured: number) => `top 10 en ${top10} de ${measured}`,
+    notFound: 'No aparece en los primeros 20',
+    before: (prevTop3: number) => `antes ${prevTop3}`,
+    up: 'Mejoró',
+    down: 'Bajó',
+    same: 'Igual',
+    footer: (runDate: string) => `Medido el ${runDate} en 9 puntos alrededor de la sucursal.`,
+  },
+
   // ── Analytics ──
   analytics: {
     googleRating: 'Calificación de Google',
