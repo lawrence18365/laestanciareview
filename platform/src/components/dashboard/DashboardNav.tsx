@@ -13,6 +13,7 @@ const gmLinks = [
   { href: '/leads', label: t.nav.leads, eventsQuotes: true },
   { href: '/quotes', label: t.nav.quotes, eventsQuotes: true },
   { href: '/staff', label: t.nav.staff },
+  { href: '/qr-codes', label: t.nav.qrCodes },
   { href: '/analytics', label: t.nav.analytics },
   { href: '/settings', label: t.nav.settings },
 ];

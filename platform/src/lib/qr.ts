@@ -26,6 +26,15 @@ export function meseroUrlFor(slug: string, code: string): string {
   return `${base}/m/${slug}/${encodeURIComponent(code)}`;
 }
 
+/**
+ * The exact URL a waiter's NFC card carries: the review page for the location
+ * plus the waiter's card code. A guest who scans it lands on the same page with
+ * the same attribution as a tap, so the QR is a stand-in for the card.
+ */
+export function cardUrlFor(slug: string, code: string): string {
+  return `${reviewUrlFor(slug)}?card=${encodeURIComponent(code)}`;
+}
+
 export async function generateMeseroQrDataUrl(slug: string, code: string): Promise<string> {
   return QRCode.toDataURL(meseroUrlFor(slug, code), {
     errorCorrectionLevel: 'H',
