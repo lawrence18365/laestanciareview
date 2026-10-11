@@ -60,13 +60,6 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
     <style>
         /* Home (es) - page-scoped: only what the design system has no class for */
-        .rt-locs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1.25rem; margin-top: 1.25rem; }
-        .rt-loc { padding: 1.75rem 1.5rem; border-radius: 20px; background: #fff; border: 1px solid rgba(15,23,42,0.08); box-shadow: 0 10px 30px -12px rgba(0,0,0,0.06); }
-        .rt-loc h3 { font-size: 1.25rem; margin-bottom: 0.4rem; }
-        .rt-loc__rate { color: #b8860b; font-weight: 700; margin-bottom: 0.6rem; }
-        .rt-loc p { color: var(--text-secondary); font-size: 0.95rem; line-height: 1.5; margin: 0; }
-        .rt-d1 { transition-delay: 100ms; }
-        .rt-d2 { transition-delay: 200ms; }
         .rt-two { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2rem; max-width: 900px; margin: 0 auto; align-items: stretch; }
         .rt-two .pricing-card { display: flex; flex-direction: column; }
         .rt-two .pricing-card .btn, .rt-upsell .pricing-card .btn { margin-top: auto !important; }
@@ -81,7 +74,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
         .rt-checks { list-style: none; padding: 0; margin: 0; display: grid; gap: 0.8rem; font-weight: 700; font-size: 1.05rem; }
         .rt-checks i { color: var(--brand-blue); margin-right: 0.5rem; }
         @media (max-width: 960px) {
-            .rt-locs, .rt-two, .rt-upsell { grid-template-columns: 1fr; }
+            .rt-two, .rt-upsell { grid-template-columns: 1fr; }
             .rt-upsell { gap: 2.5rem; }
         }
         @media (max-width: 600px) {
@@ -147,44 +140,47 @@ height="0" width="0" hidden></iframe></noscript>
     <section id="proof" class="section">
         <div class="container">
             <div class="section-header text-center">
-                <h2>Resultados reales en 12 restaurantes.</h2>
-                <p>En 12 sucursales de un grupo restaurantero en México.</p>
+                <h2>Resultados en 12 restaurantes reales</h2>
+                <p>Un grupo restaurantero en M&eacute;xico. Datos reales, m&eacute;todo publicado.</p>
             </div>
-            <div class="stat-cards">
-                <div class="stat-card reveal">
-                    <div class="stat-card__num stat-card__num--range">0,4&ndash;0,9 &rarr; 3,0&ndash;7,8</div>
-                    <div class="stat-card__label">reseñas nuevas en Google al día, antes vs después (11 sucursales)</div>
-                    <div class="stat-card__source">Fuente: <a href="/methodology#velocity">Cómo lo medimos</a>, 21 dic 2025&ndash;10 oct 2026</div>
+            <div class="proof-band">
+            <article class="proof-card proof-card--chart reveal">
+                <div class="proof-chart">
+                    <div class="proof-chart__cols">
+                        <p class="proof-chart__num">&lt;&nbsp;1</p>
+                        <p class="proof-chart__num">3&ndash;8<sup>1</sup></p>
+                    </div>
+                    <svg class="proof-chart__svg" viewBox="0 0 320 190" role="img" aria-label="Gr&aacute;fica de barras. Antes de RateTap: menos de 1 rese&ntilde;a nueva en Google al d&iacute;a por restaurante (0,4 a 0,9). Con RateTap: de 3 a 8 al d&iacute;a (3,0 a 7,8). 11 restaurantes.">
+                        <line class="proof-chart__base" x1="12" y1="186" x2="308" y2="186"></line>
+                        <rect class="proof-bar proof-bar--before" x="58" y="168" width="44" height="10" rx="5"></rect>
+                        <rect class="proof-bar proof-bar--after" x="218" y="30" width="44" height="96" rx="6"></rect>
+                    </svg>
+                    <div class="proof-chart__cols proof-chart__cols--names">
+                        <p>Antes de RateTap</p>
+                        <p>Con RateTap</p>
+                    </div>
+                    <p class="proof-chart__label">rese&ntilde;as nuevas en Google al d&iacute;a, por restaurante</p>
+                    <p class="proof-chart__cap">11 restaurantes &middot; antes vs despu&eacute;s</p>
                 </div>
-                <div class="stat-card reveal">
-                    <div class="stat-card__num">65%</div>
-                    <div class="stat-card__label">de los clientes eligen Google</div>
-                    <div class="stat-card__source">Fuente: <a href="/methodology">datos RateTap</a>, 8 jul&ndash;10 oct 2026</div>
-                </div>
-                <div class="stat-card reveal">
-                    <div class="stat-card__num">4.5&ndash;4.8&starf;</div>
-                    <div class="stat-card__label">Calificación en Google hoy, 12 sucursales</div>
-                    <div class="stat-card__source">Fuente: <a href="/methodology">perfiles de Google Business</a>, 19 ago 2026</div>
-                </div>
-            </div>
-            <div class="rt-locs">
-                <div class="rt-loc reveal">
-                    <h3>Estancia Angelópolis</h3>
-                    <div class="rt-loc__rate">4.8&starf; en Google hoy</div>
-                    <p>4,935 reseñas capturadas</p>
-                </div>
-                <div class="rt-loc reveal rt-d1">
-                    <h3>Regio Norte</h3>
-                    <div class="rt-loc__rate">4.8&starf; en Google hoy</div>
-                    <p>633 reseñas capturadas</p>
-                </div>
-                <div class="rt-loc reveal rt-d2">
-                    <h3>Estancia Juárez</h3>
-                    <div class="rt-loc__rate">4.7&starf; en Google hoy</div>
-                    <p>746 reseñas capturadas</p>
-                </div>
-            </div>
-            <p class="section-note">La velocidad de reseñas compara antes y después del lanzamiento. Muestra asociación, no causa. Datos de sucursales al 19 de agosto de 2026. La calificación es el estado actual, no un efecto atribuido a RateTap.</p>
+            </article>
+            <article class="proof-card reveal">
+                <p class="proof-stat__num">65%<sup>2</sup></p>
+                <p class="proof-stat__label">de los clientes elige Google</p>
+                <div class="proof-pictogram" role="img" aria-label="13 de 20 clientes eligen Google"><span class="proof-dot is-on"></span><span class="proof-dot is-on"></span><span class="proof-dot is-on"></span><span class="proof-dot is-on"></span><span class="proof-dot is-on"></span><span class="proof-dot is-on"></span><span class="proof-dot is-on"></span><span class="proof-dot is-on"></span><span class="proof-dot is-on"></span><span class="proof-dot is-on"></span><span class="proof-dot is-on"></span><span class="proof-dot is-on"></span><span class="proof-dot is-on"></span><span class="proof-dot"></span><span class="proof-dot"></span><span class="proof-dot"></span><span class="proof-dot"></span><span class="proof-dot"></span><span class="proof-dot"></span><span class="proof-dot"></span></div>
+            </article>
+            <article class="proof-card reveal">
+                <p class="proof-stat__num">23%<sup>3</sup></p>
+                <p class="proof-stat__label">de clientes con 1&ndash;3&starf; eligen Google</p>
+                <p class="proof-stat__sub">Nada se filtra ni se oculta.</p>
+                <p class="proof-stars" aria-hidden="true"><span class="is-on">&starf;</span><span class="is-on">&starf;</span><span class="is-on">&starf;</span><span>&starf;</span><span>&starf;</span></p>
+            </article>
+        </div>
+            <ul class="proof-locs">
+                <li class="proof-loc reveal"><strong class="proof-loc__name">Estancia Angel&oacute;polis</strong><span class="proof-loc__meta">4.8<span class="proof-loc__star">&starf;</span> en Google hoy &middot; 4,935 rese&ntilde;as capturadas</span></li>
+                <li class="proof-loc reveal"><strong class="proof-loc__name">Regio Norte</strong><span class="proof-loc__meta">4.8<span class="proof-loc__star">&starf;</span> en Google hoy &middot; 633 rese&ntilde;as capturadas</span></li>
+                <li class="proof-loc reveal"><strong class="proof-loc__name">Estancia Ju&aacute;rez</strong><span class="proof-loc__meta">4.7<span class="proof-loc__star">&starf;</span> en Google hoy &middot; 746 rese&ntilde;as capturadas</span></li>
+            </ul>
+            <p class="proof-foot"><sup>1</sup> Por sucursal: 0,4&ndash;0,9 al d&iacute;a antes, 3,0&ndash;7,8 despu&eacute;s; 21 dic 2025&ndash;10 oct 2026 &middot; <sup>2 3</sup> 8 jul&ndash;10 oct 2026, n=414 en <sup>3</sup> &middot; Asociaci&oacute;n, no causa. Datos de sucursales al 19 de agosto de 2026. La calificaci&oacute;n es el estado actual, no un efecto atribuido a RateTap. <a href="/methodology#velocity">C&oacute;mo lo medimos&nbsp;&rarr;</a></p>
             <div class="section-action">
                 <a class="btn btn-secondary" href="/es/case-studies">Ver todos los casos</a>
             </div>

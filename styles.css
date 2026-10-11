@@ -2244,6 +2244,113 @@ body:has(.hero:is([data-photo-hero], .hero--photo)).has-mobile-sticky-cta { padd
 .stat-card__label { margin-top: var(--space-3); font-weight: 700; color: var(--accent); line-height: 1.35; }
 .stat-card__source { margin-top: var(--space-2); font-size: var(--fs-small); color: var(--ink-2); }
 
+/* --- Proof band: one hero chart card + two stacked stat cards, then an optional slim location row and one footnote.
+       Markup (reference: /design-system.html):
+       .proof-band > article.proof-card.proof-card--chart.reveal > .proof-chart (.proof-chart__cols > p.proof-chart__num x2,
+         svg.proof-chart__svg[role=img] with rect.proof-bar--before / --after, .proof-chart__cols--names, p.proof-chart__label, p.proof-chart__cap)
+       .proof-band > article.proof-card.reveal > p.proof-stat__num (+ sup marker) + p.proof-stat__label
+         + .proof-pictogram[role=img] (20 span.proof-dot, .is-on = filled) or p.proof-stat__sub + p.proof-stars
+       ul.proof-locs > li.proof-loc > strong.proof-loc__name + span.proof-loc__meta
+       p.proof-foot: one footnote row with <sup> markers matching the numbers. --- */
+.proof-band {
+    display: grid;
+    grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+    gap: var(--space-5);
+}
+
+.proof-card {
+    padding: var(--space-6);
+    border-radius: var(--radius-lg);
+    background: var(--surface);
+    border: 1px solid var(--line);
+    box-shadow: var(--shadow-sm);
+    color: var(--ink);
+}
+.proof-card--chart { grid-row: span 2; display: flex; flex-direction: column; justify-content: center; }
+:where(.proof-card) p { margin: 0; }
+.proof-card sup,
+.proof-foot sup { font-size: 0.4em; font-weight: 700; letter-spacing: 0; color: var(--ink-2); margin-left: 0.15em; }
+.proof-foot sup { font-size: 0.9em; margin-left: 0; margin-right: 0.1em; }
+
+/* Chart: two big numbers, two floating bars on one shared scale (0-8 a day), names underneath. */
+.proof-chart { width: 100%; max-width: 440px; margin-inline: auto; }
+.proof-chart__cols { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4); text-align: center; }
+.proof-chart__num,
+.proof-stat__num {
+    font-size: clamp(2.6rem, 5.2vw, 4.2rem);
+    font-weight: 800;
+    letter-spacing: -0.04em;
+    line-height: 1;
+    color: var(--ink);
+    font-variant-numeric: tabular-nums;
+}
+.proof-stat__num { font-size: clamp(2.4rem, 4vw, 3.4rem); }
+.proof-chart__svg { display: block; width: 100%; height: auto; margin-top: var(--space-4); overflow: visible; }
+.proof-chart__base { stroke: var(--ink-2); stroke-opacity: 0.4; stroke-width: 1.5; }
+.proof-bar { transform-box: fill-box; transform-origin: 50% 100%; transition: transform 0.9s cubic-bezier(0.165, 0.84, 0.44, 1); }
+.proof-bar--before { fill: var(--ink-2); fill-opacity: 0.55; }
+.proof-bar--after { fill: var(--accent); transition-delay: 0.15s; }
+.proof-chart__cols--names { margin-top: var(--space-3); font-weight: 600; color: var(--ink-2); font-size: 0.95rem; }
+.proof-chart__label { margin-top: var(--space-5); text-align: center; font-weight: 700; color: var(--ink); line-height: 1.35; }
+.proof-chart__cap { margin-top: var(--space-2); text-align: center; font-size: var(--fs-small); color: var(--ink-2); }
+
+/* Stat cards: label stays under six words; the visual carries the rest. */
+.proof-stat__label { margin-top: var(--space-3); font-weight: 700; line-height: 1.35; color: var(--ink); }
+.proof-stat__sub { margin-top: var(--space-2); font-size: var(--fs-small); color: var(--ink-2); }
+.proof-pictogram { display: grid; grid-template-columns: repeat(10, minmax(0, 1fr)); gap: var(--space-2); margin-top: var(--space-4); }
+.proof-dot { aspect-ratio: 1; border-radius: var(--radius-pill); background: var(--line); transition: background-color 0.4s ease; }
+.proof-dot.is-on { background: var(--accent); }
+.proof-dot.is-on:nth-child(n+4) { transition-delay: 0.1s; }
+.proof-dot.is-on:nth-child(n+7) { transition-delay: 0.2s; }
+.proof-dot.is-on:nth-child(n+10) { transition-delay: 0.3s; }
+.proof-dot.is-on:nth-child(n+13) { transition-delay: 0.4s; }
+.proof-stars { margin-top: var(--space-3); font-size: 1.5rem; line-height: 1; letter-spacing: 0.1em; color: var(--ink-2); }
+.proof-stars span { opacity: 0.35; }
+.proof-stars .is-on { color: var(--star); opacity: 1; }
+
+/* Grow and fill on reveal. Without JS or under reduced motion .reveal-enabled is never set, so everything stays drawn. */
+html.reveal-enabled .proof-card:not(.revealed) .proof-bar { transform: scaleY(0); }
+html.reveal-enabled .proof-card:not(.revealed) .proof-dot.is-on { background: var(--line); }
+@media (prefers-reduced-motion: reduce) {
+    .proof-bar,
+    .proof-dot { transition: none; }
+}
+
+/* Slim location row and the single footnote. */
+.proof-locs { list-style: none; margin: var(--space-5) 0 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-4); }
+.proof-loc { display: grid; gap: var(--space-1); padding: var(--space-4) var(--space-5); border-radius: var(--radius-md); background: var(--surface); border: 1px solid var(--line); color: var(--ink); }
+.proof-loc__name { font-weight: 700; }
+.proof-loc__meta { font-size: var(--fs-small); color: var(--ink-2); }
+.proof-loc__star { color: var(--star); }
+.proof-foot { max-width: 880px; margin: var(--space-5) auto 0; text-align: center; font-size: var(--fs-small); line-height: 1.6; color: var(--ink-2); }
+.proof-foot a { color: var(--ink); font-weight: 700; text-decoration: underline; }
+
+/* Dark mode: the site has no global dark theme, so the proof cards are dark islands (like .cta-band).
+   They re-point the existing tokens inside the card only; page text outside the cards keeps the page tokens. */
+@media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .proof-card,
+    :root:not([data-theme="light"]) .proof-loc {
+        --ink: #F1F5F9;
+        --ink-2: #A9B6C8;
+        --surface: #111B30;
+        --line: rgba(241, 245, 249, 0.16);
+    }
+}
+:root[data-theme="dark"] .proof-card,
+:root[data-theme="dark"] .proof-loc {
+    --ink: #F1F5F9;
+    --ink-2: #A9B6C8;
+    --surface: #111B30;
+    --line: rgba(241, 245, 249, 0.16);
+}
+
+@media (max-width: 768px) {
+    .proof-band,
+    .proof-locs { grid-template-columns: 1fr; }
+    .proof-card--chart { grid-row: auto; }
+    .proof-card { padding: var(--space-5); }
+}
+
 /* --- CTA band: dark surface, white text, one button. Fixes white-on-white sections. --- */
 .cta-band {
     padding: var(--space-8) 0;
