@@ -20,12 +20,12 @@ const mocks = vi.hoisted(() => ({
   sendPushToRestaurant: vi.fn(),
   getComplaintSlaStats: vi.fn(),
   getOverdueComplaintPreviews: vi.fn(),
-  getMapsRankSummary: vi.fn(),
+  getGroupShareSummary: vi.fn(),
   getWeeklySignals: vi.fn(),
 }));
 
-vi.mock('@/lib/maps-rank', () => ({
-  getMapsRankSummary: mocks.getMapsRankSummary,
+vi.mock('@/lib/maps-rank-group', () => ({
+  getGroupShareSummary: mocks.getGroupShareSummary,
 }));
 
 vi.mock('@/lib/queries', () => ({
@@ -121,7 +121,7 @@ describe('weekly digest skippedNoEmail reporting', () => {
     });
     mocks.getOverdueComplaintPreviews.mockResolvedValue([]);
     mocks.getWeeklySignals.mockResolvedValue([]);
-    mocks.getMapsRankSummary.mockResolvedValue([]);
+    mocks.getGroupShareSummary.mockResolvedValue([]);
   });
 
   afterEach(() => {
@@ -165,14 +165,15 @@ const signal = (restaurantId: number, name: string) => ({
   signal: { summary: 'Activo', signal: 'mixed', actionable: false },
 });
 
-const summary = {
+const groupSummary = {
+  city: 'León',
   keyword: 'restaurante centro',
   measured: 9,
-  top3: 2,
-  top10: 4,
-  found: 6,
-  bestRank: 1,
-  prevTop3: null,
+  avgTop3: 1.1,
+  pointsAny: 3,
+  pointsTwoPlus: 2,
+  holders: [{ restaurantId: 1, name: 'Centro', points: 2 }],
+  prevAvgTop3: null,
   runDate: '2026-10-05',
   prevRunDate: null,
 };
@@ -182,7 +183,7 @@ const get = () => GET(new NextRequest(
   { headers: { authorization: 'Bearer test-cron-secret' } },
 ));
 
-describe('weekly digest maps rank', () => {
+describe('weekly digest group share', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     process.env.CRON_SECRET = 'test-cron-secret';
@@ -205,7 +206,7 @@ describe('weekly digest maps rank', () => {
     });
     mocks.getOverdueComplaintPreviews.mockResolvedValue([]);
     mocks.getWeeklySignals.mockResolvedValue([signal(1, 'Centro'), signal(2, 'Norte')]);
-    mocks.getMapsRankSummary.mockResolvedValue([summary]);
+    mocks.getGroupShareSummary.mockResolvedValue([groupSummary]);
   });
 
   afterEach(() => {
@@ -214,42 +215,33 @@ describe('weekly digest maps rank', () => {
     vi.restoreAllMocks();
   });
 
-  it('does not call getMapsRankSummary when the flag is off', async () => {
+  it('does not call getGroupShareSummary when the flag is off', async () => {
     await get();
 
-    expect(mocks.getMapsRankSummary).not.toHaveBeenCalled();
-    expect(mocks.sendOwnerBriefing).toHaveBeenCalledWith(expect.not.objectContaining({ mapsRank: expect.anything() }));
+    expect(mocks.getGroupShareSummary).not.toHaveBeenCalled();
+    expect(mocks.sendOwnerBriefing).toHaveBeenCalledWith(expect.not.objectContaining({ groupShare: expect.anything() }));
   });
 
-  it('passes per-location summaries to the owner briefing when the flag is on', async () => {
+  it('passes the group share summary to the owner briefing once when the flag is on', async () => {
     process.env.MAPS_RANK_EMAIL_ENABLED = 'true';
 
     await get();
 
-    expect(mocks.getMapsRankSummary).toHaveBeenCalledWith(1);
-    expect(mocks.getMapsRankSummary).toHaveBeenCalledWith(2);
+    expect(mocks.getGroupShareSummary).toHaveBeenCalledTimes(1);
     expect(mocks.sendOwnerBriefing).toHaveBeenCalledWith(expect.objectContaining({
-      mapsRank: [
-        { locationName: 'Centro', summaries: [summary] },
-        { locationName: 'Norte', summaries: [summary] },
-      ],
+      groupShare: [groupSummary],
     }));
   });
 
-  it('skips a location whose lookup throws and still sends the briefing', async () => {
+  it('omits the group share section and still sends the briefing when the lookup throws', async () => {
     process.env.MAPS_RANK_EMAIL_ENABLED = 'true';
     vi.spyOn(console, 'error').mockImplementation(() => {});
-    mocks.getMapsRankSummary.mockImplementation(async (id: number) => {
-      if (id === 1) throw new Error('places down');
-      return [summary];
-    });
+    mocks.getGroupShareSummary.mockRejectedValue(new Error('places down'));
 
     const response = await get();
     const body = await response.json();
 
     expect(body.owner.sent).toBe(1);
-    expect(mocks.sendOwnerBriefing).toHaveBeenCalledWith(expect.objectContaining({
-      mapsRank: [{ locationName: 'Norte', summaries: [summary] }],
-    }));
+    expect(mocks.sendOwnerBriefing).toHaveBeenCalledWith(expect.objectContaining({ groupShare: undefined }));
   });
 });

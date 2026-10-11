@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { BriefingLocation, MapsRankLocation } from '@/lib/email';
-import type { KeywordSummary } from '@/lib/maps-rank';
+import type { BriefingLocation } from '@/lib/email';
+import type { GroupShareSummary } from '@/lib/maps-rank-group';
 
 const mocks = vi.hoisted(() => ({
   sendMail: vi.fn((_args: { subject: string; html: string }) => Promise.resolve({ success: true })),
@@ -33,112 +33,129 @@ const location = (overrides: Partial<BriefingLocation>): BriefingLocation => ({
 
 const locations = [location({ name: 'Centro' })];
 
-const summary = (overrides: Partial<KeywordSummary>): KeywordSummary => ({
+const share = (overrides: Partial<GroupShareSummary> = {}): GroupShareSummary => ({
+  city: 'Monterrey',
   keyword: 'restaurante centro',
   measured: 9,
-  top3: 0,
-  top10: 0,
-  found: 0,
-  bestRank: null,
-  prevTop3: null,
+  avgTop3: 0,
+  pointsAny: 0,
+  pointsTwoPlus: 0,
+  holders: [],
+  prevAvgTop3: null,
   runDate: '2026-10-05',
   prevRunDate: null,
   ...overrides,
 });
 
-const render = async (mapsRank?: MapsRankLocation[]): Promise<string> => {
+const render = async (groupShare?: GroupShareSummary[]): Promise<string> => {
   await sendOwnerBriefing({
     to: 'owner@example.com',
     weekStart: new Date('2026-10-05T06:00:00Z'),
     locations,
     dashboardUrl: 'https://app.ratetapmx.com/overview',
     groupName: 'Grupo Prueba',
-    mapsRank,
+    groupShare,
   });
   return mocks.sendMail.mock.calls[mocks.sendMail.mock.calls.length - 1][0].html;
 };
 
-const SECTION = 'Tu visibilidad en Google Maps';
-const FOOTNOTE = 'Medido en 9 puntos alrededor de cada sucursal. Google puede ordenar distinto para cada persona.';
+const TITLE = 'Tu grupo en el top 3 de Google Maps';
+const FOOTNOTE = 'Medido en 9 puntos por ciudad. Cuenta cuántos de los 3 primeros resultados son del grupo.';
 
-describe('owner briefing maps rank section', () => {
+describe('owner briefing group share section', () => {
   beforeEach(() => {
-    mocks.sendMail.mockClear();
+    vi.clearAllMocks();
   });
 
-  it('renders the top 3 band with the previous count when present', async () => {
-    const html = await render([{
-      locationName: 'Centro',
-      summaries: [summary({ top3: 4, top10: 6, found: 8, prevTop3: 2 })],
-    }]);
+  it('renders the two-or-more wording when at least 5 points hold two or more top 3 places', async () => {
+    const html = await render([share({ pointsAny: 7, pointsTwoPlus: 5 })]);
 
-    expect(html).toContain(SECTION);
-    expect(html).toContain('restaurante centro: top 3 en 4 de 9 puntos (antes 2)');
+    expect(html).toContain('Monterrey · restaurante centro: 2 o más de los 3 primeros en 5 de 9 puntos');
+  });
+
+  it('renders the at-least-one wording when fewer than 5 points have two or more', async () => {
+    const html = await render([share({ pointsAny: 3, pointsTwoPlus: 2 })]);
+
+    expect(html).toContain('al menos 1 de los 3 primeros en 3 de 9 puntos');
+    expect(html).not.toContain('2 o más');
+  });
+
+  it('renders the outside-top-3 wording when no point holds a top 3 place', async () => {
+    const html = await render([share()]);
+
+    expect(html).toContain('Monterrey · restaurante centro: fuera del top 3');
+  });
+
+  it('lists at most three holder names, comma-separated', async () => {
+    const html = await render([share({
+      pointsAny: 4,
+      pointsTwoPlus: 1,
+      holders: [
+        { restaurantId: 1, name: 'Uno', points: 4 },
+        { restaurantId: 2, name: 'Dos', points: 3 },
+        { restaurantId: 3, name: 'Tres', points: 2 },
+        { restaurantId: 4, name: 'Cuatro', points: 1 },
+      ],
+    })]);
+
+    expect(html).toContain('(Uno, Dos, Tres)');
+    expect(html).not.toContain('Cuatro');
+  });
+
+  it('shows the previous average when a previous run exists', async () => {
+    const html = await render([share({ pointsAny: 1, pointsTwoPlus: 0, avgTop3: 1.4, prevAvgTop3: 0.6, prevRunDate: '2026-09-28' })]);
+
+    expect(html).toContain(' · antes 0.6 de 3');
+  });
+
+  it('omits the previous average when there is no previous run', async () => {
+    const html = await render([share({ pointsAny: 1, pointsTwoPlus: 0, avgTop3: 1.4, prevAvgTop3: null })]);
+
+    expect(html).not.toContain('antes');
+  });
+
+  it('strips the trailing city from the keyword display', async () => {
+    const html = await render([share({ keyword: 'restaurante centro Monterrey' })]);
+
+    expect(html).toContain('Monterrey · restaurante centro: fuera del top 3');
+    expect(html).not.toContain('restaurante centro Monterrey');
+  });
+
+  it('keeps the keyword when the city is not at its end', async () => {
+    const html = await render([share({ keyword: 'Monterrey restaurante centro' })]);
+
+    expect(html).toContain('Monterrey · Monterrey restaurante centro: fuera del top 3');
+  });
+
+  it('renders the title and footnote when there is data', async () => {
+    const html = await render([share()]);
+
+    expect(html).toContain(TITLE);
     expect(html).toContain(FOOTNOTE);
   });
 
-  it('omits the previous count when prevTop3 is null', async () => {
-    const html = await render([{
-      locationName: 'Centro',
-      summaries: [summary({ top3: 4, top10: 6, found: 8, prevTop3: null })],
-    }]);
-
-    expect(html).toContain('restaurante centro: top 3 en 4 de 9 puntos</td>');
-    expect(html).not.toContain('(antes');
+  it('renders no section when groupShare is absent or empty', async () => {
+    expect(await render(undefined)).not.toContain(TITLE);
+    expect(await render([])).not.toContain(TITLE);
   });
 
-  it('renders the top 10 band when no point is in the top 3', async () => {
-    const html = await render([{
-      locationName: 'Centro',
-      summaries: [summary({ top3: 0, top10: 3, found: 5, prevTop3: 1 })],
-    }]);
+  it('renders no section when no summary has measured points', async () => {
+    const html = await render([share({ measured: 0 })]);
 
-    expect(html).toContain('restaurante centro: top 10 en 3 de 9 puntos');
-    expect(html).not.toContain('(antes');
+    expect(html).not.toContain(TITLE);
   });
 
-  it('renders the not-found text when no point appears in the top 20', async () => {
-    const html = await render([{
-      locationName: 'Centro',
-      summaries: [summary({ found: 0 })],
-    }]);
+  it('no longer renders the per-location Maps rows', async () => {
+    const html = await render([share({ pointsAny: 1, pointsTwoPlus: 0 })]);
 
-    expect(html).toContain('restaurante centro: no aparece en los primeros 20');
+    expect(html).not.toContain('Tu visibilidad en Google Maps');
+    expect(html).not.toContain('top 20 en');
+    expect(html).not.toContain('top 10 en');
   });
 
-  it('never prints an exact rank number', async () => {
-    const html = await render([{
-      locationName: 'Centro',
-      summaries: [summary({ top3: 1, top10: 2, found: 3, bestRank: 4 })],
-    }]);
+  it('escapes the city and keyword', async () => {
+    const html = await render([share({ city: 'A&B', keyword: 'x <b>' })]);
 
-    expect(html).not.toContain('#4');
-    expect(html).not.toMatch(/posición\s+\d/i);
-  });
-
-  it('renders nothing when mapsRank is absent', async () => {
-    const html = await render(undefined);
-
-    expect(html).not.toContain(SECTION);
-    expect(html).not.toContain(FOOTNOTE);
-  });
-
-  it('renders nothing when every summaries array is empty', async () => {
-    const html = await render([
-      { locationName: 'Centro', summaries: [] },
-      { locationName: 'Norte', summaries: [] },
-    ]);
-
-    expect(html).not.toContain(SECTION);
-  });
-
-  it('escapes the location name and keyword', async () => {
-    const html = await render([{
-      locationName: 'Centro <Norte>',
-      summaries: [summary({ keyword: 'tacos & más', found: 0 })],
-    }]);
-
-    expect(html).toContain('Centro &lt;Norte&gt;');
-    expect(html).toContain('tacos &amp; más: no aparece en los primeros 20');
+    expect(html).toContain('A&amp;B · x &lt;b&gt;');
   });
 });

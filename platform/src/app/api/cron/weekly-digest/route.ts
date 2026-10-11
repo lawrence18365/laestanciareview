@@ -14,7 +14,8 @@ import {
   getStaffAnomalies,
 } from '@/lib/anomalies';
 import { getGoogleRatingTrend } from '@/lib/google-places';
-import { sendWeeklyDigest, sendOwnerBriefing, sendRegionalBriefing, type BriefingLocation, type MapsRankLocation } from '@/lib/email';
+import { sendWeeklyDigest, sendOwnerBriefing, sendRegionalBriefing, type BriefingLocation } from '@/lib/email';
+import type { GroupShareSummary } from '@/lib/maps-rank-group';
 import {
   getWeeklySignals,
   getGuestSignals,
@@ -180,18 +181,15 @@ export async function GET(req: NextRequest) {
     };
   };
 
-  // Maps rank is opt-in. A failing location is skipped so the briefing still sends.
-  let mapsRank: MapsRankLocation[] | undefined;
+  // Group share is opt-in. A failure omits the section so the briefing still sends.
+  let groupShare: GroupShareSummary[] | undefined;
   if (process.env.MAPS_RANK_EMAIL_ENABLED === 'true') {
-    // Dynamic import: maps-rank pulls in the DB client, which needs DATABASE_URL at load time.
-    const { getMapsRankSummary } = await import('@/lib/maps-rank');
-    mapsRank = [];
-    for (const sig of allSignals) {
-      try {
-        mapsRank.push({ locationName: sig.name, summaries: await getMapsRankSummary(sig.restaurantId) });
-      } catch (err) {
-        console.error(`[digest] maps rank failed for ${sig.name}:`, err);
-      }
+    // Dynamic import: the group share module pulls in the DB client, which needs DATABASE_URL at load time.
+    try {
+      const { getGroupShareSummary } = await import('@/lib/maps-rank-group');
+      groupShare = await getGroupShareSummary();
+    } catch (err) {
+      console.error('[digest] group share failed:', err);
     }
   }
 
@@ -208,7 +206,7 @@ export async function GET(req: NextRequest) {
         locations: allSignals.map(toBriefingLocation),
         dashboardUrl: `${baseUrl}/overview`,
         groupName: owner.name,
-        mapsRank,
+        groupShare,
       });
       if (result.success === false || result.skipped) ownerFailed++;
       else ownerSent++;
