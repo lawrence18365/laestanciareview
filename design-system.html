@@ -213,9 +213,11 @@
       &lt;div class="hero-actions"&gt;
         &lt;a class="btn btn-primary" href="/demo"&gt;One primary action&lt;/a&gt;
       &lt;/div&gt;
+      &lt;p class="hero-price"&gt;MX$700/mo per location · 30 days free&lt;/p&gt;
     &lt;/div&gt;
   &lt;/div&gt;
 &lt;/section&gt;</code></pre>
+                <p class="ds-note">Optional .hero-price is one small price line under the button. The hero holds 30 words at most: drop pills before the line.</p>
             </div>
 
       <div class="ds-block" id="pills">
@@ -447,6 +449,29 @@
   &lt;figure class="shot shot--phone"&gt;&lt;img src="assets/product/guest-choice-mobile.webp" width="780" height="1688" loading="lazy" alt="..."&gt;&lt;/figure&gt;
 &lt;/div&gt;
 &lt;figure class="shot shot--crop"&gt;&lt;img src="assets/product/owner-briefing-email.webp" width="1600" height="3440" loading="lazy" alt="..."&gt;&lt;/figure&gt;</code></pre>
+      </div>
+
+      <div class="ds-block" id="shot-extras">
+        <h3>Shot chip, caption and mobile zoom</h3>
+        <p class="ds-note">Every product shot carries a .shot__chip ("Demo data"). English pages add a .shot-caption under the frame. At 600px and below, .shot--zoom shows one region of the same image at a readable size. Pick the region with a .zoom-* class (kpi, complaint, totals, staff, live, guests, campaign, email). Resize this page to see it.</p>
+        <div class="ds-demo">
+          <figure class="shot-fig">
+            <div class="shot shot--zoom zoom-complaint"><span class="shot__chip">Demo data</span><img src="assets/product/inbox.webp" width="1600" height="1000" loading="lazy" alt="Inbox with an open complaint"></div>
+            <figcaption class="shot-caption">App in Spanish. Look at: an open complaint and its actions.</figcaption>
+          </figure>
+        </div>
+        <pre class="ds-code"><code>&lt;figure class="shot-fig"&gt;
+  &lt;div class="shot shot--zoom zoom-complaint"&gt;
+    &lt;span class="shot__chip"&gt;Demo data&lt;/span&gt;
+    &lt;img src="assets/product/inbox.webp" width="1600" height="1000" loading="lazy" alt="..."&gt;
+  &lt;/div&gt;
+  &lt;figcaption class="shot-caption"&gt;Look at: an open complaint.&lt;/figcaption&gt;
+&lt;/figure&gt;
+&lt;div class="shot-group"&gt;
+  &lt;div class="shot-pair"&gt;...phones, each with a chip...&lt;/div&gt;
+  &lt;p class="shot-caption"&gt;One caption for the pair.&lt;/p&gt;
+&lt;/div&gt;</code></pre>
+        <p class="ds-note">Inline link: add .link-inline to a link in small print. Links inside a .section-header lede get it automatically.</p>
       </div>
 
       <div class="ds-block" id="feature-row">

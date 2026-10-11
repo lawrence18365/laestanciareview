@@ -13,7 +13,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 
     <meta charset="utf-8" />
     <meta content="width=device-width, initial-scale=1.0" name="viewport" />
-    <title>RateTap - Cada mesa califica, cada sucursal a la vista</title>
+    <title>RateTap - Cada mesa calificada, cada sucursal a la vista</title>
     <meta
         content="Una tarjeta por mesero. El cliente califica y elige Google o un mensaje privado. Avisamos al gerente cuando un cliente se queja. Pruébalo 30 días gratis."
         name="description" />
@@ -26,7 +26,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     <meta property="og:type" content="website"/>
     <meta property="og:url" content="https://ratetapmx.com/es/"/>
     <meta property="og:title" content="RateTap - Reputación online para restaurantes"/>
-    <meta property="og:description" content="Cada mesa califica, cada sucursal a la vista. Recibe alertas cuando un cliente se queja."/>
+    <meta property="og:description" content="Cada mesa calificada, cada sucursal a la vista. Recibe alertas cuando un cliente se queja."/>
     <meta property="og:image" content="https://ratetapmx.com/assets/og-image.png"/>
     <meta property="og:locale" content="es_MX"/>
     <meta property="og:locale:alternate" content="en_US"/>
@@ -34,7 +34,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image"/>
     <meta name="twitter:title" content="RateTap - Reputación online para restaurantes"/>
-    <meta name="twitter:description" content="Cada mesa califica, cada sucursal a la vista. Recibe alertas cuando un cliente se queja."/>
+    <meta name="twitter:description" content="Cada mesa calificada, cada sucursal a la vista. Recibe alertas cuando un cliente se queja."/>
     <meta name="twitter:image" content="https://ratetapmx.com/assets/og-image.png"/>
     <script type="application/ld+json">
     {
@@ -54,9 +54,9 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
       }
     }
     </script>
-    <link as="style" href="../styles.css?v=87321aa7" rel="preload" />
+    <link as="style" href="../styles.css?v=f91175e0" rel="preload" />
     <link rel="preload" href="../assets/hero-restaurant.webp" as="image" type="image/webp" fetchpriority="high">
-    <link href="../styles.css?v=87321aa7" rel="stylesheet" />
+    <link href="../styles.css?v=f91175e0" rel="stylesheet" />
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
     <style>
         /* Home (es) - page-scoped: only what the design system has no class for */
@@ -72,7 +72,8 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
         .rt-two .pricing-card .btn, .rt-upsell .pricing-card .btn { margin-top: auto !important; }
         .rt-featured { border: 2px solid var(--brand-blue); }
         .rt-btn-block { width: 100%; text-align: center; }
-        .rt-per { font: 600 1rem 'Plus Jakarta Sans', sans-serif; color: var(--text-secondary); }
+        .rt-per { display: block; margin-top: var(--space-2); font: 600 1rem 'Plus Jakarta Sans', sans-serif; letter-spacing: 0; color: var(--text-secondary); }
+        .rt-two .pricing-card__desc, .rt-upsell .pricing-card__desc { margin-bottom: var(--space-5); }
         .rt-upsell { display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 4rem; align-items: center; }
         .rt-upsell .pricing-card { display: flex; flex-direction: column; }
         .rt-upsell h2 { font-size: var(--fs-h2); margin-bottom: 1.25rem; }
@@ -82,6 +83,9 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
         @media (max-width: 960px) {
             .rt-locs, .rt-two, .rt-upsell { grid-template-columns: 1fr; }
             .rt-upsell { gap: 2.5rem; }
+        }
+        @media (max-width: 600px) {
+            .rt-two .pricing-card__price, .rt-upsell .pricing-card__price { font-size: clamp(2.2rem, 11vw, 3.5rem); }
         }
     </style>
 
@@ -127,16 +131,12 @@ height="0" width="0" hidden></iframe></noscript>
     <section class="hero hero--photo hero--restaurant" id="hero">
         <div class="container hero-container">
             <div class="hero-content">
-                <h1>Cada mesa califica. Cada sucursal a la vista.</h1>
+                <h1>Cada mesa calificada. Cada sucursal a la vista.</h1>
                 <p class="hero-subtitle">Una tarjeta por mesero. Te avisamos si algo sale mal.</p>
-                <ul class="stat-pills">
-                    <li class="stat-pill">23,664 reseñas</li>
-                    <li class="stat-pill">12 sucursales</li>
-                    <li class="stat-pill">4.5&ndash;4.8&starf;</li>
-                </ul>
                 <div class="hero-actions">
                     <a class="btn btn-primary" data-funnel-context="hero" href="https://app.ratetapmx.com/contacto?offer=trial_checkout&amp;source_page=home&amp;cta_context=hero&amp;language=es">Pruébalo 30 días gratis</a>
                 </div>
+                <p class="hero-price">MX$700/mes por sucursal · 30 días gratis</p>
                 <!-- Marker: stops script.js from injecting its generic trust strip (unverified claims) -->
                 <div class="hero-proof-row" hidden></div>
             </div>
@@ -154,21 +154,27 @@ height="0" width="0" hidden></iframe></noscript>
                     <h3>Calificaciones por mesero</h3>
                     <p>Cada tarjeta es de un mesero. Ve quién pide en cada mesa, por turno y sucursal.</p>
                 </div>
-                <figure class="shot"><img src="../assets/product/dashboard.webp" width="1600" height="1000" loading="lazy" alt="Panel de RateTap con calificaciones por mesero y sucursal"></figure>
+                <figure class="shot-fig">
+                    <div class="shot shot--zoom zoom-kpi"><span class="shot__chip">Datos de demostración</span><img src="../assets/product/dashboard.webp" width="1600" height="1000" loading="lazy" alt="Panel de RateTap con calificaciones por mesero y sucursal"></div>
+                </figure>
             </div>
             <div class="feature-row feature-row--flip reveal">
                 <div class="feature-row__text">
                     <h3>Alerta cuando un cliente se queja</h3>
                     <p>El comentario privado llega al gerente al instante. Las quejas abiertas te llegan a ti después de unas horas.</p>
                 </div>
-                <figure class="shot"><img src="../assets/product/inbox.webp" width="1600" height="1000" loading="lazy" alt="Bandeja de RateTap con quejas de clientes"></figure>
+                <figure class="shot-fig">
+                    <div class="shot shot--zoom zoom-complaint"><span class="shot__chip">Datos de demostración</span><img src="../assets/product/inbox.webp" width="1600" height="1000" loading="lazy" alt="Bandeja de RateTap con quejas de clientes"></div>
+                </figure>
             </div>
             <div class="feature-row reveal">
                 <div class="feature-row__text">
                     <h3>Todas tus sucursales en una vista</h3>
                     <p>Un tablero de grupo y un resumen cada lunes muestran qué sucursal necesita atención.</p>
                 </div>
-                <figure class="shot"><img src="../assets/product/overview.webp" width="1600" height="1000" loading="lazy" alt="Vista general de todas las sucursales en RateTap"></figure>
+                <figure class="shot-fig">
+                    <div class="shot shot--zoom zoom-totals"><span class="shot__chip">Datos de demostración</span><img src="../assets/product/overview.webp" width="1600" height="1000" loading="lazy" alt="Vista general de todas las sucursales en RateTap"></div>
+                </figure>
             </div>
             <div class="included">
                 <div class="section-header text-center">
@@ -196,6 +202,7 @@ height="0" width="0" hidden></iframe></noscript>
         <div class="container">
             <div class="section-header text-center">
                 <h2>Resultados reales en 12 restaurantes.</h2>
+                <p>En 12 sucursales de un grupo restaurantero en México.</p>
             </div>
             <div class="stat-cards">
                 <div class="stat-card reveal">
@@ -254,8 +261,8 @@ height="0" width="0" hidden></iframe></noscript>
                 </div>
                 <div class="pricing-card rt-featured reveal">
                     <div class="pricing-card__label">Software</div>
-                    <div class="pricing-card__price">$700<span class="rt-per">/mes</span></div>
-                    <div class="pricing-card__unit">+ $1,500 setup</div>
+                    <div class="pricing-card__price">MX$700<span class="rt-per">/mes por sucursal</span></div>
+                    <div class="pricing-card__unit">+ MX$1,500 de instalación, tarjetas incluidas</div>
                     <p class="pricing-card__desc">Reseñas, alertas, bandeja, reportes y tablero. Tu equipo lo opera.</p>
                     <a href="https://app.ratetapmx.com/contacto?offer=trial_checkout&amp;source_page=home&amp;cta_context=pricing_software&amp;language=es" data-funnel-context="pricing_software" class="btn btn-primary rt-btn-block">Pruébalo 30 días gratis</a>
                 </div>
@@ -269,19 +276,19 @@ height="0" width="0" hidden></iframe></noscript>
             <div class="rt-upsell">
                 <div>
                     <h2>¿Noches flojas? Llénalas.</h2>
-                    <p class="rt-upsell__sub">RateTap opera campañas por WhatsApp con tus invitados y mide cada reservación.</p>
+                    <p class="rt-upsell__sub">RateTap opera campañas por WhatsApp con tus clientes y mide cada reservación.</p>
                     <ul class="rt-checks">
-                        <li><i class="fa-solid fa-check" aria-hidden="true"></i> Base propia de invitados</li>
+                        <li><i class="fa-solid fa-check" aria-hidden="true"></i> Base propia de clientes</li>
                         <li><i class="fa-solid fa-check" aria-hidden="true"></i> Segmentos por WhatsApp</li>
                         <li><i class="fa-solid fa-check" aria-hidden="true"></i> Ingresos atribuidos a cada mensaje</li>
                     </ul>
                 </div>
                 <div class="pricing-card rt-featured reveal">
-                    <div class="pricing-card__label">Growth</div>
-                    <div class="pricing-card__price">$10,000<span class="rt-per">/mes</span></div>
-                    <div class="pricing-card__unit">+ $15,000 setup</div>
+                    <div class="pricing-card__label">Crecimiento</div>
+                    <div class="pricing-card__price">MX$10,000<span class="rt-per">/mes</span></div>
+                    <div class="pricing-card__unit">+ MX$15,000 de instalación</div>
                     <p class="pricing-card__desc">Campaña operada por sucursal, con reporte al dueño.</p>
-                    <a href="https://wa.me/5212228822360?text=Hola%20Lawrence%2C%20tengo%20un%20grupo%20con%20varias%20sucursales%20y%20quiero%20una%20auditor%C3%ADa%20de%20RateTap." class="btn btn-secondary rt-btn-block">Hablar por WhatsApp</a>
+                    <a href="https://wa.me/5212228822360?text=Hola%2C%20tengo%20un%20grupo%20con%20varias%20sucursales%20y%20quiero%20llenar%20noches%20lentas." class="btn btn-secondary rt-btn-block">Hablar por WhatsApp</a>
                 </div>
             </div>
         </div>
