@@ -15,6 +15,7 @@ import {
   date,
   uuid,
   check,
+  smallint,
 } from 'drizzle-orm/pg-core';
 import { relations, sql } from 'drizzle-orm';
 import type { Resolution, ReviewedVia } from '@/lib/review-recovery';
@@ -360,6 +361,45 @@ export const googleRatingSnapshots = pgTable(
   (t) => [
     index('snapshots_restaurant_id_idx').on(t.restaurantId),
     index('snapshots_captured_at_idx').on(t.capturedAt),
+  ],
+);
+
+// Maps rank tracker (migration 0030). Stores only restaurant-owned keywords and
+// our own rank per grid point. No coordinates and no competitor data.
+export const mapsRankKeywords = pgTable(
+  'maps_rank_keywords',
+  {
+    id: serial('id').primaryKey(),
+    restaurantId: integer('restaurant_id')
+      .notNull()
+      .references(() => restaurants.id, { onDelete: 'cascade' }),
+    keyword: text('keyword').notNull(),
+    active: boolean('active').notNull().default(true),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [unique('maps_rank_keywords_restaurant_keyword_unique').on(t.restaurantId, t.keyword)],
+);
+
+export const mapsRankSamples = pgTable(
+  'maps_rank_samples',
+  {
+    id: serial('id').primaryKey(),
+    restaurantId: integer('restaurant_id')
+      .notNull()
+      .references(() => restaurants.id, { onDelete: 'cascade' }),
+    keyword: text('keyword').notNull(),
+    gridPoint: smallint('grid_point').notNull(),
+    runDate: date('run_date').notNull(),
+    status: text('status').notNull(),
+    rank: smallint('rank'),
+    capturedAt: timestamp('captured_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    unique('maps_rank_samples_point_unique').on(t.restaurantId, t.keyword, t.gridPoint, t.runDate),
+    index('maps_rank_samples_restaurant_run_idx').on(t.restaurantId, t.runDate),
+    check('maps_rank_samples_grid_point_check', sql`${t.gridPoint} between 0 and 8`),
+    check('maps_rank_samples_status_check', sql`${t.status} in ('found', 'not_returned', 'error')`),
+    check('maps_rank_samples_rank_check', sql`${t.rank} between 1 and 20`),
   ],
 );
 
