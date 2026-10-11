@@ -124,3 +124,26 @@ Tickets:
 | T2 Sweep | `platform/src/lib/maps-rank.ts`, `platform/src/app/api/cron/refresh-ratings/route.ts`, `platform/src/__tests__/maps-rank.test.ts` | Client, grid, isolation |
 | T3 Briefing | `platform/src/lib/email.ts`, `platform/src/app/api/cron/weekly-digest/route.ts` | One Spanish line |
 | T4 Dashboard | `platform/src/app/(app)/dashboard`, admin keyword editor | Card, editor |
+
+## Shipped (SQ-156)
+
+Schema (migration `0030`), the weekly grid sweep (`src/lib/maps-rank.ts`), and the default keywords (`src/lib/maps-rank-keywords.ts`) are in place. The sweep runs from the daily `refresh-ratings` cron and only does work on Sundays, Mexico City time.
+
+Env flags:
+- `MAPS_RANK_ENABLED=true` turns the sweep on. Unset or any other value skips it.
+- `MAPS_RANK_EMAIL_ENABLED` gates the weekly briefing line. The T3 ticket reads it, not this code.
+
+Seed keywords (dry run by default):
+
+```
+cd platform && npx tsx scripts/seed-maps-rank-keywords.ts          # print plan
+cd platform && npx tsx scripts/seed-maps-rank-keywords.ts --apply  # insert
+```
+
+The cron route also refreshes Google ratings. Its JSON `mapsRank` field reports `skipped` (`disabled` or `not_sweep_day`), or `restaurants`, `samples`, and `failed`. The route never forces the sweep, so the curl below sweeps only on a Sunday:
+
+```
+curl -H "Authorization: Bearer $CRON_SECRET" https://app.ratetapmx.com/api/cron/refresh-ratings
+```
+
+To force a sweep on another day, call `runMapsRankSweep({ force: true })` from a script.

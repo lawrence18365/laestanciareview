@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server';
 import { refreshAllGoogleRatings } from '@/lib/google-places';
+import { runMapsRankSweep } from '@/lib/maps-rank';
 
 export const dynamic = 'force-dynamic';
 
@@ -21,8 +22,10 @@ export async function GET(req: NextRequest) {
 
   // Force refresh all (ignore cache age - it's a daily cron)
   const result = await refreshAllGoogleRatings(0);
+  // Maps rank sweep is best-effort and must never change this route's status code.
+  const mapsRank = await runMapsRankSweep().catch(() => ({ failed: -1 }));
 
   // Partial failure still succeeds; 500 only when every restaurant failed.
   const allFailed = result.failed > 0 && result.refreshed === 0;
-  return Response.json({ ok: !allFailed, ...result }, { status: allFailed ? 500 : 200 });
+  return Response.json({ ok: !allFailed, ...result, mapsRank }, { status: allFailed ? 500 : 200 });
 }
