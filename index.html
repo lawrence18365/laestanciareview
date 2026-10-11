@@ -53,9 +53,9 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     }
     </script>
 
-    <link rel="preload" href="styles.css?v=87321aa7" as="style">
+    <link rel="preload" href="styles.css?v=f91175e0" as="style">
     <link rel="preload" href="assets/hero-restaurant.webp" as="image" type="image/webp" fetchpriority="high">
-    <link rel="stylesheet" href="styles.css?v=87321aa7">
+    <link rel="stylesheet" href="styles.css?v=f91175e0">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <style>
@@ -72,7 +72,8 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
         .rt-two .pricing-card .btn, .rt-upsell .pricing-card .btn { margin-top: auto !important; }
         .rt-featured { border: 2px solid var(--brand-blue); }
         .rt-btn-block { width: 100%; text-align: center; }
-        .rt-per { font: 600 1rem 'Plus Jakarta Sans', sans-serif; color: var(--text-secondary); }
+        .rt-per { display: block; margin-top: var(--space-2); font: 600 1rem 'Plus Jakarta Sans', sans-serif; letter-spacing: 0; color: var(--text-secondary); }
+        .rt-two .pricing-card__desc, .rt-upsell .pricing-card__desc { margin-bottom: var(--space-5); }
         .rt-upsell { display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 4rem; align-items: center; }
         .rt-upsell .pricing-card { display: flex; flex-direction: column; }
         .rt-upsell h2 { font-size: var(--fs-h2); margin-bottom: 1.25rem; }
@@ -82,6 +83,9 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
         @media (max-width: 960px) {
             .rt-locs, .rt-two, .rt-upsell { grid-template-columns: 1fr; }
             .rt-upsell { gap: 2.5rem; }
+        }
+        @media (max-width: 600px) {
+            .rt-two .pricing-card__price, .rt-upsell .pricing-card__price { font-size: clamp(2.2rem, 11vw, 3.5rem); }
         }
     </style>
     <!-- Gizmo analytics -->
@@ -131,14 +135,10 @@ height="0" width="0" hidden></iframe></noscript>
             <div class="hero-content">
                 <h1>Every table rated. Every location in view.</h1>
                 <p class="hero-subtitle">One card per server. You get alerted when something goes wrong.</p>
-                <ul class="stat-pills">
-                    <li class="stat-pill">23,664 reviews</li>
-                    <li class="stat-pill">12 locations</li>
-                    <li class="stat-pill">4.5&ndash;4.8&starf;</li>
-                </ul>
                 <div class="hero-actions">
                     <a class="btn btn-primary" data-funnel-context="hero" href="https://app.ratetapmx.com/contacto?offer=trial_checkout&amp;source_page=home&amp;cta_context=hero&amp;language=en">Try it free for 30 days</a>
                 </div>
+                <p class="hero-price">MX$700/mo per location · 30 days free</p>
                 <!-- Marker: stops script.js from injecting its generic trust strip (unverified claims) -->
                 <div class="hero-proof-row" hidden></div>
             </div>
@@ -156,21 +156,30 @@ height="0" width="0" hidden></iframe></noscript>
                     <h3>Ratings by server</h3>
                     <p>Every card belongs to one server. See who asks at every table, by shift and location.</p>
                 </div>
-                <figure class="shot"><img src="assets/product/dashboard.webp" width="1600" height="1000" loading="lazy" alt="RateTap dashboard with ratings by server and location"></figure>
+                <figure class="shot-fig">
+                    <div class="shot shot--zoom zoom-kpi"><span class="shot__chip">Demo data</span><img src="assets/product/dashboard.webp" width="1600" height="1000" loading="lazy" alt="RateTap dashboard with ratings by server and location"></div>
+                    <figcaption class="shot-caption">App in Spanish. Look at: ratings per week.</figcaption>
+                </figure>
             </div>
             <div class="feature-row feature-row--flip reveal">
                 <div class="feature-row__text">
                     <h3>An alert when a guest complains</h3>
                     <p>Private feedback reaches your GM right away. Open complaints escalate to you after a few hours.</p>
                 </div>
-                <figure class="shot"><img src="assets/product/inbox.webp" width="1600" height="1000" loading="lazy" alt="RateTap inbox listing guest complaints"></figure>
+                <figure class="shot-fig">
+                    <div class="shot shot--zoom zoom-complaint"><span class="shot__chip">Demo data</span><img src="assets/product/inbox.webp" width="1600" height="1000" loading="lazy" alt="RateTap inbox listing guest complaints"></div>
+                    <figcaption class="shot-caption">Look at: an open complaint and its actions.</figcaption>
+                </figure>
             </div>
             <div class="feature-row reveal">
                 <div class="feature-row__text">
                     <h3>Every location in one view</h3>
                     <p>A group dashboard and a Monday briefing show which location needs attention.</p>
                 </div>
-                <figure class="shot"><img src="assets/product/overview.webp" width="1600" height="1000" loading="lazy" alt="RateTap overview of all locations"></figure>
+                <figure class="shot-fig">
+                    <div class="shot shot--zoom zoom-totals"><span class="shot__chip">Demo data</span><img src="assets/product/overview.webp" width="1600" height="1000" loading="lazy" alt="RateTap overview of all locations"></div>
+                    <figcaption class="shot-caption">Look at: totals across locations. The red banner is an alert example.</figcaption>
+                </figure>
             </div>
             <div class="included">
                 <div class="section-header text-center">
@@ -198,6 +207,7 @@ height="0" width="0" hidden></iframe></noscript>
         <div class="container">
             <div class="section-header text-center">
                 <h2>Real results across 12 restaurants.</h2>
+                <p>Live at 12 locations of one restaurant group in Mexico.</p>
             </div>
             <div class="stat-cards">
                 <div class="stat-card reveal">
@@ -256,8 +266,8 @@ height="0" width="0" hidden></iframe></noscript>
                 </div>
                 <div class="pricing-card rt-featured reveal">
                     <div class="pricing-card__label">Software</div>
-                    <div class="pricing-card__price">MX$700<span class="rt-per">/mo</span></div>
-                    <div class="pricing-card__unit">+ MX$1,500 setup, NFC cards included</div>
+                    <div class="pricing-card__price">MX$700<span class="rt-per">/mo per location</span></div>
+                    <div class="pricing-card__unit">+ MX$1,500 setup, cards included</div>
                     <p class="pricing-card__desc">Reviews, alerts, inbox, reports, and dashboard. Your team runs it.</p>
                     <a href="https://app.ratetapmx.com/contacto?offer=trial_checkout&amp;source_page=home&amp;cta_context=pricing_software&amp;language=en" data-funnel-context="pricing_software" class="btn btn-primary rt-btn-block">Try it free for 30 days</a>
                 </div>
@@ -283,7 +293,7 @@ height="0" width="0" hidden></iframe></noscript>
                     <div class="pricing-card__price">MX$10,000<span class="rt-per">/mo</span></div>
                     <div class="pricing-card__unit">+ MX$15,000 setup</div>
                     <p class="pricing-card__desc">Operated campaign per location, with owner reporting.</p>
-                    <a href="https://wa.me/5212228822360?text=Hi%20Lawrence%2C%20I%20have%20a%20multi-location%20group%20and%20want%20a%20RateTap%20audit." class="btn btn-secondary rt-btn-block">Chat on WhatsApp</a>
+                    <a href="https://wa.me/5212228822360?text=Hi%2C%20I%20run%20a%20restaurant%20group%20with%20several%20locations%20and%20want%20to%20fill%20slow%20nights." class="btn btn-secondary rt-btn-block">Chat on WhatsApp</a>
                 </div>
             </div>
         </div>

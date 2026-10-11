@@ -2073,7 +2073,8 @@ body:has(.hero:is([data-photo-hero], .hero--photo)).has-mobile-sticky-cta { padd
    ========================================= */
 
 /* --- Page hero, photo variant. Markup: .hero.hero--photo.hero--restaurant > .container.hero-container
-       > .hero-content > h1 + .hero-subtitle + ul.stat-pills + .hero-actions > one .btn-primary.
+       > .hero-content > h1 + .hero-subtitle + ul.stat-pills + .hero-actions > one .btn-primary, then an
+       optional p.hero-price (one small price line). The hero holds 30 words at most: drop a pill before the line.
        Add one .hero--<name> modifier per hero image. --- */
 .hero--restaurant { --hero-image: url('assets/hero-restaurant.webp'); }
 
@@ -2360,7 +2361,59 @@ body:has(.hero:is([data-photo-hero], .hero--photo)).has-mobile-sticky-cta { padd
 .shot-pair { display: flex; align-items: flex-start; justify-content: center; gap: var(--space-5); }
 .shot-pair .shot--phone { flex: 1 1 0; min-width: 0; max-width: 240px; margin-inline: 0; }
 .shot-pair .shot--phone + .shot--phone { margin-top: var(--space-7); }
-.icon-steps + .shot-pair { margin-top: var(--space-7); }
+.icon-steps + .shot-pair,
+.icon-steps + .shot-group { margin-top: var(--space-7); }
+
+/* --- Demo chip and caption. Every product shot carries a "Demo data" chip inside its frame.
+       English pages add a one-line caption under the frame: <figure class="shot-fig"><div class="shot">
+       <span class="shot__chip">Demo data</span><img ...></div><figcaption class="shot-caption">...</figcaption></figure>
+       Phone pairs: wrap .shot-pair and one .shot-caption in .shot-group. --- */
+.shot-fig,
+.shot-group { margin: 0; min-width: 0; }
+.shot-caption { margin: var(--space-3) 0 0; color: var(--ink-2); font-size: var(--fs-small); line-height: 1.4; }
+.shot-group .shot-caption { text-align: center; }
+.shot__chip {
+    position: absolute;
+    top: 5px;
+    right: 10px;
+    z-index: 1;
+    padding: 0.1rem 0.6rem;
+    border-radius: var(--radius-pill);
+    background: var(--ink);
+    color: #fff;
+    font-size: 0.6875rem;
+    font-weight: 700;
+    line-height: 1.5;
+    white-space: nowrap;
+}
+.shot--phone .shot__chip { top: 2.1rem; right: auto; left: 50%; transform: translateX(-50%); }
+
+/* --- Mobile zoom: at 600px and below, .shot--zoom shows one region of the desktop screenshot at a
+       readable size (same image file, no extra assets). Pick the region with a .zoom-* class: --rx and
+       --ry are the region's top-left, --rw and --rh its size, all in pixels of the 1600px-wide source. --- */
+.zoom-kpi { --rx: 1015; --ry: 632; --rw: 395; --rh: 125; }
+.zoom-complaint { --rx: 28; --ry: 428; --rw: 470; --rh: 145; }
+.zoom-totals { --rx: 15; --ry: 250; --rw: 395; --rh: 290; }
+.zoom-staff { --rx: 28; --ry: 355; --rw: 480; --rh: 230; }
+.zoom-live { --rx: 28; --ry: 215; --rw: 380; --rh: 205; }
+.zoom-guests { --rx: 1165; --ry: 580; --rw: 380; --rh: 250; }
+.zoom-campaign { --rx: 165; --ry: 555; --rw: 425; --rh: 240; }
+.zoom-email { --rx: 210; --ry: 440; --rw: 730; --rh: 370; }
+
+/* --- Hero price line: one small line under the hero button. --- */
+.hero-price { margin: var(--space-3) 0 0; color: rgba(255, 255, 255, 0.88); font-size: var(--fs-small); font-weight: 600; }
+
+/* --- Inline link: ink text with a blue underline, for links inside a lede or a line of small print. --- */
+.link-inline,
+.section-header p a {
+    color: var(--ink);
+    font-weight: 600;
+    text-decoration: underline;
+    text-decoration-color: var(--accent);
+    text-underline-offset: 0.2em;
+}
+.link-inline:hover,
+.section-header p a:hover { color: var(--accent); }
 
 /* --- Feature row: outcome heading + one line of how, beside a .shot. Add .feature-row--flip to put the
        shot on the left at desktop. Rows stack (text first) below 768px. --- */
@@ -2400,7 +2453,7 @@ body:has(.hero:is([data-photo-hero], .hero--photo)).has-mobile-sticky-cta { padd
 .stat-card__source a { color: inherit; text-decoration: underline; }
 
 /* --- FAQ list: centers .faq-item rows in a readable column. --- */
-.faq-list { max-width: 760px; margin-inline: auto; }
+.faq-list { max-width: 760px; margin-inline: auto; padding-top: var(--space-4); }
 
 @media (max-width: 768px) {
     .feature-row,
@@ -2409,6 +2462,19 @@ body:has(.hero:is([data-photo-hero], .hero--photo)).has-mobile-sticky-cta { padd
     .feature-row + .feature-row { margin-top: var(--space-7); }
     .included-list { grid-template-columns: minmax(0, 1fr); }
     .shot--crop { max-height: 26rem; }
+}
+
+@media (max-width: 600px) {
+    .shot--zoom { aspect-ratio: var(--rw) / var(--rh); max-height: none; }
+    .shot--zoom::before,
+    .shot--zoom::after { display: none; }
+    .shot--zoom img {
+        width: calc(100% * 1600 / var(--rw));
+        max-width: none;
+        margin-left: calc(-100% * var(--rx) / var(--rw));
+        margin-top: calc(-100% * var(--ry) / var(--rw));
+    }
+    .shot--zoom .shot__chip { top: 8px; right: 8px; }
 }
 
 /* =========================================
