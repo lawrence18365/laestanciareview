@@ -7,6 +7,8 @@ import { getComplaintSlaStats, type ComplaintSlaStats } from '@/lib/complaint-sl
 import { getAlertCoverage } from '@/lib/product-analytics';
 import { startOfWeek } from 'date-fns';
 import OwnerOverview from '@/components/dashboard/OwnerOverview';
+import GroupShareCard from '@/components/dashboard/GroupShareCard';
+import { getGroupShareSummary, type GroupShareSummary } from '@/lib/maps-rank-group';
 
 function percentage(count: number, total: number): number {
   return total > 0 ? Math.round((count / total) * 100) : 0;
@@ -20,6 +22,16 @@ export default async function OverviewPage() {
   if (session.role !== 'owner' && session.role !== 'regional') redirect('/dashboard');
 
   const stats = await getOverviewStats(session.role === 'regional' ? session.region : undefined);
+
+  // Group share of Maps top 3: owner accounts only, and a failure just hides the card.
+  let groupShare: GroupShareSummary[] = [];
+  if (session.role === 'owner' && process.env.MAPS_RANK_ENABLED === 'true') {
+    try {
+      groupShare = await getGroupShareSummary();
+    } catch (err) {
+      console.error('[overview] group share failed:', err);
+    }
+  }
 
   // Fetch unresolved counts, ROI stats, and Google trends in parallel
   const unresolvedCounts: Record<number, number> = {};
@@ -99,6 +111,8 @@ export default async function OverviewPage() {
         baselineTotal={baselineTotal}
         weeklyByRestaurant={weeklyByRestaurant}
       />
+
+      {groupShare.length > 0 && <GroupShareCard summaries={groupShare} />}
 
       {stats.length > 0 && (
         <section

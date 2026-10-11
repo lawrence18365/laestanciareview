@@ -108,6 +108,16 @@ export const t = {
     footer: (runDate: string) => `Medido el ${runDate} en 9 puntos alrededor de la sucursal.`,
   },
 
+  groupShare: {
+    title: 'Tu grupo en el top 3 de Google Maps',
+    twoPlus: (points: number, measured: number) => `2 o más de los 3 primeros en ${points} de ${measured} puntos`,
+    anyOne: (points: number, measured: number) => `al menos 1 de los 3 primeros en ${points} de ${measured} puntos`,
+    none: 'fuera del top 3',
+    holders: (names: string) => `(${names})`,
+    before: (prevAvgTop3: number) => `antes ${prevAvgTop3} de 3`,
+    footnote: 'Medido en 9 puntos por ciudad. Cuenta cuántos de los 3 primeros resultados son del grupo.',
+  },
+
   // ── Analytics ──
   analytics: {
     googleRating: 'Calificación de Google',
