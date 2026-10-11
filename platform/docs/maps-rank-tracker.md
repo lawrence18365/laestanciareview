@@ -147,3 +147,9 @@ curl -H "Authorization: Bearer $CRON_SECRET" https://app.ratetapmx.com/api/cron/
 ```
 
 To force a sweep on another day, call `runMapsRankSweep({ force: true })` from a script.
+
+## Group share of Maps top 3
+
+`runGroupShareSweep` (in `src/lib/maps-rank-group.ts`) runs after each per-restaurant sweep. It asks how many of OUR locations hold the top 3 for each city and active keyword. It uses a 2 km 3x3 grid around the mean of the city's locations, with the center fetched fresh and never stored. Only our restaurant IDs are kept, and competitor place IDs are dropped before anything is written. Results go to `maps_rank_group_samples` (migration 0031), one row per city, keyword, grid point, and run date, with `status` `ok` or `error`, `group_top3` (0 to 3), and `holder_ids` in rank order.
+
+`getGroupShareSummary()` compares the latest run with the previous one per city and keyword. Errors are excluded from the denominator. It returns `avgTop3` (one decimal), `pointsAny`, `pointsTwoPlus`, and holders with their point counts. The sweep result gets a `group` field of `{ cities, samples, failed }`. If the group sweep throws, `group` is `{ failed: -1 }` and the per-restaurant sweep still succeeds.
