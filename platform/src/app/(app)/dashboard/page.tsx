@@ -12,6 +12,8 @@ import {
 } from '@/lib/queries';
 import { getGoogleRatingTrend, getGoogleRatingHistory, getGoogleReviewsAddedToday } from '@/lib/google-places';
 import DashboardView from '@/components/dashboard/DashboardView';
+import MapsRankCard from '@/components/dashboard/MapsRankCard';
+import { getMapsRankSummary, type KeywordSummary } from '@/lib/maps-rank';
 
 export default async function DashboardPage({
   searchParams,
@@ -67,20 +69,35 @@ export default async function DashboardPage({
     ? await getGoogleReviewsAddedToday(restaurant.id, restaurant.googleReviewCount ?? null)
     : null;
 
+  // The dashboard must never break on Maps rank data: any failure renders no card.
+  let mapsSummaries: KeywordSummary[] = [];
+  if (process.env.MAPS_RANK_ENABLED === 'true') {
+    try {
+      mapsSummaries = await getMapsRankSummary(restaurant.id);
+    } catch {
+      mapsSummaries = [];
+    }
+  }
+
   return (
-    <DashboardView
-      stats={stats}
-      lastWeekStats={lastWeekStats}
-      leaderboard={leaderboard}
-      unreadCount={unreadCount}
-      unreadLowCount={unreadLowCount}
-      roiStats={roiStats}
-      monthlyStats={monthlyStats}
-      googleTrend={googleTrend}
-      googleHistory={googleHistory}
-      googleRating={restaurant.googleRating ? parseFloat(restaurant.googleRating) : null}
-      googleReviewCount={restaurant.googleReviewCount ?? null}
-      googleReviewsToday={googleReviewsToday}
-    />
+    <>
+      <DashboardView
+        stats={stats}
+        lastWeekStats={lastWeekStats}
+        leaderboard={leaderboard}
+        unreadCount={unreadCount}
+        unreadLowCount={unreadLowCount}
+        roiStats={roiStats}
+        monthlyStats={monthlyStats}
+        googleTrend={googleTrend}
+        googleHistory={googleHistory}
+        googleRating={restaurant.googleRating ? parseFloat(restaurant.googleRating) : null}
+        googleReviewCount={restaurant.googleReviewCount ?? null}
+        googleReviewsToday={googleReviewsToday}
+      />
+      <div className="page-container" style={{ paddingTop: 0 }}>
+        <MapsRankCard summaries={mapsSummaries} />
+      </div>
+    </>
   );
 }
