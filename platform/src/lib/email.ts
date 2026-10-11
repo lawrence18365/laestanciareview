@@ -1611,21 +1611,27 @@ function sectionHeading(ordinal: string, label: string): string {
  * Owner briefing. One screen: what needs a decision, activity per location,
  * service load, the Club VIP guest book, and reputation.
  */
-export async function sendOwnerBriefing({
-  to,
-  weekStart,
-  locations,
-  dashboardUrl,
-  groupName,
-  mapsRank,
-}: {
-  to: string;
+type OwnerBriefingInput = {
   weekStart: Date;
   locations: BriefingLocation[];
   dashboardUrl: string;
   groupName?: string;
   mapsRank?: MapsRankLocation[];
-}) {
+};
+
+export async function sendOwnerBriefing({ to, ...input }: OwnerBriefingInput & { to: string }) {
+  const { subject, html } = renderOwnerBriefing(input);
+  return sendMail({ from: FROM, to, subject, html });
+}
+
+/** Renders the owner briefing without sending it, for founder previews. */
+export function renderOwnerBriefing({
+  weekStart,
+  locations,
+  dashboardUrl,
+  groupName,
+  mapsRank,
+}: OwnerBriefingInput) {
   const group = groupName?.trim() || 'Tu grupo';
   const activeCount = locations.filter((l) => l.scansThisWeek > 0).length;
   const scans = locations.reduce((s, l) => s + l.scansThisWeek, 0);
@@ -1799,12 +1805,10 @@ export async function sendOwnerBriefing({
       <a href="${dashboardUrl}" style="display: inline-block; padding: 14px 36px; background: #111111; color: #ffffff; border-radius: 0; text-decoration: none; font-size: 15px; font-weight: 600; letter-spacing: 0.02em;">Abrir panel</a>
     </div>`;
 
-  return sendMail({
-    from: FROM,
-    to,
+  return {
     subject: `${group} · ${activeCount} de ${locations.length} ubicaciones activas, ${complaints} quejas esta semana`,
     html: emailLayout(content, metricNote(['calificaciones'])),
-  });
+  };
 }
 
 /**
