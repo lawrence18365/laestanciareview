@@ -3,7 +3,7 @@ import { inboxLinkFor } from '@/lib/review-recovery';
 import { formatStaffAnomaly, type StaffAnomaly } from '@/lib/anomalies';
 import { RATING_BASELINE_NOTE } from '@/lib/rating-baseline';
 import type { GroupShareSummary } from '@/lib/maps-rank-group';
-import { groupShareRows } from '@/components/dashboard/GroupShareCard';
+import { groupShareCities } from '@/components/dashboard/GroupShareCard';
 import { t } from '@/lib/i18n';
 import { PILOT_TRIAL_DAYS } from '@/lib/pilot';
 import {
@@ -1511,16 +1511,32 @@ export interface BriefingLocation {
 
 /** Empty string when there is nothing to show, so existing briefings are unchanged. */
 function groupShareBlock(groupShare?: GroupShareSummary[]): string {
-  const rows = groupShareRows(groupShare ?? []);
-  if (rows.length === 0) return '';
+  const cities = groupShareCities(groupShare ?? []);
+  if (cities.length === 0) return '';
+  const cell = 'padding: 9px 8px 9px 0; font-size: 13px; vertical-align: top; border-top: 1px solid #E5E5E5; color: #111111;';
+  const cityRows = cities.map((c) => `
+        <tr>
+          <td colspan="3" style="padding: 14px 0 4px; font-size: 11px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #737373;">${escapeHtml(c.city)}</td>
+        </tr>${c.rows.map((row) => {
+          const dotsTitle = t.groupShare.dotsTitle(row.pointsAny, row.measured);
+          const dots = [0, 1, 2].map((d) => (d < row.filled
+            ? '<span style="color: #059669;">&#9679;</span>'
+            : '<span style="color: #D4D4D4;">&#9675;</span>')).join('');
+          const trend = row.trend ? `<span style="font-size: 10px; color: #737373;"> ${row.trend === 'up' ? '&#9650;' : '&#9660;'}</span>` : '';
+          const who = row.who.length === 0
+            ? '<strong style="color: #B45309;">' + t.groupShare.opportunity + '</strong>'
+            : escapeHtml(row.who.join(', ')) + (row.whoMore > 0 ? ' ' + t.groupShare.more(row.whoMore) : '');
+          return `
+        <tr>
+          <td style="${cell} width: 40%; font-weight: 600;">${escapeHtml(row.search)}</td>
+          <td style="${cell} white-space: nowrap;" title="${escapeHtml(dotsTitle)}">${dots}<span style="font-size: 11px; color: #A3A3A3;"> ${row.pointsAny}/${row.measured}</span>${trend}</td>
+          <td style="${cell} color: #525252;">${who}</td>
+        </tr>`;
+        }).join('')}`).join('');
   return `
     <div style="margin: 0 28px 22px; padding: 18px; background: #ffffff; border: 1px solid #111111; border-radius: 0;">
       ${sectionHeading('5', t.groupShare.title)}
-      <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
-        ${rows.map((row) => `
-        <tr>
-          <td style="padding: 9px 0; font-size: 13px; color: #111111;">${escapeHtml(row.label)}: ${escapeHtml(row.result)}</td>
-        </tr>`).join('')}
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse: collapse;">${cityRows}
       </table>
       <p style="margin: 12px 0 0; font-size: 11px; line-height: 1.5; color: #A3A3A3;">${t.groupShare.footnote}</p>
     </div>`;

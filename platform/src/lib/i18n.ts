@@ -110,12 +110,10 @@ export const t = {
 
   groupShare: {
     title: 'Tu grupo en el top 3 de Google Maps',
-    twoPlus: (points: number, measured: number) => `2 o más de los 3 primeros en ${points} de ${measured} puntos`,
-    anyOne: (points: number, measured: number) => `al menos 1 de los 3 primeros en ${points} de ${measured} puntos`,
-    none: 'fuera del top 3',
-    holders: (names: string) => `(${names})`,
-    before: (prevAvgTop3: number) => `antes ${prevAvgTop3} de 3`,
-    footnote: 'Medido en 9 puntos por ciudad. Cuenta cuántos de los 3 primeros resultados son del grupo.',
+    dotsTitle: (points: number, measured: number) => `el grupo aparece en el top 3 en ${points} de ${measured} puntos`,
+    opportunity: 'Oportunidad',
+    more: (count: number) => `+${count}`,
+    footnote: '● = lugares del grupo en el top 3 · 9 puntos por ciudad',
   },
 
   // ── Analytics ──
