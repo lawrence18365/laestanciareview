@@ -365,6 +365,77 @@
 &lt;/div&gt;</code></pre>
       </div>
 
+      <div class="ds-block" id="proof-band">
+        <h3>Proof band</h3>
+        <p class="ds-note">Visual proof: a range-bar chart card beside two stat cards, an optional slim location row, and one footnote row. Superscript markers tie each number to the footnote. Bars grow and dots fill on reveal; both stay drawn without JavaScript or under reduced motion. Cards turn into dark islands in dark mode. Labels stay at six words or fewer.</p>
+        <div class="ds-demo">
+          <div class="proof-band">
+            <article class="proof-card proof-card--chart">
+              <div class="proof-chart">
+                <div class="proof-chart__cols">
+                  <p class="proof-chart__num">&lt;&nbsp;1</p>
+                  <p class="proof-chart__num">3&ndash;8<sup>1</sup></p>
+                </div>
+                <svg class="proof-chart__svg" viewBox="0 0 320 190" role="img" aria-label="Bar chart. Before RateTap: fewer than 1 new Google review a day per restaurant (0.4 to 0.9). With RateTap: 3 to 8 a day (3.0 to 7.8). 11 restaurants.">
+                  <line class="proof-chart__base" x1="12" y1="186" x2="308" y2="186"></line>
+                  <rect class="proof-bar proof-bar--before" x="58" y="168" width="44" height="10" rx="5"></rect>
+                  <rect class="proof-bar proof-bar--after" x="218" y="30" width="44" height="96" rx="6"></rect>
+                </svg>
+                <div class="proof-chart__cols proof-chart__cols--names"><p>Before RateTap</p><p>With RateTap</p></div>
+                <p class="proof-chart__label">new Google reviews a day, per restaurant</p>
+                <p class="proof-chart__cap">11 restaurants &middot; before vs after launch</p>
+              </div>
+            </article>
+            <article class="proof-card">
+              <p class="proof-stat__num">65%<sup>2</sup></p>
+              <p class="proof-stat__label">of guests choose Google</p>
+              <div class="proof-pictogram" role="img" aria-label="13 of 20 guests choose Google"><span class="proof-dot is-on"></span><span class="proof-dot is-on"></span><span class="proof-dot is-on"></span><span class="proof-dot is-on"></span><span class="proof-dot is-on"></span><span class="proof-dot is-on"></span><span class="proof-dot is-on"></span><span class="proof-dot is-on"></span><span class="proof-dot is-on"></span><span class="proof-dot is-on"></span><span class="proof-dot is-on"></span><span class="proof-dot is-on"></span><span class="proof-dot is-on"></span><span class="proof-dot"></span><span class="proof-dot"></span><span class="proof-dot"></span><span class="proof-dot"></span><span class="proof-dot"></span><span class="proof-dot"></span><span class="proof-dot"></span></div>
+            </article>
+            <article class="proof-card">
+              <p class="proof-stat__num">23%<sup>3</sup></p>
+              <p class="proof-stat__label">of 1&ndash;3&starf; guests choose Google too</p>
+              <p class="proof-stat__sub">Nothing is filtered or hidden.</p>
+              <p class="proof-stars" aria-hidden="true"><span class="is-on">&starf;</span><span class="is-on">&starf;</span><span class="is-on">&starf;</span><span>&starf;</span><span>&starf;</span></p>
+            </article>
+          </div>
+          <ul class="proof-locs">
+            <li class="proof-loc"><strong class="proof-loc__name">Regio Norte</strong><span class="proof-loc__meta">4.8<span class="proof-loc__star">&starf;</span> on Google today &middot; 633 reviews captured</span></li>
+          </ul>
+          <p class="proof-foot"><sup>1</sup> Per location, dates &middot; <sup>2 3</sup> dates, n &middot; Association, not cause. <a href="/methodology#velocity">How we measured&nbsp;&rarr;</a></p>
+        </div>
+        <pre class="ds-code"><code>&lt;div class="proof-band"&gt;
+  &lt;article class="proof-card proof-card--chart reveal"&gt;
+    &lt;div class="proof-chart"&gt;
+      &lt;div class="proof-chart__cols"&gt;
+        &lt;p class="proof-chart__num"&gt;&amp;lt;&amp;nbsp;1&lt;/p&gt;
+        &lt;p class="proof-chart__num"&gt;3&amp;ndash;8&lt;sup&gt;1&lt;/sup&gt;&lt;/p&gt;
+      &lt;/div&gt;
+      &lt;svg class="proof-chart__svg" viewBox="0 0 320 190" role="img" aria-label="Numbers in words"&gt;
+        &lt;line class="proof-chart__base" x1="12" y1="186" x2="308" y2="186"&gt;&lt;/line&gt;
+        &lt;rect class="proof-bar proof-bar--before" x="58" y="168" width="44" height="10" rx="5"&gt;&lt;/rect&gt;
+        &lt;rect class="proof-bar proof-bar--after" x="218" y="30" width="44" height="96" rx="6"&gt;&lt;/rect&gt;
+      &lt;/svg&gt;
+      &lt;div class="proof-chart__cols proof-chart__cols--names"&gt;&lt;p&gt;Before&lt;/p&gt;&lt;p&gt;After&lt;/p&gt;&lt;/div&gt;
+      &lt;p class="proof-chart__label"&gt;What the bars count&lt;/p&gt;
+      &lt;p class="proof-chart__cap"&gt;Sample size, period&lt;/p&gt;
+    &lt;/div&gt;
+  &lt;/article&gt;
+  &lt;article class="proof-card reveal"&gt;
+    &lt;p class="proof-stat__num"&gt;65%&lt;sup&gt;2&lt;/sup&gt;&lt;/p&gt;
+    &lt;p class="proof-stat__label"&gt;Six words or fewer&lt;/p&gt;
+    &lt;div class="proof-pictogram" role="img" aria-label="13 of 20 ..."&gt;20 x &lt;span class="proof-dot is-on"&gt;&lt;/span&gt; (first 13) or &lt;span class="proof-dot"&gt;&lt;/span&gt;&lt;/div&gt;
+  &lt;/article&gt;
+  &lt;article class="proof-card reveal"&gt;
+    &lt;p class="proof-stat__num"&gt;23%&lt;sup&gt;3&lt;/sup&gt;&lt;/p&gt;
+    &lt;p class="proof-stat__label"&gt;Six words or fewer&lt;/p&gt;
+    &lt;p class="proof-stat__sub"&gt;One short line.&lt;/p&gt;
+    &lt;p class="proof-stars" aria-hidden="true"&gt;&lt;span class="is-on"&gt;&amp;starf;&lt;/span&gt; x3, &lt;span&gt;&amp;starf;&lt;/span&gt; x2&lt;/p&gt;
+  &lt;/article&gt;
+&lt;/div&gt;
+&lt;ul class="proof-locs"&gt;&lt;li class="proof-loc reveal"&gt;&lt;strong class="proof-loc__name"&gt;Name&lt;/strong&gt;&lt;span class="proof-loc__meta"&gt;4.8&lt;span class="proof-loc__star"&gt;&amp;starf;&lt;/span&gt; detail&lt;/span&gt;&lt;/li&gt;&lt;/ul&gt;
+&lt;p class="proof-foot"&gt;&lt;sup&gt;1&lt;/sup&gt; Source, dates &amp;middot; Association, not cause. &lt;a href="/methodology#velocity"&gt;How we measured &amp;rarr;&lt;/a&gt;&lt;/p&gt;</code></pre>
+      </div>
+
       <div class="ds-block" id="cards">
         <h3>Cards and grids</h3>
         <p class="ds-note">Existing .card, .grid-3 and .card-icon-wrapper.</p>

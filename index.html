@@ -60,13 +60,6 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 
     <style>
         /* Home (en) - page-scoped: only what the design system has no class for */
-        .rt-locs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1.25rem; margin-top: 1.25rem; }
-        .rt-loc { padding: 1.75rem 1.5rem; border-radius: 20px; background: #fff; border: 1px solid rgba(15,23,42,0.08); box-shadow: 0 10px 30px -12px rgba(0,0,0,0.06); }
-        .rt-loc h3 { font-size: 1.25rem; margin-bottom: 0.4rem; }
-        .rt-loc__rate { color: #b8860b; font-weight: 700; margin-bottom: 0.6rem; }
-        .rt-loc p { color: var(--text-secondary); font-size: 0.95rem; line-height: 1.5; margin: 0; }
-        .rt-d1 { transition-delay: 100ms; }
-        .rt-d2 { transition-delay: 200ms; }
         .rt-two { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2rem; max-width: 900px; margin: 0 auto; align-items: stretch; }
         .rt-two .pricing-card { display: flex; flex-direction: column; }
         .rt-two .pricing-card .btn, .rt-upsell .pricing-card .btn { margin-top: auto !important; }
@@ -81,7 +74,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
         .rt-checks { list-style: none; padding: 0; margin: 0; display: grid; gap: 0.8rem; font-weight: 700; font-size: 1.05rem; }
         .rt-checks i { color: var(--brand-blue); margin-right: 0.5rem; }
         @media (max-width: 960px) {
-            .rt-locs, .rt-two, .rt-upsell { grid-template-columns: 1fr; }
+            .rt-two, .rt-upsell { grid-template-columns: 1fr; }
             .rt-upsell { gap: 2.5rem; }
         }
         @media (max-width: 600px) {
@@ -149,44 +142,47 @@ height="0" width="0" hidden></iframe></noscript>
     <section id="proof" class="section">
         <div class="container">
             <div class="section-header text-center">
-                <h2>Real results across 12 restaurants.</h2>
-                <p>Live at 12 locations of one restaurant group in Mexico.</p>
+                <h2>Results from 12 live restaurants</h2>
+                <p>One restaurant group in Mexico. Real data, published method.</p>
             </div>
-            <div class="stat-cards">
-                <div class="stat-card reveal">
-                    <div class="stat-card__num stat-card__num--range">0.4&ndash;0.9 &rarr; 3.0&ndash;7.8</div>
-                    <div class="stat-card__label">new Google reviews a day, before vs after launch (11 locations)</div>
-                    <div class="stat-card__source">Source: <a href="/methodology#velocity">How we measured</a>, Dec 21, 2025&ndash;Oct 10, 2026</div>
+            <div class="proof-band">
+            <article class="proof-card proof-card--chart reveal">
+                <div class="proof-chart">
+                    <div class="proof-chart__cols">
+                        <p class="proof-chart__num">&lt;&nbsp;1</p>
+                        <p class="proof-chart__num">3&ndash;8<sup>1</sup></p>
+                    </div>
+                    <svg class="proof-chart__svg" viewBox="0 0 320 190" role="img" aria-label="Bar chart. Before RateTap: fewer than 1 new Google review a day per restaurant (0.4 to 0.9). With RateTap: 3 to 8 a day (3.0 to 7.8). 11 restaurants.">
+                        <line class="proof-chart__base" x1="12" y1="186" x2="308" y2="186"></line>
+                        <rect class="proof-bar proof-bar--before" x="58" y="168" width="44" height="10" rx="5"></rect>
+                        <rect class="proof-bar proof-bar--after" x="218" y="30" width="44" height="96" rx="6"></rect>
+                    </svg>
+                    <div class="proof-chart__cols proof-chart__cols--names">
+                        <p>Before RateTap</p>
+                        <p>With RateTap</p>
+                    </div>
+                    <p class="proof-chart__label">new Google reviews a day, per restaurant</p>
+                    <p class="proof-chart__cap">11 restaurants &middot; before vs after launch</p>
                 </div>
-                <div class="stat-card reveal">
-                    <div class="stat-card__num">65%</div>
-                    <div class="stat-card__label">of guests choose Google</div>
-                    <div class="stat-card__source">Source: <a href="/methodology">RateTap data</a>, Jul 8&ndash;Oct 10, 2026</div>
-                </div>
-                <div class="stat-card reveal">
-                    <div class="stat-card__num">4.5&ndash;4.8&starf;</div>
-                    <div class="stat-card__label">Google rating today, 12 locations</div>
-                    <div class="stat-card__source">Source: <a href="/methodology">Google Business Profiles</a>, Aug 19, 2026</div>
-                </div>
-            </div>
-            <div class="rt-locs">
-                <div class="rt-loc reveal">
-                    <h3>Estancia Angel&oacute;polis</h3>
-                    <div class="rt-loc__rate">4.8&starf; on Google today</div>
-                    <p>4,935 reviews captured</p>
-                </div>
-                <div class="rt-loc reveal rt-d1">
-                    <h3>Regio Norte</h3>
-                    <div class="rt-loc__rate">4.8&starf; on Google today</div>
-                    <p>633 reviews captured</p>
-                </div>
-                <div class="rt-loc reveal rt-d2">
-                    <h3>Estancia Ju&aacute;rez</h3>
-                    <div class="rt-loc__rate">4.7&starf; on Google today</div>
-                    <p>746 reviews captured</p>
-                </div>
-            </div>
-            <p class="section-note">Review speed compares before and after launch. It shows association, not cause. Location data as of August 19, 2026. Ratings show today&rsquo;s status, not an effect of RateTap.</p>
+            </article>
+            <article class="proof-card reveal">
+                <p class="proof-stat__num">65%<sup>2</sup></p>
+                <p class="proof-stat__label">of guests choose Google</p>
+                <div class="proof-pictogram" role="img" aria-label="13 of 20 guests choose Google"><span class="proof-dot is-on"></span><span class="proof-dot is-on"></span><span class="proof-dot is-on"></span><span class="proof-dot is-on"></span><span class="proof-dot is-on"></span><span class="proof-dot is-on"></span><span class="proof-dot is-on"></span><span class="proof-dot is-on"></span><span class="proof-dot is-on"></span><span class="proof-dot is-on"></span><span class="proof-dot is-on"></span><span class="proof-dot is-on"></span><span class="proof-dot is-on"></span><span class="proof-dot"></span><span class="proof-dot"></span><span class="proof-dot"></span><span class="proof-dot"></span><span class="proof-dot"></span><span class="proof-dot"></span><span class="proof-dot"></span></div>
+            </article>
+            <article class="proof-card reveal">
+                <p class="proof-stat__num">23%<sup>3</sup></p>
+                <p class="proof-stat__label">of 1&ndash;3&starf; guests choose Google too</p>
+                <p class="proof-stat__sub">Nothing is filtered or hidden.</p>
+                <p class="proof-stars" aria-hidden="true"><span class="is-on">&starf;</span><span class="is-on">&starf;</span><span class="is-on">&starf;</span><span>&starf;</span><span>&starf;</span></p>
+            </article>
+        </div>
+            <ul class="proof-locs">
+                <li class="proof-loc reveal"><strong class="proof-loc__name">Estancia Angel&oacute;polis</strong><span class="proof-loc__meta">4.8<span class="proof-loc__star">&starf;</span> on Google today &middot; 4,935 reviews captured</span></li>
+                <li class="proof-loc reveal"><strong class="proof-loc__name">Regio Norte</strong><span class="proof-loc__meta">4.8<span class="proof-loc__star">&starf;</span> on Google today &middot; 633 reviews captured</span></li>
+                <li class="proof-loc reveal"><strong class="proof-loc__name">Estancia Ju&aacute;rez</strong><span class="proof-loc__meta">4.7<span class="proof-loc__star">&starf;</span> on Google today &middot; 746 reviews captured</span></li>
+            </ul>
+            <p class="proof-foot"><sup>1</sup> Per location: 0.4&ndash;0.9 a day before, 3.0&ndash;7.8 after; Dec 21, 2025&ndash;Oct 10, 2026 &middot; <sup>2 3</sup> Jul 8&ndash;Oct 10, 2026, n=414 for <sup>3</sup> &middot; Association, not cause. Location data as of August 19, 2026. Ratings show today&rsquo;s status, not an effect of RateTap. <a href="/methodology#velocity">How we measured&nbsp;&rarr;</a></p>
             <div class="section-action">
                 <a class="btn btn-secondary" href="/case-studies">See all case studies</a>
             </div>
