@@ -112,13 +112,14 @@ describe('searchRank', () => {
     const [url, init] = fetchMock.mock.calls[0] as unknown as [string, RequestInit];
     const headers = init.headers as Record<string, string>;
     expect(headers['X-Goog-FieldMask']).toBe('places.id');
+    expect(JSON.parse(init.body as string).rankPreference).toBe('RELEVANCE');
     expect(headers['X-Goog-Api-Key']).toBe('test-key');
     expect(url).not.toContain('test-key');
   });
 
-  it('strips a literal trailing backslash-n from the key', async () => {
+  it('strips quotes and a literal trailing backslash-n from the key', async () => {
     const prev = process.env.GOOGLE_PLACES_API_KEY;
-    process.env.GOOGLE_PLACES_API_KEY = 'test-key\\n';
+    process.env.GOOGLE_PLACES_API_KEY = '"test-key\\n"';
     try {
       const fetchMock = stubSearch(() => Response.json({ places: [] }));
       await searchRank('restaurante leon', point, placeId);

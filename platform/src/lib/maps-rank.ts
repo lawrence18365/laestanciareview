@@ -42,8 +42,8 @@ export type KeywordSummary = {
 };
 
 function apiKey(): string {
-  // Strip a literal trailing \n: a copied env value carried one and every call returned 400 (SQ-159).
-  const key = (process.env.GOOGLE_PLACES_API_KEY ?? '').trim().replace(/\\n$/, '');
+  // A copied env value arrived as `"KEY\n"` (quotes plus a literal backslash-n) and every call returned 400 (SQ-159, SQ-160).
+  const key = (process.env.GOOGLE_PLACES_API_KEY ?? '').trim().replace(/^"|"$/g, '').replace(/\\n$/, '').trim();
   if (!key) throw new Error('GOOGLE_PLACES_API_KEY missing');
   return key;
 }
@@ -88,6 +88,8 @@ export async function searchRank(keyword: string, point: LatLng, placeId: string
         pageSize: RESULT_PAGE_SIZE,
         languageCode: 'es',
         regionCode: 'MX',
+        // Explicit RELEVANCE matched logged-out Google Maps order best and was the most stable run to run (SQ-160).
+        rankPreference: 'RELEVANCE',
         locationBias: {
           circle: {
             center: { latitude: point.lat, longitude: point.lng },
