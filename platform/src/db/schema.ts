@@ -403,6 +403,30 @@ export const mapsRankSamples = pgTable(
   ],
 );
 
+// Group share of Maps top 3 per city x keyword (migration 0031). holder_ids are
+// restaurant ids we own that held the top 3, in rank order. No competitor data.
+export const mapsRankGroupSamples = pgTable(
+  'maps_rank_group_samples',
+  {
+    id: serial('id').primaryKey(),
+    city: text('city').notNull(),
+    keyword: text('keyword').notNull(),
+    gridPoint: smallint('grid_point').notNull(),
+    runDate: date('run_date').notNull(),
+    status: text('status').notNull(),
+    groupTop3: smallint('group_top3').notNull().default(0),
+    holderIds: integer('holder_ids').array().notNull().default(sql`'{}'::integer[]`),
+    capturedAt: timestamp('captured_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    unique('maps_rank_group_samples_point_unique').on(t.city, t.keyword, t.gridPoint, t.runDate),
+    index('maps_rank_group_samples_city_run_idx').on(t.city, t.runDate),
+    check('maps_rank_group_samples_grid_point_check', sql`${t.gridPoint} between 0 and 8`),
+    check('maps_rank_group_samples_status_check', sql`${t.status} in ('ok', 'error')`),
+    check('maps_rank_group_samples_group_top3_check', sql`${t.groupTop3} between 0 and 3`),
+  ],
+);
+
 export const googleRatingSnapshotsRelations = relations(
   googleRatingSnapshots,
   ({ one }) => ({

@@ -177,7 +177,8 @@ describe('runMapsRankSweep', () => {
     vi.spyOn(console, 'error').mockImplementation(() => {});
 
     const result = await runMapsRankSweep({ now: SUNDAY_NOON_MX, concurrency: 2 });
-    expect(result).toEqual({ restaurants: 2, samples: 9, failed: 1 });
+    // The mocked db has no group-share query chain, so the group sweep throws and must be contained.
+    expect(result).toEqual({ restaurants: 2, samples: 9, failed: 1, group: { failed: -1 } });
     expect(state.inserts).toHaveLength(1);
     expect(state.inserts[0].every((r) => r.restaurantId === 2)).toBe(true);
   });

@@ -2,6 +2,7 @@ import { db } from '@/db';
 import { restaurants, mapsRankKeywords, mapsRankSamples } from '@/db/schema';
 import { and, eq, isNotNull, sql } from 'drizzle-orm';
 import { weekdayMexico } from '@/lib/mexico-tz';
+import { runGroupShareSweep } from '@/lib/maps-rank-group';
 
 /**
  * Google Maps rank tracker. Each sweep asks Places Text Search for every active
@@ -27,6 +28,7 @@ export type SweepResult = {
   restaurants: number;
   samples: number;
   failed: number;
+  group?: { cities: number; samples: number; failed: number } | { failed: -1 };
 };
 
 export type KeywordSummary = {
@@ -74,7 +76,8 @@ export async function fetchPlaceLocation(placeId: string): Promise<LatLng | null
   return { lat: latitude, lng: longitude };
 }
 
-export async function searchRank(keyword: string, point: LatLng, placeId: string): Promise<PointResult> {
+/** Place IDs in Maps order for one keyword at one point. Null on any failure. */
+export async function searchTopIds(keyword: string, point: LatLng): Promise<string[] | null> {
   try {
     const res = await fetch(`${PLACES_BASE}/places:searchText`, {
       method: 'POST',
@@ -99,14 +102,19 @@ export async function searchRank(keyword: string, point: LatLng, placeId: string
       }),
       cache: 'no-store',
     });
-    if (!res.ok) return { status: 'error' };
+    if (!res.ok) return null;
     const data = (await res.json()) as { places?: { id?: string }[] };
-    const ids = (data.places ?? []).map((p) => p.id);
-    const index = ids.indexOf(placeId);
-    return index === -1 ? { status: 'not_returned' } : { status: 'found', rank: index + 1 };
+    return (data.places ?? []).map((p) => p.id ?? '');
   } catch {
-    return { status: 'error' };
+    return null;
   }
+}
+
+export async function searchRank(keyword: string, point: LatLng, placeId: string): Promise<PointResult> {
+  const ids = await searchTopIds(keyword, point);
+  if (!ids) return { status: 'error' };
+  const index = ids.indexOf(placeId);
+  return index === -1 ? { status: 'not_returned' } : { status: 'found', rank: index + 1 };
 }
 
 /** Sundays in Mexico City. */
@@ -114,7 +122,7 @@ export function isSweepDay(now: Date = new Date()): boolean {
   return weekdayMexico(now) === 0;
 }
 
-async function mapWithConcurrency<T, R>(
+export async function mapWithConcurrency<T, R>(
   items: T[],
   limit: number,
   fn: (item: T) => Promise<R>,
@@ -217,7 +225,16 @@ export async function runMapsRankSweep(
     }
   }
 
-  return { restaurants: byRestaurant.size, samples, failed };
+  // A group-share failure must not fail the per-restaurant sweep above.
+  let group: SweepResult['group'];
+  try {
+    group = await runGroupShareSweep(runDate);
+  } catch (err) {
+    console.error(`[maps-rank] group share sweep failed: ${(err as Error)?.name ?? 'unknown'}`);
+    group = { failed: -1 };
+  }
+
+  return { restaurants: byRestaurant.size, samples, failed, group };
 }
 
 type SampleRow = { keyword: string; runDate: string; status: string; rank: number | null };
