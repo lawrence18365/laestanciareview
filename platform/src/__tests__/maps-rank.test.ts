@@ -115,6 +115,19 @@ describe('searchRank', () => {
     expect(headers['X-Goog-Api-Key']).toBe('test-key');
     expect(url).not.toContain('test-key');
   });
+
+  it('strips a literal trailing backslash-n from the key', async () => {
+    const prev = process.env.GOOGLE_PLACES_API_KEY;
+    process.env.GOOGLE_PLACES_API_KEY = 'test-key\\n';
+    try {
+      const fetchMock = stubSearch(() => Response.json({ places: [] }));
+      await searchRank('restaurante leon', point, placeId);
+      const [, init] = fetchMock.mock.calls[0] as unknown as [string, RequestInit];
+      expect((init.headers as Record<string, string>)['X-Goog-Api-Key']).toBe('test-key');
+    } finally {
+      process.env.GOOGLE_PLACES_API_KEY = prev;
+    }
+  });
 });
 
 describe('runMapsRankSweep', () => {
@@ -217,8 +230,8 @@ describe('defaultKeywords', () => {
   it('uses steakhouse keywords for steak brands', () => {
     expect(defaultKeywords({ city: 'León', brand: 'estancia' })).toEqual([
       'restaurante de cortes León',
-      'steakhouse León',
-      'restaurante León',
+      'cortes argentinos León',
+      'restaurante argentino León',
     ]);
   });
 
@@ -226,12 +239,11 @@ describe('defaultKeywords', () => {
     expect(defaultKeywords({ city: 'Veracruz', brand: 'harbors' })).toEqual([
       'mariscos Veracruz',
       'restaurante de mariscos Veracruz',
-      'restaurante Veracruz',
     ]);
   });
 
-  it('falls back to a generic keyword for an unknown brand', () => {
-    expect(defaultKeywords({ city: 'Juárez', brand: null })).toEqual(['restaurante Juárez']);
+  it('returns nothing for an unknown brand', () => {
+    expect(defaultKeywords({ city: 'Juárez', brand: null })).toEqual([]);
   });
 
   it('returns nothing without a city', () => {

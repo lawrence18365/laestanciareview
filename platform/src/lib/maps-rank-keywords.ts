@@ -10,10 +10,11 @@ export function defaultKeywords(r: { city: string | null; brand: string | null }
   const city = r.city?.trim();
   if (!city) return [];
   if (r.brand && STEAK_BRANDS.has(r.brand)) {
-    return [`restaurante de cortes ${city}`, `steakhouse ${city}`, `restaurante ${city}`];
+    return [`restaurante de cortes ${city}`, `cortes argentinos ${city}`, `restaurante argentino ${city}`];
   }
   if (r.brand && SEAFOOD_BRANDS.has(r.brand)) {
-    return [`mariscos ${city}`, `restaurante de mariscos ${city}`, `restaurante ${city}`];
+    return [`mariscos ${city}`, `restaurante de mariscos ${city}`];
   }
-  return [`restaurante ${city}`];
+  // Generic "restaurante {city}" ranks nobody useful (SQ-159); founders add keywords by hand.
+  return [];
 }

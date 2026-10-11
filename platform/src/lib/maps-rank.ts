@@ -42,7 +42,8 @@ export type KeywordSummary = {
 };
 
 function apiKey(): string {
-  const key = process.env.GOOGLE_PLACES_API_KEY;
+  // Strip a literal trailing \n: a copied env value carried one and every call returned 400 (SQ-159).
+  const key = (process.env.GOOGLE_PLACES_API_KEY ?? '').trim().replace(/\\n$/, '');
   if (!key) throw new Error('GOOGLE_PLACES_API_KEY missing');
   return key;
 }
