@@ -1,5 +1,21 @@
+import type { Metadata } from 'next';
 import ContactoForm from './ContactoForm';
 import { cookies } from 'next/headers';
+
+// Ad link scrapers (Meta) read these tags; without them the page exposes
+// almost no server-rendered text and language detection fails.
+export const metadata: Metadata = {
+  title: 'Prueba RateTap 30 días gratis | Más reseñas en Google',
+  description:
+    'Cada mesero lleva su QR y tu cliente califica en 10 segundos. Activa tu restaurante hoy: 30 días gratis, sin tarjeta.',
+  openGraph: {
+    title: 'Prueba RateTap 30 días gratis',
+    description: 'Más reseñas en Google, todos los días. 30 días gratis, sin tarjeta.',
+    locale: 'es_MX',
+    type: 'website',
+    siteName: 'RateTap',
+  },
+};
 import { redirect } from 'next/navigation';
 import { isValidPilotAccessToken, PILOT_ACCESS_COOKIE } from '@/lib/pilot';
 
