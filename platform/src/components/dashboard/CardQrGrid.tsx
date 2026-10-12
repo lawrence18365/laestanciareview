@@ -50,17 +50,19 @@ export default function CardQrGrid({ staff, slug, restaurantName, logo, logoDark
   );
 
   // Render every card once, one at a time: each one is a 1080x1920 canvas.
+  // Previews are data URLs, not object URLs: there is nothing to revoke, so a
+  // cleanup can never leave the <img> pointing at a dead blob (on iPhone Safari
+  // that showed as an empty box with the alt text).
   useEffect(() => {
     let alive = true;
-    const urls: string[] = [];
     (async () => {
       for (const member of staff) {
         try {
           const blob = await renderCard(member);
           if (!alive) break;
-          const url = URL.createObjectURL(blob);
-          urls.push(url);
-          setPreviews((prev) => ({ ...prev, [member.id]: url }));
+          const dataUrl = await blobToDataUrl(blob);
+          if (!alive) break;
+          setPreviews((prev) => ({ ...prev, [member.id]: dataUrl }));
         } catch {
           /* leave the "Generando…" placeholder in place */
         }
@@ -68,7 +70,6 @@ export default function CardQrGrid({ staff, slug, restaurantName, logo, logoDark
     })();
     return () => {
       alive = false;
-      urls.forEach((url) => URL.revokeObjectURL(url));
     };
   }, [staff, renderCard]);
 
@@ -149,23 +150,13 @@ export default function CardQrGrid({ staff, slug, restaurantName, logo, logoDark
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
-            gap: '1rem',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+            gap: '0.75rem',
           }}
         >
           {staff.map((member) => (
             <div key={member.id} style={cardStyle}>
-              <div
-                style={{
-                  width: '100%',
-                  aspectRatio: '9 / 16',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  background: 'var(--bg-base)',
-                  overflow: 'hidden',
-                }}
-              >
+              <div style={thumbStyle}>
                 {previews[member.id] ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
@@ -174,29 +165,27 @@ export default function CardQrGrid({ staff, slug, restaurantName, logo, logoDark
                     style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
                   />
                 ) : (
-                  <span style={{ color: 'var(--text-dim)', fontSize: '0.8rem' }}>Generando…</span>
+                  <span style={{ color: 'var(--text-dim)', fontSize: '0.65rem' }}>Generando…</span>
                 )}
               </div>
 
-              <div style={{ fontFamily: 'var(--font-serif)', fontSize: '0.95rem', fontWeight: 600, color: 'var(--text-main)', textAlign: 'center' }}>
-                {member.name}
-              </div>
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.72rem', color: 'var(--text-muted)' }}>
-                {member.code}
-              </div>
+              <div style={infoStyle}>
+                <div style={nameStyle}>{member.name}</div>
+                <div style={codeStyle}>{member.code}</div>
 
-              <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap', justifyContent: 'center' }}>
-                <button onClick={() => download(member)} disabled={busyId === member.id} style={btnSecondary}>
-                  Descargar
-                </button>
-                {canShareFiles && (
-                  <button onClick={() => share(member)} disabled={busyId === member.id} style={btnSecondary}>
-                    Compartir
+                <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap', justifyContent: 'flex-start' }}>
+                  <button onClick={() => download(member)} disabled={busyId === member.id} style={btnSecondary}>
+                    Descargar
                   </button>
-                )}
-                <a href={`/qr-codes/print?id=${member.id}`} target="_blank" rel="noreferrer" style={{ ...btnSecondary, textDecoration: 'none', display: 'inline-block' }}>
-                  Imprimir
-                </a>
+                  {canShareFiles && (
+                    <button onClick={() => share(member)} disabled={busyId === member.id} style={btnSecondary}>
+                      Compartir
+                    </button>
+                  )}
+                  <a href={`/qr-codes/print?id=${member.id}`} target="_blank" rel="noreferrer" style={{ ...btnSecondary, textDecoration: 'none', display: 'inline-block' }}>
+                    Imprimir
+                  </a>
+                </div>
               </div>
             </div>
           ))}
@@ -206,15 +195,51 @@ export default function CardQrGrid({ staff, slug, restaurantName, logo, logoDark
   );
 }
 
+// A horizontal tile on every screen size: a 96px thumbnail on the left, the
+// waiter's name/code and actions on the right. A full-width 9:16 preview used
+// to fill a phone screen and push the buttons below the fold.
 const cardStyle: React.CSSProperties = {
   background: 'var(--panel-bg)',
   border: '1px solid var(--border-dark)',
   borderRadius: 0,
-  padding: '1rem',
+  padding: '0.75rem',
+  display: 'flex',
+  flexDirection: 'row',
+  alignItems: 'center',
+  gap: '1rem',
+};
+
+const thumbStyle: React.CSSProperties = {
+  width: '96px',
+  flex: '0 0 96px',
+  aspectRatio: '9 / 16',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  background: 'var(--bg-base)',
+  overflow: 'hidden',
+};
+
+const infoStyle: React.CSSProperties = {
+  flex: 1,
+  minWidth: 0,
   display: 'flex',
   flexDirection: 'column',
-  alignItems: 'center',
-  gap: '0.5rem',
+  alignItems: 'flex-start',
+  gap: '0.4rem',
+};
+
+const nameStyle: React.CSSProperties = {
+  fontFamily: 'var(--font-serif)',
+  fontSize: '1rem',
+  fontWeight: 600,
+  color: 'var(--text-main)',
+};
+
+const codeStyle: React.CSSProperties = {
+  fontFamily: 'var(--font-mono)',
+  fontSize: '0.72rem',
+  color: 'var(--text-muted)',
 };
 
 const sectionTitle: React.CSSProperties = {
@@ -250,3 +275,16 @@ const btnSecondary: React.CSSProperties = {
   cursor: 'pointer',
   borderRadius: 0,
 };
+
+/** Read a rendered Blob as a data URL — unlike an object URL, nothing to revoke. */
+function blobToDataUrl(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === 'string') resolve(reader.result);
+      else reject(new Error('FileReader did not return a data URL'));
+    };
+    reader.onerror = () => reject(reader.error ?? new Error('FileReader failed'));
+    reader.readAsDataURL(blob);
+  });
+}
