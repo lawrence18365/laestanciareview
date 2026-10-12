@@ -190,14 +190,14 @@ describe('Mercado Pago deferred pricing', () => {
     vi.useRealTimers();
   });
 
-  it('returns the 700 + 27 + 0 = 727 price breakdown', () => {
+  it('returns the flat 700 price breakdown (processing fee absorbed)', () => {
     const breakdown = getPriceBreakdown();
 
     expect(breakdown).toEqual({
       base: 700,
-      processingCharge: 27,
+      processingCharge: 0,
       tax: 0,
-      total: 727,
+      total: 700,
     });
     expect(breakdown.tax).toBe(0);
   });

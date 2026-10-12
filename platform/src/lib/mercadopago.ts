@@ -14,9 +14,10 @@ export const MERCADOPAGO_BASE_AMOUNT_MXN = amountFromEnv(
   'MERCADOPAGO_BASE_AMOUNT_MXN',
   700,
 );
+// We absorb Mercado Pago's fee: the advertised MX$700/mes is what the owner pays.
 export const MERCADOPAGO_PROCESSING_CHARGE_MXN = amountFromEnv(
   'MERCADOPAGO_PROCESSING_CHARGE_MXN',
-  27,
+  0,
 );
 export const MERCADOPAGO_TAX_AMOUNT_MXN = amountFromEnv(
   'MERCADOPAGO_TAX_AMOUNT_MXN',
