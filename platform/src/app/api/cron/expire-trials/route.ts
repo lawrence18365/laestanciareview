@@ -14,6 +14,7 @@ import { NextRequest } from 'next/server';
 import { and, eq, lt } from 'drizzle-orm';
 import { db } from '@/db';
 import { restaurants } from '@/db/schema';
+import { sendFounderTrialsExpiredAlert, sendTrialEndedEmail } from '@/lib/email';
 
 export const dynamic = 'force-dynamic';
 
@@ -38,13 +39,35 @@ export async function GET(req: NextRequest) {
         lt(restaurants.trialEndsAt, new Date()),
       ),
     )
-    .returning({ id: restaurants.id, name: restaurants.name, slug: restaurants.slug });
+    .returning({
+      id: restaurants.id,
+      name: restaurants.name,
+      slug: restaurants.slug,
+      managerEmail: restaurants.managerEmail,
+    });
 
   if (expired.length > 0) {
     console.log(
       `[expire-trials] flipped ${expired.length} row(s):`,
       expired.map((r) => r.slug).join(', '),
     );
+
+    // A lapse must never be silent: tell each owner their account is blocked,
+    // and tell the founders once. Mail failures must not fail the cron — the
+    // rows are already flipped, so a retry would not resend anyway.
+    for (const r of expired) {
+      if (!r.managerEmail) continue;
+      try {
+        await sendTrialEndedEmail({ to: r.managerEmail, restaurantName: r.name });
+      } catch (err) {
+        console.error(`[expire-trials] owner email failed for ${r.slug}:`, err);
+      }
+    }
+    try {
+      await sendFounderTrialsExpiredAlert(expired.map((r) => r.slug));
+    } catch (err) {
+      console.error('[expire-trials] founder alert failed:', err);
+    }
   }
 
   return Response.json({

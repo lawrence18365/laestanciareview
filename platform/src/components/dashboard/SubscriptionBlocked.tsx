@@ -18,6 +18,14 @@ export default function SubscriptionBlocked({
 }) {
   const isPastDue = status === 'past_due';
 
+  // Back from Mercado Pago (backUrl ends in ?billing=mercadopago) but the
+  // webhook has not unlocked the account yet. Read after mount to keep SSR and
+  // first client render identical.
+  const [returningFromMp, setReturningFromMp] = React.useState(false);
+  React.useEffect(() => {
+    setReturningFromMp(new URLSearchParams(window.location.search).get('billing') === 'mercadopago');
+  }, []);
+
   return (
     <div
       style={{
@@ -60,6 +68,10 @@ export default function SubscriptionBlocked({
           {restaurantName}
         </div>
 
+        {returningFromMp ? (
+          <PaymentPending />
+        ) : (
+        <>
         <h1
           style={{
             fontSize: '1.5rem',
@@ -119,6 +131,8 @@ export default function SubscriptionBlocked({
             </p>
           </>
         )}
+        </>
+        )}
 
         <form action="/api/auth/logout" method="post">
           <button
@@ -144,6 +158,60 @@ export default function SubscriptionBlocked({
   );
 }
 
+/** Shown after returning from Mercado Pago: the webhook has not unlocked the account yet. */
+function PaymentPending() {
+  return (
+    <div style={{ marginBottom: '0.75rem' }}>
+      <h1
+        style={{
+          fontSize: '1.5rem',
+          fontWeight: 800,
+          color: '#1c1917',
+          letterSpacing: '-0.02em',
+          margin: '0 0 0.75rem',
+        }}
+      >
+        Estamos confirmando tu pago…
+      </h1>
+      <p style={{ color: '#57534e', fontSize: '0.95rem', lineHeight: 1.55, margin: '0 0 1.5rem' }}>
+        Tarda unos minutos. Actualiza esta página para ver tu cuenta.
+      </p>
+      <button
+        type="button"
+        onClick={() => window.location.reload()}
+        style={{
+          display: 'block',
+          width: '100%',
+          padding: '0.85rem',
+          background: '#1c1917',
+          color: '#fff',
+          border: 'none',
+          fontWeight: 700,
+          fontSize: '0.8rem',
+          letterSpacing: '0.1em',
+          textTransform: 'uppercase',
+          marginBottom: '0.75rem',
+          cursor: 'pointer',
+        }}
+      >
+        Actualizar
+      </button>
+      <p style={{ fontSize: '0.8rem', color: '#78716c', lineHeight: 1.5, margin: '0 0 1.25rem' }}>
+        ¿Sigue igual?{' '}
+        <a
+          href={SUPPORT_WHATSAPP_PAYMENT_URL}
+          target="_blank"
+          rel="noreferrer"
+          style={{ color: '#1c1917', fontWeight: 600 }}
+        >
+          Escríbenos por WhatsApp
+        </a>
+        .
+      </p>
+    </div>
+  );
+}
+
 function SubscribeButton({
   endpoint,
   label,
@@ -153,31 +221,42 @@ function SubscribeButton({
   label: string;
   whatsappUrl: string;
 }) {
-  const [state, setState] = React.useState<'idle' | 'loading' | 'error'>('idle');
+  const [state, setState] = React.useState<'idle' | 'loading' | 'error' | 'pending'>('idle');
+  const [errorMessage, setErrorMessage] = React.useState<string | null>(null);
 
   async function handleClick() {
     setState('loading');
 
     try {
       const res = await fetch(endpoint, { method: 'POST' });
-      const data = (await res.json()) as { url?: string; error?: string };
+      const data = (await res.json()) as { url?: string; error?: string; pending?: boolean };
       if (data.url) {
         window.location.href = data.url;
         return; // navigation starts — no state update needed
       }
+      if (data.pending) {
+        // The payment was already authorized on Mercado Pago; wait for the webhook.
+        setState('pending');
+        return;
+      }
+      if (data.error) setErrorMessage(data.error);
     } catch {
       /* portal unreachable */
     }
 
-    // Portal failed — show explicit error state with WhatsApp option
+    // Portal failed — show the server's reason, plus a WhatsApp option
     setState('error');
+  }
+
+  if (state === 'pending') {
+    return <PaymentPending />;
   }
 
   if (state === 'error') {
     return (
       <div style={{ marginBottom: '0.75rem' }}>
         <p style={{ fontSize: '0.85rem', color: '#b91c1c', marginBottom: '0.75rem', lineHeight: 1.5 }}>
-          No pudimos abrir el portal de pago. Escríbenos y lo resolvemos en minutos:
+          {errorMessage ?? 'No pudimos abrir el portal de pago.'} Escríbenos y lo resolvemos en minutos:
         </p>
         <a
           href={whatsappUrl}

@@ -11,6 +11,7 @@ import {
   computeBillingStartDate,
   createPreapproval,
   getMercadoPagoBaseUrl,
+  getPreapproval,
   getPriceBreakdown,
   isLegacyActiveAccount,
   legacyBillingStartDate,
@@ -113,6 +114,34 @@ export async function POST(req: NextRequest) {
     // two live preapprovals.
     const previousPreapprovalId = existing[0]?.preapprovalId;
     if (previousPreapprovalId) {
+      // Re-click guard: our row can still say `pending` after the customer
+      // authorized on Mercado Pago (the webhook may not have landed yet).
+      // Cancelling that preapproval would kill a payment that just went
+      // through, so check its LIVE status first. If we cannot read it, abort:
+      // never cancel blind.
+      try {
+        const live = await getPreapproval(previousPreapprovalId);
+        if (live.status === 'authorized') {
+          return Response.json(
+            { pending: true, message: 'Estamos confirmando tu pago…' },
+            { status: 202 },
+          );
+        }
+      } catch (statusErr) {
+        // 404 = the preapproval no longer exists, so there is nothing live to
+        // protect (cancelPreapproval tolerates it too).
+        const gone = statusErr instanceof Error && statusErr.message.includes('(404)');
+        if (!gone) {
+          console.error(
+            `[mercadopago-subscribe] failed to read previous preapproval ${previousPreapprovalId}:`,
+            statusErr,
+          );
+          return Response.json(
+            { error: 'No pudimos verificar tu pago. Inténtalo de nuevo en un momento.' },
+            { status: 502 },
+          );
+        }
+      }
       try {
         await cancelPreapproval(previousPreapprovalId);
       } catch (cancelErr) {
