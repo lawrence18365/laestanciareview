@@ -1318,11 +1318,16 @@ export async function getReviewFunnel(
   };
   if (scopeIds.length === 0) return emptyResult;
 
-  // Restaurants that have a Google review URL configured ("Google option shown").
+  // Restaurants that have a Google review link to offer ("Google option
+  // shown"). Either source counts: a stored review URL, or a Place ID that
+  // /api/reviews/submit derives the URL from — the same order as
+  // lib/google-review.ts reviewUrlFor().
   const withGoogle = db
     .select({ id: restaurants.id })
     .from(restaurants)
-    .where(sql`${restaurants.googleReviewUrl} is not null`)
+    .where(
+      sql`${restaurants.googleReviewUrl} is not null or ${restaurants.googlePlaceId} is not null`,
+    )
     .as('with_google');
 
   const [pageOpenAgg, reviewAgg, staffRows] = await Promise.all([

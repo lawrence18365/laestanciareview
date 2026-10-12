@@ -12,6 +12,7 @@ import { trackCommercialEvent } from '@/lib/commercial-tracking';
 import { normalizeStaffCode } from '@/lib/staff-code';
 import { recordProductEvent } from '@/lib/product-events';
 import { scheduleComplaintSlaSweep } from '@/lib/complaint-sla';
+import { reviewUrlFor } from '@/lib/google-review';
 
 // 30 reviews per minute per IP (generous for busy restaurants with shared tablet)
 const SUBMIT_LIMIT = 30;
@@ -140,17 +141,22 @@ export async function POST(req: NextRequest) {
   // /api/reviews/feedback). Tapping a star alone is not enough signal.
 
   // Google review link: offered to EVERY guest, regardless of rating.
+  // reviewUrlFor() is the single source of truth: a stored review URL wins,
+  // otherwise a Google Place ID is derived into Google's own write-a-review
+  // URL. A restaurant that captured a Place ID at signup therefore gets the
+  // Google option even though it never typed a URL.
   let googleReviewUrl: string | null = null;
-  if (restaurant.googleReviewUrl) {
+  const reviewLink = reviewUrlFor(restaurant);
+  if (reviewLink) {
     try {
-      const u = new URL(restaurant.googleReviewUrl);
+      const u = new URL(reviewLink);
       u.searchParams.set('utm_source', 'ratetap');
       u.searchParams.set('utm_medium', 'nfc');
       u.searchParams.set('utm_campaign', restaurantSlug);
       u.searchParams.set('utm_content', normalizedStaffCode || 'no-card');
       googleReviewUrl = u.toString();
     } catch {
-      googleReviewUrl = restaurant.googleReviewUrl;
+      googleReviewUrl = reviewLink;
     }
   }
 

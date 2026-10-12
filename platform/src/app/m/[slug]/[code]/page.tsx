@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation';
 import { getRestaurantBySlug, getStaffByCode, getStaffPersonalStats } from '@/lib/queries';
-import { getBrandForSlug } from '@/lib/brands';
+import { getBrandForRestaurant } from '@/lib/brands';
 import { recordProductEvent } from '@/lib/product-events';
 import { normalizeStaffCode } from '@/lib/staff-code';
 import MeseroCard from '@/components/mesero/MeseroCard';
@@ -24,7 +24,7 @@ export default async function MeseroPage({ params }: PageProps) {
   if (!staffMember) notFound();
 
   const stats = await getStaffPersonalStats(restaurant.id, staffMember.id);
-  const brand = getBrandForSlug(slug);
+  const brand = getBrandForRestaurant(restaurant);
 
   // Fire-and-forget — analytics must never block the render path.
   void recordProductEvent({

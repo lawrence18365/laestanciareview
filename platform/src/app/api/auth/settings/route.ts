@@ -5,7 +5,28 @@ import { verifySession } from '@/lib/session';
 import { getRestaurantBySlug } from '@/lib/queries';
 import { hashPassword, verifyPassword } from '@/lib/auth';
 import { refreshGoogleRating } from '@/lib/google-places';
+import { getBrandForRestaurant } from '@/lib/brands';
+import { derivedGoogleReviewUrl } from '@/lib/google-review';
 import { requireSameOrigin } from '@/lib/origin';
+
+/**
+ * An uploaded logo, as a data URL. Only the three formats the browser is told
+ * to produce are accepted, and only up to 280 KB of base64 text — the client
+ * rejects anything over 200 KB of image bytes, so this is the backstop.
+ */
+const LOGO_DATA_URL_PATTERN = /^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/;
+const LOGO_DATA_URL_MAX_LENGTH = 280_000;
+
+/**
+ * The custom logo's URL, or null when the restaurant has none.
+ *
+ * The data URL itself never leaves the server as a response field: it is up to
+ * 280 KB and the settings screen only needs to show it. /api/logo/[slug] serves
+ * the bytes, versioned by the hash of the data URL.
+ */
+function logoUrlFor(restaurant: { slug: string; logoDataUrl: string | null }) {
+  return restaurant.logoDataUrl ? getBrandForRestaurant(restaurant).logo : null;
+}
 
 export async function GET() {
   const session = await verifySession();
@@ -28,6 +49,7 @@ export async function GET() {
     googlePlaceId: restaurant.googlePlaceId,
     googleRating: restaurant.googleRating ? parseFloat(restaurant.googleRating) : null,
     googleReviewCount: restaurant.googleReviewCount,
+    logoUrl: logoUrlFor(restaurant),
   });
 }
 
@@ -86,7 +108,25 @@ export async function PATCH(req: Request) {
     updates.googlePlaceId = body.googlePlaceId || null;
     // Auto-derive review URL from place ID when no URL is set yet and none is being explicitly provided
     if (body.googlePlaceId && !restaurant.googleReviewUrl && typeof body.googleReviewUrl !== 'string') {
-      updates.googleReviewUrl = `https://search.google.com/local/writereview?placeid=${body.googlePlaceId}`;
+      updates.googleReviewUrl = derivedGoogleReviewUrl(body.googlePlaceId);
+    }
+  }
+
+  // Logo upload. `null` removes it; anything else must be one of the three
+  // formats the browser encoder produces, within the size the column allows.
+  // Rejected loudly rather than dropped: a silently ignored logo upload looks
+  // like a save that worked.
+  if (body.logoDataUrl !== undefined) {
+    if (body.logoDataUrl === null) {
+      updates.logoDataUrl = null;
+    } else if (
+      typeof body.logoDataUrl === 'string' &&
+      body.logoDataUrl.length <= LOGO_DATA_URL_MAX_LENGTH &&
+      LOGO_DATA_URL_PATTERN.test(body.logoDataUrl)
+    ) {
+      updates.logoDataUrl = body.logoDataUrl;
+    } else {
+      return Response.json({ error: 'Logo inválido' }, { status: 400 });
     }
   }
   if (typeof body.newPassword === 'string' && body.newPassword.length >= 8) {
@@ -139,5 +179,6 @@ export async function PATCH(req: Request) {
     googlePlaceId: updated.googlePlaceId,
     googleRating: updated.googleRating ? parseFloat(updated.googleRating) : null,
     googleReviewCount: updated.googleReviewCount,
+    logoUrl: logoUrlFor(updated),
   });
 }

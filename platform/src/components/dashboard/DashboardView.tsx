@@ -88,6 +88,13 @@ interface Props {
   googleRating: number | null;
   googleReviewCount: number | null;
   googleReviewsToday: number | null;
+  /**
+   * GM view only, and only while the restaurant has no review link at all
+   * (neither a stored URL nor a Place ID): without one there is nowhere to send
+   * a guest who taps "Google", so the whole point of the QR is missing.
+   * Computed on the server — see (app)/dashboard/page.tsx.
+   */
+  showGoogleConnect?: boolean;
 }
 
 /* ── Main Component ── */
@@ -105,6 +112,7 @@ export default function DashboardView({
   googleRating,
   googleReviewCount,
   googleReviewsToday,
+  showGoogleConnect = false,
 }: Props) {
   const firstReview = roiStats.firstReviewAt ? new Date(roiStats.firstReviewAt) : null;
   const weeksActive = useMemo(() => {
@@ -136,6 +144,39 @@ export default function DashboardView({
           Resumen de rendimiento y métricas clave.
         </p>
       </div>
+
+      {/* ── Google profile not connected ──
+          The one thing a new restaurant has to do before the QR means
+          anything: without a review link there is nowhere to send a guest who
+          taps "Google". Shown to the GM only, and only while it is true. */}
+      {showGoogleConnect && (
+        <a href="/settings" className="card stagger-2" style={{
+          display: 'flex', alignItems: 'center', gap: '1rem',
+          padding: '1.25rem 1.5rem', textDecoration: 'none', color: 'var(--text-main)',
+          borderLeft: '4px solid var(--gold)',
+          background: 'var(--gold-light)',
+        }}>
+          <span style={{
+            width: 32, height: 32, borderRadius: '50%', background: '#fff',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            flexShrink: 0, fontSize: '1rem', fontWeight: 700, color: 'var(--gold)',
+          }}>!</span>
+          <div style={{ flex: 1 }}>
+            <p style={{ margin: 0, fontWeight: 600, fontSize: '1rem', fontFamily: 'var(--font-serif)' }}>
+              {t.dashboard.connectGoogleTitle}
+            </p>
+            <p style={{ margin: '0.25rem 0 0', fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+              {t.dashboard.connectGoogleBody}
+            </p>
+          </div>
+          <span style={{
+            fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.08em',
+            textTransform: 'uppercase', color: 'var(--gold)', whiteSpace: 'nowrap',
+          }}>
+            {t.dashboard.connectGoogleCta} →
+          </span>
+        </a>
+      )}
 
       {/* ── Global Empty State ── */}
       {roiStats.totalReviews === 0 && (

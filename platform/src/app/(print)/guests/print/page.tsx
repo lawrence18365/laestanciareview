@@ -4,7 +4,7 @@ import { db } from '@/db';
 import { guests, guestVisits, staff } from '@/db/schema';
 import { verifySession } from '@/lib/session';
 import { getRestaurantBySlug } from '@/lib/queries';
-import { getBrandForSlug } from '@/lib/brands';
+import { getBrandForRestaurant } from '@/lib/brands';
 import PrintButton from './PrintButton';
 
 function fmtDate(iso: string | Date): string {
@@ -29,7 +29,7 @@ export default async function GuestsPrintPage() {
   const restaurant = await getRestaurantBySlug(session.slug);
   if (!restaurant) redirect('/login');
 
-  const brand = getBrandForSlug(session.slug);
+  const brand = getBrandForRestaurant(restaurant);
 
   const [metricsResult, leaderboardResult, guestRows] = await Promise.all([
     db

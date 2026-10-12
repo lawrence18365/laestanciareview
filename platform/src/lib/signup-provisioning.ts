@@ -1,6 +1,7 @@
 import { db, transactionDb } from '@/db';
 import { pendingSignups, restaurants } from '@/db/schema';
 import { generateUniqueSlug, slugify } from '@/lib/slug';
+import { reviewUrlFor } from '@/lib/google-review';
 import { and, eq, sql } from 'drizzle-orm';
 
 export type SignupRestaurantInput = {
@@ -31,9 +32,10 @@ export async function provisionSignupRestaurant(input: SignupRestaurantInput) {
       city: input.city ?? null,
       managerPhone: input.phone ?? null,
       googlePlaceId: input.googlePlaceId || null,
-      googleReviewUrl: input.googlePlaceId
-        ? `https://search.google.com/local/writereview?placeid=${input.googlePlaceId}`
-        : null,
+      googleReviewUrl: reviewUrlFor({
+        googleReviewUrl: null,
+        googlePlaceId: input.googlePlaceId ?? null,
+      }),
       adminPasswordHash: input.passwordHash,
       shippingAddress: input.shippingAddress ?? null,
       stripeCustomerId: input.stripeCustomerId ?? null,
@@ -104,9 +106,10 @@ export async function provisionSignupAtomic(
           city: input.city ?? null,
           managerPhone: input.phone ?? null,
           googlePlaceId: input.googlePlaceId || null,
-          googleReviewUrl: input.googlePlaceId
-            ? `https://search.google.com/local/writereview?placeid=${input.googlePlaceId}`
-            : null,
+          googleReviewUrl: reviewUrlFor({
+            googleReviewUrl: null,
+            googlePlaceId: input.googlePlaceId ?? null,
+          }),
           adminPasswordHash: input.passwordHash,
           shippingAddress: input.shippingAddress ?? null,
           subscriptionStatus: 'trialing',

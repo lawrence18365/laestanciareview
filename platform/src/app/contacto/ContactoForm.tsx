@@ -1,10 +1,13 @@
 'use client';
 
 import Script from 'next/script';
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
+import GooglePlaceSearch, {
+  GOOGLE_PLACES_BROWSER_KEY,
+  type PlaceSelection,
+} from '@/components/GooglePlaceSearch';
 
 const PIXEL_ID = process.env.NEXT_PUBLIC_META_PIXEL_ID ?? '1578821303344121';
-const GMAPS_KEY = process.env.NEXT_PUBLIC_GOOGLE_PLACES_BROWSER_KEY ?? '';
 
 type Form = {
   businessName: string;
@@ -72,70 +75,25 @@ export default function ContactoForm({ pilotOffer }: { pilotOffer: boolean }) {
   const [form, setForm] = useState<Form>(EMPTY);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const businessRef = useRef<HTMLInputElement | null>(null);
-  const autocompleteReady = useRef(false);
 
   function update<K extends keyof Form>(key: K, value: Form[K]) {
     setForm((f) => ({ ...f, [key]: value }));
   }
 
-  function initAutocomplete() {
-    if (autocompleteReady.current || !businessRef.current) return;
-    type AddressComponent = { types: string[]; long_name: string };
-    type PlaceResult = {
-      place_id?: string;
-      name?: string;
-      address_components?: AddressComponent[];
-    };
-    type AutocompleteInstance = {
-      addListener: (event: string, cb: () => void) => void;
-      getPlace: () => PlaceResult;
-    };
-    interface GoogleNS {
-      maps?: {
-        places?: {
-          Autocomplete: new (
-            input: HTMLInputElement,
-            opts: Record<string, unknown>,
-          ) => AutocompleteInstance;
-        };
-      };
-    }
-    const g = (window as unknown as { google?: GoogleNS }).google;
-    if (!g?.maps?.places) return;
-    const ac = new g.maps.places.Autocomplete(businessRef.current, {
-      types: ['establishment'],
-      componentRestrictions: { country: 'mx' },
-      fields: ['place_id', 'name', 'address_components'],
-    });
-    ac.addListener('place_changed', () => {
-      const place = ac.getPlace();
-      const name = place.name ?? '';
-      const placeId = place.place_id ?? '';
-      let city = '';
-      let state = '';
-      for (const comp of place.address_components ?? []) {
-        if (comp.types.includes('locality')) city = comp.long_name;
-        else if (comp.types.includes('administrative_area_level_1')) state = comp.long_name;
-      }
-      setForm((f) => ({
-        ...f,
-        businessName: name || f.businessName,
-        googlePlaceId: placeId,
-        city: city || f.city,
-        addrCity: city || f.addrCity,
-        state: state || f.state,
-      }));
-    });
-    autocompleteReady.current = true;
+  // Picking the restaurant from Google is what captures its Place ID — the same
+  // widget the dashboard uses (see components/GooglePlaceSearch.tsx). The city
+  // and state Google returns prefill the address block; anything the guest has
+  // already typed wins.
+  function handlePlaceSelected(place: PlaceSelection) {
+    setForm((f) => ({
+      ...f,
+      businessName: place.name || f.businessName,
+      googlePlaceId: place.placeId,
+      city: place.address.city || f.city,
+      addrCity: place.address.city || f.addrCity,
+      state: place.address.state || f.state,
+    }));
   }
-
-  useEffect(() => {
-    const onLoad = () => initAutocomplete();
-    if ((window as unknown as { google?: { maps?: unknown } }).google?.maps) initAutocomplete();
-    window.addEventListener('gmaps:loaded', onLoad);
-    return () => window.removeEventListener('gmaps:loaded', onLoad);
-  }, []);
 
   // Everyone who submits this form is provisioned immediately: the restaurant
   // is live with a 30-day trial the moment the request lands. The API records
@@ -209,14 +167,7 @@ export default function ContactoForm({ pilotOffer }: { pilotOffer: boolean }) {
         fbq('init', '${PIXEL_ID}'); fbq('track', 'PageView');
       `}</Script>
 
-      {/* Google Places */}
-      {GMAPS_KEY && (
-        <Script
-          strategy="afterInteractive"
-          src={`https://maps.googleapis.com/maps/api/js?key=${GMAPS_KEY}&libraries=places&language=es&region=MX`}
-          onLoad={() => window.dispatchEvent(new Event('gmaps:loaded'))}
-        />
-      )}
+      {/* Google Places — injected by GooglePlaceSearch, which owns the key. */}
 
       <div style={{
         minHeight: '100vh',
@@ -261,16 +212,26 @@ export default function ContactoForm({ pilotOffer }: { pilotOffer: boolean }) {
           >
             <SectionTitle>Tu negocio</SectionTitle>
             <Field label="Nombre del restaurante">
-              <input
-                ref={businessRef}
-                required
-                value={form.businessName}
-                onChange={(e) => update('businessName', e.target.value)}
-                onFocus={initAutocomplete}
-                placeholder={GMAPS_KEY ? 'Escribe el nombre y selecciona de la lista' : 'Nombre del restaurante'}
-                style={inputStyle}
-                autoComplete="off"
-              />
+              {GOOGLE_PLACES_BROWSER_KEY ? (
+                <GooglePlaceSearch
+                  value={form.businessName}
+                  onChange={(v) => update('businessName', v)}
+                  onSelect={handlePlaceSelected}
+                  inputId="businessName"
+                  required
+                  placeholder="Escribe el nombre y selecciona de la lista"
+                  style={inputStyle}
+                />
+              ) : (
+                <input
+                  required
+                  value={form.businessName}
+                  onChange={(e) => update('businessName', e.target.value)}
+                  placeholder="Nombre del restaurante"
+                  style={inputStyle}
+                  autoComplete="off"
+                />
+              )}
               {form.googlePlaceId && (
                 <small style={{ fontSize: '0.7rem', color: '#16a34a', marginTop: 4, display: 'block' }}>
                   ✓ Ubicación verificada en Google
