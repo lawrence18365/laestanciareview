@@ -36,7 +36,6 @@ export default async function CardQrPrintPage({
     activeStaff.map(async (s) => ({
       id: s.id,
       name: s.name,
-      code: s.code,
       svg: await QRCode.toString(cardUrlFor(restaurant.slug, s.code), {
         type: 'svg',
         errorCorrectionLevel: 'H',
@@ -63,14 +62,17 @@ export default async function CardQrPrintPage({
             <div className="qt-grid">
               {cards.map((c) => (
                 <div key={c.id} className="qt-card">
-                  <div className="qt-qr" dangerouslySetInnerHTML={{ __html: c.svg }} />
-                  <div className="qt-info">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={brand.logo} alt="" className="qt-logo" />
-                    <div className="qt-name">{c.name}</div>
-                    <div className="qt-hint">Escanee para calificar</div>
-                    <div className="qt-code">{c.code}</div>
+                  <div className="qt-brand">
+                    <div className={`qt-logo-tile${brand.darkBg ? ' qt-logo-tile-dark' : ''}`}>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={brand.logo} alt="" className="qt-logo" />
+                    </div>
+                    <div className="qt-restaurant">{restaurant.name}</div>
                   </div>
+                  <div className="qt-qr" dangerouslySetInnerHTML={{ __html: c.svg }} />
+                  <div className="qt-name">{c.name}</div>
+                  <div className="qt-hint">Escanee para calificar</div>
+                  <div className="qt-footer">RATETAP</div>
                 </div>
               ))}
             </div>
@@ -137,62 +139,118 @@ const PRINT_CSS = `
 .qt-grid {
   display: grid;
   grid-template-columns: repeat(2, 3.5in);
-  gap: 0.25in;
+  gap: 0.2in;
   justify-content: center;
 }
+/* Portrait, mirroring the 9:16 card the waiter keeps on their phone
+   (lib/qr-card.ts): gold rule, logo tile, name, QR, waiter, CTA, footer. */
 .qt-card {
   width: 3.5in;
-  height: 2.4in;
-  border: 1px dashed #bbb;
+  height: 4.9in;
+  background: #141414;
   break-inside: avoid;
   page-break-inside: avoid;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 0.16in;
-  padding: 0.14in;
+  justify-content: center;
+  padding: 0.22in 0.2in 0.16in;
+  position: relative;
   overflow: hidden;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
 }
-.qt-qr {
-  width: 1.9in;
-  height: 1.9in;
-  flex: 0 0 1.9in;
+.qt-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 0.04in;
+  background: #d97706;
 }
-.qt-qr svg {
-  width: 100%;
-  height: 100%;
-  display: block;
+.qt-card * {
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
 }
-.qt-info {
-  flex: 1 1 auto;
-  min-width: 0;
+.qt-brand {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
+  align-items: center;
   gap: 0.06in;
 }
+.qt-logo-tile {
+  width: 0.85in;
+  height: 0.85in;
+  flex: 0 0 0.85in;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.08in;
+  background: #ffffff;
+  border: 1.5px solid #d97706;
+}
+.qt-logo-tile-dark {
+  background: #111111;
+}
 .qt-logo {
-  height: 0.45in;
-  width: auto;
   max-width: 100%;
+  max-height: 100%;
+  width: auto;
+  height: auto;
   object-fit: contain;
+  display: block;
+}
+.qt-restaurant {
+  font-family: -apple-system, 'Helvetica Neue', Arial, sans-serif;
+  font-size: 6.5pt;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #a3a3a3;
+  text-align: center;
+}
+.qt-qr {
+  width: 2.35in;
+  height: 2.35in;
+  flex: 0 0 2.35in;
+  margin-top: 0.08in;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #ffffff;
+  border-radius: 0.06in;
+}
+.qt-qr svg {
+  /* 2.05in inside the 2.35in panel leaves a quiet zone for scanning. */
+  width: 2.05in;
+  height: 2.05in;
+  display: block;
 }
 .qt-name {
+  margin-top: 0.08in;
   font-family: Georgia, 'Times New Roman', serif;
-  font-size: 15pt;
+  font-size: 20pt;
   font-weight: 700;
-  color: #1c1917;
-  line-height: 1.15;
+  color: #ffffff;
+  line-height: 1.1;
   overflow-wrap: anywhere;
+  text-align: center;
 }
 .qt-hint {
-  font-family: sans-serif;
-  font-size: 9pt;
-  color: #555;
+  margin-top: 0.06in;
+  font-family: -apple-system, 'Helvetica Neue', Arial, sans-serif;
+  font-size: 10.5pt;
+  color: #d97706;
+  text-align: center;
 }
-.qt-code {
-  font-family: ui-monospace, Menlo, Consolas, monospace;
-  font-size: 8pt;
-  color: #888;
+.qt-footer {
+  margin-top: auto;
+  font-family: -apple-system, 'Helvetica Neue', Arial, sans-serif;
+  font-size: 6pt;
+  font-weight: 700;
+  letter-spacing: 0.3em;
+  color: #5a5a5a;
+  text-align: center;
 }
 .qt-empty {
   font-family: sans-serif;
@@ -205,7 +263,9 @@ const PRINT_CSS = `
 /* ── Small screens (never applies to print) ───────────────── */
 @media screen and (max-width: 900px) {
   .qt-sheet { width: 100%; padding: 1rem; }
-  .qt-grid { grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); }
-  .qt-card { width: 100%; }
+  /* One centered column: a phone shows a single card, not a tiny one on a
+     huge empty page. */
+  .qt-grid { grid-template-columns: 1fr; justify-content: center; }
+  .qt-card { width: 100%; max-width: 3.5in; margin: 0 auto; }
 }
 `;
