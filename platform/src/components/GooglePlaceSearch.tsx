@@ -1,7 +1,7 @@
 'use client';
 
 import Script from 'next/script';
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 /**
  * Google Places autocomplete for an <input>.
@@ -11,11 +11,11 @@ import { useCallback, useEffect, useRef } from 'react';
  * Place ID is enough to send guests straight to that restaurant's review page
  * (see lib/google-review.ts). A name typed by hand gives us nothing.
  *
- * Renders NOTHING when the browser key is missing — no input, no script tag —
- * because without the key there is no autocomplete, and every caller already
- * has (or keeps) its own free-text field to fall back on. The key is read here
- * rather than taken as a prop so a caller can branch on
- * `GOOGLE_PLACES_BROWSER_KEY` and render that fallback itself.
+ * With the browser key it loads the Maps script and attaches Google's own
+ * autocomplete. Without it, it falls back to a server-backed search
+ * (/api/places/search, which uses the server-side Places key) with the same
+ * props and the same `onSelect` contract. The key is read here rather than
+ * taken as a prop.
  */
 
 export const GOOGLE_PLACES_BROWSER_KEY =
@@ -69,7 +69,7 @@ function googleNamespace(): GoogleNamespace | undefined {
   return (window as unknown as { google?: GoogleNamespace }).google;
 }
 
-export default function GooglePlaceSearch({
+function BrowserPlaceSearch({
   value,
   onChange,
   onSelect,
@@ -125,8 +125,6 @@ export default function GooglePlaceSearch({
     return () => window.removeEventListener(GMAPS_EVENT, onLoad);
   }, [initAutocomplete]);
 
-  if (!GOOGLE_PLACES_BROWSER_KEY) return null;
-
   return (
     <>
       <Script
@@ -152,4 +150,148 @@ export default function GooglePlaceSearch({
       />
     </>
   );
+}
+
+type ServerResult = {
+  placeId: string;
+  name: string;
+  address: string;
+  city: string;
+  state: string;
+};
+
+const SEARCH_DEBOUNCE_MS = 300;
+const MIN_QUERY_LENGTH = 3;
+
+const listStyle: React.CSSProperties = {
+  listStyle: 'none',
+  margin: '0.35rem 0 0',
+  padding: 0,
+  border: '1px solid rgba(128, 128, 128, 0.35)',
+  background: 'var(--panel-bg, var(--bg-card, #fff))',
+  color: 'inherit',
+};
+
+const resultButtonStyle: React.CSSProperties = {
+  display: 'block',
+  width: '100%',
+  minHeight: 44,
+  padding: '0.6rem 0.75rem',
+  textAlign: 'left',
+  background: 'transparent',
+  color: 'inherit',
+  border: 'none',
+  borderTop: '1px solid rgba(128, 128, 128, 0.2)',
+  font: 'inherit',
+  cursor: 'pointer',
+};
+
+/**
+ * Fallback when there is no browser key: the same input, but suggestions come
+ * from our own API. Search runs from the input's change handler (not an effect
+ * on `value`) so picking a result, which rewrites the value, never re-searches.
+ */
+function ServerPlaceSearch({
+  value,
+  onChange,
+  onSelect,
+  inputId,
+  placeholder,
+  required,
+  autoComplete = 'off',
+  style,
+}: Props) {
+  const [results, setResults] = useState<ServerResult[]>([]);
+  const [status, setStatus] = useState<'idle' | 'loading' | 'empty' | 'error'>('idle');
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const controller = useRef<AbortController | null>(null);
+
+  const cancelPending = useCallback(() => {
+    if (timer.current) clearTimeout(timer.current);
+    timer.current = null;
+    controller.current?.abort();
+    controller.current = null;
+  }, []);
+
+  useEffect(() => cancelPending, [cancelPending]);
+
+  function handleChange(next: string) {
+    onChange(next);
+    cancelPending();
+    const q = next.trim();
+    if (q.length < MIN_QUERY_LENGTH) {
+      setResults([]);
+      setStatus('idle');
+      return;
+    }
+    setStatus('loading');
+    timer.current = setTimeout(async () => {
+      const ac = new AbortController();
+      controller.current = ac;
+      try {
+        const res = await fetch(`/api/places/search?q=${encodeURIComponent(q)}`, {
+          signal: ac.signal,
+        });
+        if (!res.ok) throw new Error(String(res.status));
+        const data = (await res.json()) as ServerResult[];
+        setResults(data);
+        setStatus(data.length ? 'idle' : 'empty');
+      } catch (err) {
+        if (ac.signal.aborted) return;
+        console.error('places search failed', err);
+        setResults([]);
+        setStatus('error');
+      }
+    }, SEARCH_DEBOUNCE_MS);
+  }
+
+  function pick(r: ServerResult) {
+    cancelPending();
+    setResults([]);
+    setStatus('idle');
+    onChange(r.name);
+    onSelect({ placeId: r.placeId, name: r.name, address: { city: r.city, state: r.state } });
+  }
+
+  return (
+    <div>
+      <input
+        id={inputId}
+        required={required}
+        value={value}
+        onChange={(e) => handleChange(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === 'Escape') setResults([]);
+        }}
+        placeholder={placeholder}
+        style={style}
+        autoComplete={autoComplete}
+      />
+      {results.length > 0 && (
+        <ul aria-label="Resultados de Google" style={listStyle}>
+          {results.map((r, i) => (
+            <li key={r.placeId}>
+              <button
+                type="button"
+                onClick={() => pick(r)}
+                style={{ ...resultButtonStyle, borderTop: i === 0 ? 'none' : resultButtonStyle.borderTop }}
+              >
+                <span style={{ display: 'block', fontWeight: 600 }}>{r.name}</span>
+                <span style={{ display: 'block', fontSize: '0.8rem', opacity: 0.7 }}>{r.address}</span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+      <p role="status" style={{ margin: status === 'idle' ? 0 : '0.3rem 0 0', fontSize: '0.8rem', opacity: 0.7 }}>
+        {status === 'loading' && 'Buscando en Google...'}
+        {status === 'empty' && 'Sin resultados. Escribe el nombre a mano.'}
+        {status === 'error' && 'No pudimos buscar ahora. Escribe el nombre a mano.'}
+      </p>
+    </div>
+  );
+}
+
+export default function GooglePlaceSearch(props: Props) {
+  return GOOGLE_PLACES_BROWSER_KEY ? <BrowserPlaceSearch {...props} /> : <ServerPlaceSearch {...props} />;
 }

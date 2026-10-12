@@ -3,7 +3,6 @@
 import Script from 'next/script';
 import { useState } from 'react';
 import GooglePlaceSearch, {
-  GOOGLE_PLACES_BROWSER_KEY,
   type PlaceSelection,
 } from '@/components/GooglePlaceSearch';
 
@@ -214,27 +213,16 @@ export default function ContactoForm({ pilotOffer }: { pilotOffer: boolean }) {
             }}
           >
             <SectionTitle>Tu negocio</SectionTitle>
-            <Field label="Nombre del restaurante">
-              {GOOGLE_PLACES_BROWSER_KEY ? (
-                <GooglePlaceSearch
-                  value={form.businessName}
-                  onChange={(v) => update('businessName', v)}
-                  onSelect={handlePlaceSelected}
-                  inputId="businessName"
-                  required
-                  placeholder="Escribe el nombre y selecciona de la lista"
-                  style={inputStyle}
-                />
-              ) : (
-                <input
-                  required
-                  value={form.businessName}
-                  onChange={(e) => update('businessName', e.target.value)}
-                  placeholder="Nombre del restaurante"
-                  style={inputStyle}
-                  autoComplete="off"
-                />
-              )}
+            <Field label="Busca tu restaurante en Google">
+              <GooglePlaceSearch
+                value={form.businessName}
+                onChange={(v) => update('businessName', v)}
+                onSelect={handlePlaceSelected}
+                inputId="businessName"
+                required
+                placeholder="Escribe el nombre y selecciona de la lista"
+                style={inputStyle}
+              />
               {form.googlePlaceId && (
                 <small style={{ fontSize: '0.7rem', color: '#16a34a', marginTop: 4, display: 'block' }}>
                   ✓ Ubicación verificada en Google
