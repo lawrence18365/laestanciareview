@@ -19,6 +19,7 @@ import { sendPurchaseEvent, sendCompleteRegistrationEvent } from '@/lib/meta-con
 import { sendWhatsAppWelcome } from '@/lib/whatsapp';
 import { trackCommercialEvent } from '@/lib/commercial-tracking';
 import { provisionSignupRestaurant } from '@/lib/signup-provisioning';
+import { parseShippingAddress } from '@/lib/shipping';
 
 export const runtime = 'nodejs';
 // Webhooks must not be statically analyzed / cached
@@ -373,20 +374,7 @@ async function handlePaymentSucceeded(invoice: Stripe.Invoice) {
 
   if (wasFirstConversion) {
     // Owner ship-NFC email + Meta Purchase event
-    let shipping: OwnerConversionShipping = {
-      line1: '—',
-      city: r.city ?? '—',
-      state: '—',
-      postalCode: '—',
-    };
-    if (r.shippingAddress) {
-      try {
-        const parsed = JSON.parse(r.shippingAddress);
-        shipping = { ...shipping, ...parsed };
-      } catch {
-        /* ignore parse errors */
-      }
-    }
+    const shipping = parseShippingAddress(r.shippingAddress, r.city);
 
     await Promise.allSettled([
       sendOwnerConversionNotification({
@@ -538,15 +526,6 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
 }
 
 // ─────────────────────────────────────────────────────────────
-
-type OwnerConversionShipping = {
-  line1: string;
-  line2?: string;
-  city: string;
-  state: string;
-  postalCode: string;
-  notes?: string;
-};
 
 function priceAmountMxn(subscription: Stripe.Subscription): number {
   const item = subscription.items.data[0];

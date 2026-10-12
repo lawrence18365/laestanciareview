@@ -17,7 +17,13 @@ interface StatusResponse {
   signupId?: string;
 }
 
-export default function BienvenidaClient({ hasSignupAccess }: { hasSignupAccess: boolean }) {
+export default function BienvenidaClient({
+  hasSignupAccess,
+  trialDays,
+}: {
+  hasSignupAccess: boolean;
+  trialDays: number;
+}) {
   return (
     <>
       <Script id="meta-pixel" strategy="afterInteractive">{`
@@ -28,12 +34,18 @@ export default function BienvenidaClient({ hasSignupAccess }: { hasSignupAccess:
         document,'script','https://connect.facebook.net/en_US/fbevents.js');
         fbq('init', '${PIXEL_ID}'); fbq('track', 'PageView');
       `}</Script>
-      <BienvenidaInner hasSignupAccess={hasSignupAccess} />
+      <BienvenidaInner hasSignupAccess={hasSignupAccess} trialDays={trialDays} />
     </>
   );
 }
 
-function BienvenidaInner({ hasSignupAccess }: { hasSignupAccess: boolean }) {
+function BienvenidaInner({
+  hasSignupAccess,
+  trialDays,
+}: {
+  hasSignupAccess: boolean;
+  trialDays: number;
+}) {
   const [status, setStatus] = useState<StatusResponse | null>(null);
   const [timedOut, setTimedOut] = useState(false);
   const pixelFiredRef = useRef(false);
@@ -54,7 +66,7 @@ function BienvenidaInner({ hasSignupAccess }: { hasSignupAccess: boolean }) {
         event: 'signup_completed',
         event_id: signupId,
         plan_type: status.pilot ? 'pilot' : 'trial',
-        signup_method: status.pilot ? 'pilot_code' : 'stripe_checkout',
+        signup_method: status.pilot ? 'pilot_code' : 'self_serve',
       });
     }
     pixelFiredRef.current = true;
@@ -143,7 +155,7 @@ function BienvenidaInner({ hasSignupAccess }: { hasSignupAccess: boolean }) {
         <div style={{ fontSize: '2.5rem', marginBottom: '0.5rem' }}>🎉</div>
         <h1 style={h1Style}>¡Listo, {status.restaurantName}!</h1>
         <p style={{ color: '#57534e', marginBottom: '1.5rem' }}>
-          Tu prueba gratis de {status.pilot ? 30 : 15} días ya está activa. Usa este QR desde hoy.
+          Tu prueba gratis de {trialDays} días ya está activa. Usa este QR desde hoy.
         </p>
       </div>
 
@@ -169,6 +181,28 @@ function BienvenidaInner({ hasSignupAccess }: { hasSignupAccess: boolean }) {
         </div>
       </div>
 
+      <a
+        href="/staff"
+        style={{
+          display: 'block',
+          textAlign: 'center',
+          padding: '0.9rem',
+          background: '#1c1917',
+          color: '#fff',
+          textDecoration: 'none',
+          fontWeight: 700,
+          fontSize: '0.85rem',
+          letterSpacing: '0.1em',
+          textTransform: 'uppercase',
+        }}
+      >
+        Agrega a tus meseros →
+      </a>
+
+      <p style={{ fontSize: '0.8rem', color: '#78716c', textAlign: 'center', margin: '0.75rem 0' }}>
+        Luego descarga sus códigos QR.
+      </p>
+
       {status.qrDataUrl && (
         <a
           href={status.qrDataUrl}
@@ -191,26 +225,9 @@ function BienvenidaInner({ hasSignupAccess }: { hasSignupAccess: boolean }) {
         </a>
       )}
 
-      <a
-        href="/dashboard"
-        style={{
-          display: 'block',
-          textAlign: 'center',
-          padding: '0.9rem',
-          background: '#1c1917',
-          color: '#fff',
-          textDecoration: 'none',
-          fontWeight: 700,
-          fontSize: '0.85rem',
-          letterSpacing: '0.1em',
-          textTransform: 'uppercase',
-        }}
-      >
-        Ir a mi panel →
-      </a>
-
       <p style={{ fontSize: '0.75rem', color: '#a8a29e', textAlign: 'center', marginTop: '1rem' }}>
-        Revisa tu email: te mandamos una copia del QR y los datos de acceso.
+        Revisa tu email: te mandamos una copia del QR y los datos de acceso. También puedes{' '}
+        <a href="/dashboard" style={{ color: '#1c1917', fontWeight: 600 }}>ir a tu panel</a>.
       </p>
     </Shell>
   );

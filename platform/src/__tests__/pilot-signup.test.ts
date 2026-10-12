@@ -125,7 +125,7 @@ const validSignup = {
   },
 };
 
-function signupRequest(pilotAccess?: string) {
+function signupRequest(pilotAccess?: string, overrides: Record<string, unknown> = {}) {
   const headers = new Headers({ 'content-type': 'application/json' });
   if (pilotAccess) headers.set('cookie', `${PILOT_ACCESS_COOKIE}=${pilotAccess}`);
 
@@ -138,6 +138,7 @@ function signupRequest(pilotAccess?: string) {
       metadata: {
         landing_url: 'https://app.ratetapmx.com/contacto?utm_source=test',
       },
+      ...overrides,
     }),
   });
 }
@@ -147,7 +148,7 @@ function responseCookie(response: Response, name: string): string | undefined {
   return match?.[1] || undefined;
 }
 
-describe('founder pilot signup', () => {
+describe('signup provisioning', () => {
   beforeEach(() => {
     process.env.PILOT_CODE = 'founder-secret';
     process.env.SESSION_SECRET = 'session-secret-for-tests';
@@ -215,33 +216,56 @@ describe('founder pilot signup', () => {
     }));
   });
 
-  it('charges the setup fee and saves the card when the pilot code is invalid', async () => {
-    mocks.stripeSessionCreate.mockResolvedValue({
-      id: 'cs_test_123',
-      url: 'https://checkout.stripe.com/c/pay/test',
-    });
-
-    const exchangeResponse = await exchangePilotCode(new NextRequest(
-      'https://app.ratetapmx.com/api/signup/pilot-access?pilot=wrong-code',
-    ));
-    expect(responseCookie(exchangeResponse, PILOT_ACCESS_COOKIE)).toBeUndefined();
-
+  it('provisions a self-serve 30-day trial with pilot=false and no Stripe call', async () => {
     const response = await POST(signupRequest());
     const body = await response.json();
 
     expect(response.status).toBe(200);
-    expect(body.url).toBe('https://checkout.stripe.com/c/pay/test');
-    expect(mocks.insertedValues.some((values) => values.pilot === true)).toBe(false);
-    expect(mocks.getStripe).toHaveBeenCalledOnce();
-    expect(mocks.stripeSessionCreate).toHaveBeenCalledWith(expect.objectContaining({
-      mode: 'payment',
-      customer_creation: 'always',
-      line_items: [{ price: 'price_setup_test', quantity: 1 }],
-      payment_intent_data: expect.objectContaining({ setup_future_usage: 'off_session' }),
-      metadata: expect.objectContaining({ flow: 'setup_fee_then_trial' }),
+    expect(body.url).toBe('https://app.ratetapmx.com/bienvenida');
+    expect(response.headers.get('set-cookie')).toContain('ratetap_signup_access=');
+    expect(response.headers.get('set-cookie')).toContain('HttpOnly');
+
+    // Instant activation: no Stripe client/env is touched at all.
+    expect(mocks.getStripe).not.toHaveBeenCalled();
+    expect(mocks.stripeSessionCreate).not.toHaveBeenCalled();
+
+    expect(mocks.transactionDbTransaction).toHaveBeenCalledOnce();
+    expect(mocks.upsertCommercialLead).toHaveBeenCalledWith(expect.objectContaining({
+      offer: 'trial_checkout',
+      metadata: expect.objectContaining({ pilot: false }),
     }));
+
+    const restaurantValues = mocks.insertedValues.find((values) => values.pilot === false);
+    expect(restaurantValues).toEqual(expect.objectContaining({
+      name: validSignup.businessName,
+      pilot: false,
+      subscriptionStatus: 'trialing',
+      trialEndsAt: expect.any(Date),
+    }));
+
+    const trialMs = (restaurantValues!.trialEndsAt as Date).getTime() - Date.now();
+    expect(trialMs).toBeGreaterThan(29 * 24 * 60 * 60 * 1000);
+    expect(trialMs).toBeLessThanOrEqual(30 * 24 * 60 * 60 * 1000);
+
     expect(mocks.insertedValues).toContainEqual(expect.objectContaining({
-      status: 'checkout_started',
+      status: 'trial_pending',
     }));
+    expect(mocks.updatedValues).toContainEqual(expect.objectContaining({
+      status: 'provisioned',
+      restaurantId: 77,
+    }));
+  });
+
+  it('rejects the retired setup-fee flow with a 400 and never creates a payment session', async () => {
+    const response = await POST(signupRequest(undefined, { offer: 'setup_fee' }));
+    const body = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(typeof body.error).toBe('string');
+    expect(mocks.stripeSessionCreate).not.toHaveBeenCalled();
+    expect(mocks.getStripe).not.toHaveBeenCalled();
+    expect(mocks.upsertCommercialLead).not.toHaveBeenCalled();
+    expect(mocks.transactionDbTransaction).not.toHaveBeenCalled();
+    expect(mocks.insertedValues).toHaveLength(0);
   });
 });

@@ -47,13 +47,24 @@ export async function provisionSignupRestaurant(input: SignupRestaurantInput) {
   return { id: restaurant.id, slug };
 }
 
-export async function provisionPilotSignupAtomic(
+/**
+ * Provision a restaurant in one transaction, immediately (no payment step).
+ *
+ * Used by both the invite-only founder pilot (`pilot: true`, capped at 5 by a
+ * DB trigger) and the public self-serve trial (`pilot: false`, not counted by
+ * that cap). Re-submitting the same lead is idempotent: it returns the
+ * already-provisioned restaurant instead of creating a second one.
+ */
+export async function provisionSignupAtomic(
   input: SignupRestaurantInput & { pendingSignupId: string; leadId: number },
 ) {
+  const pilot = input.pilot ?? false;
+
   return transactionDb.transaction(async (tx) => {
     // Match the migration trigger's advisory lock. Taking it before the
-    // idempotency lookup serializes concurrent pilot retries and refreshes the
-    // READ COMMITTED snapshot before any account state is inspected.
+    // idempotency lookup serializes concurrent retries and refreshes the
+    // READ COMMITTED snapshot before any account state is inspected. For
+    // pilot rows it also serializes against the five-redemption cap trigger.
     await tx.execute(sql`select pg_advisory_xact_lock(72401501)`);
 
     const [existing] = await tx
@@ -62,7 +73,7 @@ export async function provisionPilotSignupAtomic(
       .innerJoin(restaurants, eq(pendingSignups.restaurantId, restaurants.id))
       .where(and(
         eq(pendingSignups.leadId, input.leadId),
-        eq(restaurants.pilot, true),
+        eq(restaurants.pilot, pilot),
       ))
       .limit(1);
 
@@ -100,7 +111,7 @@ export async function provisionPilotSignupAtomic(
           shippingAddress: input.shippingAddress ?? null,
           subscriptionStatus: 'trialing',
           trialEndsAt: input.trialEndsAt,
-          pilot: true,
+          pilot,
         })
         .returning({ id: restaurants.id, slug: restaurants.slug });
     }

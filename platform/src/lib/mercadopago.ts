@@ -118,7 +118,13 @@ export type MercadoPagoAuthorizedPayment = {
   external_reference?: string | null;
   payer_email?: string | null;
   next_payment_date?: string | null;
-  payment?: { id?: string | number; status?: string | null } | null;
+  transaction_amount?: number | null;
+  currency_id?: string | null;
+  payment?: {
+    id?: string | number;
+    status?: string | null;
+    transaction_amount?: number | null;
+  } | null;
 };
 
 // ── API calls (plain fetch, Bearer auth) ─────────────────────────────────

@@ -64,15 +64,20 @@ export const signupSchema = z.object({
   utmContent: z.string().trim().max(200).optional(),
   offer: z.string().trim().max(120).optional(),
   metadata: z.record(z.string(), z.unknown()).optional(),
+  // Optional up front: NFC cards only ship once a restaurant converts (first
+  // paid Mercado Pago payment), and /contacto hides the address behind a
+  // collapsed "optional" toggle. Every field is optional so a partially filled
+  // address never blocks an instant activation.
   shippingAddress: z
     .object({
-      line1: z.string().min(1).max(300),
+      line1: z.string().max(300).optional(),
       line2: z.string().max(300).optional(),
-      city: z.string().min(1).max(120),
-      state: z.string().min(1).max(120),
-      postalCode: z.string().min(3).max(20),
+      city: z.string().max(120).optional(),
+      state: z.string().max(120).optional(),
+      postalCode: z.string().max(20).optional(),
       notes: z.string().max(500).optional(),
-    }),
+    })
+    .optional(),
 });
 export type SignupInput = z.infer<typeof signupSchema>;
 

@@ -16,6 +16,9 @@ const mocks = vi.hoisted(() => {
     status: 'pending',
     payerEmail: 'gm@example.com',
     nextPaymentDate: null,
+    amount: '727.00',
+    totalAmount: '727.00',
+    billingStartsAt: null,
   });
   const dbInsert = vi.fn(() => ({
     values: vi.fn((values: { eventId: string }) => {
@@ -39,10 +42,42 @@ const mocks = vi.hoisted(() => {
       Record<string, unknown>
     >,
     restaurantStatus: 'canceled',
+    // Restaurants row returned by select(). Extra columns are what the
+    // conversion notification reads.
+    restaurantRow: {
+      id: 77,
+      name: 'Tacos del Centro',
+      subscriptionStatus: 'canceled',
+      billingProvider: null,
+      contactName: 'Ana López',
+      managerEmail: 'ana@example.com',
+      managerPhone: '+52 55 1234 5678',
+      city: 'Ciudad de México',
+      shippingAddress: JSON.stringify({
+        line1: 'Reforma 100',
+        city: 'Ciudad de México',
+        state: 'CDMX',
+        postalCode: '06600',
+      }),
+      nfcCardsShippedAt: null,
+    } as Record<string, unknown>,
+    // Rows returned by the conditional "claim the first conversion" update.
+    // Empty simulates a retry/renewal where another delivery already claimed it.
+    claimedRows: [{ id: 77 }] as Array<{ id: number }>,
     getPreapproval: vi.fn(),
     getAuthorizedPayment: vi.fn(),
+    sendOwnerConversionNotification: vi.fn(async () => undefined),
+    sendPurchaseEvent: vi.fn(async () => undefined),
   };
 });
+
+vi.mock('@/lib/email', () => ({
+  sendOwnerConversionNotification: mocks.sendOwnerConversionNotification,
+}));
+
+vi.mock('@/lib/meta-conversions', () => ({
+  sendPurchaseEvent: mocks.sendPurchaseEvent,
+}));
 
 vi.mock('@/db', () => ({
   db: {
@@ -56,11 +91,7 @@ vi.mock('@/db', () => ({
             }
             if (table === restaurants) {
               return [
-                {
-                  id: 77,
-                  subscriptionStatus: mocks.restaurantStatus,
-                  billingProvider: null,
-                },
+                { ...mocks.restaurantRow, subscriptionStatus: mocks.restaurantStatus },
               ];
             }
             return [];
@@ -71,7 +102,14 @@ vi.mock('@/db', () => ({
     update: vi.fn((table: unknown) => ({
       set: vi.fn((values: Record<string, unknown>) => {
         mocks.updatedRows.push({ table, values });
-        return { where: vi.fn(async () => undefined) };
+        const result = {
+          returning: vi.fn(async () => mocks.claimedRows),
+          then: (
+            onFulfilled?: (value: undefined) => unknown,
+            onRejected?: (reason: unknown) => unknown,
+          ) => Promise.resolve(undefined).then(onFulfilled, onRejected),
+        };
+        return { where: vi.fn(() => result) };
       }),
     })),
     delete: vi.fn(() => ({ where: vi.fn(async () => undefined) })),
@@ -405,9 +443,13 @@ describe('mercadopago webhook route', () => {
     mocks.updatedRows.length = 0;
     mocks.subscriptionRows = [mocks.defaultSubscriptionRow()];
     mocks.restaurantStatus = 'canceled';
+    mocks.restaurantRow.nfcCardsShippedAt = null;
+    mocks.claimedRows = [{ id: 77 }];
     mocks.dbInsert.mockClear();
     mocks.getPreapproval.mockReset();
     mocks.getAuthorizedPayment.mockReset();
+    mocks.sendOwnerConversionNotification.mockClear();
+    mocks.sendPurchaseEvent.mockClear();
     mocks.getPreapproval.mockResolvedValue({
       id: 'preapproval-123',
       status: 'authorized',
@@ -709,5 +751,119 @@ describe('mercadopago webhook route', () => {
     expect(body).toEqual({ received: true });
     expect(mocks.getPreapproval).not.toHaveBeenCalled();
     expect(mocks.updatedRows).toHaveLength(0);
+  });
+
+  it('ships NFC cards and notifies the owner once on the first approved payment', async () => {
+    mocks.getAuthorizedPayment.mockResolvedValue({
+      id: 'authorized-payment-1',
+      status: 'approved',
+      preapproval_id: 'preapproval-123',
+      external_reference: '77',
+      transaction_amount: 727,
+      payment: { id: 'payment-1', status: 'approved', transaction_amount: 727 },
+    });
+
+    const response = await webhookPOST(
+      webhookRequest({
+        id: 'evt-first-payment',
+        type: 'subscription_authorized_payment',
+        action: 'created',
+        data: { id: 'authorized-payment-1' },
+      }),
+    );
+
+    expect(response.status).toBe(200);
+
+    // Idempotent claim: nfc_cards_shipped_at is only set when it is still NULL.
+    expect(mocks.updatedRows).toContainEqual({
+      table: restaurants,
+      values: { nfcCardsShippedAt: expect.any(Date) },
+    });
+    expect(mocks.updatedRows).toContainEqual({
+      table: restaurants,
+      values: expect.objectContaining({
+        subscriptionStatus: 'active',
+        billingProvider: 'mercadopago',
+      }),
+    });
+
+    expect(mocks.sendOwnerConversionNotification).toHaveBeenCalledTimes(1);
+    expect(mocks.sendOwnerConversionNotification).toHaveBeenCalledWith(
+      expect.objectContaining({
+        restaurantName: 'Tacos del Centro',
+        email: 'ana@example.com',
+        amountMxn: 727,
+        shippingAddress: expect.objectContaining({ line1: 'Reforma 100' }),
+      }),
+    );
+    expect(mocks.sendPurchaseEvent).toHaveBeenCalledTimes(1);
+    expect(mocks.sendPurchaseEvent).toHaveBeenCalledWith(
+      expect.objectContaining({ email: 'ana@example.com', valueMxn: 727 }),
+    );
+  });
+
+  it('does not notify again when a retried approved payment finds the cards already claimed', async () => {
+    mocks.getAuthorizedPayment.mockResolvedValue({
+      id: 'authorized-payment-1',
+      status: 'approved',
+      preapproval_id: 'preapproval-123',
+      external_reference: '77',
+      transaction_amount: 727,
+      payment: { id: 'payment-1', status: 'approved', transaction_amount: 727 },
+    });
+
+    const first = await webhookPOST(
+      webhookRequest({
+        id: 'evt-first-payment',
+        type: 'subscription_authorized_payment',
+        action: 'created',
+        data: { id: 'authorized-payment-1' },
+      }),
+    );
+    expect(first.status).toBe(200);
+    expect(mocks.sendOwnerConversionNotification).toHaveBeenCalledTimes(1);
+
+    // A retry that arrives with a NEW event id (so idempotency does not catch
+    // it) updates zero rows because nfc_cards_shipped_at is no longer NULL.
+    mocks.claimedRows = [];
+    const retry = await webhookPOST(
+      webhookRequest({
+        id: 'evt-first-payment-retry',
+        type: 'subscription_authorized_payment',
+        action: 'updated',
+        data: { id: 'authorized-payment-1' },
+      }),
+    );
+
+    expect(retry.status).toBe(200);
+    expect(mocks.sendOwnerConversionNotification).toHaveBeenCalledTimes(1);
+    expect(mocks.sendPurchaseEvent).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not ship cards for a rejected payment', async () => {
+    mocks.restaurantStatus = 'active';
+    mocks.getAuthorizedPayment.mockResolvedValue({
+      id: 'authorized-payment-1',
+      status: 'rejected',
+      preapproval_id: 'preapproval-123',
+      external_reference: '77',
+      payment: { id: 'payment-1', status: 'rejected' },
+    });
+
+    const response = await webhookPOST(
+      webhookRequest({
+        id: 'evt-rejected-payment',
+        type: 'subscription_authorized_payment',
+        action: 'created',
+        data: { id: 'authorized-payment-1' },
+      }),
+    );
+
+    expect(response.status).toBe(200);
+    expect(mocks.sendOwnerConversionNotification).not.toHaveBeenCalled();
+    expect(mocks.sendPurchaseEvent).not.toHaveBeenCalled();
+    expect(
+      mocks.updatedRows.find((row) => row.table === restaurants),
+    ).toBeUndefined();
   });
 });

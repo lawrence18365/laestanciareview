@@ -78,38 +78,46 @@ export default function SubscriptionBlocked({
             : 'Tu prueba terminó sin confirmar pago. Puedes reactivar tu cuenta cuando quieras.'}
         </p>
 
-        {isPastDue && (
+        {isPastDue ? (
           <p style={{ color: '#78716c', fontSize: '0.85rem', lineHeight: 1.5, margin: '0 0 1.5rem' }}>
             Tus datos y reseñas están seguros. En cuanto actualices tu método de pago, todo vuelve a funcionar de inmediato.
           </p>
-        )}
-
-        {!isPastDue && (
+        ) : (
           <p style={{ color: '#78716c', fontSize: '0.85rem', lineHeight: 1.5, margin: '0 0 1.5rem' }}>
-            Escríbenos por WhatsApp y te reactivamos en minutos.
+            Reactiva tu cuenta y sigue recibiendo reseñas de Google sin interrupciones.
           </p>
         )}
 
         {isPastDue ? (
-          <UpdatePaymentButton billingProvider={billingProvider} />
+          <SubscribeButton
+            endpoint={
+              billingProvider === 'mercadopago'
+                ? '/api/billing/mercadopago/subscribe'
+                : '/api/stripe/portal'
+            }
+            label="ACTUALIZAR TARJETA →"
+            whatsappUrl={SUPPORT_WHATSAPP_PAYMENT_URL}
+          />
         ) : (
-          <a
-            href={SUPPORT_WHATSAPP_URL}
-            style={{
-              display: 'block',
-              padding: '0.85rem',
-              background: '#1c1917',
-              color: '#fff',
-              textDecoration: 'none',
-              fontWeight: 700,
-              fontSize: '0.8rem',
-              letterSpacing: '0.1em',
-              textTransform: 'uppercase',
-              marginBottom: '0.75rem',
-            }}
-          >
-            Reactivar por WhatsApp →
-          </a>
+          <>
+            <SubscribeButton
+              endpoint="/api/billing/mercadopago/subscribe"
+              label="Continuar con RateTap"
+              whatsappUrl={SUPPORT_WHATSAPP_REACTIVATION_URL}
+            />
+            <p style={{ fontSize: '0.8rem', color: '#78716c', lineHeight: 1.5, margin: '0 0 1.25rem' }}>
+              ¿Prefieres que lo hagamos contigo?{' '}
+              <a
+                href={SUPPORT_WHATSAPP_URL}
+                target="_blank"
+                rel="noreferrer"
+                style={{ color: '#1c1917', fontWeight: 600 }}
+              >
+                Escríbenos por WhatsApp
+              </a>
+              .
+            </p>
+          </>
         )}
 
         <form action="/api/auth/logout" method="post">
@@ -136,16 +144,19 @@ export default function SubscriptionBlocked({
   );
 }
 
-function UpdatePaymentButton({ billingProvider }: { billingProvider?: string | null }) {
+function SubscribeButton({
+  endpoint,
+  label,
+  whatsappUrl,
+}: {
+  endpoint: string;
+  label: string;
+  whatsappUrl: string;
+}) {
   const [state, setState] = React.useState<'idle' | 'loading' | 'error'>('idle');
 
   async function handleClick() {
     setState('loading');
-
-    const endpoint =
-      billingProvider === 'mercadopago'
-        ? '/api/billing/mercadopago/subscribe'
-        : '/api/stripe/portal';
 
     try {
       const res = await fetch(endpoint, { method: 'POST' });
@@ -169,7 +180,7 @@ function UpdatePaymentButton({ billingProvider }: { billingProvider?: string | n
           No pudimos abrir el portal de pago. Escríbenos y lo resolvemos en minutos:
         </p>
         <a
-          href={SUPPORT_WHATSAPP_PAYMENT_URL}
+          href={whatsappUrl}
           target="_blank"
           rel="noreferrer"
           style={{
@@ -211,7 +222,7 @@ function UpdatePaymentButton({ billingProvider }: { billingProvider?: string | n
         opacity: state === 'loading' ? 0.7 : 1,
       }}
     >
-      {state === 'loading' ? 'Abriendo portal…' : 'ACTUALIZAR TARJETA →'}
+      {state === 'loading' ? 'Abriendo…' : label}
     </button>
   );
 }

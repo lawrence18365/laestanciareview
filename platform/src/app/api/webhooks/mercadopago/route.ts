@@ -5,14 +5,19 @@ import {
   processedMercadopagoEvents,
   restaurants,
 } from '@/db/schema';
-import { eq } from 'drizzle-orm';
+import { and, eq, isNull } from 'drizzle-orm';
 import {
+  MERCADOPAGO_MONTHLY_AMOUNT_MXN,
   getAuthorizedPayment,
   getPreapproval,
   mapPreapprovalStatus,
   subscriptionBillingHasStarted,
   verifyMercadoPagoSignature,
+  type MercadoPagoAuthorizedPayment,
 } from '@/lib/mercadopago';
+import { sendOwnerConversionNotification } from '@/lib/email';
+import { sendPurchaseEvent } from '@/lib/meta-conversions';
+import { parseShippingAddress } from '@/lib/shipping';
 
 export const runtime = 'nodejs';
 // Webhooks must not be statically analyzed / cached
@@ -279,7 +284,17 @@ async function handleAuthorizedPayment(dataId: string) {
     .where(eq(restaurants.id, subscription.restaurantId))
     .limit(1);
   const restaurant = restaurantRows[0];
-  if (!restaurant || restaurant.subscriptionStatus === newStatus) return;
+  if (!restaurant) return;
+
+  // The first approved payment is the conversion moment: it is when the
+  // restaurant starts paying, so it is when the physical NFC cards ship and
+  // the owner is told. Independent of the status transition below (the
+  // preapproval webhook may already have flipped the restaurant to active).
+  if (newStatus === 'active') {
+    await notifyFirstConversion(restaurant, subscription, authorizedPayment);
+  }
+
+  if (restaurant.subscriptionStatus === newStatus) return;
 
   if (
     shouldSkipPreBillingStartDowngrade(
@@ -298,4 +313,75 @@ async function handleAuthorizedPayment(dataId: string) {
     .update(restaurants)
     .set({ subscriptionStatus: newStatus, billingProvider: 'mercadopago' })
     .where(eq(restaurants.id, restaurant.id));
+}
+
+/**
+ * Ship NFC cards + fire the owner/Meta conversion notifications on the FIRST
+ * approved payment, mirroring the Stripe `invoice.payment_succeeded` block.
+ *
+ * Idempotent: the claim is a conditional update guarded by
+ * `nfc_cards_shipped_at IS NULL`, and only the caller that actually flipped
+ * the row sends anything. A retried webhook (or a later renewal payment)
+ * updates zero rows and stays silent.
+ */
+async function notifyFirstConversion(
+  restaurant: typeof restaurants.$inferSelect,
+  subscription: typeof mercadopagoSubscriptions.$inferSelect,
+  authorizedPayment: MercadoPagoAuthorizedPayment,
+) {
+  const claimed = await db
+    .update(restaurants)
+    .set({ nfcCardsShippedAt: new Date() })
+    .where(
+      and(
+        eq(restaurants.id, restaurant.id),
+        isNull(restaurants.nfcCardsShippedAt),
+      ),
+    )
+    .returning({ id: restaurants.id });
+
+  if (claimed.length === 0) return;
+
+  const amountMxn = paymentAmountMxn(authorizedPayment, subscription);
+  const paymentId = authorizedPayment.payment?.id ?? authorizedPayment.id;
+  const shipping = parseShippingAddress(restaurant.shippingAddress, restaurant.city);
+
+  await Promise.allSettled([
+    sendOwnerConversionNotification({
+      restaurantName: restaurant.name,
+      contactName: restaurant.contactName ?? 'Desconocido',
+      email: restaurant.managerEmail ?? '',
+      phone: restaurant.managerPhone ?? '',
+      shippingAddress: shipping,
+      amountMxn,
+    }),
+    restaurant.managerEmail
+      ? sendPurchaseEvent({
+          email: restaurant.managerEmail,
+          phone: restaurant.managerPhone ?? undefined,
+          valueMxn: amountMxn,
+          eventId: paymentId != null ? `mp_${paymentId}` : `mp_${restaurant.id}_${Date.now()}`,
+        })
+      : Promise.resolve(),
+  ]);
+}
+
+/** Amount in MXN (Mercado Pago amounts are already pesos, not cents). */
+function paymentAmountMxn(
+  authorizedPayment: MercadoPagoAuthorizedPayment,
+  subscription: typeof mercadopagoSubscriptions.$inferSelect,
+): number {
+  const candidates: unknown[] = [
+    authorizedPayment.payment?.transaction_amount,
+    authorizedPayment.transaction_amount,
+    subscription.totalAmount,
+    subscription.amount,
+    MERCADOPAGO_MONTHLY_AMOUNT_MXN,
+  ];
+  for (const candidate of candidates) {
+    const parsed =
+      typeof candidate === 'number' ? candidate : parseFloat(String(candidate ?? ''));
+    if (Number.isFinite(parsed) && parsed > 0) return Math.round(parsed);
+  }
+  return 0;
 }

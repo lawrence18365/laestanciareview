@@ -1088,7 +1088,7 @@ export async function sendWelcomeEmail({
       <p style="margin: 0 0 20px; font-size: 15px; line-height: 1.6; color: #666666;">
         ${pilot
           ? 'Imprime este QR y colócalo en tus mesas hoy mismo. Si decides continuar después del piloto, te enviaremos tus tarjetas NFC físicas.'
-          : 'Imprime este QR y colócalo en tus mesas hoy mismo. En cuanto confirmes tu pago el día 15, te enviaremos tus tarjetas NFC físicas.'}
+          : 'Imprime este QR y colócalo en tus mesas hoy mismo. Las tarjetas NFC físicas se envían cuando decides continuar.'}
       </p>
 
       <table role="presentation" cellpadding="0" cellspacing="0" style="margin: 0 auto;">
