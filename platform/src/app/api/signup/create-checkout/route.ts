@@ -5,11 +5,11 @@ import { hashPassword } from '@/lib/auth';
 import { TRIAL_DAYS } from '@/lib/stripe';
 import { requireSameOrigin } from '@/lib/origin';
 import { db } from '@/db';
-import { commercialLeads, pendingSignups } from '@/db/schema';
+import { commercialLeads, pendingSignups, restaurants } from '@/db/schema';
 import { randomToken, tokenHash } from '@/lib/tokens';
 import { trackCommercialEvent, upsertCommercialLead } from '@/lib/commercial-tracking';
 import { sendOwnerSignupNotification, sendWelcomeEmail } from '@/lib/email';
-import { eq } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 import {
   isValidPilotAccessToken,
   PILOT_ACCESS_COOKIE,
@@ -62,6 +62,21 @@ export async function POST(req: NextRequest) {
             'El pago de instalación ya no es necesario. Activa tu prueba gratis desde /contacto.',
         },
         { status: 400 },
+      );
+    }
+
+    // One account per email, for both flows (self-serve and founder pilot).
+    // Checked before any pending_signups/restaurants row is written, so a
+    // returning owner gets a clear pointer to /login instead of a duplicate.
+    const [existingAccount] = await db
+      .select({ id: restaurants.id })
+      .from(restaurants)
+      .where(sql`lower(${restaurants.managerEmail}) = lower(${input.email})`)
+      .limit(1);
+    if (existingAccount) {
+      return Response.json(
+        { error: 'Ya existe una cuenta con este correo. Inicia sesión.', loginUrl: '/login' },
+        { status: 409 },
       );
     }
 

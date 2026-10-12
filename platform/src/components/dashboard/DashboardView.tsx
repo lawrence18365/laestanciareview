@@ -188,16 +188,6 @@ export default function DashboardView({
           textAlign: 'center',
           gap: '0.75rem',
         }}>
-          <p style={{
-            margin: 0,
-            fontSize: '0.65rem',
-            fontWeight: 700,
-            letterSpacing: '0.12em',
-            textTransform: 'uppercase',
-            color: 'var(--text-dim)',
-          }}>
-            ESTADO
-          </p>
           <h2 style={{
             margin: 0,
             fontSize: '1.5rem',
@@ -207,15 +197,14 @@ export default function DashboardView({
           }}>
             Aún no hay reseñas
           </h2>
-          <p style={{
-            margin: 0,
-            fontSize: '0.9375rem',
-            color: 'var(--text-muted)',
-            maxWidth: 420,
-            lineHeight: 1.5,
-          }}>
-            Las reseñas aparecerán aquí cuando los clientes escaneen los códigos NFC.
-          </p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', alignItems: 'center' }}>
+            <a href="/staff" style={{ fontSize: '0.9375rem', color: 'var(--text-muted)', textDecoration: 'underline' }}>
+              1. Agrega a tus meseros
+            </a>
+            <a href="/qr-codes" style={{ fontSize: '0.9375rem', color: 'var(--text-muted)', textDecoration: 'underline' }}>
+              2. Descarga sus códigos QR
+            </a>
+          </div>
         </div>
       )}
 

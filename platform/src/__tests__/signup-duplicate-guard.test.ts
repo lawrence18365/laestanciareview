@@ -1,0 +1,221 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { NextRequest } from 'next/server';
+
+const mocks = vi.hoisted(() => {
+  const insertedValues: Array<Record<string, unknown>> = [];
+  /** Every condition object handed to a `where()` in the mocked db. */
+  const whereConditions: unknown[] = [];
+  /** Emails the fake restaurants table already holds (mixed case on purpose). */
+  const storedEmails: string[] = [];
+
+  /**
+   * Drizzle renders `sql` templates as StringChunk wrappers, and interpolated
+   * plain strings inline in the text. Flatten both so the mock can emulate
+   * `lower(manager_email) = lower($1)` instead of trusting the caller.
+   */
+  function collect(node: unknown, depth = 0): { text: string; params: unknown[] } {
+    if (depth > 10 || node == null) return { text: '', params: [] };
+    if (typeof node === 'string') return { text: node, params: [] };
+    if (typeof node !== 'object') return { text: '', params: [] };
+
+    const ctor = (node as { constructor?: { name?: string } }).constructor?.name ?? '';
+    const value = (node as { value?: unknown }).value;
+    if (ctor === 'StringChunk') {
+      return { text: Array.isArray(value) ? value.join('') : String(value ?? ''), params: [] };
+    }
+    if (ctor === 'Param') return { text: '', params: [value] };
+
+    const chunks = (node as { queryChunks?: unknown[] }).queryChunks;
+    if (!Array.isArray(chunks)) return { text: '', params: [] };
+
+    let text = '';
+    const params: unknown[] = [];
+    for (const chunk of chunks) {
+      const part = collect(chunk, depth + 1);
+      text += part.text;
+      params.push(...part.params);
+    }
+    return { text, params };
+  }
+
+  function sqlText(node: unknown): string {
+    return collect(node).text;
+  }
+
+  function searchable(node: unknown): string {
+    const { text, params } = collect(node);
+    return [text, ...params.map((p) => String(p))].join(' ').toLowerCase();
+  }
+
+  const database = {
+    execute: vi.fn(async () => undefined),
+    select: vi.fn(() => ({
+      from: vi.fn(() => ({
+        where: vi.fn((condition: unknown) => {
+          whereConditions.push(condition);
+          return {
+            limit: vi.fn(async () => {
+              // Emulate `lower(manager_email) = lower($1)`.
+              const text = searchable(condition);
+              const hit =
+                text.includes('lower(') &&
+                storedEmails.some((email) => text.includes(email.toLowerCase()));
+              return hit ? [{ id: 4242 }] : [];
+            }),
+          };
+        }),
+        innerJoin: vi.fn(() => ({
+          where: vi.fn(() => ({ limit: vi.fn(async () => []) })),
+        })),
+      })),
+    })),
+    insert: vi.fn(() => ({
+      values: vi.fn((values: Record<string, unknown>) => {
+        insertedValues.push(values);
+        const query = Promise.resolve(undefined) as Promise<void> & {
+          returning: () => Promise<Array<{ id: number; slug: string }>>;
+        };
+        query.returning = vi.fn(async () => [{ id: 77, slug: 'tacos-del-centro' }]);
+        return query;
+      }),
+    })),
+    update: vi.fn(() => ({
+      set: vi.fn(() => ({ where: vi.fn(async () => undefined) })),
+    })),
+    delete: vi.fn(() => ({ where: vi.fn(async () => undefined) })),
+  };
+
+  const transactionDbTransaction = vi.fn(
+    async (callback: (tx: typeof database) => Promise<unknown>) => callback(database),
+  );
+
+  return {
+    database,
+    transactionDbTransaction,
+    insertedValues,
+    whereConditions,
+    storedEmails,
+    sqlText,
+    checkRateLimitAsync: vi.fn(async () => ({ allowed: true, resetAt: Date.now() + 60_000 })),
+    trackCommercialEvent: vi.fn(async () => ({ id: 1 })),
+    upsertCommercialLead: vi.fn(async () => ({
+      lead: { id: 41, status: 'new' },
+      deduped: false,
+      eventId: 1,
+    })),
+  };
+});
+
+vi.mock('@/lib/rate-limit', () => ({
+  checkRateLimitAsync: mocks.checkRateLimitAsync,
+  getClientIP: vi.fn(() => '127.0.0.1'),
+  rateLimitResponse: vi.fn(),
+}));
+vi.mock('@/lib/origin', () => ({ requireSameOrigin: vi.fn(() => null) }));
+vi.mock('@/lib/auth', () => ({ hashPassword: vi.fn(async () => 'hashed-password') }));
+vi.mock('@/lib/tokens', () => ({
+  randomToken: vi.fn((bytes?: number) => (bytes ? 'pending-id-token' : 'status-token')),
+  tokenHash: vi.fn(async () => 'status-token-hash'),
+}));
+vi.mock('@/lib/stripe', () => ({
+  getStripe: vi.fn(() => ({ checkout: { sessions: { create: vi.fn() } } })),
+  STRIPE_PRICE_ID: 'price_test',
+  STRIPE_SETUP_PRICE_ID: 'price_setup_test',
+  TRIAL_DAYS: 30,
+}));
+vi.mock('@/lib/commercial-tracking', () => ({
+  trackCommercialEvent: mocks.trackCommercialEvent,
+  upsertCommercialLead: mocks.upsertCommercialLead,
+}));
+vi.mock('@/lib/slug', () => ({
+  generateUniqueSlug: vi.fn(async () => 'tacos-del-centro'),
+  slugify: vi.fn(() => 'tacos-del-centro'),
+}));
+vi.mock('@/lib/email', () => ({
+  sendOwnerLeadNotification: vi.fn(async () => undefined),
+  sendOwnerSignupNotification: vi.fn(async () => undefined),
+  sendWelcomeEmail: vi.fn(async () => undefined),
+}));
+vi.mock('@/lib/qr', () => ({
+  generateQrDataUrl: vi.fn(async () => 'data:image/png;base64,test'),
+  reviewUrlFor: vi.fn((slug: string) => `https://example.com/r/${slug}`),
+}));
+vi.mock('@/lib/whatsapp', () => ({ sendWhatsAppWelcome: vi.fn(async () => undefined) }));
+vi.mock('@/lib/meta-conversions', () => ({
+  sendCompleteRegistrationEvent: vi.fn(async () => undefined),
+}));
+vi.mock('@/db', () => ({
+  db: mocks.database,
+  transactionDb: { transaction: mocks.transactionDbTransaction },
+}));
+
+import { POST } from '@/app/api/signup/create-checkout/route';
+
+const validSignup = {
+  businessName: 'Tacos del Centro',
+  contactName: 'Ana López',
+  email: 'ana@example.com',
+  phone: '+52 55 1234 5678',
+  city: 'Ciudad de México',
+  password: 'correct-horse',
+};
+
+function signupRequest(overrides: Record<string, unknown> = {}) {
+  return new NextRequest('https://app.ratetapmx.com/api/signup/create-checkout', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ ...validSignup, ...overrides }),
+  });
+}
+
+describe('signup duplicate email guard', () => {
+  beforeEach(() => {
+    mocks.insertedValues.length = 0;
+    mocks.whereConditions.length = 0;
+    mocks.storedEmails.length = 0;
+    mocks.transactionDbTransaction.mockClear();
+    mocks.upsertCommercialLead.mockClear();
+    mocks.checkRateLimitAsync.mockClear();
+  });
+
+  afterEach(() => {
+    mocks.storedEmails.length = 0;
+  });
+
+  it('returns 409 with a login link and writes nothing when the email already has an account', async () => {
+    mocks.storedEmails.push('ana@example.com');
+
+    const response = await POST(signupRequest({ email: 'ANA@Example.com' }));
+    const body = await response.json();
+
+    expect(response.status).toBe(409);
+    expect(body.error).toBe('Ya existe una cuenta con este correo. Inicia sesión.');
+    expect(body.loginUrl).toBe('/login');
+
+    // The lookup is case-insensitive: lower(manager_email) = lower($1).
+    expect(mocks.sqlText(mocks.whereConditions[0])).toContain('lower(');
+
+    // No pending_signups / restaurants / commercial lead rows, no provisioning.
+    expect(mocks.insertedValues).toHaveLength(0);
+    expect(mocks.transactionDbTransaction).not.toHaveBeenCalled();
+    expect(mocks.upsertCommercialLead).not.toHaveBeenCalled();
+  });
+
+  it('provisions normally when the email is new', async () => {
+    const response = await POST(signupRequest());
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.url).toBe('https://app.ratetapmx.com/bienvenida');
+    expect(mocks.transactionDbTransaction).toHaveBeenCalledOnce();
+  });
+
+  it('does not block a different email just because other accounts exist', async () => {
+    mocks.storedEmails.push('otro@example.com');
+
+    const response = await POST(signupRequest({ email: 'ana@example.com' }));
+
+    expect(response.status).toBe(200);
+    expect(mocks.transactionDbTransaction).toHaveBeenCalledOnce();
+  });
+});

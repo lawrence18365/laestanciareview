@@ -111,7 +111,7 @@ export default function AnalyticsView({
             maxWidth: 420,
             lineHeight: 1.5,
           }}>
-            Los datos aparecerán aquí conforme los clientes interactúen con los códigos NFC.
+            Los datos aparecerán aquí cuando tus clientes califiquen.
           </p>
         </div>
       )}

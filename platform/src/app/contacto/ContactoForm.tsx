@@ -74,6 +74,7 @@ function readMarketingPayload() {
 export default function ContactoForm({ pilotOffer }: { pilotOffer: boolean }) {
   const [form, setForm] = useState<Form>(EMPTY);
   const [error, setError] = useState('');
+  const [loginUrl, setLoginUrl] = useState('');
   const [loading, setLoading] = useState(false);
 
   function update<K extends keyof Form>(key: K, value: Form[K]) {
@@ -102,6 +103,7 @@ export default function ContactoForm({ pilotOffer }: { pilotOffer: boolean }) {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError('');
+    setLoginUrl('');
     setLoading(true);
 
     try {
@@ -138,6 +140,7 @@ export default function ContactoForm({ pilotOffer }: { pilotOffer: boolean }) {
             ? 'No pudimos activar tu cuenta en este momento. Inténtalo de nuevo en unos minutos o escríbenos por WhatsApp.'
             : data.error || 'No pudimos activar tu cuenta. Revisa los datos e intenta de nuevo.';
         setError(friendly);
+        if (typeof data.loginUrl === 'string') setLoginUrl(data.loginUrl);
         setLoading(false);
         return;
       }
@@ -358,6 +361,14 @@ export default function ContactoForm({ pilotOffer }: { pilotOffer: boolean }) {
                 fontWeight: 500,
               }}>
                 {error}
+                {loginUrl && (
+                  <>
+                    {' '}
+                    <a href={loginUrl} style={{ color: '#b91c1c', fontWeight: 700, textDecoration: 'underline' }}>
+                      Iniciar sesión
+                    </a>
+                  </>
+                )}
               </div>
             )}
 

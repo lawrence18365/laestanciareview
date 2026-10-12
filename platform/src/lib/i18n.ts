@@ -503,13 +503,13 @@ export const t = {
     // GM Steps
     welcomeTitle: 'Bienvenido a RateTap',
     welcomeSubtitle: 'Tu escudo de reputación en línea',
-    welcomeBody: 'RateTap te ayuda a registrar la experiencia de tus clientes. Cuando alguien escanea la tarjeta NFC en su mesa, califica su visita y elige entre abrir Google o enviar un comentario privado. El panel muestra las calificaciones capturadas, los clics a Google y los comentarios que los clientes deciden compartir.',
+    welcomeBody: 'RateTap te ayuda a registrar la experiencia de tus clientes. Cuando alguien escanea el código QR de su mesa, califica su visita y elige entre abrir Google o enviar un comentario privado. El panel muestra las calificaciones capturadas, los clics a Google y los comentarios que los clientes comparten.',
     welcomeTip: 'Las calificaciones internas y los comentarios privados te ayudan a detectar oportunidades de mejora. Los clics a Google indican que un cliente abrió esa opción.',
 
     reviewFlowTitle: 'Así Funciona para el Cliente',
     reviewFlowSubtitle: 'Del escaneo a la reseña en segundos',
-    reviewFlowBody: 'El cliente toca la tarjeta NFC con su celular, califica su visita y elige entre abrir Google o compartir un comentario privado. RateTap registra la calificación interna, la opción elegida y cualquier comentario enviado.',
-    reviewFlowTip: 'Cada mesero tiene un código único. Cuando el cliente escanea la tarjeta de un mesero, la reseña se asocia automáticamente a ese miembro del personal.',
+    reviewFlowBody: 'El cliente escanea el código QR con su celular, califica su visita y elige entre abrir Google o compartir un comentario privado. RateTap registra la calificación interna, la opción elegida y cualquier comentario enviado.',
+    reviewFlowTip: 'Cada mesero tiene un código único. Cuando el cliente escanea el código QR de un mesero, la reseña se asocia a ese mesero.',
 
     dashboardTitle: 'Panel Principal',
     dashboardSubtitle: 'Tu centro de control — /dashboard',
@@ -526,7 +526,7 @@ export const t = {
 
     staffTitle: 'Gestión de Personal',
     staffSubtitle: 'Tu equipo — /staff',
-    staffBody: 'Agrega a cada mesero con su nombre y un código único (ej. "maria01"). Este código se asocia a su tarjeta NFC. Puedes activar o desactivar meseros según su turno, editar sus datos, y ver su rendimiento en las clasificaciones.',
+    staffBody: 'Agrega a tus meseros con su nombre y un código único (ej. "maria01"). Con ese código generamos su código QR. Puedes activar o desactivar meseros según su turno, editar sus datos y ver su rendimiento en las clasificaciones.',
     staffTip: 'Los códigos de personal son únicos por restaurante. Puedes usar el mismo formato en todas tus ubicaciones.',
 
     analyticsTitle: 'Analíticas',
@@ -550,7 +550,8 @@ export const t = {
 
     readyTitle: '¡Todo Listo!',
     readySubtitle: 'Estás preparado para comenzar',
-    readyBody: 'Ya conoces todas las herramientas. Tu siguiente paso: ve a Personal para agregar a tus meseros, luego reparte las tarjetas NFC. Cada escaneo fortalece la reputación de tu restaurante en Google. Puedes volver a ver esta guía en cualquier momento desde el botón "Guía" en la barra de navegación.',
+    readyBody: 'Ya conoces todas las herramientas. Tu siguiente paso: agrega a tus meseros y descarga el código QR de cada uno. Cada cliente que califica fortalece la reputación de tu restaurante en Google. Puedes volver a ver esta guía desde el botón "Guía".',
+    readyCta: 'Descarga el código QR de cada mesero',
 
     // Owner Steps
     ownerWelcomeTitle: 'Bienvenido, Propietario',

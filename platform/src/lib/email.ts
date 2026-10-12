@@ -1085,11 +1085,17 @@ export async function sendWelcomeEmail({
         </p>
       </div>
 
-      <p style="margin: 0 0 20px; font-size: 15px; line-height: 1.6; color: #666666;">
-        ${pilot
-          ? 'Imprime este QR y colócalo en tus mesas hoy mismo. Si decides continuar después del piloto, te enviaremos tus tarjetas NFC físicas.'
-          : 'Imprime este QR y colócalo en tus mesas hoy mismo. Las tarjetas NFC físicas se envían cuando decides continuar.'}
+      <p style="margin: 0 0 12px; font-size: 15px; line-height: 1.6; color: #666666;">
+        Entra en <a href="${BASE_URL}/login" style="color: #111111;">app.ratetapmx.com/login</a> y elige <strong>${escapeHtml(restaurantName)}</strong>.
       </p>
+
+      <p style="margin: 0 0 6px; font-size: 15px; line-height: 1.6; color: #666666;">
+        Dos pasos para empezar:
+      </p>
+      <ol style="margin: 0 0 20px; padding-left: 20px; font-size: 15px; line-height: 1.6; color: #666666;">
+        <li>Agrega a tus meseros.</li>
+        <li>Descarga el código QR de cada mesero en <a href="${BASE_URL}/qr-codes" style="color: #111111;">Códigos QR</a>.</li>
+      </ol>
 
       <table role="presentation" cellpadding="0" cellspacing="0" style="margin: 0 auto;">
         <tr><td style="background: #111111; border-radius: 0;">
@@ -1108,7 +1114,9 @@ export async function sendWelcomeEmail({
     from: FROM,
     to,
     subject: `Bienvenido a RateTap, ${restaurantName} 🎉`,
-    html: emailLayout(content, `Tu prueba es gratis por ${trialDays} días. Puedes cancelar cuando quieras.`),
+    html: emailLayout(content, pilot
+      ? `Tu piloto fundador es gratis por ${trialDays} días. Puedes cancelar cuando quieras.`
+      : `Tu prueba es gratis por ${trialDays} días. Puedes cancelar cuando quieras.`),
   });
 
   if (!result.success || result.skipped) {

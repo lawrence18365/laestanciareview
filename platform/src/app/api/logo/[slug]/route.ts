@@ -44,6 +44,7 @@ export async function GET(
     headers: {
       'Content-Type': contentType,
       'Content-Length': String(bytes.length),
+      'X-Content-Type-Options': 'nosniff',
       'Cache-Control': 'public, max-age=300, stale-while-revalidate=86400',
     },
   });

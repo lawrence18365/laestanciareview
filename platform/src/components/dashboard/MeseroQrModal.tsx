@@ -72,9 +72,18 @@ export default function MeseroQrModal({ slug, member, onClose }: Props) {
         <h3 style={{ fontFamily: 'var(--font-serif)', fontSize: '1.05rem', margin: 0, color: 'var(--text-main)' }}>
           {member.name}
         </h3>
-        <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', margin: '0.25rem 0 1rem' }}>
+        <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', margin: '0.25rem 0 0.35rem' }}>
           Tablero personal · código {member.code}
         </p>
+        <p style={{ fontSize: '0.75rem', color: 'var(--text-dim)', margin: '0 0 0.35rem' }}>
+          Solo para el mesero. No es para clientes.
+        </p>
+        <a
+          href="/qr-codes"
+          style={{ display: 'inline-block', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-main)', marginBottom: '1rem' }}
+        >
+          ¿Buscas el QR para clientes? Códigos QR
+        </a>
 
         <div style={{ display: 'flex', justifyContent: 'center', minHeight: 200, alignItems: 'center' }}>
           {qr ? (

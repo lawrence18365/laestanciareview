@@ -12,6 +12,7 @@ interface Step {
   subtitle: string;
   body: string;
   tip?: string;
+  link?: { href: string; label: string };
 }
 
 /* ── Step visual palettes ── */
@@ -86,7 +87,7 @@ const gmSteps: Step[] = [
   { id: 'settings', icon: '⚙', title: t.onboarding.settingsTitle, subtitle: t.onboarding.settingsSubtitle, body: t.onboarding.settingsBody, tip: t.onboarding.settingsTip },
   { id: 'whatsapp', icon: '💬', title: t.onboarding.whatsappTitle, subtitle: t.onboarding.whatsappSubtitle, body: t.onboarding.whatsappBody, tip: t.onboarding.whatsappTip(sandboxCode) },
   { id: 'notifications', icon: '🔔', title: t.onboarding.notificationsTitle, subtitle: t.onboarding.notificationsSubtitle, body: t.onboarding.notificationsBody, tip: t.onboarding.notificationsTip },
-  { id: 'ready', icon: '🚀', title: t.onboarding.readyTitle, subtitle: t.onboarding.readySubtitle, body: t.onboarding.readyBody },
+  { id: 'ready', icon: '🚀', title: t.onboarding.readyTitle, subtitle: t.onboarding.readySubtitle, body: t.onboarding.readyBody, link: { href: '/qr-codes', label: t.onboarding.readyCta } },
 ];
 
 const ownerSteps: Step[] = [
@@ -272,6 +273,11 @@ export default function OnboardingWizard({
               <h2 className="onb-title">{current.title}</h2>
               <p className="onb-subtitle">{current.subtitle}</p>
               <p className="onb-text">{current.body}</p>
+              {current.link && (
+                <a className="onb-link" href={current.link.href}>
+                  {current.link.label} →
+                </a>
+              )}
               {current.tip && (
                 <div className="onb-tip">
                   <div className="onb-tip-head">
@@ -609,6 +615,26 @@ export default function OnboardingWizard({
           line-height: 1.72;
           color: #57534E;
           font-family: 'Outfit', sans-serif;
+        }
+
+        .onb-link {
+          display: inline-block;
+          margin-top: 1.25rem;
+          font-size: 0.7rem;
+          font-weight: 700;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+          color: #D97706;
+          text-decoration: none;
+          border-bottom: 1px solid #D97706;
+          padding-bottom: 2px;
+          font-family: 'Outfit', sans-serif;
+          transition: color 0.2s ease;
+        }
+
+        .onb-link:hover {
+          color: #1C1917;
+          border-color: #1C1917;
         }
 
         /* ─── Tip ─── */
