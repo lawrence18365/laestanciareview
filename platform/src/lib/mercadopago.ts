@@ -47,34 +47,46 @@ export function getPriceBreakdown(): {
 
 export const BILLING_START_DATE = new Date('2026-09-01T00:00:00.000-06:00');
 
-// Per-restaurant free-trial window: each subscription's first charge is
-// MERCADOPAGO_TRIAL_DAYS days after it is created, but never before the
-// global BILLING_START_DATE. A value of 0 (or negative/non-finite) would
-// silently kill the trial and could charge immediately after the global
-// date, so only strictly positive finite values are honored.
-export const MERCADOPAGO_TRIAL_DAYS = trialDaysFromEnv();
-
-function trialDaysFromEnv(): number {
-  const parsed = parseFloat(process.env.MERCADOPAGO_TRIAL_DAYS ?? '');
-  return Number.isFinite(parsed) && parsed > 0 ? parsed : 30;
-}
-
-const DAY_MS = 24 * 60 * 60 * 1000;
+/**
+ * Mercado Pago rejects a preapproval whose `start_date` is not in the future,
+ * so the computed first charge is always at least this far ahead of `now`.
+ */
+const MIN_BILLING_START_OFFSET_MS = 10 * 60 * 1000;
 
 export function billingHasStarted(now: Date = new Date()): boolean {
   return now.getTime() >= BILLING_START_DATE.getTime();
 }
 
 /**
- * First billing date for a subscription created at `now`: the later of the
- * global BILLING_START_DATE and the end of the restaurant's trial window.
- * Pure (aside from the default `now`) so it is unit-testable.
+ * First billing date for a subscription created at `now` (or at the restaurant's
+ * own trial end, if it is still running).
+ *
+ * Returns the LATER of exactly three instants:
+ *   1. the global BILLING_START_DATE,
+ *   2. the restaurant's `trialEndsAt` when it has one,
+ *   3. `now + 10 minutes` (Mercado Pago needs a future start_date).
+ *
+ * It NEVER adds a fixed trial window of its own: the free trial is the
+ * restaurant's `trial_ends_at`, so re-subscribing after that trial has already
+ * expired starts billing at the next possible moment instead of minting a
+ * second free month. Pure (aside from the default `now`) so it is
+ * unit-testable.
  */
-export function computeBillingStartDate(now: Date = new Date()): Date {
-  const trialEnd = new Date(now.getTime() + MERCADOPAGO_TRIAL_DAYS * DAY_MS);
-  return trialEnd.getTime() > BILLING_START_DATE.getTime()
-    ? trialEnd
-    : new Date(BILLING_START_DATE.getTime());
+export function computeBillingStartDate({
+  trialEndsAt,
+  now = new Date(),
+}: {
+  trialEndsAt?: Date | null;
+  now?: Date;
+} = {}): Date {
+  let start = Math.max(
+    BILLING_START_DATE.getTime(),
+    now.getTime() + MIN_BILLING_START_OFFSET_MS,
+  );
+  if (trialEndsAt) {
+    start = Math.max(start, trialEndsAt.getTime());
+  }
+  return new Date(start);
 }
 
 /**
@@ -151,8 +163,9 @@ export async function createPreapproval(params: {
   };
 
   // Always honor an explicit start_date: computeBillingStartDate() never
-  // returns a past date, and silently dropping it would let Mercado Pago
-  // charge earlier than the trial end we display to the restaurant.
+  // returns a past date (it is at least now + 10 minutes), and silently
+  // dropping it would let Mercado Pago charge earlier than the restaurant's
+  // own trial end we display to them.
   if (params.startDate) {
     autoRecurring.start_date = params.startDate.toISOString();
   }
@@ -321,6 +334,11 @@ export function verifyMercadoPagoSignature(params: {
  * Map a raw Mercado Pago preapproval status to our 4-state subscriptionStatus.
  * Returns null for `pending`/unknown statuses, meaning: do not change
  * restaurants.subscriptionStatus.
+ *
+ * 'authorized' → 'active' is safe even though authorization is not a payment:
+ * createPreapproval() starts billing at max(BILLING_START_DATE, trialEndsAt,
+ * now + 10min), so an authorized preapproval can never hand out access beyond
+ * the trial the restaurant already had.
  */
 export function mapPreapprovalStatus(
   status: string,

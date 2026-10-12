@@ -20,9 +20,10 @@ export default async function SettingsPage() {
   const priceBreakdown = getPriceBreakdown();
   // Per-restaurant trial: prefer the subscription row's billing start; for
   // restaurants without a row, show when billing would start if they
-  // subscribed today.
+  // subscribed today (their own trial end, never a fresh trial window).
   const billingStartsAt =
-    mercadopagoSubscription?.billingStartsAt ?? computeBillingStartDate();
+    mercadopagoSubscription?.billingStartsAt ??
+    computeBillingStartDate({ trialEndsAt: restaurant.trialEndsAt });
 
   return (
     <SettingsView
@@ -34,7 +35,7 @@ export default async function SettingsPage() {
         // The custom logo is shown from its served URL, not from the data URL:
         // the settings screen is the one place that must render it, and the
         // URL is a few dozen bytes instead of up to 280 KB.
-        logoUrl: restaurant.logoDataUrl ? getBrandForRestaurant(restaurant).logo : null,
+        logoUrl: restaurant.logoHash ? getBrandForRestaurant(restaurant).logo : null,
         googleThreshold: restaurant.googleThreshold,
         managerEmail: restaurant.managerEmail ?? '',
         managerPhone: restaurant.managerPhone ?? '',

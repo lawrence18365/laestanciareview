@@ -40,32 +40,26 @@ describe('getBrandForSlug', () => {
 });
 
 describe('getBrandForRestaurant', () => {
-  const LOGO_DATA_URL = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUg==';
+  const LOGO_HASH = 'a1b2c3d4';
 
-  it('serves the restaurant own uploaded logo, versioned by its content', () => {
-    const brand = getBrandForRestaurant({
-      slug: 'mi-cocina',
-      logoDataUrl: LOGO_DATA_URL,
-    });
-    expect(brand.logo).toMatch(/^\/api\/logo\/mi-cocina\?v=[0-9a-f]{8}$/);
+  it('serves the restaurant own uploaded logo, versioned by its content hash', () => {
+    const brand = getBrandForRestaurant({ slug: 'mi-cocina', logoHash: LOGO_HASH });
+    expect(brand.logo).toBe(`/api/logo/mi-cocina?v=${LOGO_HASH}`);
     // Unknown art, so it is never assumed to need a dark tile.
     expect(brand.darkBg).toBe(false);
   });
 
-  it('is stable for the same image and different for another one', () => {
-    const first = getBrandForRestaurant({ slug: 'mi-cocina', logoDataUrl: LOGO_DATA_URL });
-    const again = getBrandForRestaurant({ slug: 'mi-cocina', logoDataUrl: LOGO_DATA_URL });
-    const other = getBrandForRestaurant({
-      slug: 'mi-cocina',
-      logoDataUrl: `${LOGO_DATA_URL}A`,
-    });
+  it('is stable for the same hash and different for another one', () => {
+    const first = getBrandForRestaurant({ slug: 'mi-cocina', logoHash: LOGO_HASH });
+    const again = getBrandForRestaurant({ slug: 'mi-cocina', logoHash: LOGO_HASH });
+    const other = getBrandForRestaurant({ slug: 'mi-cocina', logoHash: 'ffffffff' });
     expect(again.logo).toBe(first.logo);
     expect(other.logo).not.toBe(first.logo);
   });
 
   it('falls back to the slug brand when there is no uploaded logo', () => {
     for (const slug of ['estancia-leon', 'harbors-veracruz', 'unknown-restaurant']) {
-      expect(getBrandForRestaurant({ slug, logoDataUrl: null })).toEqual(getBrandForSlug(slug));
+      expect(getBrandForRestaurant({ slug, logoHash: null })).toEqual(getBrandForSlug(slug));
     }
   });
 });

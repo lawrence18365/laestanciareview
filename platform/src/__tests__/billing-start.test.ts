@@ -1,10 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import {
-  BILLING_START_DATE,
-  MERCADOPAGO_TRIAL_DAYS,
-  computeBillingStartDate,
-} from '@/lib/mercadopago';
+import { BILLING_START_DATE, computeBillingStartDate } from '@/lib/mercadopago';
 
+const MINUTE_MS = 60 * 1000;
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 describe('computeBillingStartDate', () => {
@@ -14,71 +11,77 @@ describe('computeBillingStartDate', () => {
     vi.resetModules();
   });
 
-  it('defaults to a 30-day trial window', () => {
-    expect(MERCADOPAGO_TRIAL_DAYS).toBe(30);
-  });
-
-  it('returns the later of Sep 1 2026 and now + 30 days when now is well before the global start', () => {
-    // 2026-08-21 + 30d = 2026-09-20, which is later than BILLING_START_DATE.
+  it('starts billing at the restaurant own trial end when that is later', () => {
     const now = new Date('2026-08-21T12:00:00.000Z');
-    const start = computeBillingStartDate(now);
+    const trialEndsAt = new Date(now.getTime() + 20 * DAY_MS);
 
-    expect(start.getTime()).toBe(now.getTime() + 30 * DAY_MS);
-    expect(start.getTime()).toBeGreaterThan(BILLING_START_DATE.getTime());
-  });
-
-  it('returns the global start date when now + 30 days lands before Sep 1 2026', () => {
-    const now = new Date('2026-07-15T12:00:00.000Z');
-    const start = computeBillingStartDate(now);
-
-    expect(start.getTime()).toBe(BILLING_START_DATE.getTime());
-    // Defensive: never mutate or hand out the shared constant.
-    expect(start).not.toBe(BILLING_START_DATE);
-  });
-
-  it('returns now + 30 days when now is after Sep 1 2026', () => {
-    const now = new Date('2026-10-05T12:00:00.000Z');
-
-    expect(computeBillingStartDate(now).getTime()).toBe(now.getTime() + 30 * DAY_MS);
-  });
-
-  it('respects the MERCADOPAGO_TRIAL_DAYS env override', async () => {
-    vi.stubEnv('MERCADOPAGO_TRIAL_DAYS', '45');
-    vi.resetModules();
-
-    const { computeBillingStartDate: computeWithOverride } = await import(
-      '@/lib/mercadopago'
+    expect(computeBillingStartDate({ trialEndsAt, now }).getTime()).toBe(
+      trialEndsAt.getTime(),
     );
-    const now = new Date('2026-10-05T12:00:00.000Z');
-
-    expect(computeWithOverride(now).getTime()).toBe(now.getTime() + 45 * DAY_MS);
   });
 
-  it('falls back to 30 days for an invalid MERCADOPAGO_TRIAL_DAYS value', async () => {
-    vi.stubEnv('MERCADOPAGO_TRIAL_DAYS', 'not-a-number');
-    vi.resetModules();
-
-    const { computeBillingStartDate: computeWithInvalid } = await import(
-      '@/lib/mercadopago'
-    );
+  it('never mints a second free trial once the trial has already ended', () => {
     const now = new Date('2026-10-05T12:00:00.000Z');
+    const trialEndsAt = new Date(now.getTime() - 5 * DAY_MS);
 
-    expect(computeWithInvalid(now).getTime()).toBe(now.getTime() + 30 * DAY_MS);
+    const start = computeBillingStartDate({ trialEndsAt, now });
+
+    // ~now + 10 minutes (Mercado Pago needs a future start_date), NOT now + 30d.
+    expect(start.getTime()).toBe(now.getTime() + 10 * MINUTE_MS);
+    expect(start.getTime()).toBeLessThan(now.getTime() + DAY_MS);
   });
 
-  it.each(['0', '-5', 'NaN', 'Infinity'])(
-    'falls back to 30 days when MERCADOPAGO_TRIAL_DAYS is %s',
-    async (value) => {
-      vi.stubEnv('MERCADOPAGO_TRIAL_DAYS', value);
-      vi.resetModules();
+  it('is never earlier than max(trialEndsAt, now + 10min, BILLING_START_DATE)', () => {
+    const cases: Array<{ now: string; trialEndsAt: string | null }> = [
+      // Before the global launch date, no trial at all.
+      { now: '2026-07-15T12:00:00.000Z', trialEndsAt: null },
+      // Before the global launch date, trial ends before it.
+      { now: '2026-07-15T12:00:00.000Z', trialEndsAt: '2026-07-20T12:00:00.000Z' },
+      // Before the global launch date, trial still running past it.
+      { now: '2026-08-21T12:00:00.000Z', trialEndsAt: '2026-09-10T12:00:00.000Z' },
+      // After the global launch date, trial long expired.
+      { now: '2026-12-01T12:00:00.000Z', trialEndsAt: '2026-11-01T12:00:00.000Z' },
+      // After the global launch date, trial still running.
+      { now: '2026-12-01T12:00:00.000Z', trialEndsAt: '2026-12-20T12:00:00.000Z' },
+    ];
 
-      const mod = await import('@/lib/mercadopago');
-      const now = new Date('2026-10-05T12:00:00.000Z');
+    for (const c of cases) {
+      const now = new Date(c.now);
+      const trialEndsAt = c.trialEndsAt ? new Date(c.trialEndsAt) : null;
+      const start = computeBillingStartDate({ trialEndsAt, now });
 
-      expect(mod.MERCADOPAGO_TRIAL_DAYS).toBe(30);
-      expect(mod.computeBillingStartDate(now).getTime()).toBe(
-        now.getTime() + 30 * DAY_MS,
+      const lowerBound = Math.max(
+        BILLING_START_DATE.getTime(),
+        now.getTime() + 10 * MINUTE_MS,
+        trialEndsAt ? trialEndsAt.getTime() : 0,
       );
-    },
-  );
+
+      expect(start.getTime()).toBe(lowerBound);
+      // Defensive: never mutate or hand out the shared constant.
+      if (start.getTime() === BILLING_START_DATE.getTime()) {
+        expect(start).not.toBe(BILLING_START_DATE);
+      }
+    }
+  });
+
+  it('falls back to the global start date when the trial is not the constraint', () => {
+    const now = new Date('2026-08-15T12:00:00.000Z');
+
+    // now + 10min and the (absent) trial are both before Sep 1 2026.
+    expect(computeBillingStartDate({ now }).getTime()).toBe(
+      BILLING_START_DATE.getTime(),
+    );
+    expect(
+      computeBillingStartDate({ trialEndsAt: new Date('2026-08-20T12:00:00.000Z'), now })
+        .getTime(),
+    ).toBe(BILLING_START_DATE.getTime());
+  });
+
+  it('needs no arguments and defaults to the current time', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-08-21T12:00:00.000Z'));
+
+    // No trial: the global launch date (later than now + 10min) wins.
+    expect(computeBillingStartDate().getTime()).toBe(BILLING_START_DATE.getTime());
+  });
 });

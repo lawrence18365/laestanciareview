@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server';
-import { getRestaurantBySlug } from '@/lib/queries';
+import { getRestaurantLogoDataUrl } from '@/lib/queries';
 
 /**
  * GET /api/logo/[slug] — a restaurant's uploaded logo, as bytes.
@@ -14,22 +14,28 @@ import { getRestaurantBySlug } from '@/lib/queries';
  * logo, a legacy value — is a 404, never an error page: callers fall back to
  * the hardcoded brand logo themselves.
  *
- * Each URL is versioned (`?v=<hash>`), so the response can be cached and
- * revalidated in the background rather than re-fetched on every guest tap.
+ * The data URL is read with its own single-column query, so the ~280 KB image
+ * never rides along with any other restaurant column.
+ *
+ * Each URL is versioned (`?v=<md5 prefix of the image>`). With a `v` the bytes
+ * can never go stale for that URL, so the response is cached immutably; without
+ * one (a hand-typed or legacy URL) it keeps the short policy and revalidates.
  */
 
 const DATA_URL_PATTERN = /^data:(image\/(?:png|jpeg|webp));base64,([A-Za-z0-9+/=]+)$/;
 
+const CACHE_IMMUTABLE = 'public, max-age=31536000, immutable';
+const CACHE_SHORT = 'public, max-age=300, stale-while-revalidate=86400';
+
 const notFound = () => new Response('Not found', { status: 404 });
 
 export async function GET(
-  _req: NextRequest,
+  req: NextRequest,
   { params }: { params: Promise<{ slug: string }> },
 ) {
   const { slug } = await params;
 
-  const restaurant = await getRestaurantBySlug(slug);
-  const logoDataUrl = restaurant?.logoDataUrl ?? null;
+  const logoDataUrl = await getRestaurantLogoDataUrl(slug);
   if (!logoDataUrl) return notFound();
 
   const match = DATA_URL_PATTERN.exec(logoDataUrl);
@@ -39,13 +45,17 @@ export async function GET(
   const bytes = Buffer.from(base64, 'base64');
   if (bytes.length === 0) return notFound();
 
+  // A present-but-empty `v` cannot version anything, so it is not treated as
+  // one: only a real tag lets the bytes be cached forever for that URL.
+  const version = req.nextUrl.searchParams.get('v');
+
   return new Response(new Uint8Array(bytes), {
     status: 200,
     headers: {
       'Content-Type': contentType,
       'Content-Length': String(bytes.length),
       'X-Content-Type-Options': 'nosniff',
-      'Cache-Control': 'public, max-age=300, stale-while-revalidate=86400',
+      'Cache-Control': version ? CACHE_IMMUTABLE : CACHE_SHORT,
     },
   });
 }

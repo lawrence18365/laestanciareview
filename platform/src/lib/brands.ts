@@ -25,40 +25,26 @@ export function getBrandForSlug(slug: string): BrandInfo {
 }
 
 /**
- * Version tag for a restaurant's uploaded logo.
- *
- * The uploaded image lives in the database and is served by /api/logo/[slug]
- * with a 5-minute cache, so the URL has to change when the image does. The data
- * URL IS the image, so hashing it is enough — no extra column, no clock.
- * (`updatedAt` is accepted only because some callers already have the row.)
- *
- * FNV-1a: 8 hex chars, no dependency, identical on server and client.
- */
-function logoVersion(dataUrl: string): string {
-  let hash = 0x811c9dc5;
-  for (let i = 0; i < dataUrl.length; i++) {
-    hash ^= dataUrl.charCodeAt(i);
-    hash = Math.imul(hash, 0x01000193) >>> 0;
-  }
-  return hash.toString(16).padStart(8, '0');
-}
-
-/**
  * Brand for a real restaurant row: its own uploaded logo when it has one,
  * otherwise the hardcoded brand table. Use this anywhere a restaurant row is
  * available; `getBrandForSlug` stays for the owner/regional and quote surfaces
  * that only ever have a slug.
+ *
+ * `logoHash` is the md5 prefix of the stored logo, computed by the query that
+ * loaded the row (see `logoHashSql` in lib/queries.ts) — the row itself never
+ * carries the up-to-280 KB data URL. The hash IS the version tag: the same
+ * image always yields the same URL, a new image a new one, so /api/logo can be
+ * cached forever.
  *
  * An uploaded logo is unknown art, so it gets a white tile (`darkBg: false`)
  * rather than guessing that it needs a dark background.
  */
 export function getBrandForRestaurant(r: {
   slug: string;
-  logoDataUrl: string | null;
-  updatedAt?: Date | null;
+  logoHash: string | null;
 }): BrandInfo {
-  if (r.logoDataUrl) {
-    return { logo: `/api/logo/${r.slug}?v=${logoVersion(r.logoDataUrl)}`, darkBg: false };
+  if (r.logoHash) {
+    return { logo: `/api/logo/${r.slug}?v=${r.logoHash}`, darkBg: false };
   }
   return getBrandForSlug(r.slug);
 }

@@ -4,6 +4,22 @@ import { generateUniqueSlug, slugify } from '@/lib/slug';
 import { reviewUrlFor } from '@/lib/google-review';
 import { and, eq, sql } from 'drizzle-orm';
 
+/**
+ * Thrown by `provisionSignupAtomic` when the lead it was handed is already
+ * linked to an account whose manager email is NOT the one being provisioned.
+ *
+ * Commercial leads are deduped by phone + business name (see
+ * `commercialLeadDedupeKey`), not by email, so anyone who knows a restaurant's
+ * public phone and name can land on that restaurant's lead — and, without this
+ * check, be handed its account. Only the same email may reuse an account.
+ */
+export class SignupConflictError extends Error {
+  constructor() {
+    super('signup_conflict_existing_account');
+    this.name = 'SignupConflictError';
+  }
+}
+
 export type SignupRestaurantInput = {
   businessName: string;
   contactName?: string | null;
@@ -54,8 +70,9 @@ export async function provisionSignupRestaurant(input: SignupRestaurantInput) {
  *
  * Used by both the invite-only founder pilot (`pilot: true`, capped at 5 by a
  * DB trigger) and the public self-serve trial (`pilot: false`, not counted by
- * that cap). Re-submitting the same lead is idempotent: it returns the
- * already-provisioned restaurant instead of creating a second one.
+ * that cap). Re-submitting the same lead with the same email is idempotent: it
+ * returns the already-provisioned restaurant instead of creating a second one.
+ * A different email on that lead throws `SignupConflictError` instead.
  */
 export async function provisionSignupAtomic(
   input: SignupRestaurantInput & { pendingSignupId: string; leadId: number },
@@ -70,7 +87,11 @@ export async function provisionSignupAtomic(
     await tx.execute(sql`select pg_advisory_xact_lock(72401501)`);
 
     const [existing] = await tx
-      .select({ id: restaurants.id, slug: restaurants.slug })
+      .select({
+        id: restaurants.id,
+        slug: restaurants.slug,
+        managerEmail: restaurants.managerEmail,
+      })
       .from(pendingSignups)
       .innerJoin(restaurants, eq(pendingSignups.restaurantId, restaurants.id))
       .where(and(
@@ -79,7 +100,23 @@ export async function provisionSignupAtomic(
       ))
       .limit(1);
 
-    let restaurant = existing;
+    // Idempotency is only ever "the same account submitted twice". The lead is
+    // deduped by phone + business name, so a DIFFERENT email on the same lead
+    // is an attempt to take over someone else's restaurant: refuse instead of
+    // attaching that restaurant (and a session for it) to this email. A null
+    // manager email counts as "not equal" — never hand out an account we
+    // cannot prove belongs to this email.
+    if (
+      existing &&
+      (existing.managerEmail ?? '').trim().toLowerCase() !==
+        input.email.trim().toLowerCase()
+    ) {
+      throw new SignupConflictError();
+    }
+
+    let restaurant: { id: number; slug: string } | undefined = existing
+      ? { id: existing.id, slug: existing.slug }
+      : undefined;
     if (!restaurant) {
       const baseSlug = slugify(input.businessName);
       let slug = `${baseSlug}-${crypto.randomUUID().slice(0, 8)}`;

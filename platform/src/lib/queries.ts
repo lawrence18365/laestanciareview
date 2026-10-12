@@ -1,6 +1,17 @@
 import { db } from '@/db';
 import { reviews, staff, restaurants, mercadopagoSubscriptions } from '@/db/schema';
-import { eq, and, gte, lt, sql, desc, count, avg, asc } from 'drizzle-orm';
+import {
+  eq,
+  and,
+  gte,
+  lt,
+  sql,
+  desc,
+  count,
+  avg,
+  asc,
+  getTableColumns,
+} from 'drizzle-orm';
 import { startOfWeek } from 'date-fns';
 import { startOfWeekMexico, startOfTodayMexico } from '@/lib/mexico-tz';
 import { POSITIVE_RATING_MIN } from '@/lib/feedback';
@@ -9,14 +20,64 @@ import { POSITIVE_RATING_MIN } from '@/lib/feedback';
 const countSql = (strings: TemplateStringsArray, ...values: unknown[]) =>
   sql<number>(strings, ...values).mapWith(Number);
 
+/**
+ * Cache-busting version tag for a restaurant's uploaded logo: the first 8 hex
+ * characters of md5(logo_data_url), NULL when there is no logo.
+ *
+ * Computed inside Postgres on purpose — the data URL is up to 280 KB and the
+ * only thing callers need from it is this 8-character tag.
+ */
+export const logoHashSql = sql<string | null>`substr(md5(${restaurants.logoDataUrl}), 1, 8)`;
+
+/**
+ * Every `restaurants` column EXCEPT `logoDataUrl`, plus the cheap `logoHash`
+ * version tag. Table rows are ~1 KB without the logo and up to ~280 KB with
+ * it, and the logo is only ever needed by /api/logo/[slug], so hot paths
+ * (guest pages, every dashboard page, webhooks) must never select it.
+ */
+export function restaurantColumnsWithoutLogo() {
+  // `logoDataUrl` is dropped on purpose: up to 280 KB that no hot path needs.
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { logoDataUrl, ...columns } = getTableColumns(restaurants);
+  return { ...columns, logoHash: logoHashSql };
+}
+
 /** Resolve a restaurant by slug, returning null if not found. */
 export async function getRestaurantBySlug(slug: string) {
   const rows = await db
-    .select()
+    .select(restaurantColumnsWithoutLogo())
     .from(restaurants)
     .where(eq(restaurants.slug, slug))
     .limit(1);
   return rows[0] ?? null;
+}
+
+/**
+ * The uploaded logo of a restaurant, as the stored data URL (null when it has
+ * none). Deliberately a single-column query: /api/logo/[slug] is the one place
+ * that needs the bytes, and it must not pull the rest of the row with them.
+ */
+export async function getRestaurantLogoDataUrl(slug: string) {
+  const rows = await db
+    .select({ logoDataUrl: restaurants.logoDataUrl })
+    .from(restaurants)
+    .where(eq(restaurants.slug, slug))
+    .limit(1);
+  return rows[0]?.logoDataUrl ?? null;
+}
+
+/**
+ * The logo version tag of a restaurant by id (null when it has no logo).
+ * Single-column query, used after a settings write to build the served URL
+ * without dragging `logo_data_url` back out of Postgres.
+ */
+export async function getRestaurantLogoHash(restaurantId: number) {
+  const rows = await db
+    .select({ logoHash: logoHashSql })
+    .from(restaurants)
+    .where(eq(restaurants.id, restaurantId))
+    .limit(1);
+  return rows[0]?.logoHash ?? null;
 }
 
 /** Latest Mercado Pago subscription row for a restaurant (null if none). */
@@ -510,10 +571,17 @@ export async function getQuietStaff(
     .orderBy(desc(priorWeeklyAvg));
 }
 
+/**
+ * Whole-account queries below feed the digest/anomaly crons, which only ever
+ * read scalar fields (id, slug, name, email, region). They project the logo
+ * away for the same reason the hot paths do: N restaurant rows must not carry
+ * N logo images across the wire.
+ */
+
 /** All restaurants that have a manager email set (for digest sends). */
 export async function getRestaurantsWithEmail() {
   return db
-    .select()
+    .select(restaurantColumnsWithoutLogo())
     .from(restaurants)
     .where(sql`${restaurants.managerEmail} is not null`);
 }
@@ -521,7 +589,7 @@ export async function getRestaurantsWithEmail() {
 /** All restaurants marked as owner accounts. */
 export async function getOwnerAccounts() {
   return db
-    .select()
+    .select(restaurantColumnsWithoutLogo())
     .from(restaurants)
     .where(eq(restaurants.isOwner, true));
 }
@@ -529,7 +597,7 @@ export async function getOwnerAccounts() {
 /** All regional account rows. */
 export async function getRegionalAccounts() {
   return db
-    .select()
+    .select(restaurantColumnsWithoutLogo())
     .from(restaurants)
     .where(eq(restaurants.isRegional, true));
 }
@@ -537,7 +605,7 @@ export async function getRegionalAccounts() {
 /** All operational restaurant rows, excluding owner and regional accounts. */
 export async function getOperationalRestaurants() {
   return db
-    .select()
+    .select(restaurantColumnsWithoutLogo())
     .from(restaurants)
     .where(
       and(

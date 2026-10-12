@@ -47,7 +47,11 @@ export async function POST(req: NextRequest) {
 
   const baseUrl = getMercadoPagoBaseUrl();
   const breakdown = getPriceBreakdown();
-  const billingStartsAt = computeBillingStartDate();
+  // Billing starts when this restaurant's own trial ends — never a fresh
+  // trial window, so an already-expired trial cannot be reset by subscribing.
+  const billingStartsAt = computeBillingStartDate({
+    trialEndsAt: restaurant.trialEndsAt,
+  });
 
   try {
     // One active row per restaurant: reuse/update a non-cancelled row if one

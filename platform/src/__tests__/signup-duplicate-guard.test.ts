@@ -7,6 +7,12 @@ const mocks = vi.hoisted(() => {
   const whereConditions: unknown[] = [];
   /** Emails the fake restaurants table already holds (mixed case on purpose). */
   const storedEmails: string[] = [];
+  /**
+   * Restaurant the `pending_signups -> restaurants` join resolves to, i.e. the
+   * account an earlier signup with the SAME lead already provisioned.
+   */
+  let linkedRestaurant: { id: number; slug: string; managerEmail: string | null } | null =
+    null;
 
   /**
    * Drizzle renders `sql` templates as StringChunk wrappers, and interpolated
@@ -65,7 +71,9 @@ const mocks = vi.hoisted(() => {
           };
         }),
         innerJoin: vi.fn(() => ({
-          where: vi.fn(() => ({ limit: vi.fn(async () => []) })),
+          where: vi.fn(() => ({
+            limit: vi.fn(async () => (linkedRestaurant ? [{ ...linkedRestaurant }] : [])),
+          })),
         })),
       })),
     })),
@@ -96,8 +104,14 @@ const mocks = vi.hoisted(() => {
     whereConditions,
     storedEmails,
     sqlText,
+    setLinkedRestaurant: (
+      value: { id: number; slug: string; managerEmail: string | null } | null,
+    ) => {
+      linkedRestaurant = value;
+    },
     checkRateLimitAsync: vi.fn(async () => ({ allowed: true, resetAt: Date.now() + 60_000 })),
     trackCommercialEvent: vi.fn(async () => ({ id: 1 })),
+    sendWelcomeEmail: vi.fn(async () => undefined),
     upsertCommercialLead: vi.fn(async () => ({
       lead: { id: 41, status: 'new' },
       deduped: false,
@@ -134,7 +148,7 @@ vi.mock('@/lib/slug', () => ({
 vi.mock('@/lib/email', () => ({
   sendOwnerLeadNotification: vi.fn(async () => undefined),
   sendOwnerSignupNotification: vi.fn(async () => undefined),
-  sendWelcomeEmail: vi.fn(async () => undefined),
+  sendWelcomeEmail: mocks.sendWelcomeEmail,
 }));
 vi.mock('@/lib/qr', () => ({
   generateQrDataUrl: vi.fn(async () => 'data:image/png;base64,test'),
@@ -173,9 +187,11 @@ describe('signup duplicate email guard', () => {
     mocks.insertedValues.length = 0;
     mocks.whereConditions.length = 0;
     mocks.storedEmails.length = 0;
+    mocks.setLinkedRestaurant(null);
     mocks.transactionDbTransaction.mockClear();
     mocks.upsertCommercialLead.mockClear();
     mocks.checkRateLimitAsync.mockClear();
+    mocks.sendWelcomeEmail.mockClear();
   });
 
   afterEach(() => {
@@ -217,5 +233,62 @@ describe('signup duplicate email guard', () => {
 
     expect(response.status).toBe(200);
     expect(mocks.transactionDbTransaction).toHaveBeenCalledOnce();
+  });
+
+  it('refuses to hand an existing restaurant to a different email on the same lead', async () => {
+    // Account takeover path: leads are deduped by phone + business name, so an
+    // attacker who knows the victim's public phone and business name lands on
+    // the victim's lead — and must NOT be handed the victim's restaurant.
+    mocks.setLinkedRestaurant({
+      id: 4242,
+      slug: 'restaurante-victima',
+      managerEmail: 'victima@example.com',
+    });
+
+    const response = await POST(signupRequest({ email: 'atacante@example.com' }));
+    const body = await response.json();
+
+    expect(response.status).toBe(409);
+    expect(body.error).toBe('Ya existe una cuenta para este restaurante. Inicia sesión.');
+    expect(body.loginUrl).toBe('/login');
+
+    // No login/signup session cookie, no welcome email, no new restaurant row.
+    expect(response.headers.get('set-cookie')).toBeNull();
+    expect(mocks.sendWelcomeEmail).not.toHaveBeenCalled();
+    expect(mocks.insertedValues.filter((v) => 'slug' in v)).toHaveLength(0);
+  });
+
+  it('refuses when the linked account has no manager email to match against', async () => {
+    mocks.setLinkedRestaurant({
+      id: 4242,
+      slug: 'restaurante-victima',
+      managerEmail: null,
+    });
+
+    const response = await POST(signupRequest({ email: 'atacante@example.com' }));
+
+    expect(response.status).toBe(409);
+    expect(response.headers.get('set-cookie')).toBeNull();
+    expect(mocks.sendWelcomeEmail).not.toHaveBeenCalled();
+  });
+
+  it('returns the same restaurant when the same lead is resubmitted with the same email', async () => {
+    mocks.setLinkedRestaurant({
+      id: 4242,
+      slug: 'tacos-existentes',
+      managerEmail: 'ana@example.com',
+    });
+
+    const response = await POST(signupRequest({ email: 'ANA@Example.com' }));
+    const body = await response.json();
+
+    // Idempotent retry: 200, and the existing account is reused (no second
+    // restaurants row) — the email comparison is case-insensitive.
+    expect(response.status).toBe(200);
+    expect(body.url).toBe('https://app.ratetapmx.com/bienvenida');
+    expect(mocks.insertedValues.filter((v) => 'slug' in v)).toHaveLength(0);
+    expect(mocks.sendWelcomeEmail).toHaveBeenCalledWith(
+      expect.objectContaining({ slug: 'tacos-existentes', to: 'ANA@Example.com' }),
+    );
   });
 });

@@ -67,14 +67,23 @@ function shouldSkipPreBillingStartDowngrade(
   currentStatus: string,
   nextStatus: string,
   billingStartsAt: Date | null,
+  trialEndsAt: Date | null,
+  now: Date = new Date(),
 ): boolean {
   const currentlyHasAccess =
     currentStatus === 'active' || currentStatus === 'trialing';
   const wouldLoseAccess = nextStatus === 'canceled' || nextStatus === 'past_due';
+  // Skipping is only ever justified while the restaurant still HAS a trial to
+  // protect: a cancelled/paused preapproval during the free trial must not
+  // revoke the remaining days, but an account whose trial already ended has no
+  // free access left to preserve and must be downgraded when MP says so.
+  const trialStillRunning =
+    !!trialEndsAt && trialEndsAt.getTime() > now.getTime();
   // Per-restaurant trial window: prefer the subscription row's billing start
   // over the global launch date (rows predate per-restaurant trials may be null).
   return (
-    !subscriptionBillingHasStarted(billingStartsAt) &&
+    trialStillRunning &&
+    !subscriptionBillingHasStarted(billingStartsAt, now) &&
     currentlyHasAccess &&
     wouldLoseAccess
   );
@@ -219,6 +228,7 @@ async function handlePreapproval(dataId: string) {
       restaurant.subscriptionStatus,
       mapped,
       subscription.billingStartsAt,
+      restaurant.trialEndsAt,
     )
   ) {
     console.log(
@@ -301,6 +311,7 @@ async function handleAuthorizedPayment(dataId: string) {
       restaurant.subscriptionStatus,
       newStatus,
       subscription.billingStartsAt,
+      restaurant.trialEndsAt,
     )
   ) {
     console.log(
@@ -323,15 +334,23 @@ async function handleAuthorizedPayment(dataId: string) {
  * `nfc_cards_shipped_at IS NULL`, and only the caller that actually flipped
  * the row sends anything. A retried webhook (or a later renewal payment)
  * updates zero rows and stays silent.
+ *
+ * The owner notice is the whole point of shipping here, so a notice that never
+ * went out releases the claim again (only if the row still holds the timestamp
+ * WE wrote) and logs loudly: the next approved payment — a real retry-bait
+ * signal, unlike a webhook replay — then tries again. A failed Meta purchase
+ * event is NOT worth echoing a second paid conversion for, so it never
+ * releases the claim.
  */
 async function notifyFirstConversion(
   restaurant: typeof restaurants.$inferSelect,
   subscription: typeof mercadopagoSubscriptions.$inferSelect,
   authorizedPayment: MercadoPagoAuthorizedPayment,
 ) {
+  const claimedAt = new Date();
   const claimed = await db
     .update(restaurants)
-    .set({ nfcCardsShippedAt: new Date() })
+    .set({ nfcCardsShippedAt: claimedAt })
     .where(
       and(
         eq(restaurants.id, restaurant.id),
@@ -346,7 +365,7 @@ async function notifyFirstConversion(
   const paymentId = authorizedPayment.payment?.id ?? authorizedPayment.id;
   const shipping = parseShippingAddress(restaurant.shippingAddress, restaurant.city);
 
-  await Promise.allSettled([
+  const [notice] = await Promise.allSettled([
     sendOwnerConversionNotification({
       restaurantName: restaurant.name,
       contactName: restaurant.contactName ?? 'Desconocido',
@@ -364,6 +383,27 @@ async function notifyFirstConversion(
         })
       : Promise.resolve(),
   ]);
+
+  // Rejected, or an explicit `false` ("not sent"). A `void` result from a
+  // caller/mock that predates the boolean contract carries no signal, so it
+  // must not undo a shipped claim.
+  const noticeSent = notice.status === 'fulfilled' && notice.value !== false;
+  if (noticeSent) return;
+
+  console.error(
+    `[mercadopago-webhook] conversion notice NOT sent for restaurant=${restaurant.id}; releasing nfc_cards_shipped_at so the next approved payment retries`,
+    notice.status === 'rejected' ? notice.reason : 'not sent',
+  );
+
+  await db
+    .update(restaurants)
+    .set({ nfcCardsShippedAt: null })
+    .where(
+      and(
+        eq(restaurants.id, restaurant.id),
+        eq(restaurants.nfcCardsShippedAt, claimedAt),
+      ),
+    );
 }
 
 /** Amount in MXN (Mercado Pago amounts are already pesos, not cents). */

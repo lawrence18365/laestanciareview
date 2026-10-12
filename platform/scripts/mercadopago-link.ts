@@ -101,7 +101,9 @@ async function main() {
         throw new Error(`No payer email for restaurant: ${slug}`);
       }
 
-      const billingStartsAt = computeBillingStartDate();
+      const billingStartsAt = computeBillingStartDate({
+        trialEndsAt: restaurant.trialEndsAt,
+      });
 
       const existing = await db
         .select()

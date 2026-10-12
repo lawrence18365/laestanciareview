@@ -15,7 +15,7 @@ import {
   PILOT_ACCESS_COOKIE,
   PILOT_TRIAL_DAYS,
 } from '@/lib/pilot';
-import { provisionSignupAtomic } from '@/lib/signup-provisioning';
+import { provisionSignupAtomic, SignupConflictError } from '@/lib/signup-provisioning';
 import { generateQrDataUrl, reviewUrlFor } from '@/lib/qr';
 import { sendWhatsAppWelcome } from '@/lib/whatsapp';
 import { sendCompleteRegistrationEvent } from '@/lib/meta-conversions';
@@ -162,6 +162,15 @@ export async function POST(req: NextRequest) {
     } catch (err) {
       await db.delete(pendingSignups).where(eq(pendingSignups.id, pendingSignupId));
       if (isPilotLimitError(err)) return pilotLimitResponse();
+      // The lead already belongs to an account under another email (leads are
+      // deduped by phone + business name, not email): refuse rather than hand
+      // the caller someone else's restaurant.
+      if (isSignupConflictError(err)) {
+        return Response.json(
+          { error: 'Ya existe una cuenta para este restaurante. Inicia sesión.', loginUrl: '/login' },
+          { status: 409 },
+        );
+      }
       throw err;
     }
 
@@ -280,6 +289,28 @@ function isPilotLimitError(err: unknown): boolean {
     ? String((cause as { message?: unknown }).message)
     : '';
   return message.includes('pilot_signup_limit_reached') || causeMessage.includes('pilot_signup_limit_reached');
+}
+
+/**
+ * True when the failure is "this lead already belongs to an account under a
+ * different email". Walks the `cause` chain like the pilot-limit check: a
+ * driver-side transaction wrapper may rethrow without preserving the class.
+ */
+function isSignupConflictError(err: unknown): boolean {
+  const seen = new Set<unknown>();
+  let current: unknown = err;
+  while (current && typeof current === 'object' && !seen.has(current)) {
+    seen.add(current);
+    if (current instanceof SignupConflictError) return true;
+    if (
+      typeof (current as { message?: unknown }).message === 'string' &&
+      String((current as { message?: unknown }).message).includes('signup_conflict_existing_account')
+    ) {
+      return true;
+    }
+    current = (current as { cause?: unknown }).cause;
+  }
+  return false;
 }
 
 function pilotLimitResponse() {

@@ -1388,10 +1388,21 @@ interface OwnerConversionParams {
   amountMxn: number;
 }
 
-export async function sendOwnerConversionNotification(p: OwnerConversionParams) {
+/**
+ * Tell the owner that a restaurant converted and where to ship its NFC cards.
+ *
+ * Returns whether the notice actually went out: `false` means "definitely not
+ * sent" (no recipient configured, or the send failed/skipped). Callers that
+ * gate a one-shot side effect on this notice — the Mercado Pago webhook
+ * releases its `nfc_cards_shipped_at` claim so the next approved payment
+ * retries — must not treat a failure as success.
+ */
+export async function sendOwnerConversionNotification(
+  p: OwnerConversionParams,
+): Promise<boolean> {
   if (!OWNER_NOTIFICATION_EMAIL) {
     console.error('[sendOwnerConversionNotification] skipped: missing OWNER_NOTIFICATION_EMAIL / ADMIN_EMAIL');
-    return;
+    return false;
   }
 
   const addr = p.shippingAddress;
@@ -1431,7 +1442,10 @@ export async function sendOwnerConversionNotification(p: OwnerConversionParams) 
         ? 'missing SMTP_USER / SMTP_PASS'
         : (result.response ?? 'unknown');
     console.error(`[sendOwnerConversionNotification] failed to ${OWNER_NOTIFICATION_EMAIL}: ${reason}`);
+    return false;
   }
+
+  return true;
 }
 
 interface OwnerLapsedParams {
