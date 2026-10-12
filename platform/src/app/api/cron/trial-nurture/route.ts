@@ -1,17 +1,24 @@
 /**
  * Daily cron: send WhatsApp + email nurture messages to trialing restaurants.
- * Day 3 → tips. Day 7 → case study. Every trial (self-serve and founder
- * pilot) → ending warning three days before trialEndsAt, linking to the
- * Mercado Pago activation in Settings.
+ * Day 1 → activation nudge, only when waiters or the Google listing are missing.
+ * Day 3 → tips. Day 7 → case study (both switch to an activation variant while
+ * the restaurant has no waiters or no guest ratings yet). Every trial
+ * (self-serve and founder pilot) → ending warning three days before
+ * trialEndsAt, linking to the Mercado Pago activation in Settings.
+ *
+ * Each channel is tracked on its own (`day3:email`, `day3:whatsapp`) so a
+ * failed WhatsApp never makes the email send again. A plain `day3` row from
+ * before this split counts as both channels sent.
  *
  * Schedule: every day at noon Mexico City (18:00 UTC)
  * Vercel cron: "0 18 * * *"
  */
 import { NextRequest } from 'next/server';
 import { db } from '@/db';
-import { restaurants, nurtureEvents } from '@/db/schema';
-import { eq, and } from 'drizzle-orm';
+import { restaurants, nurtureEvents, staff, reviews } from '@/db/schema';
+import { eq, and, count } from 'drizzle-orm';
 import { FROM, sendMail } from '@/lib/mailer';
+import { getPriceBreakdown } from '@/lib/mercadopago';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -54,43 +61,135 @@ async function sendWhatsApp(to: string, body: string) {
   }
 }
 
+type Ctx = {
+  name: string;
+  pilot: boolean;
+  slug: string;
+  staffCount: number;
+  ratingCount: number;
+  hasGoogle: boolean;
+};
+
+const BUTTON = 'background:#10B981;color:#fff;padding:12px 24px;text-decoration:none;font-weight:700;display:inline-block;border-radius:6px';
+
+function monthlyPrice(): string {
+  return `$${getPriceBreakdown().total.toLocaleString('es-MX')} MXN/mes`;
+}
+
+// Nothing to celebrate yet: no waiters, or nobody has rated.
+const needsActivation = (c: Ctx) => c.staffCount === 0 || c.ratingCount === 0;
+
+function activationWhatsApp(c: Ctx, lead: string): string {
+  return `*${c.name}*, ${lead} Aún no hay calificaciones de tus clientes.\n1. Agrega a tus meseros: ${BASE_URL}/staff\n2. Imprime sus QR: ${BASE_URL}/qr-codes`;
+}
+
+function activationHtml(c: Ctx, lead: string): string {
+  return `<p>Hola ${c.name},</p><p>${lead} Aún no hay calificaciones de tus clientes.</p><ol><li><a href="${BASE_URL}/staff">Agrega a tus meseros →</a></li><li><a href="${BASE_URL}/qr-codes">Imprime sus QR →</a></li></ol>`;
+}
+
 const NURTURE: Record<string, {
   days: number;
-  whatsapp: (name: string, pilot: boolean, slug: string) => string;
-  subject: (name: string, pilot: boolean, slug: string) => string;
-  html: (name: string, pilot: boolean, slug: string) => string;
+  // Content gate beyond the signup age (e.g. day1 only when something is missing).
+  applies?: (c: Ctx) => boolean;
+  whatsapp: (c: Ctx) => string;
+  subject: (c: Ctx) => string;
+  html: (c: Ctx) => string;
 }> = {
+  day1: {
+    days: 1,
+    applies: (c) => c.staffCount === 0 || !c.hasGoogle,
+    whatsapp: (c) => {
+      const lines = [`Hola *${c.name}* 👋 Para empezar con RateTap te falta:`];
+      if (c.staffCount === 0) lines.push(`• Agregar a tus meseros: ${BASE_URL}/staff`);
+      if (!c.hasGoogle) lines.push(`• Conectar tu Google: ${BASE_URL}/settings`);
+      return lines.join('\n');
+    },
+    subject: (c) => `Te falta un paso para empezar: ${c.name}`,
+    html: (c) => {
+      const items: string[] = [];
+      if (c.staffCount === 0) items.push(`<li><a href="${BASE_URL}/staff">Agrega a tus meseros →</a></li>`);
+      if (!c.hasGoogle) items.push(`<li><a href="${BASE_URL}/settings">Conecta tu Google →</a></li>`);
+      return `<p>Hola ${c.name},</p><p>Para empezar con RateTap te falta:</p><ul>${items.join('')}</ul>`;
+    },
+  },
   day3: {
     days: 3,
-    whatsapp: (name) =>
-      `Hola *${name}* 👋 Llevas 3 días con RateTap. Tip: pídele a tu equipo que muestren el código QR con la frase "Nos encantaría conocer tu opinión, ¿nos ayudas con una reseña? ⭐". ¿Cómo va hasta ahora?`,
-    subject: (name) => `Tip del día 3: ${name}`,
-    html: (name) => `<p>Hola ${name},</p><p>Llevas 3 días con RateTap. El truco que mejor funciona: tu mesero muestra el código QR y dice "Nos encantaría conocer su opinión, ¿nos ayuda con una reseña en Google? ⭐".</p><p><a href="${BASE_URL}/dashboard">Ver mi dashboard →</a></p>`,
+    whatsapp: (c) => needsActivation(c)
+      ? activationWhatsApp(c, 'llevas 3 días con RateTap.')
+      : `Hola *${c.name}* 👋 Llevas 3 días con RateTap. Tip: pídele a tu equipo que muestren el código QR con la frase "Nos encantaría conocer tu opinión, ¿nos ayudas con una reseña? ⭐". ¿Cómo va hasta ahora?`,
+    subject: (c) => needsActivation(c) ? `Activa tu RateTap: ${c.name}` : `Tip del día 3: ${c.name}`,
+    html: (c) => needsActivation(c)
+      ? activationHtml(c, 'Llevas 3 días con RateTap.')
+      : `<p>Hola ${c.name},</p><p>Llevas 3 días con RateTap. El truco que mejor funciona: tu mesero muestra el código QR y dice "Nos encantaría conocer su opinión, ¿nos ayuda con una reseña en Google? ⭐".</p><p><a href="${BASE_URL}/dashboard">Ver mi dashboard →</a></p>`,
   },
   day7: {
     days: 7,
     // The La Estancia case study is only shown to that group's own locations;
     // everyone else gets the outcome without naming a client or its figures.
-    whatsapp: (name, _pilot, slug) =>
-      slug.startsWith('estancia')
-        ? `*${name}*, llevas una semana 🎉 La Estancia (12 restaurantes en México) logró subir consistentemente sus calificaciones en todos sus locales con RateTap. Tus reseñas nuevas ya están trabajando para ti. Panel: ${BASE_URL}/dashboard`
-        : `*${name}*, llevas una semana 🎉 Los restaurantes que piden la reseña en cada mesa reciben más reseñas. Tus reseñas nuevas ya están trabajando para ti. Panel: ${BASE_URL}/dashboard`,
-    subject: (name) => `Una semana con RateTap: ${name}`,
-    html: (name, _pilot, slug) => slug.startsWith('estancia')
-      ? `<p>Hola ${name},</p><p>Llevas 7 días con RateTap. Grupo La Estancia (12 restaurantes en México) ha visto cómo sus reseñas de Google crecen consistentemente desde que usan el sistema.</p><p>Tus reseñas nuevas ya están llegando.</p><p><a href="${BASE_URL}/dashboard">Ver mi progreso →</a></p>`
-      : `<p>Hola ${name},</p><p>Llevas 7 días con RateTap. Los restaurantes que piden la reseña en cada mesa reciben más reseñas.</p><p>Tus reseñas nuevas ya están llegando.</p><p><a href="${BASE_URL}/dashboard">Ver mi progreso →</a></p>`,
+    whatsapp: (c) => needsActivation(c)
+      ? activationWhatsApp(c, 'llevas una semana con RateTap.')
+      : c.slug.startsWith('estancia')
+        ? `*${c.name}*, llevas una semana 🎉 La Estancia (12 restaurantes en México) logró subir consistentemente sus calificaciones en todos sus locales con RateTap. Tus reseñas nuevas ya están trabajando para ti. Panel: ${BASE_URL}/dashboard`
+        : `*${c.name}*, llevas una semana 🎉 Los restaurantes que piden la reseña en cada mesa reciben más reseñas. Tus reseñas nuevas ya están trabajando para ti. Panel: ${BASE_URL}/dashboard`,
+    subject: (c) => needsActivation(c) ? `Aún no hay calificaciones: ${c.name}` : `Una semana con RateTap: ${c.name}`,
+    html: (c) => needsActivation(c)
+      ? activationHtml(c, 'Llevas una semana con RateTap.')
+      : c.slug.startsWith('estancia')
+        ? `<p>Hola ${c.name},</p><p>Llevas 7 días con RateTap. Grupo La Estancia (12 restaurantes en México) ha visto cómo sus reseñas de Google crecen consistentemente desde que usan el sistema.</p><p>Tus reseñas nuevas ya están llegando.</p><p><a href="${BASE_URL}/dashboard">Ver mi progreso →</a></p>`
+        : `<p>Hola ${c.name},</p><p>Llevas 7 días con RateTap. Los restaurantes que piden la reseña en cada mesa reciben más reseñas.</p><p>Tus reseñas nuevas ya están llegando.</p><p><a href="${BASE_URL}/dashboard">Ver mi progreso →</a></p>`,
   },
   day12: {
     days: 12,
-    whatsapp: (name, pilot) => pilot
-      ? `Hola *${name}*, tu piloto fundador termina en 3 días. Si decides continuar, tu plan será de $700 MXN/mes y la cuota de setup de $1,500 MXN se factura al activar. Escríbenos desde tu panel: ${BASE_URL}/settings`
-      : `Hola *${name}*, tu prueba gratis termina en 3 días. Para seguir recibiendo reseñas de Google sin interrupciones, activa tu plan aquí: ${BASE_URL}/settings. $700 MXN/mes, cancela cuando quieras.`,
-    subject: (name, pilot) => `${pilot ? 'Tu piloto' : 'Tu prueba'} termina en 3 días, ${name}`,
-    html: (name, pilot) => pilot
-      ? `<p>Hola ${name},</p><p>Tu piloto fundador de RateTap termina en <strong>3 días</strong>.</p><p>Si decides continuar, el plan cuesta $700 MXN/mes y la cuota de setup de $1,500 MXN se factura al activar.</p><p><a href="${BASE_URL}/settings" style="background:#10B981;color:#fff;padding:12px 24px;text-decoration:none;font-weight:700;display:inline-block;border-radius:6px">Continuar con RateTap →</a></p><p style="color:#6b7280;font-size:13px">Sin contrato. Cancela cuando quieras.</p>`
-      : `<p>Hola ${name},</p><p>Tu prueba gratis de RateTap termina en <strong>3 días</strong>.</p><p>Para que tus reseñas de Google sigan llegando sin interrupciones, activa tu plan ($700 MXN/mes).</p><p><a href="${BASE_URL}/settings" style="background:#10B981;color:#fff;padding:12px 24px;text-decoration:none;font-weight:700;display:inline-block;border-radius:6px">Activar mi plan →</a></p><p style="color:#6b7280;font-size:13px">Sin contrato. Cancela cuando quieras.</p>`,
+    whatsapp: (c) => c.pilot
+      ? `Hola *${c.name}*, tu piloto fundador termina en 3 días. Si decides continuar, tu plan será de ${monthlyPrice()}. Escríbenos desde tu panel: ${BASE_URL}/settings`
+      : `Hola *${c.name}*, tu prueba gratis termina en 3 días. Para seguir recibiendo reseñas de Google sin interrupciones, activa tu plan aquí: ${BASE_URL}/settings. ${monthlyPrice()}, cancela cuando quieras.`,
+    subject: (c) => `${c.pilot ? 'Tu piloto' : 'Tu prueba'} termina en 3 días, ${c.name}`,
+    html: (c) => c.pilot
+      ? `<p>Hola ${c.name},</p><p>Tu piloto fundador de RateTap termina en <strong>3 días</strong>.</p><p>Si decides continuar, el plan cuesta ${monthlyPrice()}.</p><p><a href="${BASE_URL}/settings" style="${BUTTON}">Continuar con RateTap →</a></p><p style="color:#6b7280;font-size:13px">Sin contrato. Cancela cuando quieras.</p>`
+      : `<p>Hola ${c.name},</p><p>Tu prueba gratis de RateTap termina en <strong>3 días</strong>.</p><p>Para que tus reseñas de Google sigan llegando sin interrupciones, activa tu plan (${monthlyPrice()}).</p><p><a href="${BASE_URL}/settings" style="${BUTTON}">Activar mi plan →</a></p><p style="color:#6b7280;font-size:13px">Sin contrato. Cancela cuando quieras.</p>`,
   },
 };
+
+async function countActiveStaff(restaurantId: number): Promise<number> {
+  const [row] = await db.select({ n: count() }).from(staff)
+    .where(and(eq(staff.restaurantId, restaurantId), eq(staff.active, true)));
+  return row?.n ?? 0;
+}
+
+async function countRatings(restaurantId: number): Promise<number> {
+  const [row] = await db.select({ n: count() }).from(reviews)
+    .where(eq(reviews.restaurantId, restaurantId));
+  return row?.n ?? 0;
+}
+
+/**
+ * Claim one channel of one event before delivery so overlapping cron
+ * invocations cannot double-send. The claim is removed on failure so only that
+ * channel retries on the next run.
+ */
+async function deliver(
+  restaurantId: number,
+  event: string,
+  label: string,
+  send: () => Promise<void>,
+): Promise<boolean> {
+  try {
+    await db.insert(nurtureEvents).values({ restaurantId, event });
+  } catch {
+    return false;
+  }
+  try {
+    await send();
+    return true;
+  } catch (error) {
+    await db.delete(nurtureEvents).where(and(
+      eq(nurtureEvents.restaurantId, restaurantId),
+      eq(nurtureEvents.event, event),
+    ));
+    console.error(`[trial-nurture] ${event} delivery failed for ${label}:`, error);
+    return false;
+  }
+}
 
 export async function GET(req: NextRequest) {
   if (!CRON_SECRET) {
@@ -114,6 +213,24 @@ export async function GET(req: NextRequest) {
       ? Math.ceil((r.trialEndsAt.getTime() - Date.now()) / 86_400_000)
       : null;
 
+    const hasWhatsApp = Boolean(r.managerPhone && getTwilioConfig());
+    if (!r.managerEmail && !hasWhatsApp) continue;
+
+    const sentRows = await db.select().from(nurtureEvents)
+      .where(eq(nurtureEvents.restaurantId, r.id));
+    const sent = new Set(sentRows.map((e) => e.event));
+
+    // Counts are only needed once something is actually pending; fetch lazily.
+    let ctx: Ctx | null = null;
+    const getCtx = async (): Promise<Ctx> => ctx ??= {
+      name: r.name,
+      pilot: r.pilot,
+      slug: r.slug,
+      staffCount: await countActiveStaff(r.id),
+      ratingCount: await countRatings(r.id),
+      hasGoogle: Boolean(r.googlePlaceId || r.googleReviewUrl),
+    };
+
     for (const [eventKey, nurture] of Object.entries(NURTURE)) {
       // The ending warning keys off trialEndsAt only: without an end date (or
       // once it has passed) "termina en 3 días" would be false.
@@ -122,53 +239,42 @@ export async function GET(req: NextRequest) {
         : daysSinceSignup >= nurture.days;
       if (!eligible) continue;
 
-      // Check if already sent
-      const existing = await db.select().from(nurtureEvents)
-        .where(and(
-          eq(nurtureEvents.restaurantId, r.id),
-          eq(nurtureEvents.event, eventKey),
-        )).limit(1);
+      // A plain `${eventKey}` row (pre channel split) means both channels sent.
+      const legacySent = sent.has(eventKey);
+      const needEmail = Boolean(r.managerEmail) && !legacySent && !sent.has(`${eventKey}:email`);
+      const needWhatsApp = hasWhatsApp && !legacySent && !sent.has(`${eventKey}:whatsapp`);
+      if (!needEmail && !needWhatsApp) continue;
 
-      if (existing.length > 0) continue;
+      const c = await getCtx();
+      if (nurture.applies && !nurture.applies(c)) continue;
 
-      const hasEmail = Boolean(r.managerEmail);
-      const hasWhatsApp = Boolean(r.managerPhone && getTwilioConfig());
-      if (!hasEmail && !hasWhatsApp) continue;
+      let delivered = false;
 
-      // Claim the event before delivery so overlapping cron invocations cannot
-      // double-send. Remove the claim on failure so the next run can retry.
-      try {
-        await db.insert(nurtureEvents).values({ restaurantId: r.id, event: eventKey });
-      } catch {
-        continue;
-      }
-
-      try {
-        if (r.managerEmail) {
+      if (needEmail && r.managerEmail) {
+        const to = r.managerEmail;
+        delivered = await deliver(r.id, `${eventKey}:email`, r.name, async () => {
           const result = await sendMail({
             from: FROM,
-            to: r.managerEmail,
-            subject: nurture.subject(r.name, r.pilot, r.slug),
-            html: nurture.html(r.name, r.pilot, r.slug),
+            to,
+            subject: nurture.subject(c),
+            html: nurture.html(c),
           });
           if (!result.success) {
             throw new Error(result.error?.message ?? 'SMTP send skipped');
           }
-        }
-        if (r.managerPhone && hasWhatsApp) {
-          await sendWhatsApp(r.managerPhone, nurture.whatsapp(r.name, r.pilot, r.slug));
-        }
-      } catch (error) {
-        await db.delete(nurtureEvents).where(and(
-          eq(nurtureEvents.restaurantId, r.id),
-          eq(nurtureEvents.event, eventKey),
-        ));
-        console.error(`[trial-nurture] ${eventKey} delivery failed for ${r.name}:`, error);
-        continue;
+        }) || delivered;
+      }
+      if (needWhatsApp && r.managerPhone) {
+        const to = r.managerPhone;
+        delivered = await deliver(r.id, `${eventKey}:whatsapp`, r.name, () =>
+          sendWhatsApp(to, nurture.whatsapp(c)),
+        ) || delivered;
       }
 
-      processed++;
-      console.log(`[trial-nurture] ${eventKey} → ${r.name}`);
+      if (delivered) {
+        processed++;
+        console.log(`[trial-nurture] ${eventKey} → ${r.name}`);
+      }
     }
   }
 
