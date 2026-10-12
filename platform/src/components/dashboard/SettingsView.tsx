@@ -2,6 +2,14 @@
 
 import { useEffect, useState } from 'react';
 import { t } from '@/lib/i18n';
+import GooglePlaceSearch, {
+  GOOGLE_PLACES_BROWSER_KEY,
+  type PlaceSelection,
+} from '@/components/GooglePlaceSearch';
+import {
+  derivedGoogleReviewUrl,
+  isDerivedGoogleReviewUrl,
+} from '@/lib/google-review';
 
 interface BillingInfo {
   provider: string | null;
@@ -22,6 +30,9 @@ interface Props {
     name: string;
     slug: string;
     googleReviewUrl: string;
+    googlePlaceId: string;
+    /** URL of the restaurant's own uploaded logo, or null when it has none. */
+    logoUrl: string | null;
     googleThreshold: number;
     managerEmail: string;
     managerPhone: string;
@@ -82,8 +93,82 @@ const btnPrimary: React.CSSProperties = {
   borderRadius: 0,
 };
 
+const btnSecondary: React.CSSProperties = {
+  ...btnPrimary,
+  background: 'transparent',
+  color: 'var(--text-main)',
+  border: '1px solid var(--border-dark)',
+};
+
+/* ── Logo upload ──
+ *
+ * The image is resized and re-encoded in the browser before it is sent, so the
+ * row stays small and the server only has to validate what it receives:
+ *   - longest side <= 512 px (a logo is shown at 44–160 px on every surface),
+ *   - PNG when the source has transparency, JPEG q=0.85 otherwise,
+ *   - <= 200 KB.
+ * This is deliberately the only place that touches logoDataUrl on the client:
+ * everywhere else links to /api/logo/[slug], so the (up to 280 KB) data URL is
+ * never part of a props object.
+ */
+const LOGO_ACCEPTED_TYPES = ['image/png', 'image/jpeg', 'image/webp'];
+const LOGO_MAX_SIDE = 512;
+const LOGO_MAX_IMAGE_BYTES = 200 * 1024;
+
+/** Bytes a data URL stands for (base64 is 4 chars per 3 bytes, minus padding). */
+function dataUrlByteLength(dataUrl: string): number {
+  const base64 = dataUrl.slice(dataUrl.indexOf(',') + 1);
+  const padding = base64.endsWith('==') ? 2 : base64.endsWith('=') ? 1 : 0;
+  return Math.floor((base64.length * 3) / 4) - padding;
+}
+
+/** Any pixel that is not fully opaque — i.e. the source needs an alpha channel. */
+function hasTransparency(image: ImageData): boolean {
+  const { data } = image;
+  for (let i = 3; i < data.length; i += 4) {
+    if (data[i] < 250) return true;
+  }
+  return false;
+}
+
+/** Throws 'too-big' or 'unreadable'; both are shown to the user. */
+async function encodeLogoFile(file: File): Promise<string> {
+  if (!LOGO_ACCEPTED_TYPES.includes(file.type)) throw new Error('unreadable');
+
+  let bitmap: ImageBitmap;
+  try {
+    bitmap = await createImageBitmap(file);
+  } catch {
+    throw new Error('unreadable');
+  }
+
+  try {
+    const scale = Math.min(1, LOGO_MAX_SIDE / Math.max(bitmap.width, bitmap.height));
+    const width = Math.max(1, Math.round(bitmap.width * scale));
+    const height = Math.max(1, Math.round(bitmap.height * scale));
+
+    const canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) throw new Error('unreadable');
+    ctx.drawImage(bitmap, 0, 0, width, height);
+
+    const dataUrl = canvas.toDataURL(
+      hasTransparency(ctx.getImageData(0, 0, width, height)) ? 'image/png' : 'image/jpeg',
+      0.85,
+    );
+    if (dataUrlByteLength(dataUrl) > LOGO_MAX_IMAGE_BYTES) throw new Error('too-big');
+    return dataUrl;
+  } finally {
+    bitmap.close?.();
+  }
+}
+
 export default function SettingsView({ settings, billing }: Props) {
   const [googleReviewUrl, setGoogleReviewUrl] = useState(settings.googleReviewUrl);
+  const [googlePlaceId, setGooglePlaceId] = useState(settings.googlePlaceId);
+  const [placeQuery, setPlaceQuery] = useState(settings.name);
   const [googleThreshold, setGoogleThreshold] = useState(settings.googleThreshold);
   const [managerEmail, setManagerEmail] = useState(settings.managerEmail);
   const [managerPhone, setManagerPhone] = useState(settings.managerPhone);
@@ -94,9 +179,106 @@ export default function SettingsView({ settings, billing }: Props) {
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
 
+  /** Shown logo: the saved one, or the freshly picked file before it is saved. */
+  const [logoPreview, setLogoPreview] = useState<string | null>(settings.logoUrl);
+  /** A picked-but-unsaved logo. Null means "nothing to save". */
+  const [logoDataUrl, setLogoDataUrl] = useState<string | null>(null);
+  const [logoError, setLogoError] = useState('');
+
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
   const [messageType, setMessageType] = useState<'success' | 'error'>('success');
+
+  /**
+   * A Google place was picked. Saved immediately (not with the general form):
+   * it is the one setting whose effect — guests reaching the right review
+   * page — matters more than the rest of the form being complete.
+   *
+   * The review URL is replaced only when it is ours to replace: empty, or a
+   * writereview URL we derived from an earlier place ID. A URL the restaurant
+   * typed (g.page/…, maps.app.goo.gl/…) is never overwritten.
+   */
+  async function handlePlaceSelected(place: PlaceSelection) {
+    if (!place.placeId) return;
+    const derivedUrl = derivedGoogleReviewUrl(place.placeId);
+    const replaceReviewUrl = !googleReviewUrl.trim() || isDerivedGoogleReviewUrl(googleReviewUrl);
+
+    setSaving(true);
+    setMessage('');
+    try {
+      const res = await fetch('/api/auth/settings', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          googlePlaceId: place.placeId,
+          ...(replaceReviewUrl ? { googleReviewUrl: derivedUrl } : {}),
+        }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || t.login.somethingWrong);
+      }
+      setGooglePlaceId(place.placeId);
+      if (replaceReviewUrl) setGoogleReviewUrl(derivedUrl);
+      if (place.name) setPlaceQuery(place.name);
+      setMessage(t.settings.googlePlaceSaved);
+      setMessageType('success');
+    } catch (err) {
+      setMessage(err instanceof Error ? err.message : t.login.somethingWrong);
+      setMessageType('error');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  /** Scale + re-encode locally; nothing is uploaded until "Guardar logo". */
+  async function handleLogoChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    // Clear the value so re-picking the same file after a rejection works.
+    e.target.value = '';
+    if (!file) return;
+
+    setLogoError('');
+    try {
+      const dataUrl = await encodeLogoFile(file);
+      setLogoDataUrl(dataUrl);
+      setLogoPreview(dataUrl);
+    } catch (err) {
+      setLogoError(
+        err instanceof Error && err.message === 'too-big'
+          ? t.settings.logoTooBig
+          : t.settings.logoUnreadable,
+      );
+    }
+  }
+
+  /** Send the picked logo (or `null` to remove it) and adopt the served URL. */
+  async function handleSaveLogo(next: string | null) {
+    setSaving(true);
+    setMessage('');
+    try {
+      const res = await fetch('/api/auth/settings', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ logoDataUrl: next }),
+      });
+      const data = (await res.json().catch(() => ({}))) as {
+        logoUrl?: string | null;
+        error?: string;
+      };
+      if (!res.ok) throw new Error(data.error || t.login.somethingWrong);
+
+      setLogoDataUrl(null);
+      setLogoPreview(data.logoUrl ?? null);
+      setMessage(t.settings.logoSaved);
+      setMessageType('success');
+    } catch (err) {
+      setMessage(err instanceof Error ? err.message : t.login.somethingWrong);
+      setMessageType('error');
+    } finally {
+      setSaving(false);
+    }
+  }
 
   async function handleSaveGeneral(e: React.FormEvent) {
     e.preventDefault();
@@ -214,9 +396,130 @@ export default function SettingsView({ settings, billing }: Props) {
         </div>
       </section>
 
+      {/* Logo */}
+      <section style={card}>
+        <h2 style={sectionTitle}>{t.settings.logo}</h2>
+        <div style={{ display: 'flex', gap: '1.25rem', alignItems: 'flex-start', flexWrap: 'wrap' }}>
+          <div
+            style={{
+              width: 96,
+              height: 96,
+              flexShrink: 0,
+              border: '1px solid var(--border-dark)',
+              background: '#fff',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              overflow: 'hidden',
+            }}
+          >
+            {logoPreview ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={logoPreview}
+                alt={settings.name}
+                style={{ width: '100%', height: '100%', objectFit: 'contain', padding: 6 }}
+              />
+            ) : (
+              <span style={{ fontSize: '0.7rem', color: 'var(--text-dim)', textAlign: 'center', padding: '0.5rem' }}>
+                {t.settings.logoNone}
+              </span>
+            )}
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', flex: '1 1 220px', minWidth: 0 }}>
+            <label style={labelStyle} htmlFor="logoFile">
+              {t.settings.logoUpload}
+            </label>
+            <input
+              id="logoFile"
+              type="file"
+              accept="image/png,image/jpeg,image/webp"
+              onChange={handleLogoChange}
+              style={{ fontSize: '0.85rem', color: 'var(--text-main)' }}
+            />
+            <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-dim)' }}>
+              {t.settings.logoHint}
+            </p>
+
+            {logoError && (
+              <p role="alert" style={{ margin: 0, fontSize: '0.8rem', color: 'var(--red)' }}>
+                {logoError}
+              </p>
+            )}
+
+            {logoDataUrl ? (
+              <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                <button
+                  type="button"
+                  disabled={saving}
+                  onClick={() => handleSaveLogo(logoDataUrl)}
+                  style={{ ...btnPrimary, opacity: saving ? 0.6 : 1 }}
+                >
+                  {saving ? t.settings.saving : t.settings.logoSave}
+                </button>
+                <button
+                  type="button"
+                  disabled={saving}
+                  onClick={() => {
+                    setLogoDataUrl(null);
+                    setLogoPreview(settings.logoUrl);
+                    setLogoError('');
+                  }}
+                  style={btnSecondary}
+                >
+                  {t.settings.logoCancel}
+                </button>
+              </div>
+            ) : logoPreview ? (
+              <div>
+                <button
+                  type="button"
+                  disabled={saving}
+                  onClick={() => handleSaveLogo(null)}
+                  style={{ ...btnSecondary, opacity: saving ? 0.6 : 1 }}
+                >
+                  {t.settings.logoRemove}
+                </button>
+              </div>
+            ) : null}
+          </div>
+        </div>
+      </section>
+
       {/* General Settings */}
       <section style={card}>
         <h2 style={sectionTitle}>{t.settings.generalSettings}</h2>
+
+        {/* Google profile. Saves on selection, so it sits outside the form
+            below — Enter inside an autocomplete input must not submit a
+            half-filled form. Rendered only when the Places key is configured;
+            the free-text URL field below always works. */}
+        {GOOGLE_PLACES_BROWSER_KEY && (
+          <div style={{ marginBottom: '1.25rem' }}>
+            <label style={labelStyle} htmlFor="googlePlace">
+              {t.settings.googlePlace}
+            </label>
+            <GooglePlaceSearch
+              inputId="googlePlace"
+              value={placeQuery}
+              onChange={setPlaceQuery}
+              onSelect={handlePlaceSelected}
+              placeholder={t.settings.googlePlacePlaceholder}
+              style={inputStyle}
+            />
+            <p
+              style={{
+                margin: '0.3rem 0 0',
+                fontSize: '0.8rem',
+                color: googlePlaceId ? 'var(--green)' : 'var(--text-dim)',
+              }}
+            >
+              {googlePlaceId ? `✓ ${t.settings.googlePlaceConnected}` : t.settings.googlePlaceHint}
+            </p>
+          </div>
+        )}
+
         <form onSubmit={handleSaveGeneral}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
             <div>
@@ -262,6 +565,9 @@ export default function SettingsView({ settings, billing }: Props) {
                 placeholder="https://g.page/r/..."
                 style={inputStyle}
               />
+              <p style={{ margin: '0.3rem 0 0', fontSize: '0.8rem', color: 'var(--text-dim)' }}>
+                {t.settings.googleReviewUrlHint}
+              </p>
             </div>
 
             <div>

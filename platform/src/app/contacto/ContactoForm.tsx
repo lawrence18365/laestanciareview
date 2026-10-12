@@ -1,10 +1,13 @@
 'use client';
 
 import Script from 'next/script';
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
+import GooglePlaceSearch, {
+  GOOGLE_PLACES_BROWSER_KEY,
+  type PlaceSelection,
+} from '@/components/GooglePlaceSearch';
 
 const PIXEL_ID = process.env.NEXT_PUBLIC_META_PIXEL_ID ?? '1578821303344121';
-const GMAPS_KEY = process.env.NEXT_PUBLIC_GOOGLE_PLACES_BROWSER_KEY ?? '';
 
 type Form = {
   businessName: string;
@@ -68,138 +71,52 @@ function readMarketingPayload() {
   };
 }
 
-const WHATSAPP_PILOT_URL = (name: string, business: string) =>
-  `https://wa.me/5212228822360?text=${encodeURIComponent(
-    `Hola, soy ${name} de ${business}. Acabo de dejar mis datos en la página de RateTap y quiero entrar al Piloto Fundador.`,
-  )}`;
-
 export default function ContactoForm({ pilotOffer }: { pilotOffer: boolean }) {
   const [form, setForm] = useState<Form>(EMPTY);
   const [error, setError] = useState('');
+  const [loginUrl, setLoginUrl] = useState('');
   const [loading, setLoading] = useState(false);
-  const [submitted, setSubmitted] = useState(false);
-  const businessRef = useRef<HTMLInputElement | null>(null);
-  const autocompleteReady = useRef(false);
 
   function update<K extends keyof Form>(key: K, value: Form[K]) {
     setForm((f) => ({ ...f, [key]: value }));
   }
 
-  function initAutocomplete() {
-    if (autocompleteReady.current || !businessRef.current) return;
-    type AddressComponent = { types: string[]; long_name: string };
-    type PlaceResult = {
-      place_id?: string;
-      name?: string;
-      address_components?: AddressComponent[];
-    };
-    type AutocompleteInstance = {
-      addListener: (event: string, cb: () => void) => void;
-      getPlace: () => PlaceResult;
-    };
-    interface GoogleNS {
-      maps?: {
-        places?: {
-          Autocomplete: new (
-            input: HTMLInputElement,
-            opts: Record<string, unknown>,
-          ) => AutocompleteInstance;
-        };
-      };
-    }
-    const g = (window as unknown as { google?: GoogleNS }).google;
-    if (!g?.maps?.places) return;
-    const ac = new g.maps.places.Autocomplete(businessRef.current, {
-      types: ['establishment'],
-      componentRestrictions: { country: 'mx' },
-      fields: ['place_id', 'name', 'address_components'],
-    });
-    ac.addListener('place_changed', () => {
-      const place = ac.getPlace();
-      const name = place.name ?? '';
-      const placeId = place.place_id ?? '';
-      let city = '';
-      let state = '';
-      for (const comp of place.address_components ?? []) {
-        if (comp.types.includes('locality')) city = comp.long_name;
-        else if (comp.types.includes('administrative_area_level_1')) state = comp.long_name;
-      }
-      setForm((f) => ({
-        ...f,
-        businessName: name || f.businessName,
-        googlePlaceId: placeId,
-        city: city || f.city,
-        addrCity: city || f.addrCity,
-        state: state || f.state,
-      }));
-    });
-    autocompleteReady.current = true;
+  // Picking the restaurant from Google is what captures its Place ID — the same
+  // widget the dashboard uses (see components/GooglePlaceSearch.tsx). The city
+  // and state Google returns prefill the address block; anything the guest has
+  // already typed wins.
+  function handlePlaceSelected(place: PlaceSelection) {
+    setForm((f) => ({
+      ...f,
+      businessName: place.name || f.businessName,
+      googlePlaceId: place.placeId,
+      city: place.address.city || f.city,
+      addrCity: place.address.city || f.addrCity,
+      state: place.address.state || f.state,
+    }));
   }
 
-  useEffect(() => {
-    const onLoad = () => initAutocomplete();
-    if ((window as unknown as { google?: { maps?: unknown } }).google?.maps) initAutocomplete();
-    window.addEventListener('gmaps:loaded', onLoad);
-    return () => window.removeEventListener('gmaps:loaded', onLoad);
-  }, []);
-
-  // Public funnel (offer=trial_checkout): sales are founder-led and billing
-  // runs on Mercado Pago, so we do NOT send strangers to the Stripe
-  // payment-mode checkout (nothing would be provisioned). Capture the lead
-  // and hand off to WhatsApp instead. The invite-only pilot branch below is
-  // untouched and still provisions via /api/signup/create-checkout.
-  async function handleLeadSubmit() {
-    const marketing = readMarketingPayload();
-    const res = await fetch('/api/leads/create', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        name: form.contactName,
-        businessName: form.businessName,
-        email: form.email,
-        phone: form.phone,
-        city: form.city,
-        ...marketing,
-        metadata: {
-          ...(marketing.metadata ?? {}),
-          google_place_id: form.googlePlaceId || null,
-          shipping_address: {
-            line1: form.line1,
-            line2: form.line2 || null,
-            city: form.addrCity,
-            state: form.state,
-            postalCode: form.postalCode,
-            notes: form.notes || null,
-          },
-        },
-      }),
-    });
-    const data = await res.json().catch(() => ({}));
-    if (!res.ok) {
-      const friendly =
-        res.status >= 500
-          ? 'No pudimos enviar tus datos en este momento. Inténtalo de nuevo en unos minutos o escríbenos por WhatsApp.'
-          : data.error || 'No pudimos enviar tus datos. Revisa la información e intenta de nuevo.';
-      setError(friendly);
-      setLoading(false);
-      return;
-    }
-    const fbq = (window as unknown as { fbq?: (...args: unknown[]) => void }).fbq;
-    if (fbq) fbq('track', 'Lead');
-    setSubmitted(true);
-    setLoading(false);
-  }
-
+  // Everyone who submits this form is provisioned immediately: the restaurant
+  // is live with a 30-day trial the moment the request lands. The API records
+  // the commercial lead as part of provisioning (no separate lead call), so we
+  // go straight to the activation request and then the welcome page.
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError('');
+    setLoginUrl('');
     setLoading(true);
 
     try {
-      if (!pilotOffer) {
-        await handleLeadSubmit();
-        return;
-      }
+      const shippingAddress = form.line1.trim()
+        ? {
+            line1: form.line1,
+            line2: form.line2 || undefined,
+            city: form.addrCity || form.city || undefined,
+            state: form.state || undefined,
+            postalCode: form.postalCode || undefined,
+            notes: form.notes || undefined,
+          }
+        : undefined;
 
       const res = await fetch('/api/signup/create-checkout', {
         method: 'POST',
@@ -213,29 +130,23 @@ export default function ContactoForm({ pilotOffer }: { pilotOffer: boolean }) {
           password: form.password,
           googlePlaceId: form.googlePlaceId || undefined,
           ...readMarketingPayload(),
-          shippingAddress: {
-            line1: form.line1,
-            line2: form.line2 || undefined,
-            city: form.addrCity,
-            state: form.state,
-            postalCode: form.postalCode,
-            notes: form.notes || undefined,
-          },
+          ...(shippingAddress ? { shippingAddress } : {}),
         }),
       });
       const data = await res.json();
       if (!res.ok || !data.url) {
         const friendly =
           res.status >= 500
-            ? 'No pudimos iniciar el pago en este momento. Inténtalo de nuevo en unos minutos o escríbenos por WhatsApp.'
-            : data.error || 'No pudimos iniciar el pago. Revisa los datos e intenta de nuevo.';
+            ? 'No pudimos activar tu cuenta en este momento. Inténtalo de nuevo en unos minutos o escríbenos por WhatsApp.'
+            : data.error || 'No pudimos activar tu cuenta. Revisa los datos e intenta de nuevo.';
         setError(friendly);
+        if (typeof data.loginUrl === 'string') setLoginUrl(data.loginUrl);
         setLoading(false);
         return;
       }
       const fbq = (window as unknown as { fbq?: (...args: unknown[]) => void }).fbq;
       if (fbq) {
-        fbq('trackCustom', 'PilotStarted', {
+        fbq('trackCustom', pilotOffer ? 'PilotStarted' : 'TrialStarted', {
           value: 0,
           currency: 'MXN',
         });
@@ -259,14 +170,7 @@ export default function ContactoForm({ pilotOffer }: { pilotOffer: boolean }) {
         fbq('init', '${PIXEL_ID}'); fbq('track', 'PageView');
       `}</Script>
 
-      {/* Google Places */}
-      {GMAPS_KEY && (
-        <Script
-          strategy="afterInteractive"
-          src={`https://maps.googleapis.com/maps/api/js?key=${GMAPS_KEY}&libraries=places&language=es&region=MX`}
-          onLoad={() => window.dispatchEvent(new Event('gmaps:loaded'))}
-        />
-      )}
+      {/* Google Places — injected by GooglePlaceSearch, which owns the key. */}
 
       <div style={{
         minHeight: '100vh',
@@ -289,66 +193,17 @@ export default function ContactoForm({ pilotOffer }: { pilotOffer: boolean }) {
               letterSpacing: '-0.02em',
               margin: '0 0 0.5rem',
             }}>
-              {pilotOffer ? 'Piloto fundador: empieza por $0 hoy' : 'Empieza tu prueba gratis de 30 días'}
+              {pilotOffer
+                ? 'Piloto fundador: empieza por $0 hoy'
+                : '30 días gratis. Sin tarjeta, sin pagos, sin envíos.'}
             </h1>
             <p style={{ color: 'var(--text-muted, #57534e)', fontSize: '0.95rem', margin: 0 }}>
               {pilotOffer
-                ? 'Piloto fundador: $0 hoy · 30 días gratis · después $700 MXN/mes · la cuota de setup de $1,500 MXN solo se factura si decides continuar'
-                : 'Déjanos tus datos y te contactamos por WhatsApp para activar tu Piloto Fundador: 30 días gratis, sin cargos hoy.'}
+                ? 'Piloto fundador: $0 hoy · 30 días gratis. Las tarjetas NFC se envían cuando decides continuar.'
+                : 'Tu cuenta y tu QR quedan listos hoy mismo. Las tarjetas NFC se envían cuando decides continuar.'}
             </p>
           </div>
 
-          {submitted ? (
-            <div
-              role="status"
-              style={{
-                background: 'var(--panel-bg, #ffffff)',
-                border: '1px solid var(--border-dark, #1c1917)',
-                padding: '2.5rem 1.75rem',
-                boxShadow: '8px 8px 0px rgba(0,0,0,0.06)',
-                textAlign: 'center',
-              }}
-            >
-              <div style={{ fontSize: '2.5rem', marginBottom: '0.75rem' }} aria-hidden="true">✅</div>
-              <h2 style={{
-                fontSize: '1.35rem',
-                fontWeight: 800,
-                color: 'var(--text-main, #1c1917)',
-                letterSpacing: '-0.02em',
-                margin: '0 0 0.75rem',
-              }}>
-                ¡Recibimos tus datos, {form.contactName.split(' ')[0] || 'gracias'}!
-              </h2>
-              <p style={{
-                color: 'var(--text-muted, #57534e)',
-                fontSize: '0.95rem',
-                lineHeight: 1.6,
-                margin: '0 auto 1.5rem',
-                maxWidth: 420,
-              }}>
-                Un fundador de RateTap te contactará personalmente para activar tu Piloto Fundador
-                de <strong>{form.businessName}</strong>. Para empezar hoy mismo, escríbenos por WhatsApp:
-              </p>
-              <a
-                href={WHATSAPP_PILOT_URL(form.contactName, form.businessName)}
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{
-                  display: 'inline-block',
-                  padding: '0.9rem 1.75rem',
-                  background: '#25d366',
-                  color: '#ffffff',
-                  fontWeight: 700,
-                  fontSize: '0.85rem',
-                  letterSpacing: '0.1em',
-                  textTransform: 'uppercase',
-                  textDecoration: 'none',
-                }}
-              >
-                Hablar con un fundador por WhatsApp
-              </a>
-            </div>
-          ) : (
           <form
             onSubmit={handleSubmit}
             style={{
@@ -360,16 +215,26 @@ export default function ContactoForm({ pilotOffer }: { pilotOffer: boolean }) {
           >
             <SectionTitle>Tu negocio</SectionTitle>
             <Field label="Nombre del restaurante">
-              <input
-                ref={businessRef}
-                required
-                value={form.businessName}
-                onChange={(e) => update('businessName', e.target.value)}
-                onFocus={initAutocomplete}
-                placeholder={GMAPS_KEY ? 'Escribe el nombre y selecciona de la lista' : 'Nombre del restaurante'}
-                style={inputStyle}
-                autoComplete="off"
-              />
+              {GOOGLE_PLACES_BROWSER_KEY ? (
+                <GooglePlaceSearch
+                  value={form.businessName}
+                  onChange={(v) => update('businessName', v)}
+                  onSelect={handlePlaceSelected}
+                  inputId="businessName"
+                  required
+                  placeholder="Escribe el nombre y selecciona de la lista"
+                  style={inputStyle}
+                />
+              ) : (
+                <input
+                  required
+                  value={form.businessName}
+                  onChange={(e) => update('businessName', e.target.value)}
+                  placeholder="Nombre del restaurante"
+                  style={inputStyle}
+                  autoComplete="off"
+                />
+              )}
               {form.googlePlaceId && (
                 <small style={{ fontSize: '0.7rem', color: '#16a34a', marginTop: 4, display: 'block' }}>
                   ✓ Ubicación verificada en Google
@@ -417,70 +282,73 @@ export default function ContactoForm({ pilotOffer }: { pilotOffer: boolean }) {
                 style={inputStyle}
               />
             </Field>
-            {pilotOffer && (
-              <Field label="Contraseña (para tu panel)">
-                <input
-                  required
-                  type="password"
-                  minLength={8}
-                  value={form.password}
-                  onChange={(e) => update('password', e.target.value)}
-                  placeholder="Mínimo 8 caracteres"
-                  style={inputStyle}
-                />
-              </Field>
-            )}
-
-            <Divider />
-            <SectionTitle>Envío de tarjetas NFC</SectionTitle>
-            <p style={{ fontSize: '0.85rem', color: 'var(--text-muted, #57534e)', marginTop: '-0.5rem', marginBottom: '1rem' }}>
-              {pilotOffer
-                ? 'Tu QR digital queda activo hoy. Las tarjetas físicas se envían si decides continuar después del piloto.'
-                : 'Tu QR digital queda activo de inmediato. Coordinamos el envío de las tarjetas físicas contigo por WhatsApp.'}
-            </p>
-            <Field label="Dirección">
+            <Field label="Contraseña (para tu panel)">
               <input
                 required
-                value={form.line1}
-                onChange={(e) => update('line1', e.target.value)}
-                placeholder="Calle y número"
+                type="password"
+                minLength={8}
+                value={form.password}
+                onChange={(e) => update('password', e.target.value)}
+                placeholder="Mínimo 8 caracteres"
                 style={inputStyle}
               />
             </Field>
-            <Field label="Colonia / interior (opcional)">
-              <input
-                value={form.line2}
-                onChange={(e) => update('line2', e.target.value)}
-                placeholder="Colonia, depto, referencias"
-                style={inputStyle}
-              />
-            </Field>
-            <Row>
-              <Field label="Ciudad">
+
+            <Divider />
+            <details style={{ marginBottom: '1.25rem' }}>
+              <summary style={{
+                cursor: 'pointer',
+                fontSize: '0.65rem',
+                fontWeight: 700,
+                letterSpacing: '0.15em',
+                textTransform: 'uppercase',
+                color: 'var(--text-dim, #a8a29e)',
+              }}>
+                Dirección para tarjetas NFC (opcional)
+              </summary>
+              <p style={{ fontSize: '0.85rem', color: 'var(--text-muted, #57534e)', margin: '1rem 0' }}>
+                Las tarjetas NFC se envían cuando decides continuar. Puedes dejarla en blanco ahora.
+              </p>
+              <Field label="Dirección">
                 <input
-                  required
-                  value={form.addrCity}
-                  onChange={(e) => update('addrCity', e.target.value)}
+                  value={form.line1}
+                  onChange={(e) => update('line1', e.target.value)}
+                  placeholder="Calle y número"
                   style={inputStyle}
                 />
               </Field>
-              <Field label="Estado">
+              <Field label="Colonia / interior (opcional)">
                 <input
-                  required
-                  value={form.state}
-                  onChange={(e) => update('state', e.target.value)}
+                  value={form.line2}
+                  onChange={(e) => update('line2', e.target.value)}
+                  placeholder="Colonia, depto, referencias"
                   style={inputStyle}
                 />
               </Field>
-              <Field label="CP">
-                <input
-                  required
-                  value={form.postalCode}
-                  onChange={(e) => update('postalCode', e.target.value)}
-                  style={inputStyle}
-                />
-              </Field>
-            </Row>
+              <Row>
+                <Field label="Ciudad">
+                  <input
+                    value={form.addrCity}
+                    onChange={(e) => update('addrCity', e.target.value)}
+                    style={inputStyle}
+                  />
+                </Field>
+                <Field label="Estado">
+                  <input
+                    value={form.state}
+                    onChange={(e) => update('state', e.target.value)}
+                    style={inputStyle}
+                  />
+                </Field>
+                <Field label="CP">
+                  <input
+                    value={form.postalCode}
+                    onChange={(e) => update('postalCode', e.target.value)}
+                    style={inputStyle}
+                  />
+                </Field>
+              </Row>
+            </details>
 
             {error && (
               <div style={{
@@ -493,6 +361,14 @@ export default function ContactoForm({ pilotOffer }: { pilotOffer: boolean }) {
                 fontWeight: 500,
               }}>
                 {error}
+                {loginUrl && (
+                  <>
+                    {' '}
+                    <a href={loginUrl} style={{ color: '#b91c1c', fontWeight: 700, textDecoration: 'underline' }}>
+                      Iniciar sesión
+                    </a>
+                  </>
+                )}
               </div>
             )}
 
@@ -516,21 +392,18 @@ export default function ContactoForm({ pilotOffer }: { pilotOffer: boolean }) {
               }}
             >
               {loading
-                ? (pilotOffer ? 'ACTIVANDO TU PILOTO…' : 'ENVIANDO…')
-                : (pilotOffer ? 'ACTIVAR MI PILOTO GRATIS' : 'SOLICITAR MI PRUEBA GRATIS')}
+                ? (pilotOffer ? 'ACTIVANDO TU PILOTO…' : 'ACTIVANDO TU CUENTA…')
+                : (pilotOffer ? 'ACTIVAR MI PILOTO GRATIS' : 'Activar ahora')}
             </button>
 
             <p style={{ fontSize: '0.75rem', color: 'var(--text-dim, #a8a29e)', textAlign: 'center', marginTop: '1rem', lineHeight: 1.5 }}>
-              {pilotOffer
-                ? 'No necesitas tarjeta. Después de 30 días, tú decides si continúas por $700 MXN/mes más la cuota de setup de $1,500 MXN. '
-                : 'Sin pagos hoy: un fundador te contacta por WhatsApp para activar tu prueba gratis de 30 días. '}
+              No necesitas tarjeta. Cuando terminen tus 30 días, tú decides si continúas.{' '}
               Al continuar aceptas la{' '}
               <a href="/privacy" style={{ color: '#1c1917', fontWeight: 700 }}>Política de Privacidad</a>, los{' '}
               <a href="/terms" style={{ color: '#1c1917', fontWeight: 700 }}>Términos</a> y la{' '}
               <a href="/cookies" style={{ color: '#1c1917', fontWeight: 700 }}>Política de Cookies</a>.
             </p>
           </form>
-          )}
         </div>
       </div>
     </>

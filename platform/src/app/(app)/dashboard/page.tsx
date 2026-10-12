@@ -11,6 +11,7 @@ import {
   getMonthlyStats,
 } from '@/lib/queries';
 import { getGoogleRatingTrend, getGoogleRatingHistory, getGoogleReviewsAddedToday } from '@/lib/google-places';
+import { reviewUrlFor } from '@/lib/google-review';
 import DashboardView from '@/components/dashboard/DashboardView';
 import MapsRankCard from '@/components/dashboard/MapsRankCard';
 import { getMapsRankSummary, type KeywordSummary } from '@/lib/maps-rank';
@@ -81,6 +82,8 @@ export default async function DashboardPage({
 
   return (
     <>
+      {/* showGoogleConnect is GM-only: an owner or regional reaches this page
+          through ?slug, and the fix (Ajustes) is not theirs to make. */}
       <DashboardView
         stats={stats}
         lastWeekStats={lastWeekStats}
@@ -94,6 +97,7 @@ export default async function DashboardPage({
         googleRating={restaurant.googleRating ? parseFloat(restaurant.googleRating) : null}
         googleReviewCount={restaurant.googleReviewCount ?? null}
         googleReviewsToday={googleReviewsToday}
+        showGoogleConnect={session.role === 'gm' && reviewUrlFor(restaurant) === null}
       />
       <div className="page-container" style={{ paddingTop: 0 }}>
         <MapsRankCard summaries={mapsSummaries} />

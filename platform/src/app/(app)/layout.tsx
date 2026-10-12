@@ -2,7 +2,7 @@ import { verifySession } from '@/lib/session';
 import { isRateTapStaff } from '@/lib/admin';
 import { getRestaurantBySlug, getNewFeedbackCount } from '@/lib/queries';
 import { redirect } from 'next/navigation';
-import { getBrandForSlug, hasEventsQuotes } from '@/lib/brands';
+import { getBrandForRestaurant, hasEventsQuotes } from '@/lib/brands';
 import { t } from '@/lib/i18n';
 import DashboardShell from '@/components/dashboard/DashboardShell';
 import SubscriptionBlocked from '@/components/dashboard/SubscriptionBlocked';
@@ -34,7 +34,7 @@ export default async function AppLayout({
     );
   }
 
-  const brand = getBrandForSlug(session.slug);
+  const brand = getBrandForRestaurant(restaurant);
   const isOwner = session.role === 'owner';
   const isRegional = session.role === 'regional';
   const isMultiView = isOwner || isRegional;

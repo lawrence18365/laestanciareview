@@ -1,6 +1,6 @@
 /** Map a restaurant slug to its brand logo path and background style. */
 
-interface BrandInfo {
+export interface BrandInfo {
   logo: string;
   /** Whether the logo looks best on a dark background. */
   darkBg: boolean;
@@ -22,6 +22,31 @@ export function getBrandForSlug(slug: string): BrandInfo {
     if (slug.startsWith(prefix)) return info;
   }
   return { logo: '/logos/ratetap_logo_transparent_background.png', darkBg: false };
+}
+
+/**
+ * Brand for a real restaurant row: its own uploaded logo when it has one,
+ * otherwise the hardcoded brand table. Use this anywhere a restaurant row is
+ * available; `getBrandForSlug` stays for the owner/regional and quote surfaces
+ * that only ever have a slug.
+ *
+ * `logoHash` is the md5 prefix of the stored logo, computed by the query that
+ * loaded the row (see `logoHashSql` in lib/queries.ts) — the row itself never
+ * carries the up-to-280 KB data URL. The hash IS the version tag: the same
+ * image always yields the same URL, a new image a new one, so /api/logo can be
+ * cached forever.
+ *
+ * An uploaded logo is unknown art, so it gets a white tile (`darkBg: false`)
+ * rather than guessing that it needs a dark background.
+ */
+export function getBrandForRestaurant(r: {
+  slug: string;
+  logoHash: string | null;
+}): BrandInfo {
+  if (r.logoHash) {
+    return { logo: `/api/logo/${r.slug}?v=${r.logoHash}`, darkBg: false };
+  }
+  return getBrandForSlug(r.slug);
 }
 
 /**

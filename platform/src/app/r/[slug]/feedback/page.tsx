@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation';
 import { getRestaurantBySlug } from '@/lib/queries';
-import { getBrandForSlug } from '@/lib/brands';
+import { getBrandForRestaurant } from '@/lib/brands';
 import FeedbackForm from '@/components/review/FeedbackForm';
 
 interface PageProps {
@@ -18,7 +18,7 @@ export default async function FeedbackPage({
   const restaurant = await getRestaurantBySlug(slug);
   if (!restaurant) notFound();
 
-  const brand = getBrandForSlug(slug);
+  const brand = getBrandForRestaurant(restaurant);
 
   return (
     <main

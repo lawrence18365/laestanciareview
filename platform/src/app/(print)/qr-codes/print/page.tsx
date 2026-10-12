@@ -2,7 +2,7 @@ import { notFound, redirect } from 'next/navigation';
 import QRCode from 'qrcode';
 import { verifySession } from '@/lib/session';
 import { getRestaurantBySlug, getStaffList } from '@/lib/queries';
-import { getBrandForSlug } from '@/lib/brands';
+import { getBrandForRestaurant } from '@/lib/brands';
 import { cardUrlFor } from '@/lib/qr';
 import PrintButton from '../../guests/print/PrintButton';
 
@@ -19,7 +19,7 @@ export default async function CardQrPrintPage({
   const restaurant = await getRestaurantBySlug(session.slug);
   if (!restaurant) redirect('/login');
 
-  const brand = getBrandForSlug(session.slug);
+  const brand = getBrandForRestaurant(restaurant);
 
   const staffList = await getStaffList(restaurant.id);
   let activeStaff = staffList.filter((s) => s.active);

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { getBrandForSlug } from '@/lib/brands';
+import { getBrandForRestaurant, getBrandForSlug } from '@/lib/brands';
 
 describe('getBrandForSlug', () => {
   it('returns estancia brand for slugs starting with "estancia"', () => {
@@ -36,5 +36,30 @@ describe('getBrandForSlug', () => {
     const brand = getBrandForSlug('unknown-restaurant');
     expect(brand.logo).toBe('/logos/ratetap_logo_transparent_background.png');
     expect(brand.darkBg).toBe(false);
+  });
+});
+
+describe('getBrandForRestaurant', () => {
+  const LOGO_HASH = 'a1b2c3d4';
+
+  it('serves the restaurant own uploaded logo, versioned by its content hash', () => {
+    const brand = getBrandForRestaurant({ slug: 'mi-cocina', logoHash: LOGO_HASH });
+    expect(brand.logo).toBe(`/api/logo/mi-cocina?v=${LOGO_HASH}`);
+    // Unknown art, so it is never assumed to need a dark tile.
+    expect(brand.darkBg).toBe(false);
+  });
+
+  it('is stable for the same hash and different for another one', () => {
+    const first = getBrandForRestaurant({ slug: 'mi-cocina', logoHash: LOGO_HASH });
+    const again = getBrandForRestaurant({ slug: 'mi-cocina', logoHash: LOGO_HASH });
+    const other = getBrandForRestaurant({ slug: 'mi-cocina', logoHash: 'ffffffff' });
+    expect(again.logo).toBe(first.logo);
+    expect(other.logo).not.toBe(first.logo);
+  });
+
+  it('falls back to the slug brand when there is no uploaded logo', () => {
+    for (const slug of ['estancia-leon', 'harbors-veracruz', 'unknown-restaurant']) {
+      expect(getBrandForRestaurant({ slug, logoHash: null })).toEqual(getBrandForSlug(slug));
+    }
   });
 });

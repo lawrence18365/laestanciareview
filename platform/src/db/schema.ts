@@ -53,6 +53,11 @@ export const restaurants = pgTable('restaurants', {
   // in lib/brands.ts. Scopes guest-capture dedup and the agency-tier view.
   // Nullable on owner/regional rows since those aren't single-brand.
   brand: text('brand'),
+  // Self-serve logo upload: the image itself, stored inline as a data URL
+  // (PNG/JPEG/WebP, ≤ 280 KB of base64 as validated by /api/auth/settings).
+  // Served back through GET /api/logo/[slug] and resolved by
+  // lib/brands.ts getBrandForRestaurant().
+  logoDataUrl: text('logo_data_url'),
   managerPhone: text('manager_phone'),
   alertPreference: text('alert_preference').notNull().default('all'),
   smsAlerts: boolean('sms_alerts').notNull().default(false),

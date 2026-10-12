@@ -5,14 +5,19 @@ import {
   processedMercadopagoEvents,
   restaurants,
 } from '@/db/schema';
-import { eq } from 'drizzle-orm';
+import { and, eq, isNull } from 'drizzle-orm';
 import {
+  MERCADOPAGO_MONTHLY_AMOUNT_MXN,
   getAuthorizedPayment,
   getPreapproval,
   mapPreapprovalStatus,
   subscriptionBillingHasStarted,
   verifyMercadoPagoSignature,
+  type MercadoPagoAuthorizedPayment,
 } from '@/lib/mercadopago';
+import { sendOwnerConversionNotification } from '@/lib/email';
+import { sendPurchaseEvent } from '@/lib/meta-conversions';
+import { parseShippingAddress } from '@/lib/shipping';
 
 export const runtime = 'nodejs';
 // Webhooks must not be statically analyzed / cached
@@ -62,17 +67,53 @@ function shouldSkipPreBillingStartDowngrade(
   currentStatus: string,
   nextStatus: string,
   billingStartsAt: Date | null,
+  trialEndsAt: Date | null,
+  now: Date = new Date(),
 ): boolean {
   const currentlyHasAccess =
     currentStatus === 'active' || currentStatus === 'trialing';
   const wouldLoseAccess = nextStatus === 'canceled' || nextStatus === 'past_due';
+  // Skipping is only ever justified while the restaurant still HAS a trial to
+  // protect: a cancelled/paused preapproval during the free trial must not
+  // revoke the remaining days, but an account whose trial already ended has no
+  // free access left to preserve and must be downgraded when MP says so.
+  const trialStillRunning =
+    !!trialEndsAt && trialEndsAt.getTime() > now.getTime();
   // Per-restaurant trial window: prefer the subscription row's billing start
   // over the global launch date (rows predate per-restaurant trials may be null).
   return (
-    !subscriptionBillingHasStarted(billingStartsAt) &&
+    trialStillRunning &&
+    !subscriptionBillingHasStarted(billingStartsAt, now) &&
     currentlyHasAccess &&
     wouldLoseAccess
   );
+}
+
+/**
+ * Handle the case where the preapproval went away (cancelled/paused) while the
+ * restaurant's own trial is still running: keep the free days it already has,
+ * but never let them turn into free access forever.
+ *
+ * An account that authorized a preapproval mid-trial is `active`
+ * (mapPreapprovalStatus), and `active` is not expired by anything: the
+ * expire-trials cron only flips `trialing` rows. So skipping the downgrade
+ * outright would leave a cancelled/paused account `active` for good once the
+ * trial ends. Downgrading to `trialing` keeps the remaining trial intact and
+ * hands expiry back to the cron.
+ *
+ * An account that is already `trialing` needs no change — the cron already
+ * owns it.
+ */
+async function holdTrialAccessAfterPreapprovalLoss(
+  restaurantId: number,
+  currentStatus: string,
+): Promise<void> {
+  if (currentStatus !== 'active') return;
+
+  await db
+    .update(restaurants)
+    .set({ subscriptionStatus: 'trialing' })
+    .where(eq(restaurants.id, restaurantId));
 }
 
 export async function POST(req: NextRequest) {
@@ -214,10 +255,15 @@ async function handlePreapproval(dataId: string) {
       restaurant.subscriptionStatus,
       mapped,
       subscription.billingStartsAt,
+      restaurant.trialEndsAt,
     )
   ) {
     console.log(
       `[mercadopago-webhook] pre-billing-start downgrade skipped restaurant=${restaurant.id} current=${restaurant.subscriptionStatus} mapped=${mapped}`,
+    );
+    await holdTrialAccessAfterPreapprovalLoss(
+      restaurant.id,
+      restaurant.subscriptionStatus,
     );
     return;
   }
@@ -279,17 +325,32 @@ async function handleAuthorizedPayment(dataId: string) {
     .where(eq(restaurants.id, subscription.restaurantId))
     .limit(1);
   const restaurant = restaurantRows[0];
-  if (!restaurant || restaurant.subscriptionStatus === newStatus) return;
+  if (!restaurant) return;
+
+  // The first approved payment is the conversion moment: it is when the
+  // restaurant starts paying, so it is when the physical NFC cards ship and
+  // the owner is told. Independent of the status transition below (the
+  // preapproval webhook may already have flipped the restaurant to active).
+  if (newStatus === 'active') {
+    await notifyFirstConversion(restaurant, subscription, authorizedPayment);
+  }
+
+  if (restaurant.subscriptionStatus === newStatus) return;
 
   if (
     shouldSkipPreBillingStartDowngrade(
       restaurant.subscriptionStatus,
       newStatus,
       subscription.billingStartsAt,
+      restaurant.trialEndsAt,
     )
   ) {
     console.log(
       `[mercadopago-webhook] pre-billing-start downgrade skipped restaurant=${restaurant.id} current=${restaurant.subscriptionStatus} mapped=${newStatus}`,
+    );
+    await holdTrialAccessAfterPreapprovalLoss(
+      restaurant.id,
+      restaurant.subscriptionStatus,
     );
     return;
   }
@@ -298,4 +359,108 @@ async function handleAuthorizedPayment(dataId: string) {
     .update(restaurants)
     .set({ subscriptionStatus: newStatus, billingProvider: 'mercadopago' })
     .where(eq(restaurants.id, restaurant.id));
+}
+
+/**
+ * Ship NFC cards + fire the owner/Meta conversion notifications on the FIRST
+ * approved payment, mirroring the Stripe `invoice.payment_succeeded` block.
+ *
+ * Idempotent: the claim is a conditional update guarded by
+ * `nfc_cards_shipped_at IS NULL`, and only the caller that actually flipped
+ * the row sends anything. A retried webhook (or a later renewal payment)
+ * updates zero rows and stays silent.
+ *
+ * The owner notice is the whole point of shipping here, so a notice that never
+ * went out releases the claim again (only if the row still holds the timestamp
+ * WE wrote) and logs loudly: the next approved payment — a real retry-bait
+ * signal, unlike a webhook replay — then tries again. A failed Meta purchase
+ * event is NOT worth echoing a second paid conversion for, so it never
+ * releases the claim.
+ */
+async function notifyFirstConversion(
+  restaurant: typeof restaurants.$inferSelect,
+  subscription: typeof mercadopagoSubscriptions.$inferSelect,
+  authorizedPayment: MercadoPagoAuthorizedPayment,
+) {
+  const claimedAt = new Date();
+  const claimed = await db
+    .update(restaurants)
+    .set({ nfcCardsShippedAt: claimedAt })
+    .where(
+      and(
+        eq(restaurants.id, restaurant.id),
+        isNull(restaurants.nfcCardsShippedAt),
+      ),
+    )
+    .returning({ id: restaurants.id });
+
+  if (claimed.length === 0) return;
+
+  const amountMxn = paymentAmountMxn(authorizedPayment, subscription);
+  const shipping = parseShippingAddress(restaurant.shippingAddress, restaurant.city);
+
+  const [notice] = await Promise.allSettled([
+    sendOwnerConversionNotification({
+      restaurantName: restaurant.name,
+      contactName: restaurant.contactName ?? 'Desconocido',
+      email: restaurant.managerEmail ?? '',
+      phone: restaurant.managerPhone ?? '',
+      shippingAddress: shipping,
+      amountMxn,
+    }),
+    restaurant.managerEmail
+      ? sendPurchaseEvent({
+          email: restaurant.managerEmail,
+          phone: restaurant.managerPhone ?? undefined,
+          valueMxn: amountMxn,
+          // Deterministic per-restaurant id: a ship-notice retry re-runs this
+          // whole block on the next approved payment, and the same event id
+          // makes Meta drop the duplicate instead of counting a second
+          // Purchase (the payment id would differ on a real retry, and a
+          // Date.now()-based id would never match).
+          eventId: `mp_conversion_${restaurant.id}`,
+        })
+      : Promise.resolve(),
+  ]);
+
+  // Rejected, or an explicit `false` ("not sent"). A `void` result from a
+  // caller/mock that predates the boolean contract carries no signal, so it
+  // must not undo a shipped claim.
+  const noticeSent = notice.status === 'fulfilled' && notice.value !== false;
+  if (noticeSent) return;
+
+  console.error(
+    `[mercadopago-webhook] conversion notice NOT sent for restaurant=${restaurant.id}; releasing nfc_cards_shipped_at so the next approved payment retries`,
+    notice.status === 'rejected' ? notice.reason : 'not sent',
+  );
+
+  await db
+    .update(restaurants)
+    .set({ nfcCardsShippedAt: null })
+    .where(
+      and(
+        eq(restaurants.id, restaurant.id),
+        eq(restaurants.nfcCardsShippedAt, claimedAt),
+      ),
+    );
+}
+
+/** Amount in MXN (Mercado Pago amounts are already pesos, not cents). */
+function paymentAmountMxn(
+  authorizedPayment: MercadoPagoAuthorizedPayment,
+  subscription: typeof mercadopagoSubscriptions.$inferSelect,
+): number {
+  const candidates: unknown[] = [
+    authorizedPayment.payment?.transaction_amount,
+    authorizedPayment.transaction_amount,
+    subscription.totalAmount,
+    subscription.amount,
+    MERCADOPAGO_MONTHLY_AMOUNT_MXN,
+  ];
+  for (const candidate of candidates) {
+    const parsed =
+      typeof candidate === 'number' ? candidate : parseFloat(String(candidate ?? ''));
+    if (Number.isFinite(parsed) && parsed > 0) return Math.round(parsed);
+  }
+  return 0;
 }

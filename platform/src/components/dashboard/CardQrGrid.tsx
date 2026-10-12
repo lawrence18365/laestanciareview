@@ -129,7 +129,7 @@ export default function CardQrGrid({ staff, slug, restaurantName, logo, logoDark
         <div>
           <h2 style={sectionTitle}>Códigos QR</h2>
           <p style={{ margin: '0.35rem 0 0', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-            Si la tarjeta no lee, el cliente escanea este código.
+            Cada mesero guarda su código y lo muestra al cliente.
           </p>
         </div>
         <a href="/qr-codes/print" target="_blank" rel="noreferrer" style={{ ...btnPrimary, textDecoration: 'none', display: 'inline-block' }}>

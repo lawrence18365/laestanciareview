@@ -548,7 +548,7 @@ export default function LiveView({ restaurantName, logoSrc, logoDarkBg, googleRa
             maxWidth: 420,
             lineHeight: 1.5,
           }}>
-            Agrega personal en la sección de Staff y los datos aparecerán aquí en tiempo real cuando los clientes escaneen los códigos NFC.
+            Los datos aparecerán aquí cuando tus clientes califiquen.
           </p>
         </div>
       ) : <div

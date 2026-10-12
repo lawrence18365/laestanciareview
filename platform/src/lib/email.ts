@@ -1085,11 +1085,17 @@ export async function sendWelcomeEmail({
         </p>
       </div>
 
-      <p style="margin: 0 0 20px; font-size: 15px; line-height: 1.6; color: #666666;">
-        ${pilot
-          ? 'Imprime este QR y colócalo en tus mesas hoy mismo. Si decides continuar después del piloto, te enviaremos tus tarjetas NFC físicas.'
-          : 'Imprime este QR y colócalo en tus mesas hoy mismo. En cuanto confirmes tu pago el día 15, te enviaremos tus tarjetas NFC físicas.'}
+      <p style="margin: 0 0 12px; font-size: 15px; line-height: 1.6; color: #666666;">
+        Entra en <a href="${BASE_URL}/login" style="color: #111111;">app.ratetapmx.com/login</a> y elige <strong>${escapeHtml(restaurantName)}</strong>.
       </p>
+
+      <p style="margin: 0 0 6px; font-size: 15px; line-height: 1.6; color: #666666;">
+        Dos pasos para empezar:
+      </p>
+      <ol style="margin: 0 0 20px; padding-left: 20px; font-size: 15px; line-height: 1.6; color: #666666;">
+        <li>Agrega a tus meseros.</li>
+        <li>Descarga el código QR de cada mesero en <a href="${BASE_URL}/qr-codes" style="color: #111111;">Códigos QR</a>.</li>
+      </ol>
 
       <table role="presentation" cellpadding="0" cellspacing="0" style="margin: 0 auto;">
         <tr><td style="background: #111111; border-radius: 0;">
@@ -1108,7 +1114,9 @@ export async function sendWelcomeEmail({
     from: FROM,
     to,
     subject: `Bienvenido a RateTap, ${restaurantName} 🎉`,
-    html: emailLayout(content, `Tu prueba es gratis por ${trialDays} días. Puedes cancelar cuando quieras.`),
+    html: emailLayout(content, pilot
+      ? `Tu piloto fundador es gratis por ${trialDays} días. Puedes cancelar cuando quieras.`
+      : `Tu prueba es gratis por ${trialDays} días. Puedes cancelar cuando quieras.`),
   });
 
   if (!result.success || result.skipped) {
@@ -1380,10 +1388,21 @@ interface OwnerConversionParams {
   amountMxn: number;
 }
 
-export async function sendOwnerConversionNotification(p: OwnerConversionParams) {
+/**
+ * Tell the owner that a restaurant converted and where to ship its NFC cards.
+ *
+ * Returns whether the notice actually went out: `false` means "definitely not
+ * sent" (no recipient configured, or the send failed/skipped). Callers that
+ * gate a one-shot side effect on this notice — the Mercado Pago webhook
+ * releases its `nfc_cards_shipped_at` claim so the next approved payment
+ * retries — must not treat a failure as success.
+ */
+export async function sendOwnerConversionNotification(
+  p: OwnerConversionParams,
+): Promise<boolean> {
   if (!OWNER_NOTIFICATION_EMAIL) {
     console.error('[sendOwnerConversionNotification] skipped: missing OWNER_NOTIFICATION_EMAIL / ADMIN_EMAIL');
-    return;
+    return false;
   }
 
   const addr = p.shippingAddress;
@@ -1423,7 +1442,10 @@ export async function sendOwnerConversionNotification(p: OwnerConversionParams) 
         ? 'missing SMTP_USER / SMTP_PASS'
         : (result.response ?? 'unknown');
     console.error(`[sendOwnerConversionNotification] failed to ${OWNER_NOTIFICATION_EMAIL}: ${reason}`);
+    return false;
   }
+
+  return true;
 }
 
 interface OwnerLapsedParams {

@@ -3,6 +3,7 @@
 import { useState, useMemo } from 'react';
 import { t } from '@/lib/i18n';
 import { track } from '@/lib/analytics-client';
+import { makeCode } from '@/lib/staff-code';
 import MeseroQrModal from './MeseroQrModal';
 
 interface StaffMember {
@@ -70,11 +71,30 @@ const btnSecondary: React.CSSProperties = {
   borderRadius: 0,
 };
 
+/**
+ * Read a response body without ever throwing: a proxy or 500 can return empty
+ * or HTML, and a failed res.json() used to leave the form stuck on "loading".
+ */
+async function readJson(res: Response): Promise<Record<string, unknown>> {
+  try {
+    const data: unknown = await res.json();
+    return data && typeof data === 'object' ? (data as Record<string, unknown>) : {};
+  } catch {
+    return {};
+  }
+}
+
+function errorMessage(data: Record<string, unknown>, fallback: string): string {
+  return typeof data.error === 'string' && data.error ? data.error : fallback;
+}
+
 export default function StaffManager({ initialStaff, slug }: Props) {
   const [staffList, setStaffList] = useState<StaffMember[]>(initialStaff);
   const [qrFor, setQrFor] = useState<StaffMember | null>(null);
   const [newName, setNewName] = useState('');
   const [newCode, setNewCode] = useState('');
+  // Once the GM types their own code, stop auto-filling it from the name.
+  const [codeTouched, setCodeTouched] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editName, setEditName] = useState('');
   const [editCode, setEditCode] = useState('');
@@ -90,79 +110,109 @@ export default function StaffManager({ initialStaff, slug }: Props) {
     );
   }, [staffList, searchQuery]);
 
+  /** Auto-suggest a unique code from the name (fresh set per keystroke). */
+  function suggestCode(name: string): string {
+    const used = new Set(staffList.map((s) => s.code.toUpperCase()));
+    return makeCode(name, used);
+  }
+
+  function handleNameChange(value: string) {
+    setNewName(value);
+    if (!codeTouched) setNewCode(suggestCode(value));
+  }
+
   async function handleAdd(e: React.FormEvent) {
     e.preventDefault();
     if (!newName.trim() || !newCode.trim()) return;
     setLoading(true);
     setMessage('');
 
-    const res = await fetch('/api/auth/staff', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: newName, code: newCode }),
-    });
+    try {
+      const res = await fetch('/api/auth/staff', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: newName, code: newCode }),
+      });
 
-    if (res.ok) {
-      const data = await res.json();
-      setStaffList((prev) => [...prev, data.staff].sort((a, b) => a.name.localeCompare(b.name)));
-      setNewName('');
-      setNewCode('');
-      setMessage(t.staffManager.staffAdded);
-    } else {
-      const data = await res.json();
-      setMessage(data.error || t.staffManager.failedToAdd);
+      const data = await readJson(res);
+      if (res.ok && data.staff) {
+        setStaffList((prev) => [...prev, data.staff as StaffMember].sort((a, b) => a.name.localeCompare(b.name)));
+        setNewName('');
+        setNewCode('');
+        setCodeTouched(false);
+        setMessage(t.staffManager.staffAdded);
+      } else {
+        setMessage(errorMessage(data, t.staffManager.failedToAdd));
+      }
+    } catch {
+      setMessage(t.staffManager.failedToAdd);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   }
 
   async function handleUpdate(id: number) {
     setLoading(true);
     setMessage('');
 
-    const res = await fetch('/api/auth/staff', {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id, name: editName, code: editCode }),
-    });
+    try {
+      const res = await fetch('/api/auth/staff', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, name: editName, code: editCode }),
+      });
 
-    if (res.ok) {
-      const data = await res.json();
-      setStaffList((prev) =>
-        prev.map((s) => (s.id === id ? data.staff : s)).sort((a, b) => a.name.localeCompare(b.name)),
-      );
-      setEditingId(null);
-      setMessage(t.staffManager.staffUpdated);
-    } else {
+      const data = await readJson(res);
+      if (res.ok && data.staff) {
+        setStaffList((prev) =>
+          prev
+            .map((s) => (s.id === id ? (data.staff as StaffMember) : s))
+            .sort((a, b) => a.name.localeCompare(b.name)),
+        );
+        setEditingId(null);
+        setMessage(t.staffManager.staffUpdated);
+      } else {
+        setMessage(errorMessage(data, t.staffManager.failedToUpdate));
+      }
+    } catch {
       setMessage(t.staffManager.failedToUpdate);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   }
 
   async function handleToggle(s: StaffMember) {
-    const res = await fetch('/api/auth/staff', {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id: s.id, active: !s.active }),
-    });
-
-    if (res.ok) {
-      const data = await res.json();
-      setStaffList((prev) => prev.map((x) => (x.id === s.id ? data.staff : x)));
+    try {
+      const res = await fetch('/api/auth/staff', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: s.id, active: !s.active }),
+      });
+      if (!res.ok) return;
+      const data = await readJson(res);
+      if (!data.staff) return;
+      setStaffList((prev) => prev.map((x) => (x.id === s.id ? (data.staff as StaffMember) : x)));
+    } catch {
+      /* a failed toggle just leaves the row as it was */
     }
   }
 
   async function handleDelete(id: number) {
     if (!confirm(t.staffManager.confirmDelete)) return;
 
-    const res = await fetch('/api/auth/staff', {
-      method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id }),
-    });
+    try {
+      const res = await fetch('/api/auth/staff', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id }),
+      });
 
-    if (res.ok) {
-      setStaffList((prev) => prev.filter((s) => s.id !== id));
-      setMessage(t.staffManager.staffDeleted);
+      if (res.ok) {
+        setStaffList((prev) => prev.filter((s) => s.id !== id));
+        setMessage(t.staffManager.staffDeleted);
+      }
+    } catch {
+      /* a failed delete just leaves the row as it was */
     }
   }
 
@@ -200,7 +250,7 @@ export default function StaffManager({ initialStaff, slug }: Props) {
             </label>
             <input
               value={newName}
-              onChange={(e) => setNewName(e.target.value)}
+              onChange={(e) => handleNameChange(e.target.value)}
               placeholder={t.staffManager.placeholderName}
               style={inputStyle}
               required
@@ -212,7 +262,10 @@ export default function StaffManager({ initialStaff, slug }: Props) {
             </label>
             <input
               value={newCode}
-              onChange={(e) => setNewCode(e.target.value)}
+              onChange={(e) => {
+                setCodeTouched(true);
+                setNewCode(e.target.value);
+              }}
               placeholder={t.staffManager.placeholderCode}
               style={inputStyle}
               required
@@ -325,7 +378,7 @@ export default function StaffManager({ initialStaff, slug }: Props) {
                                 setQrFor(s);
                               }}
                             >
-                              Tablero
+                              Tablero del mesero
                             </button>
                             <button style={btnSecondary} onClick={() => startEdit(s)}>
                               {t.staffManager.edit}

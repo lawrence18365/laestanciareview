@@ -8,6 +8,7 @@ import { neon } from '@neondatabase/serverless';
 import { drizzle } from 'drizzle-orm/neon-http';
 import { restaurants, reviews } from './schema';
 import { eq, desc, and, isNotNull } from 'drizzle-orm';
+import { reviewUrlFor } from '../lib/google-review';
 
 const clean = (value: string | undefined) => (value ?? '').replace(/\\n/g, '').trim();
 
@@ -28,6 +29,7 @@ async function check() {
       smsAlerts: restaurants.smsAlerts,
       whatsappAlerts: restaurants.whatsappAlerts,
       googleReviewUrl: restaurants.googleReviewUrl,
+      googlePlaceId: restaurants.googlePlaceId,
       googleThreshold: restaurants.googleThreshold,
       isOwner: restaurants.isOwner,
       isRegional: restaurants.isRegional,
@@ -45,7 +47,9 @@ async function check() {
     const hasSMS = !!r.smsAlerts && !!r.managerPhone;
     const hasWhatsApp = !!r.whatsappAlerts && !!r.managerPhone;
     const alertsEnabled = r.alertPreference !== 'off';
-    const hasGoogleUrl = !!r.googleReviewUrl;
+    // Offered to the guest when either a stored URL or a Place ID is set —
+    // the same rule as the guest flow (lib/google-review.ts reviewUrlFor).
+    const hasGoogleUrl = reviewUrlFor(r) !== null;
 
     const issues: string[] = [];
     if (!hasEmail) issues.push('NO EMAIL');

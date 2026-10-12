@@ -16,6 +16,9 @@ const mocks = vi.hoisted(() => {
     status: 'pending',
     payerEmail: 'gm@example.com',
     nextPaymentDate: null,
+    amount: '727.00',
+    totalAmount: '727.00',
+    billingStartsAt: null,
   });
   const dbInsert = vi.fn(() => ({
     values: vi.fn((values: { eventId: string }) => {
@@ -39,10 +42,45 @@ const mocks = vi.hoisted(() => {
       Record<string, unknown>
     >,
     restaurantStatus: 'canceled',
+    // Restaurants row returned by select(). Extra columns are what the
+    // conversion notification reads (and the trial end the downgrade guard
+    // checks). The suite's clock is fixed at 2026-08-21.
+    restaurantRow: {
+      id: 77,
+      name: 'Tacos del Centro',
+      subscriptionStatus: 'canceled',
+      billingProvider: null,
+      contactName: 'Ana López',
+      managerEmail: 'ana@example.com',
+      managerPhone: '+52 55 1234 5678',
+      city: 'Ciudad de México',
+      shippingAddress: JSON.stringify({
+        line1: 'Reforma 100',
+        city: 'Ciudad de México',
+        state: 'CDMX',
+        postalCode: '06600',
+      }),
+      nfcCardsShippedAt: null,
+      trialEndsAt: new Date('2026-09-15T00:00:00.000Z'),
+    } as Record<string, unknown>,
+    // Rows returned by the conditional "claim the first conversion" update.
+    // Empty simulates a retry/renewal where another delivery already claimed it.
+    claimedRows: [{ id: 77 }] as Array<{ id: number }>,
     getPreapproval: vi.fn(),
     getAuthorizedPayment: vi.fn(),
+    // Contract: `true` when the notice went out, `false` when it did not.
+    sendOwnerConversionNotification: vi.fn(async () => true),
+    sendPurchaseEvent: vi.fn(async () => true),
   };
 });
+
+vi.mock('@/lib/email', () => ({
+  sendOwnerConversionNotification: mocks.sendOwnerConversionNotification,
+}));
+
+vi.mock('@/lib/meta-conversions', () => ({
+  sendPurchaseEvent: mocks.sendPurchaseEvent,
+}));
 
 vi.mock('@/db', () => ({
   db: {
@@ -56,11 +94,7 @@ vi.mock('@/db', () => ({
             }
             if (table === restaurants) {
               return [
-                {
-                  id: 77,
-                  subscriptionStatus: mocks.restaurantStatus,
-                  billingProvider: null,
-                },
+                { ...mocks.restaurantRow, subscriptionStatus: mocks.restaurantStatus },
               ];
             }
             return [];
@@ -71,7 +105,14 @@ vi.mock('@/db', () => ({
     update: vi.fn((table: unknown) => ({
       set: vi.fn((values: Record<string, unknown>) => {
         mocks.updatedRows.push({ table, values });
-        return { where: vi.fn(async () => undefined) };
+        const result = {
+          returning: vi.fn(async () => mocks.claimedRows),
+          then: (
+            onFulfilled?: (value: undefined) => unknown,
+            onRejected?: (reason: unknown) => unknown,
+          ) => Promise.resolve(undefined).then(onFulfilled, onRejected),
+        };
+        return { where: vi.fn(() => result) };
       }),
     })),
     delete: vi.fn(() => ({ where: vi.fn(async () => undefined) })),
@@ -405,9 +446,16 @@ describe('mercadopago webhook route', () => {
     mocks.updatedRows.length = 0;
     mocks.subscriptionRows = [mocks.defaultSubscriptionRow()];
     mocks.restaurantStatus = 'canceled';
+    mocks.restaurantRow.nfcCardsShippedAt = null;
+    mocks.restaurantRow.trialEndsAt = new Date('2026-09-15T00:00:00.000Z');
+    mocks.claimedRows = [{ id: 77 }];
     mocks.dbInsert.mockClear();
     mocks.getPreapproval.mockReset();
     mocks.getAuthorizedPayment.mockReset();
+    mocks.sendOwnerConversionNotification.mockReset();
+    mocks.sendOwnerConversionNotification.mockResolvedValue(true);
+    mocks.sendPurchaseEvent.mockReset();
+    mocks.sendPurchaseEvent.mockResolvedValue(true);
     mocks.getPreapproval.mockResolvedValue({
       id: 'preapproval-123',
       status: 'authorized',
@@ -502,8 +550,65 @@ describe('mercadopago webhook route', () => {
     );
   });
 
-  it('records a cancelled preapproval without downgrading an active restaurant before billing starts', async () => {
+  it('holds a cancelled preapproval at trialing while the restaurant own trial is still running', async () => {
+    // Clock is 2026-08-21; the trial runs to 2026-09-15, so cancelling the
+    // preapproval must not revoke the days the restaurant already has. It must
+    // not leave the account 'active' either: expire-trials only expires
+    // 'trialing' rows, so 'active' would be free access forever.
     mocks.restaurantStatus = 'active';
+    mocks.subscriptionRows = [
+      { ...mocks.defaultSubscriptionRow(), billingStartsAt: new Date('2026-09-15T00:00:00.000Z') },
+    ];
+    mocks.getPreapproval.mockResolvedValue({
+      id: 'preapproval-123',
+      status: 'cancelled',
+      external_reference: '77',
+      payer_email: 'gm@example.com',
+      next_payment_date: null,
+    });
+
+    const response = await webhookPOST(webhookRequest(eventPayload));
+
+    expect(response.status).toBe(200);
+    // Access kept for the rest of the trial, but handed back to expire-trials
+    // (which only flips 'trialing'), so cancelling during the trial cannot buy
+    // free access after it.
+    expect(
+      mocks.updatedRows.find((row) => row.table === restaurants)?.values,
+    ).toEqual({ subscriptionStatus: 'trialing' });
+    expect(
+      mocks.updatedRows.find((row) => row.table === mercadopagoSubscriptions)
+        ?.values,
+    ).toEqual(expect.objectContaining({ status: 'cancelled' }));
+  });
+
+  it('holds a paused preapproval at trialing while the restaurant own trial is still running', async () => {
+    mocks.restaurantStatus = 'active';
+    mocks.subscriptionRows = [
+      { ...mocks.defaultSubscriptionRow(), billingStartsAt: new Date('2026-09-15T00:00:00.000Z') },
+    ];
+    mocks.getPreapproval.mockResolvedValue({
+      id: 'preapproval-123',
+      status: 'paused',
+      external_reference: '77',
+      payer_email: 'gm@example.com',
+      next_payment_date: null,
+    });
+
+    const response = await webhookPOST(webhookRequest(eventPayload));
+
+    expect(response.status).toBe(200);
+    expect(
+      mocks.updatedRows.find((row) => row.table === restaurants)?.values,
+    ).toEqual({ subscriptionStatus: 'trialing' });
+    expect(
+      mocks.updatedRows.find((row) => row.table === mercadopagoSubscriptions)
+        ?.values,
+    ).toEqual(expect.objectContaining({ status: 'paused' }));
+  });
+
+  it('leaves an already-trialing restaurant untouched when the preapproval is cancelled during the trial', async () => {
+    mocks.restaurantStatus = 'trialing';
     mocks.getPreapproval.mockResolvedValue({
       id: 'preapproval-123',
       status: 'cancelled',
@@ -518,10 +623,32 @@ describe('mercadopago webhook route', () => {
     expect(
       mocks.updatedRows.find((row) => row.table === restaurants),
     ).toBeUndefined();
+  });
+
+  it('downgrades an active restaurant for a cancelled preapproval once its own trial has ended', async () => {
+    // Trial ended 2026-08-06, i.e. before the 2026-08-21 clock: there is no
+    // free access left to protect, so the cancellation must land.
+    mocks.restaurantRow.trialEndsAt = new Date('2026-08-06T00:00:00.000Z');
+    mocks.restaurantStatus = 'active';
+    mocks.getPreapproval.mockResolvedValue({
+      id: 'preapproval-123',
+      status: 'cancelled',
+      external_reference: '77',
+      payer_email: 'gm@example.com',
+      next_payment_date: null,
+    });
+
+    const response = await webhookPOST(webhookRequest(eventPayload));
+
+    expect(response.status).toBe(200);
     expect(
-      mocks.updatedRows.find((row) => row.table === mercadopagoSubscriptions)
-        ?.values,
-    ).toEqual(expect.objectContaining({ status: 'cancelled' }));
+      mocks.updatedRows.find((row) => row.table === restaurants)?.values,
+    ).toEqual(
+      expect.objectContaining({
+        subscriptionStatus: 'canceled',
+        billingProvider: 'mercadopago',
+      }),
+    );
   });
 
   it('downgrades an active restaurant for a cancelled preapproval after billing starts', async () => {
@@ -548,7 +675,7 @@ describe('mercadopago webhook route', () => {
     );
   });
 
-  it('records a rejected authorized payment without downgrading active access before billing starts', async () => {
+  it('records a rejected authorized payment and holds the account at trialing before billing starts', async () => {
     mocks.restaurantStatus = 'active';
     mocks.getAuthorizedPayment.mockResolvedValue({
       id: 'authorized-payment-1',
@@ -567,9 +694,11 @@ describe('mercadopago webhook route', () => {
     const response = await webhookPOST(webhookRequest(payload));
 
     expect(response.status).toBe(200);
+    // past_due is not applied mid-trial (the trial days are kept), but the
+    // account must not stay 'active' either — that would never expire.
     expect(
-      mocks.updatedRows.find((row) => row.table === restaurants),
-    ).toBeUndefined();
+      mocks.updatedRows.find((row) => row.table === restaurants)?.values,
+    ).toEqual({ subscriptionStatus: 'trialing' });
     expect(
       mocks.updatedRows.find((row) => row.table === mercadopagoSubscriptions)
         ?.values,
@@ -709,5 +838,245 @@ describe('mercadopago webhook route', () => {
     expect(body).toEqual({ received: true });
     expect(mocks.getPreapproval).not.toHaveBeenCalled();
     expect(mocks.updatedRows).toHaveLength(0);
+  });
+
+  it('ships NFC cards and notifies the owner once on the first approved payment', async () => {
+    mocks.getAuthorizedPayment.mockResolvedValue({
+      id: 'authorized-payment-1',
+      status: 'approved',
+      preapproval_id: 'preapproval-123',
+      external_reference: '77',
+      transaction_amount: 727,
+      payment: { id: 'payment-1', status: 'approved', transaction_amount: 727 },
+    });
+
+    const response = await webhookPOST(
+      webhookRequest({
+        id: 'evt-first-payment',
+        type: 'subscription_authorized_payment',
+        action: 'created',
+        data: { id: 'authorized-payment-1' },
+      }),
+    );
+
+    expect(response.status).toBe(200);
+
+    // Idempotent claim: nfc_cards_shipped_at is only set when it is still NULL.
+    expect(mocks.updatedRows).toContainEqual({
+      table: restaurants,
+      values: { nfcCardsShippedAt: expect.any(Date) },
+    });
+    expect(mocks.updatedRows).toContainEqual({
+      table: restaurants,
+      values: expect.objectContaining({
+        subscriptionStatus: 'active',
+        billingProvider: 'mercadopago',
+      }),
+    });
+
+    expect(mocks.sendOwnerConversionNotification).toHaveBeenCalledTimes(1);
+    expect(mocks.sendOwnerConversionNotification).toHaveBeenCalledWith(
+      expect.objectContaining({
+        restaurantName: 'Tacos del Centro',
+        email: 'ana@example.com',
+        amountMxn: 727,
+        shippingAddress: expect.objectContaining({ line1: 'Reforma 100' }),
+      }),
+    );
+    expect(mocks.sendPurchaseEvent).toHaveBeenCalledTimes(1);
+    expect(mocks.sendPurchaseEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        email: 'ana@example.com',
+        valueMxn: 727,
+        // Deterministic id: the retry path below re-sends the same Purchase
+        // event and Meta must drop the duplicate.
+        eventId: 'mp_conversion_77',
+      }),
+    );
+  });
+
+  it('does not notify again when a retried approved payment finds the cards already claimed', async () => {
+    mocks.getAuthorizedPayment.mockResolvedValue({
+      id: 'authorized-payment-1',
+      status: 'approved',
+      preapproval_id: 'preapproval-123',
+      external_reference: '77',
+      transaction_amount: 727,
+      payment: { id: 'payment-1', status: 'approved', transaction_amount: 727 },
+    });
+
+    const first = await webhookPOST(
+      webhookRequest({
+        id: 'evt-first-payment',
+        type: 'subscription_authorized_payment',
+        action: 'created',
+        data: { id: 'authorized-payment-1' },
+      }),
+    );
+    expect(first.status).toBe(200);
+    expect(mocks.sendOwnerConversionNotification).toHaveBeenCalledTimes(1);
+
+    // A retry that arrives with a NEW event id (so idempotency does not catch
+    // it) updates zero rows because nfc_cards_shipped_at is no longer NULL.
+    mocks.claimedRows = [];
+    const retry = await webhookPOST(
+      webhookRequest({
+        id: 'evt-first-payment-retry',
+        type: 'subscription_authorized_payment',
+        action: 'updated',
+        data: { id: 'authorized-payment-1' },
+      }),
+    );
+
+    expect(retry.status).toBe(200);
+    expect(mocks.sendOwnerConversionNotification).toHaveBeenCalledTimes(1);
+    expect(mocks.sendPurchaseEvent).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not ship cards for a rejected payment', async () => {
+    mocks.restaurantStatus = 'active';
+    mocks.getAuthorizedPayment.mockResolvedValue({
+      id: 'authorized-payment-1',
+      status: 'rejected',
+      preapproval_id: 'preapproval-123',
+      external_reference: '77',
+      payment: { id: 'payment-1', status: 'rejected' },
+    });
+
+    const response = await webhookPOST(
+      webhookRequest({
+        id: 'evt-rejected-payment',
+        type: 'subscription_authorized_payment',
+        action: 'created',
+        data: { id: 'authorized-payment-1' },
+      }),
+    );
+
+    expect(response.status).toBe(200);
+    expect(mocks.sendOwnerConversionNotification).not.toHaveBeenCalled();
+    expect(mocks.sendPurchaseEvent).not.toHaveBeenCalled();
+    // No ship claim; the only restaurant write is the trial hold.
+    expect(
+      mocks.updatedRows.some(
+        (row) => row.table === restaurants && 'nfcCardsShippedAt' in row.values,
+      ),
+    ).toBe(false);
+    expect(
+      mocks.updatedRows.find((row) => row.table === restaurants)?.values,
+    ).toEqual({ subscriptionStatus: 'trialing' });
+  });
+
+  const approvedPayment = {
+    id: 'authorized-payment-1',
+    status: 'approved',
+    preapproval_id: 'preapproval-123',
+    external_reference: '77',
+    transaction_amount: 727,
+    payment: { id: 'payment-1', status: 'approved', transaction_amount: 727 },
+  };
+
+  const approvedPayload = {
+    id: 'evt-first-payment',
+    type: 'subscription_authorized_payment',
+    action: 'created',
+    data: { id: 'authorized-payment-1' },
+  };
+
+  it('uses the same deterministic Meta Purchase event id on every claiming attempt', async () => {
+    // Two deliveries both win the ship claim (the notice-retry path released it
+    // in between) and carry DIFFERENT payment ids. Meta dedupes by event_id, so
+    // both sends must carry the same per-restaurant id or the second one would
+    // be counted as a second paid conversion.
+    mocks.getAuthorizedPayment
+      .mockResolvedValueOnce({ ...approvedPayment })
+      .mockResolvedValueOnce({
+        ...approvedPayment,
+        id: 'authorized-payment-2',
+        payment: { id: 'payment-2', status: 'approved', transaction_amount: 727 },
+      });
+
+    const first = await webhookPOST(webhookRequest(approvedPayload));
+    const second = await webhookPOST(
+      webhookRequest({ ...approvedPayload, id: 'evt-first-payment-retry' }),
+    );
+
+    expect(first.status).toBe(200);
+    expect(second.status).toBe(200);
+    expect(mocks.sendPurchaseEvent).toHaveBeenCalledTimes(2);
+    const eventIds = mocks.sendPurchaseEvent.mock.calls.map(
+      (call) => (call as unknown as [{ eventId: string }])[0].eventId,
+    );
+    expect(eventIds).toEqual(['mp_conversion_77', 'mp_conversion_77']);
+  });
+
+  it('releases the ship claim when the owner conversion notice rejects', async () => {
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+    mocks.getAuthorizedPayment.mockResolvedValue({ ...approvedPayment });
+    mocks.sendOwnerConversionNotification.mockRejectedValue(new Error('smtp down'));
+
+    try {
+      const response = await webhookPOST(webhookRequest(approvedPayload));
+
+      expect(response.status).toBe(200);
+      // Claimed first, so a concurrent delivery still cannot double-send...
+      expect(mocks.updatedRows).toContainEqual({
+        table: restaurants,
+        values: { nfcCardsShippedAt: expect.any(Date) },
+      });
+      // ...then released, so the next approved payment retries the notice.
+      expect(mocks.updatedRows).toContainEqual({
+        table: restaurants,
+        values: { nfcCardsShippedAt: null },
+      });
+      expect(consoleError).toHaveBeenCalledWith(
+        expect.stringContaining('conversion notice NOT sent'),
+        expect.anything(),
+      );
+    } finally {
+      consoleError.mockRestore();
+    }
+  });
+
+  it('releases the ship claim when the notice resolves to "not sent"', async () => {
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+    mocks.getAuthorizedPayment.mockResolvedValue({ ...approvedPayment });
+    mocks.sendOwnerConversionNotification.mockResolvedValue(false);
+
+    try {
+      const response = await webhookPOST(webhookRequest(approvedPayload));
+
+      expect(response.status).toBe(200);
+      expect(mocks.updatedRows).toContainEqual({
+        table: restaurants,
+        values: { nfcCardsShippedAt: null },
+      });
+      expect(consoleError).toHaveBeenCalledWith(
+        expect.stringContaining('conversion notice NOT sent'),
+        expect.anything(),
+      );
+    } finally {
+      consoleError.mockRestore();
+    }
+  });
+
+  it('keeps the ship claim when only the Meta purchase event fails', async () => {
+    mocks.getAuthorizedPayment.mockResolvedValue({ ...approvedPayment });
+    mocks.sendPurchaseEvent.mockRejectedValue(new Error('meta down'));
+
+    const response = await webhookPOST(webhookRequest(approvedPayload));
+
+    expect(response.status).toBe(200);
+    expect(mocks.sendOwnerConversionNotification).toHaveBeenCalledTimes(1);
+    expect(mocks.updatedRows).toContainEqual({
+      table: restaurants,
+      values: { nfcCardsShippedAt: expect.any(Date) },
+    });
+    // The notice went out, so the claim stands: a failed ad-platform event is
+    // not worth echoing a second paid conversion for.
+    expect(
+      mocks.updatedRows.some(
+        (row) => row.table === restaurants && row.values.nfcCardsShippedAt === null,
+      ),
+    ).toBe(false);
   });
 });

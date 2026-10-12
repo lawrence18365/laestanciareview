@@ -12,9 +12,25 @@ import {
   createPreapproval,
   getMercadoPagoBaseUrl,
   getPriceBreakdown,
+  isLegacyActiveAccount,
+  legacyBillingStartDate,
 } from '@/lib/mercadopago';
 
 export const dynamic = 'force-dynamic';
+
+/**
+ * Whether the restaurant has ANY mercadopago_subscriptions row, cancelled ones
+ * included: a row proves it has been through Mercado Pago before, so it is not
+ * a legacy account.
+ */
+async function hasAnyMercadopagoRow(restaurantId: number): Promise<boolean> {
+  const rows = await db
+    .select({ id: mercadopagoSubscriptions.id })
+    .from(mercadopagoSubscriptions)
+    .where(eq(mercadopagoSubscriptions.restaurantId, restaurantId))
+    .limit(1);
+  return rows.length > 0;
+}
 
 export async function POST(req: NextRequest) {
   const csrf = requireSameOrigin(req);
@@ -47,7 +63,6 @@ export async function POST(req: NextRequest) {
 
   const baseUrl = getMercadoPagoBaseUrl();
   const breakdown = getPriceBreakdown();
-  const billingStartsAt = computeBillingStartDate();
 
   try {
     // One active row per restaurant: reuse/update a non-cancelled row if one
@@ -62,6 +77,23 @@ export async function POST(req: NextRequest) {
         ),
       )
       .limit(1);
+
+    // Legacy accounts: already `active` but never in Mercado Pago at all (they
+    // paid outside the app), so they have no trial window left to bill from.
+    // computeBillingStartDate() would charge them at now + 10min; they keep
+    // the 30-day window instead. Any existing row — cancelled or not —
+    // disqualifies the account: it has been through Mercado Pago, so it is not
+    // legacy.
+    const isLegacy = isLegacyActiveAccount({
+      subscriptionStatus: restaurant.subscriptionStatus,
+      hasMercadopagoRow: await hasAnyMercadopagoRow(restaurant.id),
+    });
+
+    // Billing starts when this restaurant's own trial ends — never a fresh
+    // trial window, so an already-expired trial cannot be reset by subscribing.
+    const billingStartsAt = isLegacy
+      ? legacyBillingStartDate()
+      : computeBillingStartDate({ trialEndsAt: restaurant.trialEndsAt });
 
     // Never cancel/reissue a live subscription: if the customer already
     // authorized, the preapproval is actively billing (or about to) and

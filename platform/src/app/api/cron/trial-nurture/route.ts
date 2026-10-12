@@ -56,23 +56,29 @@ async function sendWhatsApp(to: string, body: string) {
 
 const NURTURE: Record<string, {
   days: number;
-  whatsapp: (name: string, pilot: boolean) => string;
-  subject: (name: string, pilot: boolean) => string;
-  html: (name: string, pilot: boolean) => string;
+  whatsapp: (name: string, pilot: boolean, slug: string) => string;
+  subject: (name: string, pilot: boolean, slug: string) => string;
+  html: (name: string, pilot: boolean, slug: string) => string;
 }> = {
   day3: {
     days: 3,
     whatsapp: (name) =>
-      `Hola *${name}* 👋 Llevas 3 días con RateTap. Tip: pídele a tu equipo que entreguen la tarjeta con la frase "Nos encantaría conocer tu opinión, ¿nos ayudas con una reseña? ⭐". Eso duplica la tasa de escaneo. ¿Cómo va hasta ahora?`,
+      `Hola *${name}* 👋 Llevas 3 días con RateTap. Tip: pídele a tu equipo que muestren el código QR con la frase "Nos encantaría conocer tu opinión, ¿nos ayudas con una reseña? ⭐". Eso duplica la tasa de escaneo. ¿Cómo va hasta ahora?`,
     subject: (name) => `Tip del día 3: ${name}`,
-    html: (name) => `<p>Hola ${name},</p><p>Llevas 3 días con RateTap. El truco que mejor funciona: tu mesero entrega la tarjeta y dice "Nos encantaría conocer su opinión, ¿nos ayuda con una reseña en Google? ⭐".</p><p>Eso solo duplica la tasa de escaneo.</p><p><a href="${BASE_URL}/dashboard">Ver mi dashboard →</a></p>`,
+    html: (name) => `<p>Hola ${name},</p><p>Llevas 3 días con RateTap. El truco que mejor funciona: tu mesero muestra el código QR y dice "Nos encantaría conocer su opinión, ¿nos ayuda con una reseña en Google? ⭐".</p><p>Eso duplica la tasa de escaneo.</p><p><a href="${BASE_URL}/dashboard">Ver mi dashboard →</a></p>`,
   },
   day7: {
     days: 7,
-    whatsapp: (name) =>
-      `*${name}*, llevas una semana 🎉 La Estancia (12 restaurantes en León) logró subir consistentemente sus calificaciones en todos sus locales con RateTap. Tus reseñas nuevas ya están trabajando para ti. Panel: ${BASE_URL}/dashboard`,
+    // The La Estancia case study is only shown to that group's own locations;
+    // everyone else gets the outcome without naming a client or its figures.
+    whatsapp: (name, _pilot, slug) =>
+      slug.startsWith('estancia')
+        ? `*${name}*, llevas una semana 🎉 La Estancia (12 restaurantes en León) logró subir consistentemente sus calificaciones en todos sus locales con RateTap. Tus reseñas nuevas ya están trabajando para ti. Panel: ${BASE_URL}/dashboard`
+        : `*${name}*, llevas una semana 🎉 Los restaurantes que piden la reseña en cada mesa reciben más reseñas. Tus reseñas nuevas ya están trabajando para ti. Panel: ${BASE_URL}/dashboard`,
     subject: (name) => `Una semana con RateTap: ${name}`,
-    html: (name) => `<p>Hola ${name},</p><p>Llevas 7 días con RateTap. Un cliente nuestro, Grupo La Estancia (12 restaurantes en León), ha visto cómo sus reseñas de Google crecen consistentemente desde que usan el sistema.</p><p>Tus reseñas nuevas ya están llegando.</p><p><a href="${BASE_URL}/dashboard">Ver mi progreso →</a></p>`,
+    html: (name, _pilot, slug) => slug.startsWith('estancia')
+      ? `<p>Hola ${name},</p><p>Llevas 7 días con RateTap. Grupo La Estancia (12 restaurantes en León) ha visto cómo sus reseñas de Google crecen consistentemente desde que usan el sistema.</p><p>Tus reseñas nuevas ya están llegando.</p><p><a href="${BASE_URL}/dashboard">Ver mi progreso →</a></p>`
+      : `<p>Hola ${name},</p><p>Llevas 7 días con RateTap. Los restaurantes que piden la reseña en cada mesa reciben más reseñas.</p><p>Tus reseñas nuevas ya están llegando.</p><p><a href="${BASE_URL}/dashboard">Ver mi progreso →</a></p>`,
   },
   day12: {
     days: 12,
@@ -141,15 +147,15 @@ export async function GET(req: NextRequest) {
           const result = await sendMail({
             from: FROM,
             to: r.managerEmail,
-            subject: nurture.subject(r.name, r.pilot),
-            html: nurture.html(r.name, r.pilot),
+            subject: nurture.subject(r.name, r.pilot, r.slug),
+            html: nurture.html(r.name, r.pilot, r.slug),
           });
           if (!result.success) {
             throw new Error(result.error?.message ?? 'SMTP send skipped');
           }
         }
         if (r.managerPhone && hasWhatsApp) {
-          await sendWhatsApp(r.managerPhone, nurture.whatsapp(r.name, r.pilot));
+          await sendWhatsApp(r.managerPhone, nurture.whatsapp(r.name, r.pilot, r.slug));
         }
       } catch (error) {
         await db.delete(nurtureEvents).where(and(

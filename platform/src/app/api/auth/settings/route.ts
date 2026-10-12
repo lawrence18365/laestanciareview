@@ -2,10 +2,32 @@ import { db } from '@/db';
 import { restaurants } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 import { verifySession } from '@/lib/session';
-import { getRestaurantBySlug } from '@/lib/queries';
+import { getRestaurantBySlug, getRestaurantLogoHash } from '@/lib/queries';
 import { hashPassword, verifyPassword } from '@/lib/auth';
 import { refreshGoogleRating } from '@/lib/google-places';
+import { getBrandForRestaurant } from '@/lib/brands';
+import { derivedGoogleReviewUrl } from '@/lib/google-review';
 import { requireSameOrigin } from '@/lib/origin';
+
+/**
+ * An uploaded logo, as a data URL. Only the three formats the browser is told
+ * to produce are accepted, and only up to 280 KB of base64 text — the client
+ * rejects anything over 200 KB of image bytes, so this is the backstop.
+ */
+const LOGO_DATA_URL_PATTERN = /^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/;
+const LOGO_DATA_URL_MAX_LENGTH = 280_000;
+
+/**
+ * The custom logo's URL, or null when the restaurant has none.
+ *
+ * The data URL itself never leaves the server as a response field: it is up to
+ * 280 KB and the settings screen only needs to show it. /api/logo/[slug] serves
+ * the bytes, versioned by `logoHash` — the md5 prefix of the data URL, which is
+ * all any caller ever sees of the image.
+ */
+function logoUrlFor(restaurant: { slug: string; logoHash: string | null }) {
+  return restaurant.logoHash ? getBrandForRestaurant(restaurant).logo : null;
+}
 
 export async function GET() {
   const session = await verifySession();
@@ -28,6 +50,7 @@ export async function GET() {
     googlePlaceId: restaurant.googlePlaceId,
     googleRating: restaurant.googleRating ? parseFloat(restaurant.googleRating) : null,
     googleReviewCount: restaurant.googleReviewCount,
+    logoUrl: logoUrlFor(restaurant),
   });
 }
 
@@ -86,7 +109,25 @@ export async function PATCH(req: Request) {
     updates.googlePlaceId = body.googlePlaceId || null;
     // Auto-derive review URL from place ID when no URL is set yet and none is being explicitly provided
     if (body.googlePlaceId && !restaurant.googleReviewUrl && typeof body.googleReviewUrl !== 'string') {
-      updates.googleReviewUrl = `https://search.google.com/local/writereview?placeid=${body.googlePlaceId}`;
+      updates.googleReviewUrl = derivedGoogleReviewUrl(body.googlePlaceId);
+    }
+  }
+
+  // Logo upload. `null` removes it; anything else must be one of the three
+  // formats the browser encoder produces, within the size the column allows.
+  // Rejected loudly rather than dropped: a silently ignored logo upload looks
+  // like a save that worked.
+  if (body.logoDataUrl !== undefined) {
+    if (body.logoDataUrl === null) {
+      updates.logoDataUrl = null;
+    } else if (
+      typeof body.logoDataUrl === 'string' &&
+      body.logoDataUrl.length <= LOGO_DATA_URL_MAX_LENGTH &&
+      LOGO_DATA_URL_PATTERN.test(body.logoDataUrl)
+    ) {
+      updates.logoDataUrl = body.logoDataUrl;
+    } else {
+      return Response.json({ error: 'Logo inválido' }, { status: 400 });
     }
   }
   if (typeof body.newPassword === 'string' && body.newPassword.length >= 8) {
@@ -108,11 +149,33 @@ export async function PATCH(req: Request) {
     return Response.json({ error: 'No valid fields to update' }, { status: 400 });
   }
 
+  // Only the fields the response actually returns come back from Postgres —
+  // in particular not `logo_data_url`, which is up to 280 KB.
   const [updated] = await db
     .update(restaurants)
     .set(updates)
     .where(eq(restaurants.id, restaurant.id))
-    .returning();
+    .returning({
+      id: restaurants.id,
+      name: restaurants.name,
+      slug: restaurants.slug,
+      googleReviewUrl: restaurants.googleReviewUrl,
+      googleThreshold: restaurants.googleThreshold,
+      managerEmail: restaurants.managerEmail,
+      managerPhone: restaurants.managerPhone,
+      alertPreference: restaurants.alertPreference,
+      smsAlerts: restaurants.smsAlerts,
+      whatsappAlerts: restaurants.whatsappAlerts,
+      callmebotApiKey: restaurants.callmebotApiKey,
+      googlePlaceId: restaurants.googlePlaceId,
+      googleRating: restaurants.googleRating,
+      googleReviewCount: restaurants.googleReviewCount,
+    });
+
+  // The logo's version tag is read with its own single-column query
+  // (md5(logo_data_url) inside Postgres) so the image itself never travels
+  // back to the app just to build a URL.
+  const logoHash = await getRestaurantLogoHash(updated.id);
 
   // If a Place ID was just set for the first time, immediately capture
   // the baseline rating. This is the "pre-RateTap" score - day 1.
@@ -139,5 +202,6 @@ export async function PATCH(req: Request) {
     googlePlaceId: updated.googlePlaceId,
     googleRating: updated.googleRating ? parseFloat(updated.googleRating) : null,
     googleReviewCount: updated.googleReviewCount,
+    logoUrl: logoUrlFor({ slug: updated.slug, logoHash }),
   });
 }

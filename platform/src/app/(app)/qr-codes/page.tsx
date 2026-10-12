@@ -1,7 +1,7 @@
 import { verifySession } from '@/lib/session';
 import { redirect } from 'next/navigation';
 import { getRestaurantBySlug, getStaffList } from '@/lib/queries';
-import { getBrandForSlug } from '@/lib/brands';
+import { getBrandForRestaurant } from '@/lib/brands';
 import CardQrGrid from '@/components/dashboard/CardQrGrid';
 
 export default async function QrCodesPage() {
@@ -15,7 +15,7 @@ export default async function QrCodesPage() {
 
   const staffList = await getStaffList(restaurant.id);
   const activeStaff = staffList.filter((s) => s.active);
-  const brand = getBrandForSlug(restaurant.slug);
+  const brand = getBrandForRestaurant(restaurant);
 
   return (
     <CardQrGrid
