@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react';
 import { t } from '@/lib/i18n';
 import GooglePlaceSearch, {
-  GOOGLE_PLACES_BROWSER_KEY,
   type PlaceSelection,
 } from '@/components/GooglePlaceSearch';
 import {
@@ -493,32 +492,31 @@ export default function SettingsView({ settings, billing }: Props) {
 
         {/* Google profile. Saves on selection, so it sits outside the form
             below — Enter inside an autocomplete input must not submit a
-            half-filled form. Rendered only when the Places key is configured;
-            the free-text URL field below always works. */}
-        {GOOGLE_PLACES_BROWSER_KEY && (
-          <div style={{ marginBottom: '1.25rem' }}>
-            <label style={labelStyle} htmlFor="googlePlace">
-              {t.settings.googlePlace}
-            </label>
-            <GooglePlaceSearch
-              inputId="googlePlace"
-              value={placeQuery}
-              onChange={setPlaceQuery}
-              onSelect={handlePlaceSelected}
-              placeholder={t.settings.googlePlacePlaceholder}
-              style={inputStyle}
-            />
-            <p
-              style={{
-                margin: '0.3rem 0 0',
-                fontSize: '0.8rem',
-                color: googlePlaceId ? 'var(--green)' : 'var(--text-dim)',
-              }}
-            >
-              {googlePlaceId ? `✓ ${t.settings.googlePlaceConnected}` : t.settings.googlePlaceHint}
-            </p>
-          </div>
-        )}
+            half-filled form. Uses Google's autocomplete when the browser Places
+            key is set, otherwise a server-backed search; the free-text URL
+            field below always works. */}
+        <div style={{ marginBottom: '1.25rem' }}>
+          <label style={labelStyle} htmlFor="googlePlace">
+            {t.settings.googlePlace}
+          </label>
+          <GooglePlaceSearch
+            inputId="googlePlace"
+            value={placeQuery}
+            onChange={setPlaceQuery}
+            onSelect={handlePlaceSelected}
+            placeholder={t.settings.googlePlacePlaceholder}
+            style={inputStyle}
+          />
+          <p
+            style={{
+              margin: '0.3rem 0 0',
+              fontSize: '0.8rem',
+              color: googlePlaceId ? 'var(--green)' : 'var(--text-dim)',
+            }}
+          >
+            {googlePlaceId ? `✓ ${t.settings.googlePlaceConnected}` : t.settings.googlePlaceHint}
+          </p>
+        </div>
 
         <form onSubmit={handleSaveGeneral}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
