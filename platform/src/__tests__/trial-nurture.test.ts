@@ -2,6 +2,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { NextRequest } from 'next/server';
 
 const h = vi.hoisted(() => {
+  // These tests cover the WhatsApp channel too; production has it off by default.
+  process.env.WHATSAPP_API_ENABLED = '1';
   process.env.CRON_SECRET = 'test-secret';
   return {
     sendMail: vi.fn(),

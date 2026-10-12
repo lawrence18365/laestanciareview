@@ -269,7 +269,8 @@ export async function POST(req: NextRequest) {
         slug: restaurant.slug,
         googlePlaceId: input.googlePlaceId,
       }),
-      input.phone
+      // No WhatsApp Business API yet: the welcome email is the channel.
+      input.phone && process.env.WHATSAPP_API_ENABLED === '1'
         ? sendWhatsAppWelcome({
             to: input.phone,
             restaurantName: input.businessName,

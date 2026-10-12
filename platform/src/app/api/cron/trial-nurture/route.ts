@@ -1,5 +1,6 @@
 /**
- * Daily cron: send WhatsApp + email nurture messages to trialing restaurants.
+ * Daily cron: send email nurture messages to trialing restaurants (WhatsApp
+ * only when WHATSAPP_API_ENABLED=1).
  * Day 1 → activation nudge, only when waiters or the Google listing are missing.
  * Day 3 → tips. Day 7 → case study (both switch to an activation variant while
  * the restaurant has no waiters or no guest ratings yet). Every trial
@@ -25,6 +26,10 @@ export const dynamic = 'force-dynamic';
 
 const CRON_SECRET = process.env.CRON_SECRET;
 const BASE_URL = 'https://app.ratetapmx.com';
+
+// We have no WhatsApp Business API (only a Twilio sandbox owners never join),
+// so nurture is email-only unless this is explicitly switched on.
+const WHATSAPP_API_ENABLED = process.env.WHATSAPP_API_ENABLED === '1';
 
 function getTwilioConfig() {
   const accountSid = process.env.TWILIO_ACCOUNT_SID?.trim();
@@ -213,7 +218,7 @@ export async function GET(req: NextRequest) {
       ? Math.ceil((r.trialEndsAt.getTime() - Date.now()) / 86_400_000)
       : null;
 
-    const hasWhatsApp = Boolean(r.managerPhone && getTwilioConfig());
+    const hasWhatsApp = WHATSAPP_API_ENABLED && Boolean(r.managerPhone && getTwilioConfig());
     if (!r.managerEmail && !hasWhatsApp) continue;
 
     const sentRows = await db.select().from(nurtureEvents)
