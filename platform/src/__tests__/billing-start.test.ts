@@ -1,5 +1,10 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { BILLING_START_DATE, computeBillingStartDate } from '@/lib/mercadopago';
+import {
+  BILLING_START_DATE,
+  computeBillingStartDate,
+  isLegacyActiveAccount,
+  legacyBillingStartDate,
+} from '@/lib/mercadopago';
 
 const MINUTE_MS = 60 * 1000;
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -84,4 +89,41 @@ describe('computeBillingStartDate', () => {
     // No trial: the global launch date (later than now + 10min) wins.
     expect(computeBillingStartDate().getTime()).toBe(BILLING_START_DATE.getTime());
   });
+});
+
+describe('legacyBillingStartDate', () => {
+  it('gives a legacy active account the retired 30-day window, not now + 10min', () => {
+    const now = new Date('2026-08-21T12:00:00.000Z');
+
+    const start = legacyBillingStartDate(now);
+
+    expect(start.getTime()).toBe(now.getTime() + 30 * DAY_MS);
+    expect(start.getTime()).toBeGreaterThan(
+      computeBillingStartDate({ trialEndsAt: null, now }).getTime(),
+    );
+  });
+
+  it('never goes back before the global launch date', () => {
+    // A re-subscribe long before the launch date cannot undercut it.
+    const start = legacyBillingStartDate(new Date('2026-07-15T12:00:00.000Z'));
+
+    expect(start.getTime()).toBe(BILLING_START_DATE.getTime());
+  });
+});
+
+describe('isLegacyActiveAccount', () => {
+  it.each([
+    ['active', false, true],
+    ['active', true, false],
+    ['trialing', false, false],
+    ['trialing', true, false],
+    ['canceled', false, false],
+  ] as const)(
+    'status=%s hasMercadopagoRow=%s → %s',
+    (subscriptionStatus, hasMercadopagoRow, expected) => {
+      expect(isLegacyActiveAccount({ subscriptionStatus, hasMercadopagoRow })).toBe(
+        expected,
+      );
+    },
+  );
 });

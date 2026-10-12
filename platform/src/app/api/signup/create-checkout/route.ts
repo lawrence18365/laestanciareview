@@ -7,9 +7,13 @@ import { requireSameOrigin } from '@/lib/origin';
 import { db } from '@/db';
 import { commercialLeads, pendingSignups, restaurants } from '@/db/schema';
 import { randomToken, tokenHash } from '@/lib/tokens';
-import { trackCommercialEvent, upsertCommercialLead } from '@/lib/commercial-tracking';
+import {
+  commercialLeadDedupeKey,
+  trackCommercialEvent,
+  upsertCommercialLead,
+} from '@/lib/commercial-tracking';
 import { sendOwnerSignupNotification, sendWelcomeEmail } from '@/lib/email';
-import { eq, sql } from 'drizzle-orm';
+import { and, eq, sql } from 'drizzle-orm';
 import {
   isValidPilotAccessToken,
   PILOT_ACCESS_COOKIE,
@@ -76,6 +80,43 @@ export async function POST(req: NextRequest) {
     if (existingAccount) {
       return Response.json(
         { error: 'Ya existe una cuenta con este correo. Inicia sesión.', loginUrl: '/login' },
+        { status: 409 },
+      );
+    }
+
+    // Takeover guard, checked BEFORE the lead is upserted (provisionSignupAtomic
+    // re-checks it inside the transaction as a backstop). Commercial leads are
+    // deduped by phone + business name, NOT by email, so this form's lead may
+    // already be the lead of an account that belongs to someone else. The
+    // upsert would overwrite that lead's email/name/metadata before the
+    // transaction ever ran, so a request we are going to refuse must be
+    // refused before it writes anything. Only the same email may reuse the
+    // account; a missing manager email never matches.
+    const leadDedupeKey = commercialLeadDedupeKey({
+      businessName: input.businessName,
+      email: input.email,
+      phone: input.phone,
+      city: input.city,
+    });
+    const [linkedAccount] = await db
+      .select({ managerEmail: restaurants.managerEmail })
+      .from(commercialLeads)
+      .innerJoin(pendingSignups, eq(pendingSignups.leadId, commercialLeads.id))
+      .innerJoin(restaurants, eq(pendingSignups.restaurantId, restaurants.id))
+      .where(
+        and(
+          eq(commercialLeads.dedupeKey, leadDedupeKey),
+          eq(restaurants.pilot, isPilot),
+        ),
+      )
+      .limit(1);
+    if (
+      linkedAccount &&
+      (linkedAccount.managerEmail ?? '').trim().toLowerCase() !==
+        input.email.trim().toLowerCase()
+    ) {
+      return Response.json(
+        { error: 'Ya existe una cuenta para este restaurante. Inicia sesión.', loginUrl: '/login' },
         { status: 409 },
       );
     }

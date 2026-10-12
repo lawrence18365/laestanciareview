@@ -89,6 +89,33 @@ function shouldSkipPreBillingStartDowngrade(
   );
 }
 
+/**
+ * Handle the case where the preapproval went away (cancelled/paused) while the
+ * restaurant's own trial is still running: keep the free days it already has,
+ * but never let them turn into free access forever.
+ *
+ * An account that authorized a preapproval mid-trial is `active`
+ * (mapPreapprovalStatus), and `active` is not expired by anything: the
+ * expire-trials cron only flips `trialing` rows. So skipping the downgrade
+ * outright would leave a cancelled/paused account `active` for good once the
+ * trial ends. Downgrading to `trialing` keeps the remaining trial intact and
+ * hands expiry back to the cron.
+ *
+ * An account that is already `trialing` needs no change — the cron already
+ * owns it.
+ */
+async function holdTrialAccessAfterPreapprovalLoss(
+  restaurantId: number,
+  currentStatus: string,
+): Promise<void> {
+  if (currentStatus !== 'active') return;
+
+  await db
+    .update(restaurants)
+    .set({ subscriptionStatus: 'trialing' })
+    .where(eq(restaurants.id, restaurantId));
+}
+
 export async function POST(req: NextRequest) {
   const body = (await req.json().catch(() => null)) as MercadoPagoWebhookBody | null;
   if (!body || typeof body !== 'object') {
@@ -234,6 +261,10 @@ async function handlePreapproval(dataId: string) {
     console.log(
       `[mercadopago-webhook] pre-billing-start downgrade skipped restaurant=${restaurant.id} current=${restaurant.subscriptionStatus} mapped=${mapped}`,
     );
+    await holdTrialAccessAfterPreapprovalLoss(
+      restaurant.id,
+      restaurant.subscriptionStatus,
+    );
     return;
   }
 
@@ -317,6 +348,10 @@ async function handleAuthorizedPayment(dataId: string) {
     console.log(
       `[mercadopago-webhook] pre-billing-start downgrade skipped restaurant=${restaurant.id} current=${restaurant.subscriptionStatus} mapped=${newStatus}`,
     );
+    await holdTrialAccessAfterPreapprovalLoss(
+      restaurant.id,
+      restaurant.subscriptionStatus,
+    );
     return;
   }
 
@@ -362,7 +397,6 @@ async function notifyFirstConversion(
   if (claimed.length === 0) return;
 
   const amountMxn = paymentAmountMxn(authorizedPayment, subscription);
-  const paymentId = authorizedPayment.payment?.id ?? authorizedPayment.id;
   const shipping = parseShippingAddress(restaurant.shippingAddress, restaurant.city);
 
   const [notice] = await Promise.allSettled([
@@ -379,7 +413,12 @@ async function notifyFirstConversion(
           email: restaurant.managerEmail,
           phone: restaurant.managerPhone ?? undefined,
           valueMxn: amountMxn,
-          eventId: paymentId != null ? `mp_${paymentId}` : `mp_${restaurant.id}_${Date.now()}`,
+          // Deterministic per-restaurant id: a ship-notice retry re-runs this
+          // whole block on the next approved payment, and the same event id
+          // makes Meta drop the duplicate instead of counting a second
+          // Purchase (the payment id would differ on a real retry, and a
+          // Date.now()-based id would never match).
+          eventId: `mp_conversion_${restaurant.id}`,
         })
       : Promise.resolve(),
   ]);

@@ -4,10 +4,14 @@ config({ path: '.env.production.local' });
 config({ path: '.env.local' });
 
 const USAGE = `Usage:
-  npx tsx scripts/mercadopago-link.ts <slug> [<slug> ...] [--payer-email someone@x.com] [--allow-test]
+  npx tsx scripts/mercadopago-link.ts <slug> [<slug> ...] [--payer-email someone@x.com] [--allow-test] [--start-date YYYY-MM-DD]
 
 Options:
   --payer-email <email>  Override each restaurant's manager email
+  --start-date <date>    Force the first charge date (YYYY-MM-DD, Mexico City).
+                         Default: the restaurant's trial end; for an 'active'
+                         account with no Mercado Pago row yet (paid outside the
+                         app), now + 30 days, never before the launch date
   --allow-test           Allow a MERCADOPAGO_ACCESS_TOKEN beginning with TEST-
   --help                 Show this help`;
 
@@ -15,8 +19,22 @@ type CliOptions = {
   allowTest: boolean;
   help: boolean;
   payerEmail?: string;
+  /** First-charge override, parsed from --start-date, as a real UTC Date. */
+  startDate?: Date;
   slugs: string[];
 };
+
+/** `YYYY-MM-DD` at midnight Mexico City (UTC-06:00), as a real UTC Date. */
+function parseStartDate(value: string): Date {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    throw new Error(`--start-date must be YYYY-MM-DD (got: ${value})`);
+  }
+  const parsed = new Date(`${value}T00:00:00.000-06:00`);
+  if (Number.isNaN(parsed.getTime())) {
+    throw new Error(`--start-date is not a real date: ${value}`);
+  }
+  return parsed;
+}
 
 function parseArgs(args: string[]): CliOptions {
   const options: CliOptions = { allowTest: false, help: false, slugs: [] };
@@ -33,6 +51,13 @@ function parseArgs(args: string[]): CliOptions {
         throw new Error('--payer-email requires an email address');
       }
       options.payerEmail = payerEmail;
+      index += 1;
+    } else if (arg === '--start-date') {
+      const value = args[index + 1];
+      if (!value || value.startsWith('--')) {
+        throw new Error('--start-date requires a YYYY-MM-DD date');
+      }
+      options.startDate = parseStartDate(value);
       index += 1;
     } else if (arg.startsWith('--')) {
       throw new Error(`Unknown option: ${arg}`);
@@ -61,6 +86,8 @@ async function main() {
     createPreapproval,
     getMercadoPagoBaseUrl,
     getPriceBreakdown,
+    isLegacyActiveAccount,
+    legacyBillingStartDate,
   } = await import('../src/lib/mercadopago');
 
   if (!MERCADOPAGO_ACCESS_TOKEN) {
@@ -78,6 +105,16 @@ async function main() {
       import('../src/db/schema'),
       import('drizzle-orm'),
     ]);
+
+  /** Any row at all, cancelled included: a row means "not a legacy account". */
+  async function hasAnyMercadopagoRow(restaurantId: number): Promise<boolean> {
+    const rows = await db
+      .select({ id: mercadopagoSubscriptions.id })
+      .from(mercadopagoSubscriptions)
+      .where(eq(mercadopagoSubscriptions.restaurantId, restaurantId))
+      .limit(1);
+    return rows.length > 0;
+  }
 
   let created = 0;
   let skippedActive = 0;
@@ -101,10 +138,6 @@ async function main() {
         throw new Error(`No payer email for restaurant: ${slug}`);
       }
 
-      const billingStartsAt = computeBillingStartDate({
-        trialEndsAt: restaurant.trialEndsAt,
-      });
-
       const existing = await db
         .select()
         .from(mercadopagoSubscriptions)
@@ -115,6 +148,19 @@ async function main() {
           ),
         )
         .limit(1);
+
+      // First-charge date: an explicit --start-date wins; otherwise an 'active'
+      // account with no Mercado Pago row at all (paid outside the app) keeps
+      // its 30-day window instead of being charged at now + 10min, and
+      // everyone else bills from their own trial end.
+      const billingStartsAt =
+        options.startDate ??
+        (isLegacyActiveAccount({
+          subscriptionStatus: restaurant.subscriptionStatus,
+          hasMercadopagoRow: await hasAnyMercadopagoRow(restaurant.id),
+        })
+          ? legacyBillingStartDate()
+          : computeBillingStartDate({ trialEndsAt: restaurant.trialEndsAt }));
 
       // Never cancel/reissue a live subscription: an authorized row means
       // the customer already authorized and replacing it would silently kill

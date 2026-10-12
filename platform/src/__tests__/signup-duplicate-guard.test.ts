@@ -8,11 +8,18 @@ const mocks = vi.hoisted(() => {
   /** Emails the fake restaurants table already holds (mixed case on purpose). */
   const storedEmails: string[] = [];
   /**
-   * Restaurant the `pending_signups -> restaurants` join resolves to, i.e. the
-   * account an earlier signup with the SAME lead already provisioned.
+   * Restaurant the `lead -> pending_signups -> restaurants` lookups resolve to,
+   * i.e. the account an earlier signup with the SAME lead already provisioned.
+   * Both the pre-upsert conflict check and the in-transaction backstop read it.
    */
   let linkedRestaurant: { id: number; slug: string; managerEmail: string | null } | null =
     null;
+
+  /** Chainable stand-in for drizzle's `from(...).innerJoin(...)...where(...)`. */
+  type ChainableSelect = {
+    innerJoin: (table: unknown, condition: unknown) => ChainableSelect;
+    where: (condition: unknown) => { limit: (count: number) => Promise<unknown[]> };
+  };
 
   /**
    * Drizzle renders `sql` templates as StringChunk wrappers, and interpolated
@@ -56,26 +63,35 @@ const mocks = vi.hoisted(() => {
   const database = {
     execute: vi.fn(async () => undefined),
     select: vi.fn(() => ({
-      from: vi.fn(() => ({
-        where: vi.fn((condition: unknown) => {
-          whereConditions.push(condition);
-          return {
-            limit: vi.fn(async () => {
-              // Emulate `lower(manager_email) = lower($1)`.
-              const text = searchable(condition);
-              const hit =
-                text.includes('lower(') &&
-                storedEmails.some((email) => text.includes(email.toLowerCase()));
-              return hit ? [{ id: 4242 }] : [];
-            }),
-          };
-        }),
-        innerJoin: vi.fn(() => ({
-          where: vi.fn(() => ({
-            limit: vi.fn(async () => (linkedRestaurant ? [{ ...linkedRestaurant }] : [])),
-          })),
-        })),
-      })),
+      from: vi.fn(() => {
+        let joined = false;
+        const chain: ChainableSelect = {
+          innerJoin: () => {
+            joined = true;
+            return chain;
+          },
+          where: (condition: unknown) => {
+            whereConditions.push(condition);
+            return {
+              limit: async () => {
+                if (!joined) {
+                  // Emulate `lower(manager_email) = lower($1)`.
+                  const text = searchable(condition);
+                  const hit =
+                    text.includes('lower(') &&
+                    storedEmails.some((email) => text.includes(email.toLowerCase()));
+                  return hit ? [{ id: 4242 }] : [];
+                }
+                // Lead -> pending_signups -> restaurants: the pre-upsert
+                // conflict check and the in-transaction backstop both resolve
+                // to the account an earlier signup on this lead provisioned.
+                return linkedRestaurant ? [{ ...linkedRestaurant }] : [];
+              },
+            };
+          },
+        };
+        return chain;
+      }),
     })),
     insert: vi.fn(() => ({
       values: vi.fn((values: Record<string, unknown>) => {
@@ -137,10 +153,15 @@ vi.mock('@/lib/stripe', () => ({
   STRIPE_SETUP_PRICE_ID: 'price_setup_test',
   TRIAL_DAYS: 30,
 }));
-vi.mock('@/lib/commercial-tracking', () => ({
-  trackCommercialEvent: mocks.trackCommercialEvent,
-  upsertCommercialLead: mocks.upsertCommercialLead,
-}));
+vi.mock('@/lib/commercial-tracking', async (importOriginal) => {
+  const original =
+    await importOriginal<typeof import('@/lib/commercial-tracking')>();
+  return {
+    ...original,
+    trackCommercialEvent: mocks.trackCommercialEvent,
+    upsertCommercialLead: mocks.upsertCommercialLead,
+  };
+});
 vi.mock('@/lib/slug', () => ({
   generateUniqueSlug: vi.fn(async () => 'tacos-del-centro'),
   slugify: vi.fn(() => 'tacos-del-centro'),
@@ -190,6 +211,7 @@ describe('signup duplicate email guard', () => {
     mocks.setLinkedRestaurant(null);
     mocks.transactionDbTransaction.mockClear();
     mocks.upsertCommercialLead.mockClear();
+    mocks.trackCommercialEvent.mockClear();
     mocks.checkRateLimitAsync.mockClear();
     mocks.sendWelcomeEmail.mockClear();
   });
@@ -258,6 +280,26 @@ describe('signup duplicate email guard', () => {
     expect(mocks.insertedValues.filter((v) => 'slug' in v)).toHaveLength(0);
   });
 
+  it('detects the takeover BEFORE upserting the lead, so the victim lead is untouched', async () => {
+    // The upsert rewrites the existing lead's email/name/metadata (leads are
+    // deduped by phone + business name). A request we are going to refuse must
+    // not have written anything at all, so the conflict must be found before
+    // that upsert — not only inside the provisioning transaction.
+    mocks.setLinkedRestaurant({
+      id: 4242,
+      slug: 'restaurante-victima',
+      managerEmail: 'victima@example.com',
+    });
+
+    const response = await POST(signupRequest({ email: 'atacante@example.com' }));
+
+    expect(response.status).toBe(409);
+    expect(mocks.upsertCommercialLead).not.toHaveBeenCalled();
+    expect(mocks.trackCommercialEvent).not.toHaveBeenCalled();
+    expect(mocks.transactionDbTransaction).not.toHaveBeenCalled();
+    expect(mocks.insertedValues).toHaveLength(0);
+  });
+
   it('refuses when the linked account has no manager email to match against', async () => {
     mocks.setLinkedRestaurant({
       id: 4242,
@@ -283,9 +325,11 @@ describe('signup duplicate email guard', () => {
     const body = await response.json();
 
     // Idempotent retry: 200, and the existing account is reused (no second
-    // restaurants row) — the email comparison is case-insensitive.
+    // restaurants row) — the email comparison is case-insensitive, so the
+    // pre-upsert conflict check must let this one through to provisioning.
     expect(response.status).toBe(200);
     expect(body.url).toBe('https://app.ratetapmx.com/bienvenida');
+    expect(mocks.upsertCommercialLead).toHaveBeenCalledOnce();
     expect(mocks.insertedValues.filter((v) => 'slug' in v)).toHaveLength(0);
     expect(mocks.sendWelcomeEmail).toHaveBeenCalledWith(
       expect.objectContaining({ slug: 'tacos-existentes', to: 'ANA@Example.com' }),

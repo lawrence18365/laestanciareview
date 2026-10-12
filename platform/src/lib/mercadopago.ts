@@ -103,6 +103,45 @@ export function subscriptionBillingHasStarted(
     : billingHasStarted(now);
 }
 
+/**
+ * Days of grace granted to a legacy account that is already `active` but has
+ * never had a Mercado Pago subscription row (it paid outside the app): the
+ * retired per-restaurant trial window. Kept as a literal so this lib does not
+ * pull the Stripe SDK (lib/stripe.ts) just to read its TRIAL_DAYS constant.
+ */
+const LEGACY_ACTIVE_TRIAL_DAYS = 30;
+
+/**
+ * Whether an account is "legacy" for first-charge purposes: already `active`
+ * AND with no mercadopago_subscriptions row at all, cancelled ones included.
+ * Such an account paid outside the app, so it has no trial window of ours to
+ * bill from and must not be treated as a fresh self-serve subscription.
+ */
+export function isLegacyActiveAccount(params: {
+  subscriptionStatus: string;
+  /** True when ANY row exists for the restaurant, cancelled included. */
+  hasMercadopagoRow: boolean;
+}): boolean {
+  return params.subscriptionStatus === 'active' && !params.hasMercadopagoRow;
+}
+
+/**
+ * First billing date for a LEGACY account: one already `active` that has no
+ * Mercado Pago subscription row at all (it paid outside the app), so it has no
+ * `trialEndsAt` to bill from. It must not be charged ~immediately by
+ * computeBillingStartDate()'s `now + 10 minutes` floor; it gets the 30-day
+ * trial window it is conceptually still on, never before the global launch
+ * date. Same shape as the pre-8d20921 behaviour of computeBillingStartDate().
+ */
+export function legacyBillingStartDate(now: Date = new Date()): Date {
+  return new Date(
+    Math.max(
+      BILLING_START_DATE.getTime(),
+      now.getTime() + LEGACY_ACTIVE_TRIAL_DAYS * 24 * 60 * 60 * 1000,
+    ),
+  );
+}
+
 /** Public base URL of the app, stripped of stray `\n` and trailing slash. */
 export function getMercadoPagoBaseUrl(): string {
   return (process.env.NEXT_PUBLIC_BASE_URL ?? 'https://app.ratetapmx.com')
@@ -336,9 +375,13 @@ export function verifyMercadoPagoSignature(params: {
  * restaurants.subscriptionStatus.
  *
  * 'authorized' → 'active' is safe even though authorization is not a payment:
- * createPreapproval() starts billing at max(BILLING_START_DATE, trialEndsAt,
- * now + 10min), so an authorized preapproval can never hand out access beyond
- * the trial the restaurant already had.
+ * the restaurant's own trial is what bounds access, not the preapproval's
+ * requested start_date. createPreapproval() asks for
+ * max(BILLING_START_DATE, trialEndsAt, now + 10min) — a REQUEST Mercado Pago
+ * may re-schedule — so the webhook, not the start_date, is the guarantee: a
+ * preapproval cancelled or paused before the trial ends downgrades an
+ * 'active' account back to 'trialing' (holdTrialAccessAfterPreapprovalLoss),
+ * and expire-trials then ends access at trial end.
  */
 export function mapPreapprovalStatus(
   status: string,

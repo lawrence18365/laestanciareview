@@ -550,9 +550,11 @@ describe('mercadopago webhook route', () => {
     );
   });
 
-  it('keeps access for a cancelled preapproval while the restaurant own trial is still running', async () => {
+  it('holds a cancelled preapproval at trialing while the restaurant own trial is still running', async () => {
     // Clock is 2026-08-21; the trial runs to 2026-09-15, so cancelling the
-    // preapproval must not revoke the days the restaurant already has.
+    // preapproval must not revoke the days the restaurant already has. It must
+    // not leave the account 'active' either: expire-trials only expires
+    // 'trialing' rows, so 'active' would be free access forever.
     mocks.restaurantStatus = 'active';
     mocks.subscriptionRows = [
       { ...mocks.defaultSubscriptionRow(), billingStartsAt: new Date('2026-09-15T00:00:00.000Z') },
@@ -568,13 +570,59 @@ describe('mercadopago webhook route', () => {
     const response = await webhookPOST(webhookRequest(eventPayload));
 
     expect(response.status).toBe(200);
+    // Access kept for the rest of the trial, but handed back to expire-trials
+    // (which only flips 'trialing'), so cancelling during the trial cannot buy
+    // free access after it.
     expect(
-      mocks.updatedRows.find((row) => row.table === restaurants),
-    ).toBeUndefined();
+      mocks.updatedRows.find((row) => row.table === restaurants)?.values,
+    ).toEqual({ subscriptionStatus: 'trialing' });
     expect(
       mocks.updatedRows.find((row) => row.table === mercadopagoSubscriptions)
         ?.values,
     ).toEqual(expect.objectContaining({ status: 'cancelled' }));
+  });
+
+  it('holds a paused preapproval at trialing while the restaurant own trial is still running', async () => {
+    mocks.restaurantStatus = 'active';
+    mocks.subscriptionRows = [
+      { ...mocks.defaultSubscriptionRow(), billingStartsAt: new Date('2026-09-15T00:00:00.000Z') },
+    ];
+    mocks.getPreapproval.mockResolvedValue({
+      id: 'preapproval-123',
+      status: 'paused',
+      external_reference: '77',
+      payer_email: 'gm@example.com',
+      next_payment_date: null,
+    });
+
+    const response = await webhookPOST(webhookRequest(eventPayload));
+
+    expect(response.status).toBe(200);
+    expect(
+      mocks.updatedRows.find((row) => row.table === restaurants)?.values,
+    ).toEqual({ subscriptionStatus: 'trialing' });
+    expect(
+      mocks.updatedRows.find((row) => row.table === mercadopagoSubscriptions)
+        ?.values,
+    ).toEqual(expect.objectContaining({ status: 'paused' }));
+  });
+
+  it('leaves an already-trialing restaurant untouched when the preapproval is cancelled during the trial', async () => {
+    mocks.restaurantStatus = 'trialing';
+    mocks.getPreapproval.mockResolvedValue({
+      id: 'preapproval-123',
+      status: 'cancelled',
+      external_reference: '77',
+      payer_email: 'gm@example.com',
+      next_payment_date: null,
+    });
+
+    const response = await webhookPOST(webhookRequest(eventPayload));
+
+    expect(response.status).toBe(200);
+    expect(
+      mocks.updatedRows.find((row) => row.table === restaurants),
+    ).toBeUndefined();
   });
 
   it('downgrades an active restaurant for a cancelled preapproval once its own trial has ended', async () => {
@@ -627,7 +675,7 @@ describe('mercadopago webhook route', () => {
     );
   });
 
-  it('records a rejected authorized payment without downgrading active access before billing starts', async () => {
+  it('records a rejected authorized payment and holds the account at trialing before billing starts', async () => {
     mocks.restaurantStatus = 'active';
     mocks.getAuthorizedPayment.mockResolvedValue({
       id: 'authorized-payment-1',
@@ -646,9 +694,11 @@ describe('mercadopago webhook route', () => {
     const response = await webhookPOST(webhookRequest(payload));
 
     expect(response.status).toBe(200);
+    // past_due is not applied mid-trial (the trial days are kept), but the
+    // account must not stay 'active' either — that would never expire.
     expect(
-      mocks.updatedRows.find((row) => row.table === restaurants),
-    ).toBeUndefined();
+      mocks.updatedRows.find((row) => row.table === restaurants)?.values,
+    ).toEqual({ subscriptionStatus: 'trialing' });
     expect(
       mocks.updatedRows.find((row) => row.table === mercadopagoSubscriptions)
         ?.values,
@@ -835,7 +885,13 @@ describe('mercadopago webhook route', () => {
     );
     expect(mocks.sendPurchaseEvent).toHaveBeenCalledTimes(1);
     expect(mocks.sendPurchaseEvent).toHaveBeenCalledWith(
-      expect.objectContaining({ email: 'ana@example.com', valueMxn: 727 }),
+      expect.objectContaining({
+        email: 'ana@example.com',
+        valueMxn: 727,
+        // Deterministic id: the retry path below re-sends the same Purchase
+        // event and Meta must drop the duplicate.
+        eventId: 'mp_conversion_77',
+      }),
     );
   });
 
@@ -899,9 +955,15 @@ describe('mercadopago webhook route', () => {
     expect(response.status).toBe(200);
     expect(mocks.sendOwnerConversionNotification).not.toHaveBeenCalled();
     expect(mocks.sendPurchaseEvent).not.toHaveBeenCalled();
+    // No ship claim; the only restaurant write is the trial hold.
     expect(
-      mocks.updatedRows.find((row) => row.table === restaurants),
-    ).toBeUndefined();
+      mocks.updatedRows.some(
+        (row) => row.table === restaurants && 'nfcCardsShippedAt' in row.values,
+      ),
+    ).toBe(false);
+    expect(
+      mocks.updatedRows.find((row) => row.table === restaurants)?.values,
+    ).toEqual({ subscriptionStatus: 'trialing' });
   });
 
   const approvedPayment = {
@@ -919,6 +981,33 @@ describe('mercadopago webhook route', () => {
     action: 'created',
     data: { id: 'authorized-payment-1' },
   };
+
+  it('uses the same deterministic Meta Purchase event id on every claiming attempt', async () => {
+    // Two deliveries both win the ship claim (the notice-retry path released it
+    // in between) and carry DIFFERENT payment ids. Meta dedupes by event_id, so
+    // both sends must carry the same per-restaurant id or the second one would
+    // be counted as a second paid conversion.
+    mocks.getAuthorizedPayment
+      .mockResolvedValueOnce({ ...approvedPayment })
+      .mockResolvedValueOnce({
+        ...approvedPayment,
+        id: 'authorized-payment-2',
+        payment: { id: 'payment-2', status: 'approved', transaction_amount: 727 },
+      });
+
+    const first = await webhookPOST(webhookRequest(approvedPayload));
+    const second = await webhookPOST(
+      webhookRequest({ ...approvedPayload, id: 'evt-first-payment-retry' }),
+    );
+
+    expect(first.status).toBe(200);
+    expect(second.status).toBe(200);
+    expect(mocks.sendPurchaseEvent).toHaveBeenCalledTimes(2);
+    const eventIds = mocks.sendPurchaseEvent.mock.calls.map(
+      (call) => (call as unknown as [{ eventId: string }])[0].eventId,
+    );
+    expect(eventIds).toEqual(['mp_conversion_77', 'mp_conversion_77']);
+  });
 
   it('releases the ship claim when the owner conversion notice rejects', async () => {
     const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});

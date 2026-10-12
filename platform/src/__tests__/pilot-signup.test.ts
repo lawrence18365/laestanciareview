@@ -47,10 +47,15 @@ vi.mock('@/lib/stripe', () => ({
   STRIPE_SETUP_PRICE_ID: 'price_setup_test',
   TRIAL_DAYS: 30,
 }));
-vi.mock('@/lib/commercial-tracking', () => ({
-  trackCommercialEvent: mocks.trackCommercialEvent,
-  upsertCommercialLead: mocks.upsertCommercialLead,
-}));
+vi.mock('@/lib/commercial-tracking', async (importOriginal) => {
+  const original =
+    await importOriginal<typeof import('@/lib/commercial-tracking')>();
+  return {
+    ...original,
+    trackCommercialEvent: mocks.trackCommercialEvent,
+    upsertCommercialLead: mocks.upsertCommercialLead,
+  };
+});
 vi.mock('@/lib/slug', () => ({
   generateUniqueSlug: vi.fn(async () => 'tacos-del-centro'),
   slugify: vi.fn(() => 'tacos-del-centro'),
@@ -72,12 +77,19 @@ vi.mock('@/db', () => {
   const database = {
     execute: vi.fn(async () => undefined),
     select: vi.fn(() => ({
-      from: vi.fn(() => ({
-        where: vi.fn(() => ({ limit: vi.fn(async () => []) })),
-        innerJoin: vi.fn(() => ({
-          where: vi.fn(() => ({ limit: vi.fn(async () => []) })),
-        })),
-      })),
+      from: vi.fn(() => {
+        // Chainable stand-in for drizzle: `where(...)` and any number of
+        // `innerJoin(...)` calls (the signup route joins lead -> pending_signups
+        // -> restaurants before upserting) both resolve to no rows here.
+        const chain: {
+          innerJoin: (table: unknown, condition: unknown) => typeof chain;
+          where: (condition: unknown) => { limit: (count: number) => Promise<unknown[]> };
+        } = {
+          innerJoin: () => chain,
+          where: () => ({ limit: async () => [] }),
+        };
+        return chain;
+      }),
     })),
     insert: vi.fn(() => ({
       values: vi.fn((values: Record<string, unknown>) => {
