@@ -21,19 +21,41 @@ const CARD_W = 1080;
 const CARD_H = 1920;
 
 const GOLD = '#D97706';
-const BG = '#141414';
+// Background: a soft radial wash, warm at the centre and near-black at the edges.
+const BG_CENTER = '#232323';
+const BG_EDGE = '#0D0D0D';
 
 const SERIF = "Georgia, 'Times New Roman', serif";
 const SANS = "-apple-system, 'Helvetica Neue', Arial, sans-serif";
+// Playfair is the app's display serif (globals.css --font-serif, loaded on every page).
+const NAME_SERIF = "'Playfair Display', Georgia, serif";
 
-const LOGO_TILE = 300;
-const LOGO_TILE_TOP = 170;
-const QR_PANEL = 820;
-const QR_PANEL_TOP = 640;
+// A gold hairline inset from the card edge, like a fine restaurant menu.
+const FRAME_INSET = 36;
+const FRAME_ALPHA = 0.55;
+
+// The logo badge: a rounded rectangle that hugs the logo's aspect ratio
+// (content box 640x200 max), so it never becomes a box-in-box.
+const LOGO_BOX_W = 640;
+const LOGO_BOX_H = 200;
+const LOGO_PADDING = 18;
+const LOGO_RADIUS = 16;
+const LOGO_BADGE_TOP = 150;
+const QR_PANEL = 860;
+const QR_PANEL_TOP = 470;
 const QR_PANEL_RADIUS = 18;
-// 700px QR (incl. a 1-module margin) inside the 820px panel leaves ~4 modules
+// 740px QR (incl. a 1-module margin) inside the 860px panel leaves ~4 modules
 // of quiet zone, which phone-to-phone scanning needs.
-const QR_SIZE = 700;
+const QR_SIZE = 740;
+const NAME_SIZE = 92;
+const NAME_Y = 1505;
+// The label rides just clear of the name's ascenders, mirroring the print card.
+const LABEL_Y = NAME_Y - 85;
+const LABEL_ALPHA = 0.7;
+const STAR_OUTER = 34;
+const STAR_INNER = 15;
+const STAR_GAP = 88;
+const STARS_Y = 1610;
 
 export async function renderWaiterCard(opts: WaiterCardOptions): Promise<Blob> {
   const { default: QRCode } = await import('qrcode');
@@ -58,27 +80,54 @@ export async function renderWaiterCard(opts: WaiterCardOptions): Promise<Blob> {
   ctx.textAlign = 'center';
   ctx.textBaseline = 'alphabetic';
 
-  // Background + the gold rule that runs across the very top.
-  ctx.fillStyle = BG;
+  // Playfair is a webfont: resolve it before the first fillText so the name
+  // never lands in the fallback face. `document.fonts` is missing in some
+  // environments and the load can fail — both are fine, Georgia takes over.
+  if (typeof document !== 'undefined' && document.fonts) {
+    try {
+      await document.fonts.load(`700 ${NAME_SIZE}px 'Playfair Display'`);
+    } catch {
+      // Ignore: the name still renders in the fallback serif.
+    }
+  }
+
+  // Background: a radial wash (centre -> edges) + the gold rule across the top.
+  const bg = ctx.createRadialGradient(
+    CARD_W / 2,
+    CARD_H * 0.4,
+    0,
+    CARD_W / 2,
+    CARD_H * 0.4,
+    CARD_H * 0.75,
+  );
+  bg.addColorStop(0, BG_CENTER);
+  bg.addColorStop(1, BG_EDGE);
+  ctx.fillStyle = bg;
   ctx.fillRect(0, 0, CARD_W, CARD_H);
   ctx.fillStyle = GOLD;
   ctx.fillRect(0, 0, CARD_W, 8);
 
-  // ── Logo tile ──────────────────────────────────────────────
-  const tileLeft = (CARD_W - LOGO_TILE) / 2;
-  if (logo) {
-    ctx.fillStyle = opts.logoDarkBg ? '#111111' : '#FFFFFF';
-    ctx.fillRect(tileLeft, LOGO_TILE_TOP, LOGO_TILE, LOGO_TILE);
-    ctx.strokeStyle = GOLD;
-    ctx.lineWidth = 3;
-    ctx.strokeRect(tileLeft + 1.5, LOGO_TILE_TOP + 1.5, LOGO_TILE - 3, LOGO_TILE - 3);
+  // ── Gold hairline frame, inset from every edge ─────────────
+  // Everything below stays well inside it (nothing touches or crosses).
+  ctx.globalAlpha = FRAME_ALPHA;
+  ctx.strokeStyle = GOLD;
+  ctx.lineWidth = 2;
+  ctx.strokeRect(FRAME_INSET, FRAME_INSET, CARD_W - FRAME_INSET * 2, CARD_H - FRAME_INSET * 2);
+  ctx.globalAlpha = 1;
 
-    // contain, never stretch
-    const box = LOGO_TILE - 28 * 2;
-    const scale = Math.min(box / logo.width, box / logo.height);
+  // ── Logo badge (rounded rect that hugs the logo, no box-in-box) ──
+  if (logo) {
+    const scale = Math.min(LOGO_BOX_W / logo.width, LOGO_BOX_H / logo.height);
     const w = logo.width * scale;
     const h = logo.height * scale;
-    ctx.drawImage(logo, tileLeft + (LOGO_TILE - w) / 2, LOGO_TILE_TOP + (LOGO_TILE - h) / 2, w, h);
+    const badgeW = w + LOGO_PADDING * 2;
+    const badgeH = h + LOGO_PADDING * 2;
+    const badgeLeft = (CARD_W - badgeW) / 2;
+    ctx.fillStyle = opts.logoDarkBg ? '#111111' : '#FFFFFF';
+    fillRoundedRect(ctx, badgeLeft, LOGO_BADGE_TOP, badgeW, badgeH, LOGO_RADIUS);
+
+    // contain, never stretch
+    ctx.drawImage(logo, badgeLeft + LOGO_PADDING, LOGO_BADGE_TOP + LOGO_PADDING, w, h);
   } else {
     ctx.fillStyle = '#FFFFFF';
     drawFitted(ctx, opts.restaurantName, {
@@ -86,44 +135,50 @@ export async function renderWaiterCard(opts: WaiterCardOptions): Promise<Blob> {
       size: 64,
       maxWidth: 900,
       x: CARD_W / 2,
-      y: LOGO_TILE_TOP + LOGO_TILE / 2 + 22,
+      y: LOGO_BADGE_TOP + LOGO_BOX_H / 2 + 22,
     });
   }
 
-  // ── Restaurant name (already drawn large when the logo is missing) ──
-  if (logo) {
-    setLetterSpacing(ctx, '6px');
-    ctx.fillStyle = '#A3A3A3';
-    ctx.font = `30px ${SANS}`;
-    ctx.fillText(opts.restaurantName.toUpperCase(), CARD_W / 2, 540);
-  }
-
   // ── QR panel (dark-on-light: scanners need the contrast) ───
-  setLetterSpacing(ctx, '0px');
   ctx.fillStyle = '#FFFFFF';
   fillRoundedRect(ctx, (CARD_W - QR_PANEL) / 2, QR_PANEL_TOP, QR_PANEL, QR_PANEL, QR_PANEL_RADIUS);
   ctx.drawImage(qrImg, (CARD_W - QR_SIZE) / 2, QR_PANEL_TOP + (QR_PANEL - QR_SIZE) / 2, QR_SIZE, QR_SIZE);
 
+  // ── Small gold label above the name ────────────────────────
+  ctx.globalAlpha = LABEL_ALPHA;
+  setLetterSpacing(ctx, '6px');
+  ctx.fillStyle = GOLD;
+  ctx.font = `600 26px ${SANS}`;
+  ctx.fillText('LE ATENDIÓ', CARD_W / 2, LABEL_Y);
+  ctx.globalAlpha = 1;
+  setLetterSpacing(ctx, '0px');
+
   // ── Waiter name ────────────────────────────────────────────
   ctx.fillStyle = '#FFFFFF';
   drawFitted(ctx, opts.waiterName, {
-    font: `bold 84px ${SERIF}`,
-    size: 84,
+    font: `bold ${NAME_SIZE}px ${NAME_SERIF}`,
+    size: NAME_SIZE,
     maxWidth: 960,
     x: CARD_W / 2,
-    y: 1600,
+    y: NAME_Y,
   });
+
+  // ── Five gold stars, directly above the call to action ─────
+  ctx.fillStyle = GOLD;
+  for (let i = 0; i < 5; i += 1) {
+    drawStar(ctx, CARD_W / 2 + (i - 2) * STAR_GAP, STARS_Y, STAR_OUTER, STAR_INNER);
+  }
 
   // ── Call to action ─────────────────────────────────────────
   ctx.fillStyle = GOLD;
-  ctx.font = `40px ${SANS}`;
-  ctx.fillText('Escanee para calificar', CARD_W / 2, 1690);
+  ctx.font = `600 50px ${SANS}`;
+  ctx.fillText('Escanee para calificar', CARD_W / 2, 1705);
 
   // ── Footer ─────────────────────────────────────────────────
   setLetterSpacing(ctx, '8px');
   ctx.fillStyle = '#5A5A5A';
   ctx.font = `bold 24px ${SANS}`;
-  ctx.fillText('RATETAP', CARD_W / 2, 1850);
+  ctx.fillText('RATETAP', CARD_W / 2, 1830);
 
   return new Promise<Blob>((resolve, reject) => {
     canvas.toBlob((blob) => {
@@ -163,6 +218,21 @@ function splitFont(font: string): [string, string] {
 function setLetterSpacing(ctx: CanvasRenderingContext2D, value: string) {
   const spaced = ctx as CanvasRenderingContext2D & { letterSpacing?: string };
   if ('letterSpacing' in spaced) spaced.letterSpacing = value;
+}
+
+/** A filled 5-point star: 10-point path, the first point straight up. */
+function drawStar(ctx: CanvasRenderingContext2D, cx: number, cy: number, outerR: number, innerR: number) {
+  ctx.beginPath();
+  for (let i = 0; i < 10; i += 1) {
+    const radius = i % 2 === 0 ? outerR : innerR;
+    const angle = (Math.PI / 5) * i - Math.PI / 2;
+    const x = cx + radius * Math.cos(angle);
+    const y = cy + radius * Math.sin(angle);
+    if (i === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  }
+  ctx.closePath();
+  ctx.fill();
 }
 
 function fillRoundedRect(
