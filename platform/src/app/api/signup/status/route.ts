@@ -4,6 +4,7 @@ import { pendingSignups, restaurants } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 import { createSession } from '@/lib/session';
 import { generateQrDataUrl, reviewUrlFor } from '@/lib/qr';
+import { reviewUrlFor as googleReviewUrlFor } from '@/lib/google-review';
 import { verifyTokenHash } from '@/lib/tokens';
 import { cookies } from 'next/headers';
 import { parseSignupAccess, SIGNUP_ACCESS_COOKIE } from '@/lib/signup-access';
@@ -59,6 +60,8 @@ export async function GET(req: NextRequest) {
     qrDataUrl,
     trialEndsAt: r.trialEndsAt,
     pilot: r.pilot,
+    // True when guests who tap "Google" have somewhere to land.
+    googleConnected: googleReviewUrlFor(r) !== null,
     signupId,
   });
 }
