@@ -195,13 +195,18 @@ export default function ContactoForm({ pilotOffer }: { pilotOffer: boolean }) {
             }}>
               {pilotOffer
                 ? 'Piloto fundador: empieza por $0 hoy'
-                : '30 días gratis. Sin tarjeta, sin pagos, sin envíos.'}
+                : 'Más reseñas en Google, todos los días.'}
             </h1>
             <p style={{ color: 'var(--text-muted, #57534e)', fontSize: '0.95rem', margin: 0 }}>
               {pilotOffer
                 ? 'Piloto fundador: $0 hoy · 30 días gratis. Las tarjetas NFC se envían cuando decides continuar.'
-                : 'Tu cuenta y tu QR quedan listos hoy mismo. Las tarjetas NFC se envían cuando decides continuar.'}
+                : '30 días gratis, sin tarjeta. Tu cuenta y los QR de tus meseros quedan listos hoy.'}
             </p>
+            {!pilotOffer && (
+              <p style={{ color: 'var(--text-muted, #57534e)', fontSize: '0.8rem', margin: '0.5rem 0 0' }}>
+                Lo usan 12 restaurantes en México.
+              </p>
+            )}
           </div>
 
           <form
