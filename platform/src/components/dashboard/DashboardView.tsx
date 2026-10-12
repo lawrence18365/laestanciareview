@@ -150,7 +150,7 @@ export default function DashboardView({
           anything: without a review link there is nowhere to send a guest who
           taps "Google". Shown to the GM only, and only while it is true. */}
       {showGoogleConnect && (
-        <a href="/settings" className="card stagger-2" style={{
+        <a href="/settings#googlePlace" className="card stagger-2" style={{
           display: 'flex', alignItems: 'center', gap: '1rem',
           padding: '1.25rem 1.5rem', textDecoration: 'none', color: 'var(--text-main)',
           borderLeft: '4px solid var(--gold)',
@@ -197,11 +197,17 @@ export default function DashboardView({
           }}>
             Aún no hay reseñas
           </h2>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', alignItems: 'center' }}>
-            <a href="/staff" style={{ fontSize: '0.9375rem', color: 'var(--text-muted)', textDecoration: 'underline' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', alignItems: 'center', marginTop: '0.5rem' }}>
+            <a href="/staff" style={{
+              padding: '0.75rem 1.5rem', background: 'var(--text-main)', color: '#fff',
+              textDecoration: 'none', fontSize: '0.9375rem', fontWeight: 600,
+            }}>
               1. Agrega a tus meseros
             </a>
-            <a href="/qr-codes" style={{ fontSize: '0.9375rem', color: 'var(--text-muted)', textDecoration: 'underline' }}>
+            <a href="/qr-codes" style={{
+              padding: '0.75rem 1.5rem', border: '1px solid var(--text-main)', color: 'var(--text-main)',
+              textDecoration: 'none', fontSize: '0.9375rem', fontWeight: 600,
+            }}>
               2. Descarga sus códigos QR
             </a>
           </div>

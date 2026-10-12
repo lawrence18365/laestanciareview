@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import Script from 'next/script';
 import { SUPPORT_WHATSAPP_URL } from '@/lib/support';
+import GooglePlaceSearch, { type PlaceSelection } from '@/components/GooglePlaceSearch';
 
 const PIXEL_ID = process.env.NEXT_PUBLIC_META_PIXEL_ID ?? '1578821303344121';
 
@@ -14,14 +15,18 @@ interface StatusResponse {
   qrDataUrl?: string;
   trialEndsAt?: string;
   pilot?: boolean;
+  googleConnected?: boolean;
   signupId?: string;
 }
 
 export default function BienvenidaClient({
   hasSignupAccess,
+  sessionPanelHref,
   trialDays,
 }: {
   hasSignupAccess: boolean;
+  /** Panel URL when a valid session exists (signup cookie already consumed), else null. */
+  sessionPanelHref: string | null;
   trialDays: number;
 }) {
   return (
@@ -34,19 +39,29 @@ export default function BienvenidaClient({
         document,'script','https://connect.facebook.net/en_US/fbevents.js');
         if(location.hostname.endsWith('ratetapmx.com'))fbq('init', '${PIXEL_ID}'); fbq('track', 'PageView');
       `}</Script>
-      <BienvenidaInner hasSignupAccess={hasSignupAccess} trialDays={trialDays} />
+      <BienvenidaInner
+        hasSignupAccess={hasSignupAccess}
+        sessionPanelHref={sessionPanelHref}
+        trialDays={trialDays}
+      />
     </>
   );
 }
 
 function BienvenidaInner({
   hasSignupAccess,
+  sessionPanelHref,
   trialDays,
 }: {
   hasSignupAccess: boolean;
+  sessionPanelHref: string | null;
   trialDays: number;
 }) {
   const [status, setStatus] = useState<StatusResponse | null>(null);
+  const [googleConnected, setGoogleConnected] = useState(false);
+  const [placeQuery, setPlaceQuery] = useState('');
+  const [placeSaving, setPlaceSaving] = useState(false);
+  const [placeError, setPlaceError] = useState('');
   const [timedOut, setTimedOut] = useState(false);
   const pixelFiredRef = useRef(false);
 
@@ -82,6 +97,7 @@ function BienvenidaInner({
         const data = (await res.json()) as StatusResponse;
         if (cancelled) return;
         if (data.ready) {
+          setGoogleConnected(Boolean(data.googleConnected));
           setStatus(data);
           return;
         }
@@ -103,6 +119,38 @@ function BienvenidaInner({
       clearTimeout(timeoutId);
     };
   }, [hasSignupAccess]);
+
+  async function handlePlaceSelected(place: PlaceSelection) {
+    if (!place.placeId || placeSaving) return;
+    setPlaceSaving(true);
+    setPlaceError('');
+    try {
+      // Same endpoint Settings uses; the server derives the review URL from the place ID.
+      const res = await fetch('/api/auth/settings', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ googlePlaceId: place.placeId }),
+      });
+      if (!res.ok) throw new Error('save-failed');
+      setGoogleConnected(true);
+    } catch {
+      setPlaceError('No se pudo guardar. Intenta de nuevo.');
+    } finally {
+      setPlaceSaving(false);
+    }
+  }
+
+  if (!hasSignupAccess && sessionPanelHref) {
+    return <Shell>
+      <div style={{ textAlign: 'center' }}>
+        <div style={{ fontSize: '2.5rem', marginBottom: '0.5rem' }}>✅</div>
+        <h1 style={h1Style}>Tu cuenta ya está lista</h1>
+        <a href={sessionPanelHref} style={{ ...primaryButtonStyle, marginTop: '1.25rem' }}>
+          Ir a mi panel →
+        </a>
+      </div>
+    </Shell>;
+  }
 
   if (!hasSignupAccess) {
     return <Shell>
@@ -181,57 +229,84 @@ function BienvenidaInner({
         </div>
       </div>
 
-      <a
-        href="/staff"
-        style={{
-          display: 'block',
-          textAlign: 'center',
-          padding: '0.9rem',
-          background: '#1c1917',
-          color: '#fff',
-          textDecoration: 'none',
-          fontWeight: 700,
-          fontSize: '0.85rem',
-          letterSpacing: '0.1em',
-          textTransform: 'uppercase',
-        }}
-      >
+      {googleConnected ? (
+        <p style={{ fontSize: '0.85rem', fontWeight: 600, color: '#15803d', textAlign: 'center', margin: '0 0 1.25rem' }}>
+          ✓ Google conectado
+        </p>
+      ) : (
+        <div style={{ border: '1px solid #1c1917', padding: '1rem', marginBottom: '1.25rem' }}>
+          <label
+            htmlFor="bienvenida-place"
+            style={{ display: 'block', fontSize: '0.9rem', fontWeight: 700, color: '#1c1917', marginBottom: 6 }}
+          >
+            Conecta tu restaurante en Google
+          </label>
+          <GooglePlaceSearch
+            inputId="bienvenida-place"
+            value={placeQuery}
+            onChange={setPlaceQuery}
+            onSelect={handlePlaceSelected}
+            placeholder="Escribe el nombre y elígelo"
+            style={{
+              width: '100%',
+              padding: '0.65rem 0.75rem',
+              border: '1px solid #d6d3d1',
+              fontSize: '0.9rem',
+              boxSizing: 'border-box',
+            }}
+          />
+          {placeSaving && (
+            <p style={{ fontSize: '0.8rem', color: '#78716c', margin: '0.4rem 0 0' }}>Guardando…</p>
+          )}
+          {placeError && (
+            <p style={{ fontSize: '0.8rem', color: '#b91c1c', margin: '0.4rem 0 0' }}>{placeError}</p>
+          )}
+        </div>
+      )}
+
+      <a href="/staff" style={primaryButtonStyle}>
         Agrega a tus meseros →
       </a>
 
-      <p style={{ fontSize: '0.8rem', color: '#78716c', textAlign: 'center', margin: '0.75rem 0' }}>
-        Luego descarga sus códigos QR.
-      </p>
-
-      {status.qrDataUrl && (
-        <a
-          href={status.qrDataUrl}
-          download={`ratetap-qr-${status.slug}.png`}
-          style={{
-            display: 'block',
-            textAlign: 'center',
-            padding: '0.75rem',
-            border: '1px solid #1c1917',
-            color: '#1c1917',
-            textDecoration: 'none',
-            fontWeight: 700,
-            fontSize: '0.75rem',
-            letterSpacing: '0.1em',
-            textTransform: 'uppercase',
-            marginBottom: '0.75rem',
-          }}
-        >
-          Descargar QR
-        </a>
-      )}
+      <a
+        href="/qr-codes"
+        style={{
+          display: 'block',
+          textAlign: 'center',
+          padding: '0.75rem',
+          border: '1px solid #1c1917',
+          color: '#1c1917',
+          textDecoration: 'none',
+          fontWeight: 700,
+          fontSize: '0.75rem',
+          letterSpacing: '0.1em',
+          textTransform: 'uppercase',
+          marginTop: '0.75rem',
+        }}
+      >
+        Descargar QR por mesero
+      </a>
 
       <p style={{ fontSize: '0.75rem', color: '#a8a29e', textAlign: 'center', marginTop: '1rem' }}>
-        Revisa tu email: te mandamos una copia del QR y los datos de acceso. También puedes{' '}
-        <a href="/dashboard" style={{ color: '#1c1917', fontWeight: 600 }}>ir a tu panel</a>.
+        Para volver a entrar, usa tu contraseña en{' '}
+        <a href="/login" style={{ color: '#1c1917', fontWeight: 600 }}>/login</a>.
       </p>
     </Shell>
   );
 }
+
+const primaryButtonStyle: React.CSSProperties = {
+  display: 'block',
+  textAlign: 'center',
+  padding: '0.9rem',
+  background: '#1c1917',
+  color: '#fff',
+  textDecoration: 'none',
+  fontWeight: 700,
+  fontSize: '0.85rem',
+  letterSpacing: '0.1em',
+  textTransform: 'uppercase',
+};
 
 const h1Style: React.CSSProperties = {
   fontSize: '1.5rem',
