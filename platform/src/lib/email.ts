@@ -1486,6 +1486,81 @@ export async function sendOwnerTrialLapsedNotification(p: OwnerLapsedParams) {
   }
 }
 
+interface TrialEndedEmailParams {
+  to: string;
+  restaurantName: string;
+}
+
+/** Customer-facing: the trial just ended and the account is blocked until they pay. */
+export async function sendTrialEndedEmail({ to, restaurantName }: TrialEndedEmailParams) {
+  const content = `
+    <div class="content-pad" style="padding: 32px 28px;">
+      <h1 style="margin: 0 0 12px; font-family: 'Playfair Display', Georgia, 'Times New Roman', serif; font-size: 22px; font-weight: 700; color: #111111;">Tu prueba terminó</h1>
+      <p style="margin: 0 0 20px; font-size: 15px; line-height: 1.6; color: #666666;">
+        Hola <strong>${escapeHtml(restaurantName)}</strong>, tu prueba gratis terminó y pausamos tu cuenta. Tus datos y reseñas siguen seguros.
+      </p>
+      <p style="margin: 0 0 20px; font-size: 15px; line-height: 1.6; color: #666666;">
+        Activa tu plan y todo vuelve a funcionar al instante.
+      </p>
+      <table role="presentation" cellpadding="0" cellspacing="0" style="margin: 0 auto;">
+        <tr><td style="background: #111111; border-radius: 0;">
+          <a href="${BASE_URL}/settings" style="display: inline-block; padding: 14px 36px; color: #ffffff; text-decoration: none; font-weight: 600; font-size: 15px; letter-spacing: 0.02em;">
+            Activar mi plan
+          </a>
+        </td></tr>
+      </table>
+    </div>`;
+
+  const result = await sendMail({
+    from: FROM,
+    to,
+    subject: 'Tu prueba terminó — activa tu plan',
+    html: emailLayout(content),
+  });
+
+  if (!result.success || result.skipped) {
+    const reason = result.error
+      ? result.error.message
+      : result.skipped
+        ? 'missing SMTP_USER / SMTP_PASS'
+        : (result.response ?? 'unknown');
+    console.error(`[sendTrialEndedEmail] failed to ${to}: ${reason}`);
+  }
+}
+
+/** Founder-facing: one summary alert listing every trial the cron just expired. */
+export async function sendFounderTrialsExpiredAlert(slugs: string[]) {
+  if (slugs.length === 0) return;
+  if (!OWNER_NOTIFICATION_EMAIL) {
+    console.error('[sendFounderTrialsExpiredAlert] skipped: missing OWNER_NOTIFICATION_EMAIL / ADMIN_EMAIL');
+    return;
+  }
+
+  const list = slugs.map((s) => `<li style="margin: 0 0 4px;">${escapeHtml(s)}</li>`).join('');
+  const content = `
+    <div class="content-pad" style="padding: 28px 24px;">
+      <h1 style="margin: 0 0 12px; font-family: 'Playfair Display', Georgia, 'Times New Roman', serif; font-size: 20px; font-weight: 700; color: #111111;">Pruebas terminadas: ${slugs.length}</h1>
+      <p style="margin: 0 0 8px; font-size: 15px; color: #111111;">Cuentas bloqueadas hoy por fin de prueba:</p>
+      <ul style="margin: 0; padding-left: 20px; font-size: 14px; color: #666666;">${list}</ul>
+    </div>`;
+
+  const result = await sendMail({
+    from: FROM,
+    to: OWNER_NOTIFICATION_EMAIL,
+    subject: `Pruebas terminadas: ${slugs.length}`,
+    html: emailLayout(content),
+  });
+
+  if (!result.success || result.skipped) {
+    const reason = result.error
+      ? result.error.message
+      : result.skipped
+        ? 'missing SMTP_USER / SMTP_PASS'
+        : (result.response ?? 'unknown');
+    console.error(`[sendFounderTrialsExpiredAlert] failed to ${OWNER_NOTIFICATION_EMAIL}: ${reason}`);
+  }
+}
+
 // ────────────────────────────────────────────────────────────
 // Weekly briefings — owner and regional
 // ────────────────────────────────────────────────────────────

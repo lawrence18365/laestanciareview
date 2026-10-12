@@ -19,6 +19,7 @@ const mocks = vi.hoisted(() => ({
   insertedValues: [] as Array<Record<string, unknown>>,
   createPreapproval: vi.fn(),
   cancelPreapproval: vi.fn(),
+  getPreapproval: vi.fn(),
   verifySession: vi.fn(),
   getRestaurantBySlug: vi.fn(),
   restaurant: {
@@ -96,6 +97,7 @@ vi.mock('@/lib/mercadopago', async (importOriginal) => {
     MERCADOPAGO_ACCESS_TOKEN: 'test-access-token',
     createPreapproval: mocks.createPreapproval,
     cancelPreapproval: mocks.cancelPreapproval,
+    getPreapproval: mocks.getPreapproval,
   };
 });
 
@@ -132,6 +134,8 @@ beforeEach(() => {
     status: 'pending',
   });
   mocks.cancelPreapproval.mockReset();
+  mocks.getPreapproval.mockReset();
+  mocks.getPreapproval.mockResolvedValue({ id: 'preapproval-old', status: 'pending' });
   mocks.verifySession.mockReset();
   mocks.verifySession.mockResolvedValue({ slug: 'mi-cocina' });
   mocks.getRestaurantBySlug.mockReset();
