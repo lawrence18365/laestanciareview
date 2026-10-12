@@ -287,6 +287,8 @@ export default function ContactoForm({ pilotOffer }: { pilotOffer: boolean }) {
               />
             </Field>
 
+            {/* Self-serve trials are QR-only; only founder pilots still collect a card address. */}
+            {pilotOffer && (<>
             <Divider />
             <details style={{ marginBottom: '1.25rem' }}>
               <summary style={{
@@ -342,6 +344,7 @@ export default function ContactoForm({ pilotOffer }: { pilotOffer: boolean }) {
                 </Field>
               </Row>
             </details>
+            </>)}
 
             {error && (
               <div style={{
