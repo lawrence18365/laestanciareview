@@ -171,6 +171,14 @@ export async function recordProductEvents(inputs: ProductEventInput[]): Promise<
   }
 }
 
+/** Ad-network click ids: long, per-click noise with no analytics value. */
+const CLICK_ID_PARAMS = /([?&])(fbclid|gclid|gbraid|wbraid|msclkid)=[^&]*&?/g;
+
+/** Drops click-id params, then caps the stored path at 300 characters. */
+function normalizeTrackPath(path: string): string {
+  return path.replace(CLICK_ID_PARAMS, '$1').replace(/[?&]$/, '').slice(0, 300);
+}
+
 /**
  * Payload accepted by POST /api/analytics/track. Bounded hard: max 20 events
  * per request, short strings only, free-form properties capped separately
@@ -181,7 +189,9 @@ export const trackBatchSchema = z.object({
     .array(
       z.object({
         name: z.enum(PRODUCT_EVENT_NAMES),
-        path: z.string().max(300).optional(),
+        // Never reject on length: Meta ad clicks append a long fbclid, and a
+        // rejected path silently drops the whole event behind the 204.
+        path: z.string().max(4000).transform(normalizeTrackPath).optional(),
         display_mode: z.enum(['browser', 'standalone']).optional(),
         session_id: z.string().max(64).optional(),
         restaurant_slug: z.string().max(100).optional(),

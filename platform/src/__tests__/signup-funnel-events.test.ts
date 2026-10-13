@@ -106,3 +106,35 @@ describe('signupSchema analyticsSessionId', () => {
     expect(result.success).toBe(false);
   });
 });
+
+describe('track payload path', () => {
+  // A Meta ad click lands on /contacto with the UTMs plus a long fbclid. The
+  // old 300-char cap rejected that whole event, so every real ad visitor's
+  // funnel steps were dropped while the 204 hid it (2026-10-12).
+  const adClickPath =
+    '/contacto?utm_source=meta&utm_medium=paid&utm_campaign=trial_oct26&utm_content=competencia' +
+    `&fbclid=${'IwZXh0bgNhZW0BMABhZGlkAasd'.repeat(10)}`;
+
+  it('accepts an ad-click path and stores it without the click id', () => {
+    const result = productEvents.trackBatchSchema.safeParse({
+      events: [{ name: 'signup_form_started', path: adClickPath }],
+    });
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      const path = result.data.events[0].path!;
+      expect(path).toBe(
+        '/contacto?utm_source=meta&utm_medium=paid&utm_campaign=trial_oct26&utm_content=competencia',
+      );
+    }
+  });
+
+  it('truncates any path still over 300 characters instead of rejecting it', () => {
+    const result = productEvents.trackBatchSchema.safeParse({
+      events: [{ name: 'signup_page_view', path: `/contacto?x=${'a'.repeat(1000)}` }],
+    });
+
+    expect(result.success).toBe(true);
+    if (result.success) expect(result.data.events[0].path).toHaveLength(300);
+  });
+});
