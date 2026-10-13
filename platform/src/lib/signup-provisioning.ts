@@ -4,7 +4,74 @@ import { fetchOnboardingGoogleData, type OnboardingGoogleData } from '@/lib/goog
 import { generateUniqueSlug, slugify } from '@/lib/slug';
 import { reviewUrlFor } from '@/lib/google-review';
 import type { LocationsBand, TeamMode } from '@/lib/onboarding-profile';
-import { and, eq, sql } from 'drizzle-orm';
+import { detectChain } from '@/lib/chain-detect';
+import { sendChainSignupAlert } from '@/lib/email';
+import { after } from 'next/server';
+import { and, eq, isNull, sql } from 'drizzle-orm';
+
+/** A name on this many Google locations is probably a chain (US-15 M5). */
+export const CHAIN_ALERT_THRESHOLD = 3;
+
+export type ChainCheckInput = {
+  id: number;
+  slug: string;
+  name: string;
+  groupKey: string | null;
+  googlePlaceId?: string | null;
+  city?: string | null;
+  contactName?: string | null;
+  email?: string | null;
+  phone?: string | null;
+};
+
+/**
+ * Chain detection for one self-serve restaurant: store `chainCount` in
+ * `google_profile` (jsonb merge) and, at 3+ locations, tell the founders.
+ * Never throws. Group restaurants (`group_key` set) are never processed.
+ * Returns the detected count, or null when nothing was detected.
+ */
+export async function recordChainDetection(r: ChainCheckInput): Promise<number | null> {
+  if (r.groupKey !== null) return null;
+  try {
+    const chain = await detectChain(r.name, r.googlePlaceId ?? '');
+    if (!chain) return null;
+    await db
+      .update(restaurants)
+      .set({
+        googleProfile: sql`(case when jsonb_typeof(${restaurants.googleProfile}) = 'object' then ${restaurants.googleProfile} else '{}'::jsonb end) || ${JSON.stringify({ chainCount: chain.count })}::jsonb`,
+      })
+      .where(and(eq(restaurants.id, r.id), isNull(restaurants.groupKey)));
+    if (chain.count >= CHAIN_ALERT_THRESHOLD) {
+      await sendChainSignupAlert({
+        restaurantName: r.name,
+        contactName: r.contactName ?? '',
+        email: r.email ?? '',
+        phone: r.phone ?? '',
+        city: r.city ?? '',
+        slug: r.slug,
+        count: chain.count,
+        addresses: chain.sampleAddresses,
+      });
+    }
+    return chain.count;
+  } catch (err) {
+    console.error('[chain-detect] record failed:', err instanceof Error ? err.message : err);
+    return null;
+  }
+}
+
+/** Fire-and-forget: runs after the response where Next allows it, detached otherwise. */
+function scheduleChainDetection(r: ChainCheckInput) {
+  const run = async () => {
+    await recordChainDetection(r);
+  };
+  try {
+    after(run);
+  } catch {
+    // `after()` throws outside a Next.js request scope (unit tests, scripts).
+    void run();
+  }
+}
 
 /**
  * Thrown by `provisionSignupAtomic` when the lead it was handed is already
@@ -115,6 +182,18 @@ export async function provisionSignupRestaurant(input: SignupRestaurantInput) {
     }
   }
 
+  scheduleChainDetection({
+    id: restaurant.id,
+    slug,
+    name: input.businessName,
+    groupKey: null,
+    googlePlaceId: input.googlePlaceId,
+    city: input.city,
+    contactName: input.contactName,
+    email: input.email,
+    phone: input.phone,
+  });
+
   return { id: restaurant.id, slug };
 }
 
@@ -135,7 +214,8 @@ export async function provisionSignupAtomic(
   // 3s Google budget must not be spent inside it.
   const google = await googleColumns(input.googlePlaceId);
 
-  return transactionDb.transaction(async (tx) => {
+  let created = false;
+  const restaurant = await transactionDb.transaction(async (tx) => {
     // Match the migration trigger's advisory lock. Taking it before the
     // idempotency lookup serializes concurrent retries and refreshes the
     // READ COMMITTED snapshot before any account state is inspected. For
@@ -218,6 +298,7 @@ export async function provisionSignupAtomic(
 
       const baseline = baselineSnapshot(restaurant.id, google.data);
       if (baseline) await tx.insert(googleRatingSnapshots).values(baseline);
+      created = true;
     }
 
     await tx
@@ -231,4 +312,20 @@ export async function provisionSignupAtomic(
 
     return restaurant;
   });
+
+  // Only a restaurant created by this call; an idempotent re-submit is not re-checked.
+  if (created) {
+    scheduleChainDetection({
+      id: restaurant.id,
+      slug: restaurant.slug,
+      name: input.businessName,
+      groupKey: null,
+      googlePlaceId: input.googlePlaceId,
+      city: input.city,
+      contactName: input.contactName,
+      email: input.email,
+      phone: input.phone,
+    });
+  }
+  return restaurant;
 }
