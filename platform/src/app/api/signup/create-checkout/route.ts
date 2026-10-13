@@ -258,7 +258,7 @@ export async function POST(req: NextRequest) {
         const qrDataUrl = await generateQrDataUrl(restaurant.slug);
         // The signup fetch stored the Google count (SQ-189); best-effort, unknown is fine.
         let googleReviewCount: number | null = null;
-        if (onboarding.teamMode) {
+        if (teamMode) {
           try {
             const [row] = await db
               .select({ n: restaurants.googleReviewCount })
@@ -278,8 +278,8 @@ export async function POST(req: NextRequest) {
           trialEndsAt,
           trialDays,
           pilot: isPilot,
-          teamMode: onboarding.teamMode ?? null,
-          locationsBand: onboarding.locationsBand ?? null,
+          teamMode: teamMode ?? null,
+          locationsBand: locationsBand ?? null,
           googleReviewCount,
         });
       })(),
