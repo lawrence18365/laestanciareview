@@ -13,10 +13,15 @@ const PLACES_BASE = 'https://places.googleapis.com/v1';
 const FIELD_MASK = 'places.id,places.displayName,places.formattedAddress,places.addressComponents';
 const MIN_QUERY = 3;
 const MAX_QUERY = 80;
+const MAX_RAW_QUERY = 200;
 const MAX_CITY = 60;
 const SEARCH_LIMIT = 30;
 const SEARCH_WINDOW = 10 * 60_000;
 const UPSTREAM_TIMEOUT_MS = 8_000;
+// Without a location Google guesses: "La Privada" found nothing and "Metro
+// Pizza" found a shop in Toronto. Biasing to the visitor's IP area puts their
+// own restaurant first (verified 2026-10-13 against both).
+const BIAS_RADIUS_M = 50_000;
 
 const NO_STORE = { 'Cache-Control': 'no-store' };
 
@@ -52,7 +57,18 @@ function toResult(p: UpstreamPlace) {
   };
 }
 
-async function searchText(textQuery: string, key: string) {
+type LatLng = { latitude: number; longitude: number };
+
+/** Vercel's IP geolocation headers, when present and inside Mexico. */
+function ipLocation(req: NextRequest): LatLng | null {
+  if (req.headers.get('x-vercel-ip-country') !== 'MX') return null;
+  const latitude = Number(req.headers.get('x-vercel-ip-latitude'));
+  const longitude = Number(req.headers.get('x-vercel-ip-longitude'));
+  if (!Number.isFinite(latitude) || !Number.isFinite(longitude) || (latitude === 0 && longitude === 0)) return null;
+  return { latitude, longitude };
+}
+
+async function searchText(textQuery: string, key: string, near: LatLng | null) {
   const upstream = await fetch(`${PLACES_BASE}/places:searchText`, {
     method: 'POST',
     headers: {
@@ -60,7 +76,13 @@ async function searchText(textQuery: string, key: string) {
       'X-Goog-Api-Key': key,
       'X-Goog-FieldMask': FIELD_MASK,
     },
-    body: JSON.stringify({ textQuery, pageSize: 5, languageCode: 'es', regionCode: 'MX' }),
+    body: JSON.stringify({
+      textQuery,
+      pageSize: 5,
+      languageCode: 'es',
+      regionCode: 'MX',
+      ...(near ? { locationBias: { circle: { center: near, radius: BIAS_RADIUS_M } } } : {}),
+    }),
     cache: 'no-store',
     signal: AbortSignal.timeout(UPSTREAM_TIMEOUT_MS),
   });
@@ -106,7 +128,9 @@ export async function GET(req: NextRequest) {
     return res;
   }
 
-  const q = (req.nextUrl.searchParams.get('q') ?? '').trim();
+  let q = (req.nextUrl.searchParams.get('q') ?? '').trim();
+  // A full street address pasted into the name box runs long; search its name part.
+  if (q.length > MAX_QUERY && q.length <= MAX_RAW_QUERY) q = simplifyQuery(q, '').slice(0, MAX_QUERY).trim();
   if (q.length < MIN_QUERY || q.length > MAX_QUERY) {
     return reply({ error: `q must be ${MIN_QUERY}-${MAX_QUERY} characters` }, 400);
   }
@@ -120,9 +144,10 @@ export async function GET(req: NextRequest) {
   const rawCity = (req.nextUrl.searchParams.get('city') ?? '').trim();
   const city = rawCity.length <= MAX_CITY ? rawCity : '';
 
+  const near = ipLocation(req);
   let results: ReturnType<typeof toResult>[];
   try {
-    results = await searchText(q, key);
+    results = await searchText(q, key, near);
   } catch (err) {
     console.error('places-search: upstream error', err instanceof Error ? err.message : err);
     return reply({ error: 'Search failed' }, 502);
@@ -135,7 +160,7 @@ export async function GET(req: NextRequest) {
   const simplified = simplifyQuery(q, city);
   if (!simplified || simplified === q) return reply([], 200, { 'X-Places-Retried': '0' });
   try {
-    results = await searchText(simplified, key);
+    results = await searchText(simplified, key, near);
   } catch (err) {
     console.error('places-search: retry error', err instanceof Error ? err.message : err);
     results = [];

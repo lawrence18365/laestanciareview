@@ -9,10 +9,10 @@ vi.mock('@/lib/rate-limit', async () => {
 
 import { GET } from '@/app/api/places/search/route';
 
-function req(q?: string) {
+function req(q?: string, headers: Record<string, string> = {}) {
   const url = new URL('https://app.ratetapmx.com/api/places/search');
   if (q !== undefined) url.searchParams.set('q', q);
-  return new NextRequest(url, { headers: { 'x-real-ip': '203.0.113.9' } });
+  return new NextRequest(url, { headers: { 'x-real-ip': '203.0.113.9', ...headers } });
 }
 
 const upstreamBody = {
@@ -47,7 +47,7 @@ describe('GET /api/places/search', () => {
   });
 
   it('rejects a missing, too-short, or too-long query without calling Google', async () => {
-    for (const q of [undefined, '', '  ab  ', 'x'.repeat(81)]) {
+    for (const q of [undefined, '', '  ab  ', 'x'.repeat(201)]) {
       const res = await GET(req(q));
       expect(res.status).toBe(400);
       expect(res.headers.get('cache-control')).toBe('no-store');
@@ -202,5 +202,37 @@ describe('GET /api/places/search', () => {
     expect(res.status).toBe(429);
     expect(mocks.checkRateLimitAsync).toHaveBeenCalledWith('places-search:203.0.113.9', 30, 600_000);
     expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  describe('location bias and long input', () => {
+    const ok = () => new Response(JSON.stringify(upstreamBody), { status: 200 });
+    const sentBody = (i = 0) => JSON.parse(fetchMock.mock.calls[i][1].body);
+
+    it('biases the search to the visitor area from Vercel IP headers in Mexico', async () => {
+      fetchMock.mockResolvedValue(ok());
+      await GET(req('La Privada', {
+        'x-vercel-ip-country': 'MX',
+        'x-vercel-ip-latitude': '19.6018',
+        'x-vercel-ip-longitude': '-99.0507',
+      }));
+      expect(sentBody().locationBias).toEqual({
+        circle: { center: { latitude: 19.6018, longitude: -99.0507 }, radius: 50000 },
+      });
+    });
+
+    it('sends no bias outside Mexico or without usable coordinates', async () => {
+      fetchMock.mockResolvedValue(ok());
+      await GET(req('La Privada', { 'x-vercel-ip-country': 'US', 'x-vercel-ip-latitude': '37.7', 'x-vercel-ip-longitude': '-122.4' }));
+      await GET(req('La Privada', { 'x-vercel-ip-country': 'MX', 'x-vercel-ip-latitude': 'abc' }));
+      await GET(req('La Privada'));
+      for (let i = 0; i < 3; i++) expect(sentBody(i).locationBias).toBeUndefined();
+    });
+
+    it('searches the name part of a pasted full address instead of rejecting it', async () => {
+      fetchMock.mockResolvedValue(ok());
+      const res = await GET(req('LA PRIVADA, calle privada de San Andrés, manzana 1, lote 3, colonia Hank González'));
+      expect(res.status).toBe(200);
+      expect(sentBody().textQuery).toBe('LA PRIVADA');
+    });
   });
 });
