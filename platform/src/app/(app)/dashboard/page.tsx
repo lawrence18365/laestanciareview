@@ -6,6 +6,7 @@ import {
   getWeeklyStats,
   getLastWeekStats,
   getLeaderboard,
+  restaurantHasStaff,
   getNewFeedbackCount,
   getUnreadLowRatingCount,
   getROIStats,
@@ -60,6 +61,7 @@ export default async function DashboardPage({
     monthlyStats,
     googleTrend,
     googleHistory,
+    hasStaff,
   ] = await Promise.all([
     getWeeklyStats(restaurant.id),
     getLastWeekStats(restaurant.id),
@@ -74,6 +76,7 @@ export default async function DashboardPage({
     restaurant.googlePlaceId
       ? getGoogleRatingHistory(restaurant.id)
       : [],
+    restaurantHasStaff(restaurant.id),
   ]);
 
   const googleReviewsToday = restaurant.googlePlaceId
@@ -110,6 +113,7 @@ export default async function DashboardPage({
         showGoogleConnect={session.role === 'gm' && reviewUrlFor(restaurant) === null}
         isSolo={isSolo(restaurant)}
         soloShareUrl={isSolo(restaurant) ? qrReviewUrlFor(restaurant.slug) : undefined}
+        hasStaff={hasStaff}
       />
       <div className="page-container" style={{ paddingTop: 0 }}>
         <MapsRankCard summaries={mapsSummaries} />

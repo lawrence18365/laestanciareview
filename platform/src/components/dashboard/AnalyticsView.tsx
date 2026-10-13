@@ -48,6 +48,8 @@ interface Props {
   }[];
   roiStats: ROIStats;
   googleTrend: GoogleTrend | null;
+  /** False only for a restaurant with no staff: the staff ranking is then hidden. Default true (legacy). */
+  hasStaff?: boolean;
 }
 
 /* ── Main Component ── */
@@ -60,7 +62,14 @@ export default function AnalyticsView({
   staffRanking,
   roiStats,
   googleTrend,
+  hasStaff = true,
 }: Props) {
+  // No-card ratings (restaurant QR, staff_code IS NULL) never take a ranking
+  // slot; they show as one plain line. Removed-staff codes stay ranked.
+  const rankedStaff = staffRanking.filter((s) => s.staffCode != null);
+  const noCardCount = staffRanking
+    .filter((s) => s.staffCode == null)
+    .reduce((sum, s) => sum + s.reviewCount, 0);
 
   return (
     <div className="page-container">
@@ -195,7 +204,7 @@ export default function AnalyticsView({
       </div>}
 
       {/* ── Ranking de Personal (all-time) ── */}
-      {roiStats.totalReviews > 0 && <section className="card stagger-4" style={{ overflow: 'hidden' }}>
+      {hasStaff && roiStats.totalReviews > 0 && <section className="card stagger-4" style={{ overflow: 'hidden' }}>
         <div style={{
           display: 'flex', justifyContent: 'space-between', alignItems: 'center',
           padding: '1.25rem 1.5rem', borderBottom: '1px solid var(--panel-border)',
@@ -203,13 +212,13 @@ export default function AnalyticsView({
           <h2 style={{ margin: 0, fontSize: '1.125rem', fontWeight: 600, fontFamily: 'var(--font-serif)', color: 'var(--text-main)' }}>
             Ranking de Personal
           </h2>
-          {staffRanking.length > 0 && (
+          {rankedStaff.length > 0 && (
             <button
               className="btn btn-outline"
               onClick={() => {
                 track('csv_export', { feature: 'analytics' });
                 downloadCSV(
-                  staffRanking.map((s, i) => ({
+                  rankedStaff.map((s, i) => ({
                     Rango: i + 1,
                     Personal: s.staffName ?? s.staffCode ?? 'Desconocido',
                     Código: s.staffCode ?? '',
@@ -227,7 +236,7 @@ export default function AnalyticsView({
             </button>
           )}
         </div>
-        {staffRanking.length === 0 ? (
+        {rankedStaff.length === 0 ? (
           <p style={{ color: 'var(--text-dim)', fontSize: '0.875rem', textAlign: 'center', padding: '3rem 0', margin: 0 }}>
             {t.analytics.noReviewsThisWeek}
           </p>
@@ -245,7 +254,7 @@ export default function AnalyticsView({
                 </tr>
               </thead>
               <tbody>
-                {staffRanking.map((entry, i) => (
+                {rankedStaff.map((entry, i) => (
                   <tr key={entry.staffId ?? `${entry.staffCode}-${i}`} style={{ borderTop: '1px solid var(--panel-border)' }}>
                     <td style={{ textAlign: 'center', padding: '1rem 1.5rem', fontSize: '0.875rem', color: 'var(--text-dim)', fontWeight: 500, fontFamily: 'var(--font-mono)' }}>
                       {String(i + 1).padStart(2, '0')}
@@ -275,6 +284,11 @@ export default function AnalyticsView({
               </tbody>
             </table>
           </div>
+        )}
+        {noCardCount > 0 && (
+          <p style={{ margin: 0, padding: '0.875rem 1.5rem', borderTop: '1px solid var(--panel-border)', fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+            QR del restaurante: {noCardCount}
+          </p>
         )}
       </section>}
 

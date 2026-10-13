@@ -5,6 +5,7 @@ import {
   getLastWeekStats,
   getWeekBeforeLastStats,
   getLastWeekLeaderboard,
+  restaurantHasStaff,
   getNewFeedbackCount,
   getOperationalRestaurants,
   getRegionalAccounts,
@@ -112,13 +113,14 @@ export async function GET(req: NextRequest) {
     }
 
     try {
-      const [lastWeek, weekBefore, topPerformers, unresolvedCount, googleTrend] =
+      const [lastWeek, weekBefore, topPerformers, unresolvedCount, googleTrend, hasStaff] =
         await Promise.all([
           getLastWeekStats(r.id, r.googleThreshold),
           getWeekBeforeLastStats(r.id, r.googleThreshold),
           getLastWeekLeaderboard(r.id, 5),
           getNewFeedbackCount(r.id),
           r.googlePlaceId ? getGoogleRatingTrend(r.id) : Promise.resolve(null),
+          restaurantHasStaff(r.id),
         ]);
 
       const result = await sendWeeklyDigest({
@@ -131,6 +133,7 @@ export async function GET(req: NextRequest) {
         staffAnomalies: anomaliesByRestaurant.get(r.id) ?? [],
         dashboardUrl: `${baseUrl}/dashboard`,
         googleTrend,
+        hasStaff,
       });
 
       if (result.success) {

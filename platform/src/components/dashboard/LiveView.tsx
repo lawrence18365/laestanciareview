@@ -125,7 +125,33 @@ const C = {
 
 /* ── Helpers ────────────────────────────────────── */
 
-function mergeStaff(data: LiveData): MergedStaff[] {
+/**
+ * No-card ratings (restaurant QR, staff_code IS NULL) are never a staff row:
+ * they are counted on their own line instead. Ratings whose code matches no
+ * current staff row (removed staff) keep their code and stay in the team.
+ */
+function withoutNoCard<T extends { staffCode: string | null }>(rows: T[]): T[] {
+  return rows.filter((r) => r.staffCode != null);
+}
+
+function noCardCounts(data: LiveData): Record<TeamPeriod, number> {
+  const sum = (n: number, v: number) => n + Number(v);
+  const week = data.staffStats.filter((r) => r.staffCode == null);
+  return {
+    today: week.reduce((n, r) => sum(n, r.todayScans), 0),
+    week: week.reduce((n, r) => sum(n, r.totalScans), 0),
+    lastWeek: (data.lastWeekStaffStats ?? [])
+      .filter((r) => r.staffCode == null)
+      .reduce((n, r) => sum(n, r.totalScans), 0),
+  };
+}
+
+function mergeStaff(rawData: LiveData): MergedStaff[] {
+  const data: LiveData = {
+    ...rawData,
+    staffStats: withoutNoCard(rawData.staffStats),
+    lastWeekStaffStats: withoutNoCard(rawData.lastWeekStaffStats ?? []),
+  };
   const statsMap = new Map<number, StaffStat>();
   for (const s of data.staffStats) {
     if (s.staffId != null) statsMap.set(s.staffId, s);
@@ -247,6 +273,10 @@ export default function LiveView({ restaurantName, logoSrc, logoDarkBg, googleRa
   const containerRef = useRef<HTMLDivElement>(null);
 
   const team = useMemo(() => mergeStaff(data), [data]);
+  const noCard = useMemo(() => noCardCounts(data), [data]);
+  // A restaurant with no staff at all (solo owner on the restaurant QR) gets no
+  // ranking: neither the podium nor the team table.
+  const hasStaff = team.length > 0;
 
   // Compute daily winners: anyone with >0 scans today, sorted primarily by todayScans
   const todayTopPerformers = useMemo(() => {
@@ -565,7 +595,7 @@ export default function LiveView({ restaurantName, logoSrc, logoDarkBg, googleRa
         {/* ── LEFT COLUMN ── */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: fs ? '1.5rem' : '1.25rem', overflow: 'hidden' }}>
           {/* Gamified Daily Winners */}
-          {(todayTopPerformers.length > 0) && (
+          {hasStaff && (todayTopPerformers.length > 0) && (
             <DailyPodium winners={todayTopPerformers} large={fs} />
           )}
 
@@ -618,8 +648,10 @@ export default function LiveView({ restaurantName, logoSrc, logoDarkBg, googleRa
             />
           </div>
 
-          {/* Team Leaderboard Table */}
-          <TeamTable team={team} large={fs} period={teamPeriod} onPeriodChange={setTeamPeriod} />
+          {/* Team Leaderboard Table (hidden for a restaurant with no staff) */}
+          {hasStaff && (
+            <TeamTable team={team} noCard={noCard[teamPeriod]} large={fs} period={teamPeriod} onPeriodChange={setTeamPeriod} />
+          )}
         </div>
       </div>}
 
@@ -988,7 +1020,7 @@ function LiveFeed({ scans, now, large }: { scans: RecentScan[]; now: Date; large
                     textOverflow: 'ellipsis',
                   }}
                 >
-                  {scan.staffName ?? 'Desconocido'}
+                  {scan.staffName ?? 'QR del restaurante'}
                 </span>
                 
                 <div style={{ display: 'flex', gap: 2, flexShrink: 0 }}>
@@ -1134,11 +1166,14 @@ function StatBox({
 
 function TeamTable({
   team,
+  noCard,
   large,
   period,
   onPeriodChange,
 }: {
   team: MergedStaff[];
+  /** No-card (restaurant QR) ratings for the selected period; shown as one unranked line. */
+  noCard: number;
   large: boolean;
   period: TeamPeriod;
   onPeriodChange: (p: TeamPeriod) => void;
@@ -1297,6 +1332,11 @@ function TeamTable({
           </div>
         )}
       </div>
+      {noCard > 0 && (
+        <div style={{ padding: fs ? '0.9rem 1.5rem' : '0.75rem 1.25rem', borderTop: `1px solid ${C.panelBorder}`, fontSize: fs ? '0.85rem' : '0.75rem', color: C.textMuted, flexShrink: 0 }}>
+          QR del restaurante: {noCard}
+        </div>
+      )}
     </div>
   );
 }

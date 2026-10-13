@@ -103,6 +103,12 @@ interface Props {
   isSolo?: boolean;
   /** Public /r/{slug} link, shared by the solo "Compártelo por WhatsApp" CTA. */
   soloShareUrl?: string;
+  /**
+   * False only when the restaurant has no staff rows at all: the staff ranking
+   * card is then hidden instead of showing an empty ranking. Defaults to true so
+   * every legacy caller renders as before.
+   */
+  hasStaff?: boolean;
 }
 
 /* ── Main Component ── */
@@ -123,11 +129,19 @@ export default function DashboardView({
   showGoogleConnect = false,
   isSolo = false,
   soloShareUrl,
+  hasStaff = true,
 }: Props) {
   // Plain ask, no offer and no rating routing (Google policy).
   const soloWhatsappHref = soloShareUrl
     ? `https://wa.me/?text=${encodeURIComponent(t.dashboard.soloShareMessage(soloShareUrl))}`
     : '/qr-codes';
+  // No-card ratings (restaurant QR, staff_code IS NULL) never take a ranking
+  // slot; they show as one plain line. Ratings from a removed staff code keep
+  // their code and stay in the ranking exactly as before.
+  const rankedStaff = leaderboard.filter((e) => e.staffCode != null);
+  const noCardCount = leaderboard
+    .filter((e) => e.staffCode == null)
+    .reduce((sum, e) => sum + e.reviewCount, 0);
   const firstReview = roiStats.firstReviewAt ? new Date(roiStats.firstReviewAt) : null;
   const weeksActive = useMemo(() => {
     if (!firstReview) return 0;
@@ -427,7 +441,7 @@ export default function DashboardView({
       </div>
 
       {/* ── Leaderboard ── */}
-      <section className="card stagger-5" style={{ overflow: 'hidden' }}>
+      {hasStaff && <section className="card stagger-5" style={{ overflow: 'hidden' }}>
         <div style={{
           display: 'flex', justifyContent: 'space-between', alignItems: 'center',
           padding: '1.25rem 1.5rem', borderBottom: '1px solid var(--panel-border)',
@@ -435,13 +449,13 @@ export default function DashboardView({
           <h1 style={{ fontSize: '1.125rem', fontWeight: 600, color: 'var(--text-main)', margin: 0, fontFamily: 'var(--font-serif)' }}>
             {t.dashboard.staffLeaderboard}
           </h1>
-          {leaderboard.length > 0 && (
+          {rankedStaff.length > 0 && (
             <button
               className="btn btn-outline"
               onClick={() => {
                 track('csv_export', { feature: 'dashboard' });
                 downloadCSV(
-                  leaderboard.map((e, i) => ({
+                  rankedStaff.map((e, i) => ({
                     Rango: i + 1,
                     Personal: e.staffName ?? t.dashboard.unknown,
                     Código: e.staffCode ?? '',
@@ -458,7 +472,7 @@ export default function DashboardView({
           )}
         </div>
 
-        {leaderboard.length === 0 ? (
+        {rankedStaff.length === 0 ? (
           <div style={{ padding: '3rem 1.5rem', textAlign: 'center' }}>
             <p style={{
               margin: 0,
@@ -487,7 +501,7 @@ export default function DashboardView({
                 </tr>
               </thead>
               <tbody>
-                {leaderboard.map((entry, i) => (
+                {rankedStaff.map((entry, i) => (
                   <tr key={entry.staffId ?? i} style={{ borderTop: '1px solid var(--panel-border)' }}>
                     <td style={{ textAlign: 'center', padding: '1rem 1.5rem', fontSize: '0.875rem', color: 'var(--text-dim)', fontWeight: 500 }}>
                       {String(i + 1).padStart(2, '0')}
@@ -512,7 +526,13 @@ export default function DashboardView({
             </table>
           </div>
         )}
-      </section>
+
+        {noCardCount > 0 && (
+          <p style={{ margin: 0, padding: '0.875rem 1.5rem', borderTop: '1px solid var(--panel-border)', fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+            QR del restaurante: {noCardCount}
+          </p>
+        )}
+      </section>}
     </div>
   );
 }
