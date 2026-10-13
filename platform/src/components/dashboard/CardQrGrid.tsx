@@ -137,7 +137,7 @@ export default function CardQrGrid({
   // The share sheet carries the PNG when the browser can; otherwise a plain
   // WhatsApp link with the review URL. Either way: a plain ask, no incentive.
   async function shareRestaurantQr() {
-    const text = `${restaurantName}: ¿Te gustó? Déjanos tu reseña en Google ${reviewUrlFor(slug)}`;
+    const text = `${restaurantName}: ¿Cómo te fue? Déjanos tu reseña en Google ${reviewUrlFor(slug)}`;
     const nav = navigator as ShareNavigator;
     try {
       if (canShareFiles && typeof nav.share === 'function') {

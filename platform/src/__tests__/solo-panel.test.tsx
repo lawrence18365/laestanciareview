@@ -147,7 +147,7 @@ describe('dashboard empty-state CTAs per team_mode', () => {
     expect(html).toContain('2. Compártelo por WhatsApp');
     expect(html).toContain(
       `href="https://wa.me/?text=${encodeURIComponent(
-        '¿Te gustó? Déjanos tu reseña en Google: https://app.ratetapmx.com/r/tacos-ana',
+        '¿Cómo te fue? Déjanos tu reseña en Google: https://app.ratetapmx.com/r/tacos-ana',
       )}"`,
     );
     expect(html).toContain('Tienes 12 reseñas. Meta: 32.');
@@ -238,14 +238,16 @@ describe('guests hero "Meseros" counter', () => {
     leaderboard: [],
   };
 
-  it('is hidden at 0 staff', () => {
+  // activeStaff counts staff who validated a guest, which is 0 at most group
+  // locations; solo restaurants never reach /guests, so the tile always renders.
+  it('still renders at 0 (unchanged for group locations)', () => {
     const html = renderToStaticMarkup(<HeroMetrics metrics={metrics} justUpdated={false} />);
-    expect(html).not.toContain('Meseros');
+    expect(html).toContain('Meseros');
     expect(html).toContain('Invitados');
     expect(html).toContain('Cortesías');
   });
 
-  it('is shown when staff exist (the group always has staff)', () => {
+  it('is shown when staff exist', () => {
     const html = renderToStaticMarkup(
       <HeroMetrics metrics={{ ...metrics, activeStaff: 4 }} justUpdated={false} />,
     );

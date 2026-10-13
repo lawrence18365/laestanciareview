@@ -215,7 +215,7 @@ describe('ReadyView per mode', () => {
     const wa = out.match(/href="(https:\/\/wa\.me\/\?text=[^"]+)"/);
     expect(wa).not.toBeNull();
     const decoded = decodeURIComponent(wa![1].replace(/&amp;/g, '&').split('text=')[1]);
-    expect(decoded).toContain('¿Te gustó? Déjanos tu reseña en Google');
+    expect(decoded).toContain('¿Cómo te fue? Déjanos tu reseña en Google');
     expect(decoded).toContain('https://app.ratetapmx.com/r/pizzeria-lupita');
     expect(out).not.toContain('Agrega a tus meseros');
     // exactly one primary (dark filled) button

@@ -301,7 +301,7 @@ export function ReadyView({
     track('onboarding_cta_click', mode === 'legacy' ? { target } : { target, mode });
   }
 
-  const shareText = `${status.restaurantName ?? ''}: ¿Te gustó? Déjanos tu reseña en Google ${status.reviewUrl ?? ''}`.trim();
+  const shareText = `${status.restaurantName ?? ''}: ¿Cómo te fue? Déjanos tu reseña en Google ${status.reviewUrl ?? ''}`.trim();
   const whatsappShareUrl = `https://wa.me/?text=${encodeURIComponent(shareText)}`;
 
   return (

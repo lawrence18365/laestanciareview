@@ -73,7 +73,7 @@ export const t = {
     // "Agrega a tus meseros" CTAs in DashboardView.
     soloCtaSign: '1. Imprime tu letrero',
     soloCtaWhatsapp: '2. Compártelo por WhatsApp',
-    soloShareMessage: (url: string) => `¿Te gustó? Déjanos tu reseña en Google: ${url}`,
+    soloShareMessage: (url: string) => `¿Cómo te fue? Déjanos tu reseña en Google: ${url}`,
     soloGoogleLine: (n: number, goal: number) =>
       `Tienes ${n} ${n === 1 ? 'reseña' : 'reseñas'}. Meta: ${goal}.`,
     rateTapImpact: 'Impacto RateTap',

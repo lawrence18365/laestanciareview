@@ -134,7 +134,7 @@ describe('/qr-codes/letrero', () => {
     expect(html).toContain('Taquería Lupita');
     expect(html).toContain('<img');
     expect(html).toContain(await generateQrSvg('taqueria-lupita'));
-    expect(html).toContain('¿Te gustó? Déjanos tu reseña en Google');
+    expect(html).toContain('¿Cómo te fue? Déjanos tu reseña en Google');
     expect(html).toContain('Escanea con tu cámara');
     expect(html).toContain('size: letter');
   });

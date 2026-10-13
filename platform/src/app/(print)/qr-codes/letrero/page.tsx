@@ -43,7 +43,7 @@ export default async function LetreroPage() {
             <img src={brand.logo} alt="" className="lt-logo" />
           </div>
           <h1 className="lt-name">{restaurant.name}</h1>
-          <p className="lt-ask">¿Te gustó? Déjanos tu reseña en Google</p>
+          <p className="lt-ask">¿Cómo te fue? Déjanos tu reseña en Google</p>
           <div className="lt-qr" dangerouslySetInnerHTML={{ __html: svg }} />
           <p className="lt-hint">Escanea con tu cámara</p>
         </div>
