@@ -85,6 +85,8 @@ export const PRODUCT_EVENT_NAMES = [
   'onboarding_google_saved',
   'onboarding_google_save_failed',
   'onboarding_cta_click',
+  // Which pieces of the tailored ready screen's personal line showed.
+  'onboarding_personal_line_shown',
 ] as const;
 
 export type ProductEventName = (typeof PRODUCT_EVENT_NAMES)[number];

@@ -5,10 +5,12 @@ import Script from 'next/script';
 import { SUPPORT_WHATSAPP_URL } from '@/lib/support';
 import GooglePlaceSearch, { type PlaceSelection } from '@/components/GooglePlaceSearch';
 import { track } from '@/lib/analytics-client';
+import { qrPlacementTip } from '@/lib/onboarding-profile';
+import { personalLine, readyMode, type ReadyProfileFields } from './ready-data';
 
 const PIXEL_ID = process.env.NEXT_PUBLIC_META_PIXEL_ID ?? '1578821303344121';
 
-interface StatusResponse {
+export interface StatusResponse extends Partial<ReadyProfileFields> {
   ready: boolean;
   slug?: string;
   restaurantName?: string;
@@ -24,11 +26,18 @@ export default function BienvenidaClient({
   hasSignupAccess,
   sessionPanelHref,
   trialDays,
+  initialReady = null,
 }: {
   hasSignupAccess: boolean;
   /** Panel URL when a valid session exists (signup cookie already consumed), else null. */
   sessionPanelHref: string | null;
   trialDays: number;
+  /**
+   * Reload/revisit with a session: the ready payload loaded server-side from
+   * the session's restaurant (the one-time cookie is gone). Only set for
+   * restaurants with an onboarding profile; legacy ones keep the short screen.
+   */
+  initialReady?: StatusResponse | null;
 }) {
   return (
     <>
@@ -44,6 +53,7 @@ export default function BienvenidaClient({
         hasSignupAccess={hasSignupAccess}
         sessionPanelHref={sessionPanelHref}
         trialDays={trialDays}
+        initialReady={initialReady}
       />
     </>
   );
@@ -53,22 +63,19 @@ function BienvenidaInner({
   hasSignupAccess,
   sessionPanelHref,
   trialDays,
+  initialReady,
 }: {
   hasSignupAccess: boolean;
   sessionPanelHref: string | null;
   trialDays: number;
+  initialReady: StatusResponse | null;
 }) {
   const [status, setStatus] = useState<StatusResponse | null>(null);
-  const [googleConnected, setGoogleConnected] = useState(false);
-  const [placeQuery, setPlaceQuery] = useState('');
-  const [placeSaving, setPlaceSaving] = useState(false);
-  const [placeError, setPlaceError] = useState('');
   const [timedOut, setTimedOut] = useState(false);
   const pixelFiredRef = useRef(false);
   // Onboarding funnel: one event per step, per mount.
   const readyShownRef = useRef(false);
   const timedOutTrackedRef = useRef(false);
-  const googleSearchRef = useRef(false);
 
   // Step 1 of the onboarding screen: the account is ready.
   useEffect(() => {
@@ -124,7 +131,6 @@ function BienvenidaInner({
           // later poll would 400. Stop polling (and the timeout) once we have it.
           clearInterval(pollId);
           clearTimeout(timeoutId);
-          setGoogleConnected(Boolean(data.googleConnected));
           setStatus(data);
           return;
         }
@@ -148,37 +154,14 @@ function BienvenidaInner({
     };
   }, [hasSignupAccess]);
 
-  function handlePlaceQueryChange(value: string) {
-    setPlaceQuery(value);
-    if (!googleSearchRef.current && value.trim()) {
-      googleSearchRef.current = true;
-      track('onboarding_google_search');
-    }
-  }
-
-  async function handlePlaceSelected(place: PlaceSelection) {
-    if (!place.placeId || placeSaving) return;
-    setPlaceSaving(true);
-    setPlaceError('');
-    try {
-      // Same endpoint Settings uses; the server derives the review URL from the place ID.
-      const res = await fetch('/api/auth/settings', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ googlePlaceId: place.placeId }),
-      });
-      if (!res.ok) throw new Error('save-failed');
-      setGoogleConnected(true);
-      track('onboarding_google_saved');
-    } catch {
-      track('onboarding_google_save_failed');
-      setPlaceError('No se pudo guardar. Intenta de nuevo.');
-    } finally {
-      setPlaceSaving(false);
-    }
-  }
-
   if (!hasSignupAccess && sessionPanelHref) {
+    // Reload with a session: the same tailored ready screen (QR + CTA), loaded
+    // server-side. Legacy restaurants get no initialReady and keep this card.
+    if (initialReady?.ready) {
+      return <Shell>
+        <ReadyView status={initialReady} trialDays={trialDays} panelHref={sessionPanelHref} />
+      </Shell>;
+    }
     return <Shell>
       <div style={{ textAlign: 'center' }}>
         <div style={{ fontSize: '2.5rem', marginBottom: '0.5rem' }}>✅</div>
@@ -239,14 +222,104 @@ function BienvenidaInner({
     </Shell>;
   }
 
+  return <Shell><ReadyView status={status} trialDays={trialDays} panelHref={null} /></Shell>;
+}
+
+/**
+ * The "account ready" screen. Branches on the onboarding profile:
+ * solo / team / group (6+) get a tailored header line and CTA; a restaurant
+ * with no profile (legacy, incl. all of Grupo Estancia) gets today's screen.
+ * Exported so the per-mode markup can be rendered in tests.
+ */
+export function ReadyView({
+  status,
+  trialDays,
+  panelHref,
+}: {
+  status: StatusResponse;
+  trialDays: number;
+  /** Set on a reload: replaces the "use /login" footer with a panel link. */
+  panelHref: string | null;
+}) {
+  const [googleConnected, setGoogleConnected] = useState(Boolean(status.googleConnected));
+  const [placeQuery, setPlaceQuery] = useState('');
+  const [placeSaving, setPlaceSaving] = useState(false);
+  const [placeError, setPlaceError] = useState('');
+  const googleSearchRef = useRef(false);
+  const personalTrackedRef = useRef(false);
+
+  const fields = {
+    teamMode: status.teamMode ?? null,
+    locationsBand: status.locationsBand ?? null,
+    googleReviewCount: status.googleReviewCount ?? null,
+    googleProfile: status.googleProfile ?? null,
+  };
+  const mode = readyMode(fields);
+  const line = mode === 'legacy' ? null : personalLine(fields);
+  const reload = panelHref !== null;
+
+  // Which pieces of the personal line showed. Once per mount, and not on a
+  // reload (the funnel counts the first time the screen is seen).
+  useEffect(() => {
+    if (reload || personalTrackedRef.current || !line || line.pieces.length === 0) return;
+    personalTrackedRef.current = true;
+    track('onboarding_personal_line_shown', { mode, pieces: line.pieces });
+  }, [reload, line, mode]);
+
+  function handlePlaceQueryChange(value: string) {
+    setPlaceQuery(value);
+    if (!googleSearchRef.current && value.trim()) {
+      googleSearchRef.current = true;
+      track('onboarding_google_search');
+    }
+  }
+
+  async function handlePlaceSelected(place: PlaceSelection) {
+    if (!place.placeId || placeSaving) return;
+    setPlaceSaving(true);
+    setPlaceError('');
+    try {
+      // Same endpoint Settings uses; the server derives the review URL from the place ID.
+      const res = await fetch('/api/auth/settings', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ googlePlaceId: place.placeId }),
+      });
+      if (!res.ok) throw new Error('save-failed');
+      setGoogleConnected(true);
+      track('onboarding_google_saved');
+    } catch {
+      track('onboarding_google_save_failed');
+      setPlaceError('No se pudo guardar. Intenta de nuevo.');
+    } finally {
+      setPlaceSaving(false);
+    }
+  }
+
+  // Click tracking: legacy keeps today's `{ target }`; tailored adds the mode.
+  function clicked(target: string) {
+    track('onboarding_cta_click', mode === 'legacy' ? { target } : { target, mode });
+  }
+
+  const shareText = `${status.restaurantName ?? ''}: ¿Te gustó? Déjanos tu reseña en Google ${status.reviewUrl ?? ''}`.trim();
+  const whatsappShareUrl = `https://wa.me/?text=${encodeURIComponent(shareText)}`;
+
   return (
-    <Shell>
+    <>
       <div style={{ textAlign: 'center' }}>
         <div style={{ fontSize: '2.5rem', marginBottom: '0.5rem' }}>🎉</div>
         <h1 style={h1Style}>¡Listo, {status.restaurantName}!</h1>
-        <p style={{ color: '#57534e', marginBottom: '1.5rem' }}>
-          Tu prueba gratis de {trialDays} días ya está activa. Usa este QR desde hoy.
-        </p>
+        {mode === 'legacy' ? (
+          <p style={{ color: '#57534e', marginBottom: '1.5rem' }}>
+            Tu prueba gratis de {trialDays} días ya está activa. Usa este QR desde hoy.
+          </p>
+        ) : (
+          <p style={{ color: '#57534e', marginBottom: '1.5rem' }}>
+            {line && line.sentences.length > 0
+              ? line.sentences.join(' ')
+              : 'Usa este QR desde hoy.'}
+          </p>
+        )}
       </div>
 
       <div style={{
@@ -269,6 +342,11 @@ function BienvenidaInner({
         <div style={{ fontSize: '0.85rem', fontWeight: 600, wordBreak: 'break-all', color: '#1c1917' }}>
           {status.reviewUrl}
         </div>
+        {mode !== 'legacy' && (
+          <p style={{ fontSize: '0.8rem', color: '#57534e', margin: '0.75rem 0 0' }}>
+            {qrPlacementTip(fields.googleProfile, fields.teamMode)}
+          </p>
+        )}
       </div>
 
       {googleConnected ? (
@@ -306,39 +384,62 @@ function BienvenidaInner({
         </div>
       )}
 
-      <a
-        href="/staff"
-        style={primaryButtonStyle}
-        onClick={() => track('onboarding_cta_click', { target: 'staff' })}
-      >
-        Agrega a tus meseros →
-      </a>
+      {mode === 'solo' && (
+        <>
+          <a href="/qr-codes/letrero" style={primaryButtonStyle} onClick={() => clicked('letrero')}>
+            Imprime tu letrero →
+          </a>
+          <a
+            href={whatsappShareUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={() => clicked('whatsapp_share')}
+            style={secondaryButtonStyle}
+          >
+            Compártelo por WhatsApp
+          </a>
+        </>
+      )}
 
-      <a
-        href="/qr-codes"
-        onClick={() => track('onboarding_cta_click', { target: 'qr' })}
-        style={{
-          display: 'block',
-          textAlign: 'center',
-          padding: '0.75rem',
-          border: '1px solid #1c1917',
-          color: '#1c1917',
-          textDecoration: 'none',
-          fontWeight: 700,
-          fontSize: '0.75rem',
-          letterSpacing: '0.1em',
-          textTransform: 'uppercase',
-          marginTop: '0.75rem',
-        }}
-      >
-        Descargar QR por mesero
-      </a>
+      {mode === 'group' && (
+        <>
+          <a
+            href={SUPPORT_WHATSAPP_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={primaryButtonStyle}
+            onClick={() => clicked('call')}
+          >
+            Agenda una llamada →
+          </a>
+          <a href="/staff" onClick={() => clicked('staff')} style={secondaryButtonStyle}>
+            Agrega a tus meseros
+          </a>
+        </>
+      )}
+
+      {(mode === 'team' || mode === 'legacy') && (
+        <>
+          <a href="/staff" style={primaryButtonStyle} onClick={() => clicked('staff')}>
+            Agrega a tus meseros →
+          </a>
+          <a href="/qr-codes" onClick={() => clicked('qr')} style={secondaryButtonStyle}>
+            Descargar QR por mesero
+          </a>
+        </>
+      )}
 
       <p style={{ fontSize: '0.75rem', color: '#a8a29e', textAlign: 'center', marginTop: '1rem' }}>
-        Para volver a entrar, usa tu contraseña en{' '}
-        <a href="/login" style={{ color: '#1c1917', fontWeight: 600 }}>/login</a>.
+        {reload ? (
+          <a href={panelHref} style={{ color: '#1c1917', fontWeight: 600 }}>Ir a mi panel →</a>
+        ) : (
+          <>
+            Para volver a entrar, usa tu contraseña en{' '}
+            <a href="/login" style={{ color: '#1c1917', fontWeight: 600 }}>/login</a>.
+          </>
+        )}
       </p>
-    </Shell>
+    </>
   );
 }
 
@@ -353,6 +454,20 @@ const primaryButtonStyle: React.CSSProperties = {
   fontSize: '0.85rem',
   letterSpacing: '0.1em',
   textTransform: 'uppercase',
+};
+
+const secondaryButtonStyle: React.CSSProperties = {
+  display: 'block',
+  textAlign: 'center',
+  padding: '0.75rem',
+  border: '1px solid #1c1917',
+  color: '#1c1917',
+  textDecoration: 'none',
+  fontWeight: 700,
+  fontSize: '0.75rem',
+  letterSpacing: '0.1em',
+  textTransform: 'uppercase',
+  marginTop: '0.75rem',
 };
 
 const h1Style: React.CSSProperties = {

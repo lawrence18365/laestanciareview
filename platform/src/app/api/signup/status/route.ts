@@ -8,6 +8,7 @@ import { reviewUrlFor as googleReviewUrlFor } from '@/lib/google-review';
 import { verifyTokenHash } from '@/lib/tokens';
 import { cookies } from 'next/headers';
 import { parseSignupAccess, SIGNUP_ACCESS_COOKIE } from '@/lib/signup-access';
+import { readyProfileFields } from '@/app/bienvenida/ready-data';
 
 export const dynamic = 'force-dynamic';
 
@@ -63,5 +64,7 @@ export async function GET(req: NextRequest) {
     // True when guests who tap "Google" have somewhere to land.
     googleConnected: googleReviewUrlFor(r) !== null,
     signupId,
+    // Onboarding profile (US-14). All null for legacy restaurants.
+    ...readyProfileFields(r),
   });
 }
