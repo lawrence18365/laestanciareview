@@ -6,7 +6,13 @@
  * endpoint, type=restaurant, 3 km radius, and the same filters (excludes the
  * place itself, places without a rating, and places with < 10 reviews).
  * Results keep Google's order; each caller applies its own sort.
+ *
+ * Onboarding (SQ-214) does not want "the biggest places nearby" (national
+ * chains) but comparable local ones: `findComparableCompetitors` below scores
+ * candidates by category, review-count range, chain denylist and distance.
+ * The audit page does not use it and is unchanged.
  */
+import { categoryLabel, type Competitor } from '@/lib/onboarding-profile';
 
 export const NEARBY_RADIUS_M = 3000;
 
@@ -17,6 +23,8 @@ export interface NearbyCompetitor {
   userRatingsTotal: number;
   /** Straight-line distance from the origin (haversine), or null without geometry. */
   distanceM: number | null;
+  /** Google's legacy `types` for the place (empty when absent). */
+  types: string[];
 }
 
 export interface CompetitorFetchOptions {
@@ -24,6 +32,8 @@ export interface CompetitorFetchOptions {
   signal?: AbortSignal;
   /** Next.js fetch cache window in seconds. Omitted = no cache. */
   revalidate?: number;
+  /** Optional nearbysearch `keyword` (onboarding category search). Omitted = unchanged URL. */
+  keyword?: string;
 }
 
 /**
@@ -59,6 +69,7 @@ interface NearbyApiResult {
   name: string;
   rating?: number;
   user_ratings_total?: number;
+  types?: unknown;
   geometry?: { location?: { lat?: number; lng?: number } };
 }
 
@@ -70,7 +81,8 @@ export async function getNearbyCompetitors(
 ): Promise<NearbyCompetitor[]> {
   const key = placesApiKey();
   if (!key) return [];
-  const url = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${lat},${lng}&radius=${NEARBY_RADIUS_M}&type=restaurant&key=${key}`;
+  const keywordParam = options.keyword ? `&keyword=${encodeURIComponent(options.keyword)}` : '';
+  const url = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${lat},${lng}&radius=${NEARBY_RADIUS_M}&type=restaurant${keywordParam}&key=${key}`;
   const init: RequestInit & { next?: { revalidate: number } } = options.signal
     ? { signal: options.signal }
     : {};
@@ -93,10 +105,159 @@ export async function getNearbyCompetitors(
         name: p.name,
         rating: p.rating as number,
         userRatingsTotal: p.user_ratings_total as number,
+        types: Array.isArray(p.types)
+          ? p.types.filter((t): t is string => typeof t === 'string')
+          : [],
         distanceM:
           typeof pLat === 'number' && typeof pLng === 'number'
             ? haversineMeters({ lat, lng }, { lat: pLat, lng: pLng })
             : null,
       };
     });
+}
+
+// ─── Comparable competitors (onboarding / welcome line only) ───
+
+export const TOP_COMPARABLE = 3;
+
+/** Well-known chains whose review counts say nothing about a small local place. */
+const CHAIN_NAMES = [
+  'Toks',
+  'KFC',
+  "McDonald's",
+  'Burger King',
+  "Domino's",
+  'Little Caesars',
+  'Starbucks',
+  'Vips',
+  'Sanborns',
+  'Subway',
+  'Pizza Hut',
+  "Carl's Jr",
+  "Italianni's",
+  'Wings',
+  'Sushi Itto',
+  'El Portón',
+  "Chili's",
+  "Applebee's",
+];
+
+/** Lowercase, no accents, no apostrophes, other punctuation as single spaces. */
+function normalizeName(name: string): string {
+  return name
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .toLowerCase()
+    .replace(/['’`]/g, '')
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim();
+}
+
+const CHAIN_KEYS = CHAIN_NAMES.map(normalizeName);
+
+export function isKnownChain(name: string): boolean {
+  const padded = ` ${normalizeName(name)} `;
+  return CHAIN_KEYS.some((k) => padded.includes(` ${k} `));
+}
+
+/** Types every restaurant shares; they say nothing about the cuisine. */
+const GENERIC_TYPES = new Set([
+  'restaurant',
+  'food',
+  'point_of_interest',
+  'establishment',
+  'meal_takeaway',
+  'meal_delivery',
+  'store',
+]);
+
+export interface ComparableOwn {
+  /** The restaurant's own Google review count (null when unknown). */
+  reviewCount: number | null;
+  primaryType: string | null;
+  types: string[];
+}
+
+export interface ComparableCandidate extends NearbyCompetitor {
+  /** True when the category-filtered (keyword) search also returned this place. */
+  keywordMatch?: boolean;
+}
+
+/** Tiny counts are floored so the 0.5x-4x window stays meaningful. */
+const OWN_COUNT_FLOOR = 20;
+
+function sharesCategory(own: ComparableOwn, c: ComparableCandidate): boolean {
+  if (c.keywordMatch) return true;
+  const specific = new Set(
+    [own.primaryType, ...own.types].filter(
+      (t): t is string => typeof t === 'string' && !GENERIC_TYPES.has(t),
+    ),
+  );
+  return c.types.some((t) => specific.has(t));
+}
+
+/**
+ * Pick the 3 most comparable places. Order of preference: same category, review
+ * count within 0.5x-4x of the restaurant's own (floor 20), then the closest.
+ * Known chains and anything with over 10x the restaurant's reviews are
+ * excluded; if that leaves fewer than 3, the closest non-chain places fill in.
+ */
+export function selectComparableCompetitors(
+  own: ComparableOwn,
+  candidates: ComparableCandidate[],
+): NearbyCompetitor[] {
+  const base = Math.max(own.reviewCount ?? 0, OWN_COUNT_FLOOR);
+  const lo = base * 0.5;
+  const hi = base * 4;
+  const maxCount = base * 10;
+  const byDistance = (a: ComparableCandidate, b: ComparableCandidate) =>
+    (a.distanceM ?? Infinity) - (b.distanceM ?? Infinity) ||
+    b.userRatingsTotal - a.userRatingsTotal;
+
+  const nonChain = candidates.filter((c) => !isKnownChain(c.name));
+  const qualifying = nonChain.filter((c) => c.userRatingsTotal <= maxCount);
+  const rest = nonChain.filter((c) => c.userRatingsTotal > maxCount);
+
+  const rank = (c: ComparableCandidate) =>
+    (sharesCategory(own, c) ? 0 : 2) +
+    (c.userRatingsTotal >= lo && c.userRatingsTotal <= hi ? 0 : 1);
+  const picked = qualifying.sort((a, b) => rank(a) - rank(b) || byDistance(a, b));
+  if (picked.length < TOP_COMPARABLE) picked.push(...rest.sort(byDistance));
+  return picked.slice(0, TOP_COMPARABLE).map(({ keywordMatch: _keywordMatch, ...c }) => c);
+}
+
+/**
+ * Onboarding competitor lookup: the usual nearbysearch plus, for a specific
+ * category, one extra search with the category label as keyword (run in
+ * parallel; its failure is ignored). Both share the caller's abort signal.
+ */
+export async function findComparableCompetitors(
+  lat: number,
+  lng: number,
+  excludePlaceId: string,
+  own: ComparableOwn,
+  options: CompetitorFetchOptions = {},
+): Promise<Competitor[]> {
+  const keyword = categoryLabel(own.primaryType);
+  const [general, byCategory] = await Promise.all([
+    getNearbyCompetitors(lat, lng, excludePlaceId, options),
+    keyword === categoryLabel(null)
+      ? Promise.resolve([] as NearbyCompetitor[])
+      : getNearbyCompetitors(lat, lng, excludePlaceId, { ...options, keyword }).catch(
+          () => [] as NearbyCompetitor[],
+        ),
+  ]);
+  const matched = new Set(byCategory.map((c) => c.placeId));
+  const merged = new Map<string, ComparableCandidate>();
+  for (const c of [...general, ...byCategory]) {
+    if (!merged.has(c.placeId)) {
+      merged.set(c.placeId, { ...c, keywordMatch: matched.has(c.placeId) });
+    }
+  }
+  return selectComparableCompetitors(own, [...merged.values()]).map((c) => ({
+    name: c.name,
+    reviewCount: c.userRatingsTotal,
+    rating: c.rating,
+    distanceM: c.distanceM,
+  }));
 }
