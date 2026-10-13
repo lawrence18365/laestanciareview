@@ -1,4 +1,5 @@
 import type { KeywordSummary } from '@/lib/maps-rank';
+import type { Plan } from '@/lib/entitlements';
 import { t } from '@/lib/i18n';
 
 function band(s: KeywordSummary): string {
@@ -14,13 +15,14 @@ function trend(s: KeywordSummary): { arrow: string; label: string } | null {
   return { arrow: '=', label: t.mapsRank.same };
 }
 
-export default function MapsRankCard({ summaries }: { summaries: KeywordSummary[] }) {
+/** `plan` is the viewer's plan; the free-plan lock visual is added on top of this card (M2). */
+export default function MapsRankCard({ summaries, plan }: { summaries: KeywordSummary[]; plan?: Plan }) {
   if (process.env.MAPS_RANK_ENABLED !== 'true' || summaries.length === 0) return null;
 
   const runDate = summaries.map((s) => s.runDate).sort().at(-1) ?? '';
 
   return (
-    <section className="card" style={{ padding: '1.5rem' }}>
+    <section className="card" data-plan={plan} style={{ padding: '1.5rem' }}>
       <h2 style={{ margin: '0 0 1rem 0', fontSize: '1.125rem', fontWeight: 600, color: 'var(--text-main)' }}>
         {t.mapsRank.title}
       </h2>
