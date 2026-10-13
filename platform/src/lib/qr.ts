@@ -17,6 +17,16 @@ export async function generateQrDataUrl(slug: string): Promise<string> {
   });
 }
 
+/** Vector QR for the restaurant's review page: stays sharp at any print size. */
+export async function generateQrSvg(slug: string): Promise<string> {
+  return QRCode.toString(reviewUrlFor(slug), {
+    type: 'svg',
+    errorCorrectionLevel: 'H',
+    margin: 1,
+    color: { dark: '#111111', light: '#FFFFFF' },
+  });
+}
+
 /** Personal scoreboard URL for one staff member, e.g. /m/estancia-leon/K12. */
 export function meseroUrlFor(slug: string, code: string): string {
   const base = (process.env.NEXT_PUBLIC_BASE_URL ?? 'https://app.ratetapmx.com')

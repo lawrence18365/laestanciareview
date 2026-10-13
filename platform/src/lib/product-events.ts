@@ -53,6 +53,11 @@ export const PRODUCT_EVENT_NAMES = [
   // waiter's phone or shared to it (WhatsApp, AirDrop) instead of printed.
   'card_qr_downloaded',
   'card_qr_shared',
+  // The restaurant's own QR (/qr-codes top card + /qr-codes/letrero counter
+  // sign). Printed fires on the browser's beforeprint; the funnel counts these.
+  'restaurant_qr_printed',
+  'restaurant_qr_downloaded',
+  'restaurant_qr_shared',
   // Client-side crashes. Until this existed, a browser exception was recorded
   // NOWHERE: global-error.tsx calls Sentry.captureException, and
   // NEXT_PUBLIC_SENTRY_DSN is set in no environment, so the SDK disables itself

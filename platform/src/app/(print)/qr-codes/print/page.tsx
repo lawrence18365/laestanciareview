@@ -57,7 +57,11 @@ export default async function CardQrPrintPage({
       <div className="qt-bg">
         <div className="qt-sheet">
           {cards.length === 0 ? (
-            <p className="qt-empty">No hay meseros activos.</p>
+            <p className="qt-empty">
+              <a href="/qr-codes/letrero" className="qt-empty-link">
+                Imprimir el letrero del restaurante
+              </a>
+            </p>
           ) : (
             <div className="qt-grid">
               {cards.map((c) => (
@@ -302,6 +306,10 @@ const PRINT_CSS = `
   color: #78716c;
   text-align: center;
   margin: 2rem 0;
+}
+.qt-empty-link {
+  color: #1a1a1a;
+  font-weight: 700;
 }
 
 /* ── Small screens (never applies to print) ───────────────── */
