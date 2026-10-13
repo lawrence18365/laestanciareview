@@ -1,7 +1,7 @@
 /**
  * Google data for a brand-new self-serve restaurant (US-14 T2).
  *
- * One Places v1 details call plus one nearby-competitors search, under a
+ * One Places v1 details call plus one or two nearby-competitor searches, under a
  * single 3 second total budget so signup latency stays bounded. Any failure
  * (no key, HTTP error, timeout, bad payload, competitor search failure)
  * returns all nulls; the caller provisions the restaurant anyway and the
@@ -15,20 +15,21 @@
  *    Without those three booleans it would be Enterprise (about US$20/1,000).
  *  - Nearby Search (legacy, type=restaurant): about US$32 per 1,000 =
  *    US$0.032, plus about US$0.005 for Atmosphere data (rating, review count).
- *  Estimated total per signup: roughly US$0.06-0.07, under the ~US$0.10
- *  design-reopen threshold. Self-serve trials sign up a few per day.
+ *  - A second nearby search filtered by the category label (SQ-214) is the
+ *    same SKU again, only for restaurants with a specific category.
+ *  Estimated total per signup: roughly US$0.09-0.10, at the ~US$0.10
+ *  design-reopen threshold (one extra call at most). Self-serve trials sign up a few per day.
  *
  * Logs a short code only. Never logs the key, the URL (it carries the key) or
  * response bodies.
  */
-import { getNearbyCompetitors, placesApiKey } from '@/lib/competitors';
+import { findComparableCompetitors, placesApiKey } from '@/lib/competitors';
 import type { Competitor, GoogleProfile } from '@/lib/onboarding-profile';
 
 const PLACES_BASE = 'https://places.googleapis.com/v1';
 const FIELD_MASK =
   'rating,userRatingCount,primaryType,types,takeout,delivery,dineIn,location,formattedAddress';
 export const ONBOARDING_BUDGET_MS = 3000;
-const TOP_COMPETITORS = 3;
 
 export type OnboardingGoogleData = {
   /** Stored as text, like restaurants.google_rating. */
@@ -73,25 +74,31 @@ async function load(placeId: string, signal: AbortSignal): Promise<OnboardingGoo
   const lng = place.location?.longitude;
   const hasLocation = typeof lat === 'number' && typeof lng === 'number';
 
+  const primaryType = typeof place.primaryType === 'string' ? place.primaryType : null;
+  const types = Array.isArray(place.types)
+    ? place.types.filter((t): t is string => typeof t === 'string')
+    : [];
+
+  // Comparable local places (same category, similar size, no chains), not the biggest nearby.
   let competitors: Competitor[] = [];
   if (hasLocation) {
-    const nearby = await getNearbyCompetitors(lat, lng, placeId, { signal });
-    competitors = nearby
-      .sort((a, b) => b.userRatingsTotal - a.userRatingsTotal)
-      .slice(0, TOP_COMPETITORS)
-      .map((c) => ({
-        name: c.name,
-        reviewCount: c.userRatingsTotal,
-        rating: c.rating,
-        distanceM: c.distanceM,
-      }));
+    competitors = await findComparableCompetitors(
+      lat,
+      lng,
+      placeId,
+      {
+        reviewCount:
+          typeof place.userRatingCount === 'number' ? Math.round(place.userRatingCount) : null,
+        primaryType,
+        types,
+      },
+      { signal },
+    );
   }
 
   const profile: GoogleProfile = {
-    primaryType: typeof place.primaryType === 'string' ? place.primaryType : null,
-    types: Array.isArray(place.types)
-      ? place.types.filter((t): t is string => typeof t === 'string')
-      : [],
+    primaryType,
+    types,
     takeout: bool(place.takeout),
     delivery: bool(place.delivery),
     dineIn: bool(place.dineIn),

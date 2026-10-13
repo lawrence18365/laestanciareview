@@ -77,14 +77,15 @@ describe('fetchOnboardingGoogleData', () => {
       formattedAddress: 'Calle 1, León, Gto., México',
     });
     expect(typeof out.profile?.fetchedAt).toBe('string');
-    // Excludes self, <10 reviews and unrated; sorted by review count desc; top 3.
+    // Excludes self, <10 reviews and unrated. Comparable selection (SQ-214): A, B, C are within
+    // 0.5x-4x of the own 87 reviews and D (15) is not; closest first, so B (farthest) is last.
     expect(out.profile?.competitors.map((c) => [c.name, c.reviewCount])).toEqual([
-      ['B', 310],
       ['C', 120],
       ['A', 48],
+      ['B', 310],
     ]);
-    expect(out.profile?.competitors[0]).toMatchObject({ rating: 4.5 });
-    expect(out.profile?.competitors[0].distanceM).toBeGreaterThan(400);
+    expect(out.profile?.competitors[2]).toMatchObject({ rating: 4.5 });
+    expect(out.profile?.competitors[2].distanceM).toBeGreaterThan(400);
 
     // Details call: Places v1 GET with the exact field mask and the key in a header, not the URL.
     const [detailsUrl, detailsInit] = fetchMock.mock.calls[0];
