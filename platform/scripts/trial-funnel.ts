@@ -7,10 +7,18 @@
  *   npm run trial:funnel -- --slug tacos-del-centro   one restaurant's timeline
  *
  * Stages per restaurant (each a fact in the DB, nothing inferred):
- *   Google   google_place_id or google_review_url set (guests can be sent to Google)
- *   Meseros  active staff rows
- *   Calif    submitted guest ratings
- *   Pago     latest Mercado Pago subscription status
+ *   Google       google_place_id or google_review_url set (guests can be sent to Google)
+ *   Activada     first guest rating (Primera calificación). This is the activation gate.
+ *   Pago         latest Mercado Pago subscription status
+ * Informational, not gates: Con meseros (active staff rows) and QR descargado/compartido.
+ * The QR count is restaurant-QR events (restaurant_qr_printed|downloaded|shared),
+ * card_qr_downloaded|shared, mesero_qr_generated, and review_page_open with has_card=false.
+ *
+ * Table columns: forma (restaurants.team_mode) and sucursales (restaurants.locations_band).
+ * Both print '-' for NULL, and for every row before migration 0034. The values are read
+ * through to_jsonb(r), so a missing column yields NULL instead of a query error.
+ * "Por forma" and "Por sucursales" split signups, activated, and paying by those values.
+ *
  * Source is the signup's commercial lead UTM (utm_source/utm_content).
  *
  * Two extra views are printed after the raw table:
@@ -72,6 +80,26 @@ function truncate(value: unknown, max: number): string {
 }
 
 type Counts = Record<string, number | string | null>;
+type TrialRow = Record<string, string | number | boolean>;
+
+function isPaying(r: TrialRow): boolean {
+  return r.pago === 'authorized' || r.estado === 'active';
+}
+
+/** Signups, activated (first rating), and paying for each value of one column. */
+function printSplit(rows: TrialRow[], key: 'forma' | 'sucursales', title: string) {
+  const values = [...new Set(rows.map((r) => String(r[key])))].sort();
+  console.log(`\n${title}:`);
+  console.log(`  ${'valor'.padEnd(10)}${'signups'.padStart(9)}${'activadas'.padStart(11)}${'pagando'.padStart(9)}`);
+  for (const value of values) {
+    const group = rows.filter((r) => String(r[key]) === value);
+    const activated = group.filter((r) => Number(r.calif) > 0).length;
+    const paying = group.filter(isPaying).length;
+    console.log(
+      `  ${value.padEnd(10)}${String(group.length).padStart(9)}${String(activated).padStart(11)}${String(paying).padStart(9)}`,
+    );
+  }
+}
 
 async function main() {
   const { neon } = await import('@neondatabase/serverless');
@@ -89,6 +117,8 @@ async function main() {
            to_char(r.created_at at time zone 'America/Mexico_City', 'MM-DD HH24:MI') as creado,
            coalesce(cl.utm_source, '-') as fuente,
            coalesce(cl.utm_content, '-') as anuncio,
+           coalesce(to_jsonb(r)->>'team_mode', '-') as forma,
+           coalesce(to_jsonb(r)->>'locations_band', '-') as sucursales,
            (r.google_place_id is not null or r.google_review_url is not null) as google,
            (select count(*)::int from staff s where s.restaurant_id = r.id and s.active) as meseros,
            (select count(*)::int from reviews v where v.restaurant_id = r.id) as calif,
@@ -110,9 +140,11 @@ async function main() {
   console.log('Funnel:');
   console.log(`  Signups            ${n}`);
   console.log(`  Google conectado   ${count((r) => r.google === true)}`);
-  console.log(`  Con meseros        ${count((r) => Number(r.meseros) > 0)}`);
-  console.log(`  Con calificaciones ${count((r) => Number(r.calif) > 0)}`);
-  console.log(`  Pagando            ${count((r) => r.pago === 'authorized' || r.estado === 'active')}`);
+  console.log(`  Primera calificación ${count((r) => Number(r.calif) > 0)}`);
+  console.log(`  Pagando            ${count(isPaying)}`);
+
+  printSplit(rows, 'forma', 'Por forma (team_mode)');
+  printSplit(rows, 'sucursales', 'Por sucursales (locations_band)');
 
   // --- /contacto funnel, step by step -------------------------------------
   const sessionRows = (await sql`
@@ -147,7 +179,11 @@ async function main() {
     select
       count(distinct pe.restaurant_id) filter (where pe.event_name = 'onboarding_ready_shown')::int as ready,
       count(distinct pe.restaurant_id) filter (
-        where pe.event_name in ('mesero_qr_generated', 'card_qr_downloaded', 'card_qr_shared')
+        where pe.event_name in (
+          'mesero_qr_generated', 'card_qr_downloaded', 'card_qr_shared',
+          'restaurant_qr_printed', 'restaurant_qr_downloaded', 'restaurant_qr_shared'
+        )
+           or (pe.event_name = 'review_page_open' and pe.properties->>'has_card' = 'false')
       )::int as qr
     from product_events pe
     join restaurants r on r.id = pe.restaurant_id
@@ -178,10 +214,10 @@ async function main() {
   step('Cuenta creada', n);
   step('Vieron su cuenta lista', num(restaurantEvents.ready));
   step('Google conectado', count((r) => r.google === true));
-  step('Con meseros', count((r) => Number(r.meseros) > 0));
-  step('QR descargado/compartido', num(restaurantEvents.qr));
-  step('Primera calificacion', count((r) => Number(r.calif) > 0));
+  step('Primera calificación', count((r) => Number(r.calif) > 0));
   step('Pagando', count((r) => r.pago === 'authorized'));
+  console.log(`  Info: con meseros          ${count((r) => Number(r.meseros) > 0)}`);
+  console.log(`  Info: QR descargado/compartido ${num(restaurantEvents.qr)}`);
 
   const totalSessions = num(meta.total);
   const metaSessions = num(meta.meta);
