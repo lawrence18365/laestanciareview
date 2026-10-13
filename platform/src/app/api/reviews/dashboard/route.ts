@@ -5,7 +5,9 @@ import {
   getLeaderboard,
   getWeeklyStats,
   getRecentFeedback,
+  getFeedbackCounts,
 } from '@/lib/queries';
+import { canUse, planFor } from '@/lib/entitlements';
 import { verifySession } from '@/lib/session';
 import { sameGroup } from '@/lib/group-scope';
 
@@ -41,10 +43,14 @@ export async function GET(req: NextRequest) {
     }
   }
 
-  const [leaderboard, weeklyStats, recentFeedback] = await Promise.all([
+  // feedback_text is enforced here, server-side: a plan without it gets counts
+  // and an empty list, and the comment text / guest contact is never selected.
+  const canReadText = canUse(planFor(restaurant), 'feedback_text');
+  const [leaderboard, weeklyStats, recentFeedback, feedbackCounts] = await Promise.all([
     getLeaderboard(restaurant.id),
     getWeeklyStats(restaurant.id),
-    getRecentFeedback(restaurant.id),
+    canReadText ? getRecentFeedback(restaurant.id) : Promise.resolve([]),
+    canReadText ? Promise.resolve(null) : getFeedbackCounts(restaurant.id),
   ]);
 
   return Response.json({
@@ -56,5 +62,6 @@ export async function GET(req: NextRequest) {
     leaderboard,
     weeklyStats,
     recentFeedback,
+    ...(feedbackCounts ? { feedbackLocked: true, feedbackCounts } : {}),
   });
 }

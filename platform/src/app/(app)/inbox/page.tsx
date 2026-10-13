@@ -1,6 +1,8 @@
 import { verifySession } from '@/lib/session';
 import { redirect } from 'next/navigation';
-import { getRestaurantBySlug, getAllFeedback } from '@/lib/queries';
+import Link from 'next/link';
+import { getRestaurantBySlug, getAllFeedback, getFeedbackCounts } from '@/lib/queries';
+import { canUse, planFor } from '@/lib/entitlements';
 import { getComplaintSlaStats } from '@/lib/complaint-sla';
 import { RESOLUTIONS, type Resolution } from '@/lib/review-recovery';
 import FeedbackInbox from '@/components/dashboard/FeedbackInbox';
@@ -29,8 +31,12 @@ export default async function InboxPage({
   const restaurant = await getRestaurantBySlug(session.slug);
   if (!restaurant) redirect('/login');
 
-  const [feedback, complaintStats] = await Promise.all([
-    getAllFeedback(restaurant.id),
+  // Enforced here, on the server: a plan without feedback_text never has the
+  // comment text or guest contact fetched, let alone sent to the browser.
+  const canReadText = canUse(planFor(restaurant), 'feedback_text');
+  const [feedback, feedbackCounts, complaintStats] = await Promise.all([
+    canReadText ? getAllFeedback(restaurant.id) : Promise.resolve([]),
+    canReadText ? Promise.resolve(null) : getFeedbackCounts(restaurant.id),
     getComplaintSlaStats(restaurant.id, new Date()),
   ]);
   const reviewedPercent = percentage(
@@ -115,6 +121,27 @@ export default async function InboxPage({
         </div>
       </section>
 
+      {feedbackCounts ? (
+        <section
+          aria-labelledby="locked-inbox-heading"
+          className="flat-panel"
+          style={{ padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}
+        >
+          <h2
+            id="locked-inbox-heading"
+            style={{ margin: 0, color: 'var(--text-main)', fontFamily: 'var(--font-serif)', fontSize: '1rem', fontWeight: 600 }}
+          >
+            Comentarios bloqueados
+          </h2>
+          <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: '0.85rem' }}>
+            Tienes <span className="font-numeric">{feedbackCounts.total}</span> comentarios
+            (<span className="font-numeric">{feedbackCounts.unread}</span> nuevos). Activa tu plan para leerlos.
+          </p>
+          <Link href="/plan" className="btn btn-primary" style={{ alignSelf: 'flex-start', textDecoration: 'none' }}>
+            Ver el plan
+          </Link>
+        </section>
+      ) : (
       <FeedbackInbox
         focusReviewId={focusReviewId}
         focusSource={focusSource}
@@ -126,6 +153,7 @@ export default async function InboxPage({
           createdAt: f.createdAt.toISOString(),
         }))}
       />
+      )}
     </div>
   );
 }

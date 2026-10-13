@@ -14,8 +14,11 @@ import {
   subscriptionBillingHasStarted,
   verifyMercadoPagoSignature,
   type MercadoPagoAuthorizedPayment,
+  type MercadoPagoPreapproval,
 } from '@/lib/mercadopago';
 import { sendOwnerConversionNotification } from '@/lib/email';
+import { selfServePrice, type BillingCycle } from '@/lib/entitlements';
+import { recordProductEvent } from '@/lib/product-events';
 import { sendPurchaseEvent } from '@/lib/meta-conversions';
 import { parseShippingAddress } from '@/lib/shipping';
 
@@ -211,6 +214,42 @@ async function findSubscriptionByPreapproval(preapprovalId: string) {
   return byPreapproval[0] ?? null;
 }
 
+/**
+ * Billing cycle of a Plan Restaurante subscription, when it can be told: the
+ * preapproval's own frequency (12 months = annual) first, then the charged
+ * amount against the two plan prices. Undefined when neither says.
+ */
+function billingCycleOf(
+  subscription: typeof mercadopagoSubscriptions.$inferSelect,
+  preapproval?: MercadoPagoPreapproval,
+): BillingCycle | undefined {
+  const frequency = (preapproval as { auto_recurring?: { frequency?: number } } | undefined)
+    ?.auto_recurring?.frequency;
+  if (frequency === 12) return 'annual';
+  if (frequency === 1) return 'monthly';
+  const charged = Number(subscription.totalAmount ?? subscription.amount);
+  if (charged === selfServePrice('annual')) return 'annual';
+  if (charged === selfServePrice('monthly')) return 'monthly';
+  return undefined;
+}
+
+/**
+ * Analytics only (US-15): the moment a self-serve restaurant becomes active.
+ * Never throws and never touches the status transition. Group restaurants are
+ * not part of the Plan Restaurante funnel.
+ */
+async function recordPlanActivated(
+  restaurant: typeof restaurants.$inferSelect,
+  cycle: BillingCycle | undefined,
+) {
+  if (restaurant.groupKey !== null) return;
+  await recordProductEvent({
+    name: 'plan_activated',
+    restaurantId: restaurant.id,
+    properties: cycle ? { cycle } : {},
+  });
+}
+
 async function handlePreapproval(dataId: string) {
   if (!dataId) {
     console.warn('[mercadopago-webhook] subscription_preapproval without data.id');
@@ -272,6 +311,10 @@ async function handlePreapproval(dataId: string) {
     .update(restaurants)
     .set({ subscriptionStatus: mapped, billingProvider: 'mercadopago' })
     .where(eq(restaurants.id, restaurant.id));
+
+  if (mapped === 'active') {
+    await recordPlanActivated(restaurant, billingCycleOf(subscription, preapproval));
+  }
 }
 
 async function handleAuthorizedPayment(dataId: string) {
@@ -359,6 +402,10 @@ async function handleAuthorizedPayment(dataId: string) {
     .update(restaurants)
     .set({ subscriptionStatus: newStatus, billingProvider: 'mercadopago' })
     .where(eq(restaurants.id, restaurant.id));
+
+  if (newStatus === 'active') {
+    await recordPlanActivated(restaurant, billingCycleOf(subscription));
+  }
 }
 
 /**

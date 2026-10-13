@@ -10,6 +10,12 @@
  * (self-serve and founder pilot) → ending warning three days before
  * trialEndsAt, linking to the Mercado Pago activation in Settings.
  *
+ * Plan Restaurante (US-15), self-serve only (group_key NULL): day 25 of a
+ * non-pilot trial ("Tu prueba termina el …", progress numbers, price) and, once
+ * the trial lapsed onto the free plan, a counts-only teaser 3 and 10 days after
+ * it ended. All link to /plan, email-first, and each email records an
+ * upgrade_prompt_shown event (email_day25 / email_free_d3 / email_free_d10).
+ *
  * Each channel is tracked on its own (`day3:email`, `day3:whatsapp`) so a
  * failed WhatsApp never makes the email send again. A plain `day3` row from
  * before this split counts as both channels sent.
@@ -20,10 +26,12 @@
 import { NextRequest } from 'next/server';
 import { db } from '@/db';
 import { restaurants, nurtureEvents, staff, reviews, googleRatingSnapshots } from '@/db/schema';
-import { eq, and, count, desc } from 'drizzle-orm';
+import { eq, ne, and, count, desc, isNotNull } from 'drizzle-orm';
 import { FROM, sendMail } from '@/lib/mailer';
 import { reviewGoal } from '@/lib/onboarding-profile';
 import { getPriceBreakdown } from '@/lib/mercadopago';
+import { planFor, selfServePrice, usesPlanRestaurantePrice } from '@/lib/entitlements';
+import { recordProductEvent } from '@/lib/product-events';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -83,6 +91,12 @@ type Ctx = {
   // Tailored modes only; null = unknown, and the number is then omitted.
   sentToGoogle: number | null;
   googleCount: number | null;
+  // Plan Restaurante messages only (day25, free_d3, free_d10).
+  endsOn: string | null;
+  commentCount: number;
+  // Billed at the Plan Restaurante price (self-serve, 1 location); others keep
+  // the global monthly price.
+  restaurantePrice: boolean;
 };
 
 const BUTTON = 'background:#10B981;color:#fff;padding:12px 24px;text-decoration:none;font-weight:700;display:inline-block;border-radius:6px';
@@ -166,8 +180,56 @@ function soloDay1Html(c: Ctx): string {
   return `<p>Hola ${c.name},</p><p>Para tu primera reseña:</p><ol>${items.join('')}</ol>`;
 }
 
+// ── Plan Restaurante (US-15): trial ending (day25) and the free plan ───────
+// Counts only, never a guest's name, contact or comment. Each message is
+// 60 words or fewer and links to /plan.
+
+/** "Plan Restaurante desde MX$299/mes" for 1-location self-serve; the global price otherwise. */
+function planPriceLine(c: Ctx): string {
+  return c.restaurantePrice
+    ? `Plan Restaurante desde MX$${selfServePrice('monthly')}/mes`
+    : `Tu plan: ${monthlyPrice()}`;
+}
+
+const CANCEL_NOTE = 'Cancela cuando quieras.';
+
+/** "Llevas 12 calificaciones; 48 reseñas en Google." The Google part is omitted when unknown. */
+function endingProgress(c: Ctx): string {
+  const n = c.ratingCount;
+  const base = `Llevas ${fmt(n)} ${n === 1 ? 'calificación' : 'calificaciones'}`;
+  if (c.googleCount === null) return `${base}.`;
+  const g = c.googleCount;
+  return `${base}; ${fmt(g)} ${g === 1 ? 'reseña' : 'reseñas'} en Google.`;
+}
+
+/** Free-plan teaser counts. The comment count is a number only, never text. */
+function freeCounts(c: Ctx): string {
+  const n = c.ratingCount;
+  const k = c.commentCount;
+  return `Hasta hoy: ${fmt(n)} ${n === 1 ? 'calificación' : 'calificaciones'}, ${fmt(c.sentToGoogle ?? 0)} a Google, ${fmt(k)} ${k === 1 ? 'comentario' : 'comentarios'}.`;
+}
+
+function day25Text(c: Ctx): string {
+  return `${endingProgress(c)} Tu prueba termina el ${c.endsOn}. ${planPriceLine(c)}. ${CANCEL_NOTE}`;
+}
+
+function freeText(c: Ctx, lead: string): string {
+  return `${lead} ${freeCounts(c)} Los comentarios están bloqueados. Activa tu plan para leerlos. ${planPriceLine(c)}. ${CANCEL_NOTE}`;
+}
+
+const planHtml = (c: Ctx, text: string) =>
+  `<p>Hola ${c.name},</p><p>${text}</p><p><a href="${BASE_URL}/plan" style="${BUTTON}">Ver el plan →</a></p>`;
+const planWhatsApp = (c: Ctx, text: string) => `*${c.name}*, ${text}\nVer el plan: ${BASE_URL}/plan`;
+
+const FREE_D3_LEAD = 'Tu prueba terminó, pero tu QR sigue funcionando.';
+const FREE_D10_LEAD = 'Tu QR sigue funcionando en el plan gratis.';
+
 const NURTURE: Record<string, {
   days: number;
+  // 'free' = post-trial teaser for a self-serve restaurant on the free plan.
+  audience?: 'free';
+  // product_events placement for the upgrade_prompt_shown row written after the email.
+  placement?: string;
   // Content gate beyond the signup age (e.g. day1 only when something is missing).
   applies?: (c: Ctx) => boolean;
   whatsapp: (c: Ctx) => string;
@@ -256,6 +318,15 @@ const NURTURE: Record<string, {
         ? `<p>Hola ${c.name},</p><p>Llevas 7 días con RateTap. Grupo La Estancia (12 restaurantes en México) ha visto cómo sus reseñas de Google crecen consistentemente desde que usan el sistema.</p><p>Tus reseñas nuevas ya están llegando.</p><p><a href="${BASE_URL}/dashboard">Ver mi progreso →</a></p>`
         : `<p>Hola ${c.name},</p><p>Llevas 7 días con RateTap. Los restaurantes que piden la reseña en cada mesa reciben más reseñas.</p><p>Tus reseñas nuevas ya están llegando.</p><p><a href="${BASE_URL}/dashboard">Ver mi progreso →</a></p>`,
   },
+  // Self-serve, non-pilot trials only (eligibility is in GET). Progress numbers
+  // and the Plan Restaurante price, linking to /plan.
+  day25: {
+    days: 25,
+    placement: 'email_day25',
+    whatsapp: (c) => planWhatsApp(c, day25Text(c)),
+    subject: (c) => `Tu prueba termina el ${c.endsOn}: ${c.name}`,
+    html: (c) => planHtml(c, day25Text(c)),
+  },
   day12: {
     days: 12,
     whatsapp: (c) => c.pilot
@@ -266,7 +337,38 @@ const NURTURE: Record<string, {
       ? `<p>Hola ${c.name},</p><p>Tu piloto fundador de RateTap termina en <strong>3 días</strong>.</p><p>Si decides continuar, el plan cuesta ${monthlyPrice()}.</p><p><a href="${BASE_URL}/settings" style="${BUTTON}">Continuar con RateTap →</a></p><p style="color:#6b7280;font-size:13px">Sin contrato. Cancela cuando quieras.</p>`
       : `<p>Hola ${c.name},</p><p>Tu prueba gratis de RateTap termina en <strong>3 días</strong>.</p><p>Para que tus reseñas de Google sigan llegando sin interrupciones, activa tu plan (${monthlyPrice()}).</p><p><a href="${BASE_URL}/settings" style="${BUTTON}">Activar mi plan →</a></p><p style="color:#6b7280;font-size:13px">Sin contrato. Cancela cuando quieras.</p>`,
   },
+  // Post-trial, free plan (group_key NULL): 3 and 10 days after the trial ended.
+  free_d3: {
+    days: 3,
+    audience: 'free',
+    placement: 'email_free_d3',
+    whatsapp: (c) => planWhatsApp(c, freeText(c, FREE_D3_LEAD)),
+    subject: (c) => `Tu QR sigue activo: ${c.name}`,
+    html: (c) => planHtml(c, freeText(c, FREE_D3_LEAD)),
+  },
+  free_d10: {
+    days: 10,
+    audience: 'free',
+    placement: 'email_free_d10',
+    whatsapp: (c) => planWhatsApp(c, freeText(c, FREE_D10_LEAD)),
+    subject: (c) => `Tu plan gratis en RateTap: ${c.name}`,
+    html: (c) => planHtml(c, freeText(c, FREE_D10_LEAD)),
+  },
 };
+
+/** Only send a post-trial message inside a window, so a long-lapsed restaurant is never backfilled. */
+const FREE_WINDOW_DAYS = 7;
+
+/** "5 de noviembre", in Mexico City time. */
+function mxDate(d: Date): string {
+  return d.toLocaleDateString('es-MX', { day: 'numeric', month: 'long', timeZone: 'America/Mexico_City' });
+}
+
+async function countComments(restaurantId: number): Promise<number> {
+  const [row] = await db.select({ n: count() }).from(reviews)
+    .where(and(eq(reviews.restaurantId, restaurantId), isNotNull(reviews.feedback)));
+  return row?.n ?? 0;
+}
 
 async function countActiveStaff(restaurantId: number): Promise<number> {
   const [row] = await db.select({ n: count() }).from(staff)
@@ -335,12 +437,17 @@ export async function GET(req: NextRequest) {
     return Response.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const trialing = await db.select().from(restaurants)
-    .where(eq(restaurants.subscriptionStatus, 'trialing'));
+  // Trials, plus lapsed self-serve restaurants (the free plan, US-15). Paying
+  // restaurants are excluded in SQL; anything else is sorted out by planFor().
+  const candidates = await db.select().from(restaurants)
+    .where(ne(restaurants.subscriptionStatus, 'active'));
 
   let processed = 0;
 
-  for (const r of trialing) {
+  for (const r of candidates) {
+    const plan = planFor(r);
+    if (plan !== 'trial' && plan !== 'free') continue;
+    const isFreePlan = plan === 'free';
     if (!r.createdAt) continue;
     const daysSinceSignup = Math.floor((Date.now() - r.createdAt.getTime()) / 86_400_000);
     const daysUntilTrialEnd = r.trialEndsAt
@@ -379,15 +486,52 @@ export async function GET(req: NextRequest) {
         hasGoogle: Boolean(r.googlePlaceId || r.googleReviewUrl),
         sentToGoogle,
         googleCount,
+        endsOn: r.trialEndsAt ? mxDate(r.trialEndsAt) : null,
+        commentCount: 0,
+        restaurantePrice: usesPlanRestaurantePrice(r),
       };
     };
 
+    // Plan Restaurante messages quote real numbers whatever the team mode, so
+    // they fill what the tailored path only fetches for some modes.
+    let planCtx: Ctx | null = null;
+    const getPlanCtx = async (): Promise<Ctx> => {
+      if (planCtx) return planCtx;
+      const base = await getCtx();
+      const sentToGoogle = await countSentToGoogle(r.id);
+      const googleCount = (await latestGoogleCount(r.id)) ?? r.googleReviewCount ?? null;
+      const commentCount = await countComments(r.id);
+      return planCtx = { ...base, sentToGoogle, googleCount, commentCount };
+    };
+
+    // Day 12 is the ending warning for shorter trials; a restaurant that already
+    // got the day 25 note is not warned twice.
+    let endingNoted = [...sent].some((e) => e.startsWith('day25'));
+
     for (const [eventKey, nurture] of Object.entries(NURTURE)) {
-      // The ending warning keys off trialEndsAt only: without an end date (or
-      // once it has passed) "termina en 3 días" would be false.
-      const eligible = eventKey === 'day12'
-        ? daysUntilTrialEnd !== null && daysUntilTrialEnd > 0 && daysUntilTrialEnd <= 3
-        : daysSinceSignup >= nurture.days;
+      let eligible: boolean;
+      if (nurture.audience === 'free') {
+        // Post-trial: only on the free plan, N days after the trial ended, and
+        // only inside a week-long window so a long-lapsed restaurant is not backfilled.
+        const sinceEnd = r.trialEndsAt
+          ? Math.floor((Date.now() - r.trialEndsAt.getTime()) / 86_400_000)
+          : -1;
+        eligible = isFreePlan && sinceEnd >= nurture.days && sinceEnd < nurture.days + FREE_WINDOW_DAYS;
+      } else if (isFreePlan) {
+        eligible = false;
+      } else if (eventKey === 'day12') {
+        // The ending warning keys off trialEndsAt only: without an end date (or
+        // once it has passed) "termina en 3 días" would be false.
+        eligible = !endingNoted
+          && daysUntilTrialEnd !== null && daysUntilTrialEnd > 0 && daysUntilTrialEnd <= 3;
+      } else if (eventKey === 'day25') {
+        // Self-serve trials only (Grupo and founder pilots keep today's flow).
+        eligible = r.groupKey === null && !r.pilot
+          && daysSinceSignup >= nurture.days
+          && daysUntilTrialEnd !== null && daysUntilTrialEnd > 0;
+      } else {
+        eligible = daysSinceSignup >= nurture.days;
+      }
       if (!eligible) continue;
 
       // A plain `${eventKey}` row (pre channel split) means both channels sent.
@@ -396,14 +540,14 @@ export async function GET(req: NextRequest) {
       const needWhatsApp = hasWhatsApp && !legacySent && !sent.has(`${eventKey}:whatsapp`);
       if (!needEmail && !needWhatsApp) continue;
 
-      const c = await getCtx();
+      const c = nurture.placement ? await getPlanCtx() : await getCtx();
       if (nurture.applies && !nurture.applies(c)) continue;
 
       let delivered = false;
 
       if (needEmail && r.managerEmail) {
         const to = r.managerEmail;
-        delivered = await deliver(r.id, `${eventKey}:email`, r.name, async () => {
+        const emailed = await deliver(r.id, `${eventKey}:email`, r.name, async () => {
           const result = await sendMail({
             from: FROM,
             to,
@@ -413,7 +557,16 @@ export async function GET(req: NextRequest) {
           if (!result.success) {
             throw new Error(result.error?.message ?? 'SMTP send skipped');
           }
-        }) || delivered;
+        });
+        delivered = emailed || delivered;
+        if (emailed && nurture.placement) {
+          await recordProductEvent({
+            name: 'upgrade_prompt_shown',
+            restaurantId: r.id,
+            path: '/plan',
+            properties: { placement: nurture.placement, plan },
+          });
+        }
       }
       if (needWhatsApp && r.managerPhone) {
         const to = r.managerPhone;
@@ -423,6 +576,7 @@ export async function GET(req: NextRequest) {
       }
 
       if (delivered) {
+        if (eventKey === 'day25') endingNoted = true;
         processed++;
         console.log(`[trial-nurture] ${eventKey} → ${r.name}`);
       }

@@ -429,6 +429,27 @@ export async function getRecentFeedback(
     .limit(limit);
 }
 
+/**
+ * Counts only: the free-plan view of the inbox. Deliberately selects no
+ * comment text, guest name or guest contact, so a plan that cannot use
+ * `feedback_text` has nothing to leak.
+ */
+export async function getFeedbackCounts(restaurantId: number) {
+  const rows = await db
+    .select({
+      total: countSql`count(*)`,
+      unread: countSql`count(*) filter (where ${reviews.status} = 'new')`,
+    })
+    .from(reviews)
+    .where(
+      and(
+        eq(reviews.restaurantId, restaurantId),
+        sql`${reviews.feedback} is not null`,
+      ),
+    );
+  return rows[0] ?? { total: 0, unread: 0 };
+}
+
 /** Get all staff for a restaurant. */
 export async function getStaffList(restaurantId: number) {
   return db

@@ -100,6 +100,9 @@ function restaurant(over: Record<string, unknown> = {}) {
     googleReviewCount: null,
     createdAt: new Date(Date.now() - 1.5 * DAY),
     trialEndsAt: new Date(Date.now() + 20 * DAY),
+    subscriptionStatus: 'trialing',
+    groupKey: null,
+    locationsBand: null,
     ...over,
   };
 }
