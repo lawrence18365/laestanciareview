@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation';
 import { getRestaurantBySlug, getLatestMercadopagoSubscription } from '@/lib/queries';
 import { getBrandForRestaurant } from '@/lib/brands';
 import { isSolo } from '@/lib/onboarding-profile';
+import { selfServePrice, usesPlanRestaurantePrice } from '@/lib/entitlements';
 import SettingsView from '@/components/dashboard/SettingsView';
 import {
   computeBillingStartDate,
@@ -57,6 +58,11 @@ export default async function SettingsPage() {
           processingCharge: priceBreakdown.processingCharge,
           total: priceBreakdown.total,
         },
+        // Self-serve single-location restaurants pay Plan Restaurante prices;
+        // everyone else (Grupo, 2+ locations) keeps priceBreakdown above.
+        planRestaurante: usesPlanRestaurantePrice(restaurant)
+          ? { monthly: selfServePrice('monthly'), annual: selfServePrice('annual') }
+          : null,
       }}
     />
   );

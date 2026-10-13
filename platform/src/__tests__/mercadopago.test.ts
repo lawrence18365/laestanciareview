@@ -202,6 +202,38 @@ describe('Mercado Pago deferred pricing', () => {
     expect(breakdown.tax).toBe(0);
   });
 
+  it('sends frequency 12 months for an annual preapproval and 1 by default', async () => {
+    const fetchMock = vi.fn().mockImplementation(
+      async () =>
+        new Response(
+          JSON.stringify({ id: 'pre-1', init_point: 'https://mp.test/pre-1', status: 'pending' }),
+          { status: 200, headers: { 'content-type': 'application/json' } },
+        ),
+    );
+    vi.stubGlobal('fetch', fetchMock);
+    const base = {
+      reason: 'RateTap Pro',
+      externalReference: '77',
+      payerEmail: 'gm@example.com',
+      amount: 2490,
+      backUrl: 'https://app.ratetapmx.com/settings',
+    };
+
+    await createPreapproval({ ...base, frequency: 12 });
+    await createPreapproval({ ...base, amount: 299 });
+
+    const bodyOf = (i: number) =>
+      JSON.parse(String((fetchMock.mock.calls[i]?.[1] as RequestInit).body)) as {
+        auto_recurring: { frequency: number; frequency_type: string; transaction_amount: number };
+      };
+    expect(bodyOf(0).auto_recurring).toMatchObject({
+      frequency: 12,
+      frequency_type: 'months',
+      transaction_amount: 2490,
+    });
+    expect(bodyOf(1).auto_recurring).toMatchObject({ frequency: 1, frequency_type: 'months' });
+  });
+
   it('includes auto_recurring.start_date for a future first charge', async () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2026-08-21T12:00:00.000Z'));

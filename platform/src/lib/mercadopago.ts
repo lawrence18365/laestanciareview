@@ -38,8 +38,16 @@ export function getPriceBreakdown(): {
   tax: number;
   total: number;
 } {
+  // `total` is what Mercado Pago charges. When MERCADOPAGO_MONTHLY_AMOUNT_MXN
+  // overrides it, the base is derived from it so the lines always sum to the
+  // total. With the override unset this equals MERCADOPAGO_BASE_AMOUNT_MXN.
   return {
-    base: MERCADOPAGO_BASE_AMOUNT_MXN,
+    base: Math.max(
+      0,
+      MERCADOPAGO_MONTHLY_AMOUNT_MXN -
+        MERCADOPAGO_PROCESSING_CHARGE_MXN -
+        MERCADOPAGO_TAX_AMOUNT_MXN,
+    ),
     processingCharge: MERCADOPAGO_PROCESSING_CHARGE_MXN,
     tax: MERCADOPAGO_TAX_AMOUNT_MXN,
     total: MERCADOPAGO_MONTHLY_AMOUNT_MXN,
@@ -188,6 +196,8 @@ export async function createPreapproval(params: {
   amount: number;
   backUrl: string;
   startDate?: Date;
+  /** Billing period in months: 1 (monthly, default) or 12 (annual). */
+  frequency?: 1 | 12;
 }): Promise<{ id: string; init_point: string; status: string }> {
   const autoRecurring: {
     frequency: number;
@@ -196,7 +206,7 @@ export async function createPreapproval(params: {
     currency_id: string;
     start_date?: string;
   } = {
-    frequency: 1,
+    frequency: params.frequency ?? 1,
     frequency_type: 'months',
     transaction_amount: params.amount,
     currency_id: 'MXN',

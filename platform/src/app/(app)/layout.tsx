@@ -7,6 +7,7 @@ import { t } from '@/lib/i18n';
 import { getKnownGroupKey } from '@/lib/group-device';
 import GroupDeviceMarker from '@/app/login/GroupDeviceMarker';
 import { isSolo } from '@/lib/onboarding-profile';
+import { planFor } from '@/lib/entitlements';
 import DashboardShell from '@/components/dashboard/DashboardShell';
 import SubscriptionBlocked from '@/components/dashboard/SubscriptionBlocked';
 
@@ -21,13 +22,12 @@ export default async function AppLayout({
   const restaurant = await getRestaurantBySlug(session.slug);
   if (!restaurant) redirect('/login');
 
-  // Subscription gate: allow-list, not deny-list. Anything other than `active`
-  // (paying / manual customer) or `trialing` (in-trial Stripe sub) hits the
-  // block screen — including paused, unpaid, incomplete, or any status Stripe
-  // adds in the future. Manual customers have status='active' with no Stripe
-  // subscription and pass through fine.
-  const allowedStatuses = new Set(['active', 'trialing']);
-  if (!allowedStatuses.has(restaurant.subscriptionStatus)) {
+  // Subscription gate, via planFor(). Group restaurants keep the allow-list:
+  // anything other than `active` (paying / manual customer) or `trialing`
+  // (in-trial Mercado Pago or Stripe sub) is blocked, including paused,
+  // unpaid, incomplete, or any status a provider adds later. Self-serve
+  // restaurants are never blocked: a lapsed trial enters the app on the free plan.
+  if (planFor(restaurant) === 'blocked') {
     return (
       <SubscriptionBlocked
         status={restaurant.subscriptionStatus}

@@ -17,7 +17,13 @@ import {
   legacyBillingStartDate,
 } from '@/lib/mercadopago';
 
+import { z } from 'zod';
+import { recordProductEvent } from '@/lib/product-events';
+import { selfServePrice, usesPlanRestaurantePrice, type BillingCycle } from '@/lib/entitlements';
+
 export const dynamic = 'force-dynamic';
+
+const bodySchema = z.object({ cycle: z.enum(['monthly', 'annual']).optional() });
 
 /**
  * Whether the restaurant has ANY mercadopago_subscriptions row, cancelled ones
@@ -62,8 +68,24 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  // Optional body: { cycle?: 'monthly' | 'annual' }. A missing/empty body is
+  // the legacy request and means monthly.
+  const rawBody: unknown = await req.json().catch(() => ({}));
+  const parsedBody = bodySchema.safeParse(rawBody ?? {});
+  if (!parsedBody.success) {
+    return Response.json({ error: 'Ciclo de pago no válido' }, { status: 400 });
+  }
+  const cycle: BillingCycle = parsedBody.data.cycle ?? 'monthly';
+
   const baseUrl = getMercadoPagoBaseUrl();
-  const breakdown = getPriceBreakdown();
+  // Plan Restaurante price for self-serve single-location restaurants; every
+  // other restaurant (Grupo, 2+ locations) ignores `cycle` and keeps the
+  // global monthly path unchanged.
+  const planRestaurante = usesPlanRestaurantePrice(restaurant);
+  const frequency: 1 | 12 = planRestaurante && cycle === 'annual' ? 12 : 1;
+  const breakdown = planRestaurante
+    ? { base: selfServePrice(cycle), processingCharge: 0, tax: 0, total: selfServePrice(cycle) }
+    : getPriceBreakdown();
 
   try {
     // One active row per restaurant: reuse/update a non-cancelled row if one
@@ -163,6 +185,7 @@ export async function POST(req: NextRequest) {
       amount: breakdown.total,
       backUrl: `${baseUrl}/settings?billing=mercadopago`,
       startDate: billingStartsAt,
+      frequency,
     });
 
     if (existing[0]) {
@@ -235,6 +258,14 @@ export async function POST(req: NextRequest) {
       .update(restaurants)
       .set({ billingProvider: 'mercadopago' })
       .where(eq(restaurants.id, restaurant.id));
+
+    void recordProductEvent({
+      name: 'checkout_started',
+      restaurantId: restaurant.id,
+      role: session.role,
+      path: '/api/billing/mercadopago/subscribe',
+      properties: { cycle: frequency === 12 ? 'annual' : 'monthly', amount: breakdown.total },
+    });
 
     // Never grant access here — the webhook is the source of truth.
     return Response.json({ url: preapproval.init_point });
