@@ -49,6 +49,12 @@ export const restaurants = pgTable('restaurants', {
   isOwner: boolean('is_owner').notNull().default(false),
   isRegional: boolean('is_regional').notNull().default(false),
   region: text('region'),
+  // Restaurant group this account belongs to ('grupo-estancia'). Every
+  // owner/regional view, digest and escalation is scoped to the viewer's
+  // group_key. NULL = its own island: never in any group view, and an
+  // owner/regional account with NULL sees nothing. NULL never matches NULL.
+  // Self-serve signups leave it NULL (see lib/signup-provisioning.ts).
+  groupKey: text('group_key'),
   // Brand slug ('estancia', 'harbors', etc.). Mirrors the in-memory lookup
   // in lib/brands.ts. Scopes guest-capture dedup and the agency-tier view.
   // Nullable on owner/regional rows since those aren't single-brand.
@@ -82,7 +88,9 @@ export const restaurants = pgTable('restaurants', {
   createdAt: timestamp('created_at', { withTimezone: true })
     .notNull()
     .defaultNow(),
-});
+}, (t) => [
+  index('restaurants_group_key_idx').on(t.groupKey),
+]);
 
 export const passwordResetTokens = pgTable(
   'password_reset_tokens',

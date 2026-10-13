@@ -15,6 +15,7 @@ import {
 import { startOfWeek } from 'date-fns';
 import { startOfWeekMexico, startOfTodayMexico } from '@/lib/mexico-tz';
 import { POSITIVE_RATING_MIN } from '@/lib/feedback';
+import { groupLocationConditions } from '@/lib/group-scope';
 
 /** Helper: raw SQL count that returns a JS number (Postgres bigint → string otherwise). */
 const countSql = (strings: TemplateStringsArray, ...values: unknown[]) =>
@@ -50,6 +51,20 @@ export async function getRestaurantBySlug(slug: string) {
     .where(eq(restaurants.slug, slug))
     .limit(1);
   return rows[0] ?? null;
+}
+
+/**
+ * The group_key of an account (null when it has none or does not exist). The
+ * owner/regional views resolve the viewer's group from this and pass it to the
+ * scoped queries below; a null key means those queries return nothing.
+ */
+export async function getGroupKeyBySlug(slug: string): Promise<string | null> {
+  const rows = await db
+    .select({ groupKey: restaurants.groupKey })
+    .from(restaurants)
+    .where(eq(restaurants.slug, slug))
+    .limit(1);
+  return rows[0]?.groupKey ?? null;
 }
 
 /**
@@ -431,14 +446,11 @@ export async function getNewFeedbackCount(restaurantId: number) {
   return rows[0]?.count ?? 0;
 }
 
-/** Overview stats for restaurants (weekly). Optionally filter by region. */
-export async function getOverviewStats(region?: string) {
+/** Overview stats for the viewer's group (weekly). Optionally filter by region. */
+export async function getOverviewStats(groupKey: string | null | undefined, region?: string) {
   const monday = startOfWeekMexico();
 
-  const conditions = [
-    eq(restaurants.isOwner, false),
-    eq(restaurants.isRegional, false),
-  ];
+  const conditions = groupLocationConditions(groupKey);
   if (region) {
     conditions.push(eq(restaurants.region, region));
   }
@@ -791,15 +803,14 @@ export async function getMonthlyStats(restaurantId: number, months = 12, thresho
 }
 
 /** Weekly history: review counts grouped by week for the last N weeks. Optionally filter by region. */
-export async function getWeeklyHistory(region?: string, weeks = 12) {
+export async function getWeeklyHistory(groupKey: string | null | undefined, region?: string, weeks = 12) {
   const since = new Date();
   since.setDate(since.getDate() - weeks * 7);
   // Snap to Monday of that week
   const sinceMonday = startOfWeek(since, { weekStartsOn: 1 });
 
   const conditions = [
-    eq(restaurants.isOwner, false),
-    eq(restaurants.isRegional, false),
+    ...groupLocationConditions(groupKey),
     gte(reviews.createdAt, sinceMonday),
   ];
   if (region) {
@@ -824,10 +835,13 @@ export async function getWeeklyHistory(region?: string, weeks = 12) {
 }
 
 /** Total review count before a given date, for cumulative baseline. Optionally filter by region. */
-export async function getTotalReviewsBefore(before: Date, region?: string) {
+export async function getTotalReviewsBefore(
+  before: Date,
+  groupKey: string | null | undefined,
+  region?: string,
+) {
   const conditions = [
-    eq(restaurants.isOwner, false),
-    eq(restaurants.isRegional, false),
+    ...groupLocationConditions(groupKey),
     sql`${reviews.createdAt} < ${before}`,
   ];
   if (region) {
@@ -844,14 +858,13 @@ export async function getTotalReviewsBefore(before: Date, region?: string) {
 }
 
 /** Weekly history per restaurant: review counts grouped by (restaurant, week). Optionally filter by region. */
-export async function getWeeklyHistoryByRestaurant(region?: string, weeks = 12) {
+export async function getWeeklyHistoryByRestaurant(groupKey: string | null | undefined, region?: string, weeks = 12) {
   const since = new Date();
   since.setDate(since.getDate() - weeks * 7);
   const sinceMonday = startOfWeek(since, { weekStartsOn: 1 });
 
   const conditions = [
-    eq(restaurants.isOwner, false),
-    eq(restaurants.isRegional, false),
+    ...groupLocationConditions(groupKey),
     gte(reviews.createdAt, sinceMonday),
   ];
   if (region) {
@@ -879,10 +892,9 @@ export async function getWeeklyHistoryByRestaurant(region?: string, weeks = 12) 
 }
 
 /** All intercepted reviews across restaurants (for owner/regional drilldown). */
-export async function getInterceptedReviews(region?: string, limit = 1000) {
+export async function getInterceptedReviews(groupKey: string | null | undefined, region?: string, limit = 1000) {
   const conditions = [
-    eq(restaurants.isOwner, false),
-    eq(restaurants.isRegional, false),
+    ...groupLocationConditions(groupKey),
     sql`${reviews.sentToGoogle} = false`,
     sql`${reviews.rating} < ${restaurants.googleThreshold}`,
   ];

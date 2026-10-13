@@ -61,11 +61,13 @@ function locationDayRows(
   name: string,
   region: string,
   counts: Record<string, number>,
+  groupKey: string | null = 'grupo-estancia',
 ) {
   return Object.entries(counts).map(([reviewDate, reviewCount]) => ({
     restaurantId,
     name,
     region,
+    groupKey,
     reviewDate,
     reviewCount,
   }));
@@ -94,6 +96,7 @@ describe('baseline anomaly detection', () => {
       restaurantId: 3,
       name: 'Centro',
       region: 'centro',
+      groupKey: 'grupo-estancia',
       expected3d: 8.4,
       actual3d: 2,
       dropPct: 0.761,
@@ -258,11 +261,11 @@ describe('baseline anomaly detection', () => {
       [],
     );
     mocks.getOwnerAccounts.mockResolvedValue([
-      { id: 90, isOwner: true, isRegional: false, region: null },
+      { id: 90, isOwner: true, isRegional: false, region: null, groupKey: 'grupo-estancia' },
     ]);
     mocks.getRegionalAccounts.mockResolvedValue([
-      { id: 91, isOwner: false, isRegional: true, region: 'centro' },
-      { id: 92, isOwner: false, isRegional: true, region: 'norte' },
+      { id: 91, isOwner: false, isRegional: true, region: 'centro', groupKey: 'grupo-estancia' },
+      { id: 92, isOwner: false, isRegional: true, region: 'norte', groupKey: 'grupo-estancia' },
     ]);
     mocks.sendPushToRestaurant.mockResolvedValue({ targeted: 2, sent: 1, failed: 1 });
 
@@ -286,6 +289,36 @@ describe('baseline anomaly detection', () => {
       expect.objectContaining({ url: '/overview' }),
       { kind: 'location_anomaly', subjectType: 'restaurant', subjectId: 2 },
     );
+  });
+
+  it('alerts only the trial itself, never an owner or regional account, for a NULL-group location', async () => {
+    mocks.selectRows.push(
+      [
+        ...locationDayRows(98, 'Cocteles Chelita', 'centro', {
+          '2026-08-04': 3, '2026-08-05': 3, '2026-08-06': 3,
+          '2026-08-11': 3, '2026-08-12': 3, '2026-08-13': 3,
+          '2026-08-18': 3, '2026-08-19': 3, '2026-08-20': 3,
+          '2026-08-25': 3, '2026-08-26': 3, '2026-08-27': 3,
+          '2026-09-01': 1, '2026-09-02': 1,
+        }, null),
+      ],
+      [],
+    );
+    mocks.getOwnerAccounts.mockResolvedValue([
+      { id: 90, isOwner: true, isRegional: false, region: null, groupKey: 'grupo-estancia' },
+      // A NULL-group owner must not match the NULL-group trial either.
+      { id: 93, isOwner: true, isRegional: false, region: null, groupKey: null },
+    ]);
+    mocks.getRegionalAccounts.mockResolvedValue([
+      { id: 91, isOwner: false, isRegional: true, region: 'centro', groupKey: 'grupo-estancia' },
+      { id: 94, isOwner: false, isRegional: true, region: 'centro', groupKey: null },
+    ]);
+    mocks.sendPushToRestaurant.mockResolvedValue({ targeted: 1, sent: 1, failed: 0 });
+
+    const result = await runDailyLocationAnomalyCheck(now);
+
+    expect(result.anomalies).toHaveLength(1);
+    expect(mocks.sendPushToRestaurant.mock.calls.map((call) => call[0])).toEqual([98]);
   });
 
   it('contains none of the retired phrases in source files', () => {

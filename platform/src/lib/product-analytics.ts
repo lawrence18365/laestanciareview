@@ -15,6 +15,7 @@ import {
   pushSubscriptions,
 } from '@/db/schema';
 import { and, asc, eq, gte, inArray, isNotNull, isNull, sql } from 'drizzle-orm';
+import { accountInGroup, groupLocationConditions, inGroup } from '@/lib/group-scope';
 import {
   startOfTodayMexico,
   startOfWeekMexico,
@@ -154,12 +155,15 @@ interface OperationalLocation {
   slug: string;
 }
 
-/** Operational restaurants only — owner/regional accounts and churned
- *  subscriptions (anything not active/trialing) are excluded. */
-async function getOperationalLocations(regionFilter?: string): Promise<OperationalLocation[]> {
+/** Operational restaurants of ONE group only — owner/regional accounts,
+ *  churned subscriptions (anything not active/trialing) and locations outside
+ *  the viewer's group_key are excluded. A null group_key yields nothing. */
+async function getOperationalLocations(
+  groupKey: string | null | undefined,
+  regionFilter?: string,
+): Promise<OperationalLocation[]> {
   const conditions = [
-    eq(restaurants.isOwner, false),
-    eq(restaurants.isRegional, false),
+    ...groupLocationConditions(groupKey),
     inArray(restaurants.subscriptionStatus, ['active', 'trialing']),
   ];
   if (regionFilter) conditions.push(eq(restaurants.region, regionFilter));
@@ -171,12 +175,12 @@ async function getOperationalLocations(regionFilter?: string): Promise<Operation
     .orderBy(asc(restaurants.name));
 }
 
-export async function getAlertCoverage(regionFilter?: string): Promise<{
+export async function getAlertCoverage(groupKey: string | null | undefined, regionFilter?: string): Promise<{
   covered: number;
   total: number;
   missing: string[];
 }> {
-  const locations = await getOperationalLocations(regionFilter);
+  const locations = await getOperationalLocations(groupKey, regionFilter);
 
   if (locations.length === 0) return { covered: 0, total: 0, missing: [] };
 
@@ -226,10 +230,10 @@ export interface GroupSummary {
   reviewsByDay: { date: string; count: number }[];
 }
 
-export async function getGroupSummary(days: 7 | 30 = 30): Promise<GroupSummary> {
+export async function getGroupSummary(groupKey: string | null | undefined, days: 7 | 30 = 30): Promise<GroupSummary> {
   const { start, prevStart } = windowBounds(days);
 
-  const locations = await getOperationalLocations();
+  const locations = await getOperationalLocations(groupKey);
   const ids = locations.map((l) => l.id);
 
   const empty: GroupSummary = {
@@ -272,6 +276,9 @@ export async function getGroupSummary(days: 7 | 30 = 30): Promise<GroupSummary> 
         gte(productEvents.createdAt, prevStart),
         sql`${productEvents.restaurantId} is not null`,
         sql`${productEvents.role} is not null`,
+        // Every account of the viewer's group (locations AND owner/regional),
+        // never another group's or a self-serve trial's.
+        accountInGroup(productEvents.restaurantId, groupKey),
       ),
     )
     .as('active_pairs');
@@ -480,9 +487,9 @@ export interface LocationComparisonRow {
   reviewsByDay: { date: string; count: number }[];
 }
 
-export async function getLocationComparison(days: 7 | 30 = 30): Promise<LocationComparisonRow[]> {
+export async function getLocationComparison(groupKey: string | null | undefined, days: 7 | 30 = 30): Promise<LocationComparisonRow[]> {
   const { start, prevStart } = windowBounds(days);
-  const locations = await getOperationalLocations();
+  const locations = await getOperationalLocations(groupKey);
   if (locations.length === 0) return [];
   const ids = locations.map((l) => l.id);
 
@@ -927,8 +934,8 @@ function emptyCell(): FeatureAdoptionCell {
   return { days7: 0, days30: 0, activeDays30: 0, state: 'unused' };
 }
 
-export async function getFeatureAdoptionMatrix(): Promise<FeatureAdoptionMatrix> {
-  const locations = await getOperationalLocations();
+export async function getFeatureAdoptionMatrix(groupKey: string | null | undefined): Promise<FeatureAdoptionMatrix> {
+  const locations = await getOperationalLocations(groupKey);
   const featureKeys = Object.keys(FEATURE_SOURCES) as FeatureKey[];
   const base: FeatureAdoptionMatrix = {
     locations: locations.map((l) => ({ restaurantId: l.id, slug: l.slug, name: l.name })),
@@ -1190,6 +1197,7 @@ export async function getFeatureAdoptionMatrix(): Promise<FeatureAdoptionMatrix>
         and(
           inArray(productEvents.eventName, ['app_open', 'page_view']),
           inArray(productEvents.role, ['owner', 'regional']),
+          accountInGroup(productEvents.restaurantId, groupKey),
           gte(productEvents.createdAt, w30),
         ),
       )
@@ -1285,6 +1293,7 @@ export interface ReviewFunnel {
 }
 
 export async function getReviewFunnel(
+  groupKey: string | null | undefined,
   days: 7 | 30 = 30,
   restaurantId?: number,
 ): Promise<ReviewFunnel> {
@@ -1296,7 +1305,7 @@ export async function getReviewFunnel(
   if (restaurantId !== undefined) {
     scopeIds = [restaurantId];
   } else {
-    scopeIds = (await getOperationalLocations()).map((l) => l.id);
+    scopeIds = (await getOperationalLocations(groupKey)).map((l) => l.id);
   }
 
   const emptySteps: FunnelStep[] = [
@@ -1457,13 +1466,13 @@ const GUEST_FUNNEL_STEPS: { key: string; label: string; tag: IntegrityTag }[] = 
   { key: 'vip', label: 'VIP (5+ visitas)', tag: 'verified' },
 ];
 
-export async function getGuestFunnel(days: 7 | 30 = 30): Promise<GuestFunnel> {
+export async function getGuestFunnel(groupKey: string | null | undefined, days: 7 | 30 = 30): Promise<GuestFunnel> {
   const { start } = windowBounds(days);
   const w84 = windowBounds(84).start; // 12 weeks
   const weekZero = startOfWeekMexico();
   const birthdayKey = todayBirthdayKeyMexico();
 
-  const locations = await getOperationalLocations();
+  const locations = await getOperationalLocations(groupKey);
   const base: GuestFunnel = {
     steps: GUEST_FUNNEL_STEPS.map((s) => ({ ...s, count: 0 })),
     conversions: GUEST_FUNNEL_STEPS.map(() => null),
@@ -1699,8 +1708,8 @@ export interface CampaignAnalyticsRow {
   untouched: boolean;
 }
 
-export async function getCampaignAnalytics(): Promise<CampaignAnalyticsRow[]> {
-  const locations = await getOperationalLocations();
+export async function getCampaignAnalytics(groupKey: string | null | undefined): Promise<CampaignAnalyticsRow[]> {
+  const locations = await getOperationalLocations(groupKey);
   if (locations.length === 0) return [];
   const ids = locations.map((l) => l.id);
 
@@ -1819,14 +1828,20 @@ export interface PushAnalytics {
   note: string;
 }
 
-export async function getPushAnalytics(days: 7 | 30 = 30): Promise<PushAnalytics> {
+export async function getPushAnalytics(groupKey: string | null | undefined, days: 7 | 30 = 30): Promise<PushAnalytics> {
   const { start } = windowBounds(days);
   const [locations, lifecycleAccounts] = await Promise.all([
-    getOperationalLocations(),
+    getOperationalLocations(groupKey),
+    // Group-level account rows (owner/regional) of the same group only.
     db
       .select({ id: restaurants.id })
       .from(restaurants)
-      .where(inArray(restaurants.subscriptionStatus, ['active', 'trialing'])),
+      .where(
+        and(
+          inArray(restaurants.subscriptionStatus, ['active', 'trialing']),
+          inGroup(groupKey),
+        ),
+      ),
   ]);
   const ids = locations.map((l) => l.id);
   const lifecycleAccountIds = lifecycleAccounts.map((account) => account.id);
@@ -2055,8 +2070,8 @@ export interface ProblemLocation {
   issues: string[];
 }
 
-export async function getProblemLocations(): Promise<ProblemLocation[]> {
-  const locations = await getOperationalLocations();
+export async function getProblemLocations(groupKey: string | null | undefined): Promise<ProblemLocation[]> {
+  const locations = await getOperationalLocations(groupKey);
   if (locations.length === 0) return [];
   const ids = locations.map((l) => l.id);
 
@@ -2179,7 +2194,12 @@ export async function getProblemLocations(): Promise<ProblemLocation[]> {
       db
         .select({ first: sql<Date | null>`min(${productEvents.createdAt})` })
         .from(productEvents)
-        .where(inArray(productEvents.role, ['gm', 'owner', 'regional'])),
+        .where(
+          and(
+            inArray(productEvents.role, ['gm', 'owner', 'regional']),
+            accountInGroup(productEvents.restaurantId, groupKey),
+          ),
+        ),
     ]);
 
   const countBy = (rows: { restaurantId: number | null; count: number }[]) => {

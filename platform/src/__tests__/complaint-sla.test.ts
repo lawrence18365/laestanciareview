@@ -94,6 +94,7 @@ function complaint(overrides: Record<string, unknown> = {}) {
     escalatedAt: null,
     restaurantName: 'Centro',
     region: 'centro',
+    groupKey: 'grupo-estancia',
     restaurantIsOwner: false,
     restaurantIsRegional: false,
     ...overrides,
@@ -105,6 +106,7 @@ const ownerAccount = {
   isOwner: true,
   isRegional: false,
   region: null,
+  groupKey: 'grupo-estancia',
   managerEmail: 'owner@example.com',
 };
 
@@ -264,8 +266,8 @@ describe('complaint SLA', () => {
       [complaint()],
       [
         ownerAccount,
-        { id: 91, isOwner: false, isRegional: true, region: 'centro', managerEmail: null },
-        { id: 92, isOwner: false, isRegional: true, region: 'norte', managerEmail: 'norte@example.com' },
+        { id: 91, isOwner: false, isRegional: true, region: 'centro', groupKey: 'grupo-estancia', managerEmail: null },
+        { id: 92, isOwner: false, isRegional: true, region: 'norte', groupKey: 'grupo-estancia', managerEmail: 'norte@example.com' },
       ],
     );
     mocks.sendPushToRestaurant.mockImplementation(async (restaurantId: number) => ({
@@ -331,10 +333,75 @@ describe('complaint SLA', () => {
     expect(mocks.sendFeedbackAlert).toHaveBeenCalledTimes(1);
   });
 
+  describe('group scope of the owner/regional fan-out', () => {
+    const regionalCentro = {
+      id: 91, isOwner: false, isRegional: true, region: 'centro', groupKey: 'grupo-estancia', managerEmail: 'centro@example.com',
+    };
+
+    it('emails and pushes no owner or regional for a complaint at a NULL-group location', async () => {
+      mocks.selectRows.push(
+        [complaint({ restaurantId: 98, restaurantName: 'Cocteles Chelita', groupKey: null })],
+        [ownerAccount, regionalCentro],
+      );
+      mocks.sendPushToRestaurant.mockResolvedValue({ targeted: 1, sent: 1, failed: 0 });
+
+      const result = await escalateOverdueComplaints(now);
+
+      // The trial's own account is still alerted; nobody above it is.
+      expect(result.escalated).toBe(1);
+      expect(mocks.sendPushToRestaurant.mock.calls.map((call) => call[0])).toEqual([98]);
+      expect(mocks.sendFeedbackAlert).not.toHaveBeenCalled();
+      expect(Object.keys(result.details[0].channels)).toEqual(['location_push']);
+    });
+
+    it('never lets a NULL-group owner or regional account match a NULL-group complaint', async () => {
+      mocks.selectRows.push(
+        [complaint({ groupKey: null })],
+        [{ ...ownerAccount, groupKey: null }, { ...regionalCentro, groupKey: null }],
+      );
+
+      await escalateOverdueComplaints(now);
+
+      expect(mocks.sendPushToRestaurant.mock.calls.map((call) => call[0])).toEqual([7]);
+      expect(mocks.sendFeedbackAlert).not.toHaveBeenCalled();
+    });
+
+    it('still emails the group owner and matching regional for a grupo-estancia complaint', async () => {
+      mocks.selectRows.push(
+        [complaint()],
+        [ownerAccount, regionalCentro],
+      );
+      mocks.sendPushToRestaurant.mockResolvedValue({ targeted: 1, sent: 1, failed: 0 });
+
+      await escalateOverdueComplaints(now);
+
+      expect(mocks.sendPushToRestaurant.mock.calls.map((call) => call[0])).toEqual([7, 90, 91]);
+      expect(mocks.sendFeedbackAlert.mock.calls.map((call) => call[0].to)).toEqual([
+        'owner@example.com',
+        'centro@example.com',
+      ]);
+    });
+
+    it('does not reach an owner or regional account of a different group', async () => {
+      mocks.selectRows.push(
+        [complaint()],
+        [
+          { ...ownerAccount, id: 95, groupKey: 'otro-grupo', managerEmail: 'otro@example.com' },
+          { ...regionalCentro, id: 96, groupKey: 'otro-grupo', managerEmail: 'otro-reg@example.com' },
+        ],
+      );
+
+      await escalateOverdueComplaints(now);
+
+      expect(mocks.sendPushToRestaurant.mock.calls.map((call) => call[0])).toEqual([7]);
+      expect(mocks.sendFeedbackAlert).not.toHaveBeenCalled();
+    });
+  });
+
   it('releases the claim when no channel is targeted but keeps the channel record', async () => {
     mocks.selectRows.push(
       [complaint()],
-      [{ id: 91, isOwner: false, isRegional: true, region: 'centro', managerEmail: null }],
+      [{ id: 91, isOwner: false, isRegional: true, region: 'centro', groupKey: 'grupo-estancia', managerEmail: null }],
     );
 
     const result = await escalateOverdueComplaints(now);

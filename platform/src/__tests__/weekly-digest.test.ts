@@ -93,8 +93,8 @@ describe('weekly digest skippedNoEmail reporting', () => {
       { id: 2, slug: 'gm-ok', name: 'Con Correo', managerEmail: 'gm@example.com', isOwner: false, googleThreshold: 4, googlePlaceId: null },
     ]);
     mocks.getOwnerAccounts.mockResolvedValue([
-      { id: 3, slug: 'owner-no-email', name: 'Dueño Sin Correo', managerEmail: null, isOwner: true },
-      { id: 4, slug: 'owner-ok', name: 'Dueño OK', managerEmail: 'owner@example.com', isOwner: true },
+      { id: 3, slug: 'owner-no-email', name: 'Dueño Sin Correo', managerEmail: null, isOwner: true, groupKey: 'grupo-estancia' },
+      { id: 4, slug: 'owner-ok', name: 'Dueño OK', managerEmail: 'owner@example.com', isOwner: true, groupKey: 'grupo-estancia' },
     ]);
     mocks.getOperationalRestaurants.mockResolvedValue([
       { id: 1, name: 'Sin Correo', region: 'centro' },
@@ -189,7 +189,7 @@ describe('weekly digest group share', () => {
     process.env.CRON_SECRET = 'test-cron-secret';
     mocks.getRestaurantsWithEmail.mockResolvedValue([]);
     mocks.getOwnerAccounts.mockResolvedValue([
-      { id: 4, slug: 'owner-ok', name: 'Dueño OK', managerEmail: 'owner@example.com', isOwner: true },
+      { id: 4, slug: 'owner-ok', name: 'Dueño OK', managerEmail: 'owner@example.com', isOwner: true, groupKey: 'grupo-estancia' },
     ]);
     mocks.getOperationalRestaurants.mockResolvedValue([]);
     mocks.getRegionalAccounts.mockResolvedValue([]);
@@ -231,6 +231,28 @@ describe('weekly digest group share', () => {
     expect(mocks.sendOwnerBriefing).toHaveBeenCalledWith(expect.objectContaining({
       groupShare: [groupSummary],
     }));
+  });
+
+  it('sends no briefing to an owner with a NULL group_key and reports it', async () => {
+    mocks.getOwnerAccounts.mockResolvedValue([
+      { id: 5, slug: 'owner-sin-grupo', name: 'Sin Grupo', managerEmail: 'sin-grupo@example.com', isOwner: true, groupKey: null },
+    ]);
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+    const body = await (await get()).json();
+
+    expect(mocks.sendOwnerBriefing).not.toHaveBeenCalled();
+    expect(mocks.getWeeklySignals).not.toHaveBeenCalled();
+    expect(body.owner).toMatchObject({ sent: 0, skippedNoGroup: ['owner-sin-grupo'] });
+  });
+
+  it('scopes the briefing signals and group share to the owner group key', async () => {
+    process.env.MAPS_RANK_EMAIL_ENABLED = 'true';
+
+    await get();
+
+    expect(mocks.getWeeklySignals).toHaveBeenCalledWith(expect.any(Date), 'grupo-estancia');
+    expect(mocks.getGroupShareSummary).toHaveBeenCalledWith('grupo-estancia');
   });
 
   it('omits the group share section and still sends the briefing when the lookup throws', async () => {

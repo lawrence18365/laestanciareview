@@ -1,11 +1,13 @@
 import { NextRequest } from 'next/server';
 import {
+  getGroupKeyBySlug,
   getRestaurantBySlug,
   getLeaderboard,
   getWeeklyStats,
   getRecentFeedback,
 } from '@/lib/queries';
 import { verifySession } from '@/lib/session';
+import { sameGroup } from '@/lib/group-scope';
 
 export async function GET(req: NextRequest) {
   const session = await verifySession();
@@ -29,6 +31,14 @@ export async function GET(req: NextRequest) {
   const restaurant = await getRestaurantBySlug(slug);
   if (!restaurant) {
     return Response.json({ error: 'Restaurant not found' }, { status: 404 });
+  }
+
+  // Owners see other locations only inside their own group.
+  if (session.role === 'owner' && session.slug !== slug) {
+    const viewerGroup = await getGroupKeyBySlug(session.slug);
+    if (!sameGroup(viewerGroup, restaurant.groupKey)) {
+      return Response.json({ error: 'Forbidden' }, { status: 403 });
+    }
   }
 
   const [leaderboard, weeklyStats, recentFeedback] = await Promise.all([

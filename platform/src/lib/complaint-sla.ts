@@ -39,6 +39,7 @@ import {
 import { db } from '@/db';
 import { restaurants, reviews } from '@/db/schema';
 import { sendFeedbackAlert } from '@/lib/email';
+import { sameGroup } from '@/lib/group-scope';
 import { sendPushToRestaurant } from '@/lib/push';
 import { inboxLinkFor } from '@/lib/review-recovery';
 import {
@@ -198,6 +199,8 @@ export interface OverdueComplaintRow {
   escalatedAt: Date | null;
   restaurantName: string;
   region: string | null;
+  /** The complaint location's group; NULL = self-serve island (no owner/regional fan-out). */
+  groupKey: string | null;
   restaurantIsOwner: boolean;
   restaurantIsRegional: boolean;
 }
@@ -242,6 +245,7 @@ export async function getOverdueComplaints(now: Date): Promise<OverdueComplaint[
       escalatedAt: reviews.escalatedAt,
       restaurantName: restaurants.name,
       region: restaurants.region,
+      groupKey: restaurants.groupKey,
       restaurantIsOwner: restaurants.isOwner,
       restaurantIsRegional: restaurants.isRegional,
     })
@@ -338,6 +342,7 @@ export async function escalateOverdueComplaints(now: Date = new Date()) {
       isOwner: restaurants.isOwner,
       isRegional: restaurants.isRegional,
       region: restaurants.region,
+      groupKey: restaurants.groupKey,
       managerEmail: restaurants.managerEmail,
     })
     .from(restaurants)
@@ -380,9 +385,17 @@ export async function escalateOverdueComplaints(now: Date = new Date()) {
       continue;
     }
 
+    // Owner/regional fan-out stays inside the complaint's own group: this
+    // email carries the guest's name, email and feedback. A complaint at a
+    // location with no group_key (self-serve trial) reaches no owner or
+    // regional account, and a NULL group_key never matches another NULL. The
+    // location's own GM alerting above is unaffected.
     const recipients = accounts.filter((account) => (
-      account.isOwner
-      || (account.isRegional && complaint.region !== null && account.region === complaint.region)
+      sameGroup(account.groupKey, complaint.groupKey)
+      && (
+        account.isOwner
+        || (account.isRegional && complaint.region !== null && account.region === complaint.region)
+      )
     ));
     const channels: AlertChannelMap = {};
     let wasTargeted = false;
