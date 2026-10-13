@@ -3,7 +3,10 @@
  * only when WHATSAPP_API_ENABLED=1).
  * Day 1 → activation nudge, only when waiters or the Google listing are missing.
  * Day 3 → tips. Day 7 → case study (both switch to an activation variant while
- * the restaurant has no waiters or no guest ratings yet). Every trial
+ * the restaurant has no waiters or no guest ratings yet). Restaurants with
+ * team_mode solo | team (self-serve onboarding) are tailored instead:
+ * activation = first rating, and day 3 / 7 show real progress numbers once
+ * ratings exist. team_mode NULL keeps the copy above exactly. Every trial
  * (self-serve and founder pilot) → ending warning three days before
  * trialEndsAt, linking to the Mercado Pago activation in Settings.
  *
@@ -16,9 +19,10 @@
  */
 import { NextRequest } from 'next/server';
 import { db } from '@/db';
-import { restaurants, nurtureEvents, staff, reviews } from '@/db/schema';
-import { eq, and, count } from 'drizzle-orm';
+import { restaurants, nurtureEvents, staff, reviews, googleRatingSnapshots } from '@/db/schema';
+import { eq, and, count, desc } from 'drizzle-orm';
 import { FROM, sendMail } from '@/lib/mailer';
+import { reviewGoal } from '@/lib/onboarding-profile';
 import { getPriceBreakdown } from '@/lib/mercadopago';
 
 export const runtime = 'nodejs';
@@ -70,9 +74,15 @@ type Ctx = {
   name: string;
   pilot: boolean;
   slug: string;
+  // US-14: 'solo' | 'team' get the tailored copy. Anything else (NULL = every
+  // legacy restaurant, incl. Grupo Estancia) keeps today's copy exactly.
+  mode: 'solo' | 'team' | 'legacy';
   staffCount: number;
   ratingCount: number;
   hasGoogle: boolean;
+  // Tailored modes only; null = unknown, and the number is then omitted.
+  sentToGoogle: number | null;
+  googleCount: number | null;
 };
 
 const BUTTON = 'background:#10B981;color:#fff;padding:12px 24px;text-decoration:none;font-weight:700;display:inline-block;border-radius:6px';
@@ -92,6 +102,70 @@ function activationHtml(c: Ctx, lead: string): string {
   return `<p>Hola ${c.name},</p><p>${lead} Aún no hay calificaciones de tus clientes.</p><ol><li><a href="${BASE_URL}/staff">Agrega a tus meseros →</a></li><li><a href="${BASE_URL}/qr-codes">Imprime sus QR →</a></li></ol>`;
 }
 
+// ── Tailored modes (team_mode solo | team): activation = first rating ──────
+
+const tailored = (c: Ctx) => c.mode !== 'legacy';
+const fmt = (n: number) => n.toLocaleString('es-MX');
+
+/** "Llevas 12 calificaciones; 7 fueron a Google. Tienes 48 reseñas; tu meta: 68." Unknown numbers are omitted. */
+function progressText(c: Ctx): string {
+  const n = c.ratingCount;
+  const first = c.sentToGoogle === null
+    ? `Llevas ${fmt(n)} ${n === 1 ? 'calificación' : 'calificaciones'}.`
+    : `Llevas ${fmt(n)} ${n === 1 ? 'calificación' : 'calificaciones'}; ${fmt(c.sentToGoogle)} ${c.sentToGoogle === 1 ? 'fue' : 'fueron'} a Google.`;
+  if (c.googleCount === null) return first;
+  const g = c.googleCount;
+  return `${first} Tienes ${fmt(g)} ${g === 1 ? 'reseña' : 'reseñas'}; tu meta: ${fmt(reviewGoal(g))}.`;
+}
+
+function progressWhatsApp(c: Ctx, lead: string): string {
+  return `*${c.name}*, ${lead} ${progressText(c)}\nTu panel: ${BASE_URL}/dashboard`;
+}
+
+function progressHtml(c: Ctx, lead: string): string {
+  return `<p>Hola ${c.name},</p><p>${lead} ${progressText(c)}</p><p><a href="${BASE_URL}/dashboard">Ver mi panel →</a></p>`;
+}
+
+const SOLO_STEPS = ['Imprime tu letrero', 'Pídele la reseña a tu próximo cliente'] as const;
+
+function soloActivationWhatsApp(c: Ctx, lead: string): string {
+  return `*${c.name}*, ${lead} Aún no hay calificaciones de tus clientes.\n1. ${SOLO_STEPS[0]}: ${BASE_URL}/qr-codes/letrero\n2. ${SOLO_STEPS[1]}.`;
+}
+
+function soloActivationHtml(c: Ctx, lead: string): string {
+  return `<p>Hola ${c.name},</p><p>${lead} Aún no hay calificaciones de tus clientes.</p><ol><li><a href="${BASE_URL}/qr-codes/letrero">${SOLO_STEPS[0]} →</a></li><li>${SOLO_STEPS[1]}.</li></ol>`;
+}
+
+// Team: the waiter step is only listed while there are no waiters yet.
+function teamActivationWhatsApp(c: Ctx, lead: string): string {
+  const steps: string[] = [];
+  if (c.staffCount === 0) steps.push(`Agrega a tus meseros: ${BASE_URL}/staff`);
+  steps.push(`Imprime sus QR: ${BASE_URL}/qr-codes`);
+  return `*${c.name}*, ${lead} Aún no hay calificaciones de tus clientes.\n${steps.map((s, i) => `${i + 1}. ${s}`).join('\n')}`;
+}
+
+function teamActivationHtml(c: Ctx, lead: string): string {
+  const items: string[] = [];
+  if (c.staffCount === 0) items.push(`<li><a href="${BASE_URL}/staff">Agrega a tus meseros →</a></li>`);
+  items.push(`<li><a href="${BASE_URL}/qr-codes">Imprime sus QR →</a></li>`);
+  return `<p>Hola ${c.name},</p><p>${lead} Aún no hay calificaciones de tus clientes.</p><ol>${items.join('')}</ol>`;
+}
+
+function soloDay1WhatsApp(c: Ctx): string {
+  const lines = [`Hola *${c.name}* 👋 Para tu primera reseña:`, `• ${SOLO_STEPS[0]}: ${BASE_URL}/qr-codes/letrero`, `• ${SOLO_STEPS[1]}.`];
+  if (!c.hasGoogle) lines.push(`• Conecta tu Google: ${BASE_URL}/settings`);
+  return lines.join('\n');
+}
+
+function soloDay1Html(c: Ctx): string {
+  const items = [
+    `<li><a href="${BASE_URL}/qr-codes/letrero">${SOLO_STEPS[0]} →</a></li>`,
+    `<li>${SOLO_STEPS[1]}.</li>`,
+  ];
+  if (!c.hasGoogle) items.push(`<li><a href="${BASE_URL}/settings">Conecta tu Google →</a></li>`);
+  return `<p>Hola ${c.name},</p><p>Para tu primera reseña:</p><ol>${items.join('')}</ol>`;
+}
+
 const NURTURE: Record<string, {
   days: number;
   // Content gate beyond the signup age (e.g. day1 only when something is missing).
@@ -102,15 +176,24 @@ const NURTURE: Record<string, {
 }> = {
   day1: {
     days: 1,
-    applies: (c) => c.staffCount === 0 || !c.hasGoogle,
+    applies: (c) => {
+      const missing = c.staffCount === 0 || !c.hasGoogle;
+      if (c.mode === 'solo') return c.ratingCount === 0;
+      if (c.mode === 'team') return c.ratingCount === 0 && missing;
+      return missing;
+    },
     whatsapp: (c) => {
+      if (c.mode === 'solo') return soloDay1WhatsApp(c);
       const lines = [`Hola *${c.name}* 👋 Para empezar con RateTap te falta:`];
       if (c.staffCount === 0) lines.push(`• Agregar a tus meseros: ${BASE_URL}/staff`);
       if (!c.hasGoogle) lines.push(`• Conectar tu Google: ${BASE_URL}/settings`);
       return lines.join('\n');
     },
-    subject: (c) => `Te falta un paso para empezar: ${c.name}`,
+    subject: (c) => c.mode === 'solo'
+      ? `Tu primera reseña: ${c.name}`
+      : `Te falta un paso para empezar: ${c.name}`,
     html: (c) => {
+      if (c.mode === 'solo') return soloDay1Html(c);
       const items: string[] = [];
       if (c.staffCount === 0) items.push(`<li><a href="${BASE_URL}/staff">Agrega a tus meseros →</a></li>`);
       if (!c.hasGoogle) items.push(`<li><a href="${BASE_URL}/settings">Conecta tu Google →</a></li>`);
@@ -119,11 +202,27 @@ const NURTURE: Record<string, {
   },
   day3: {
     days: 3,
-    whatsapp: (c) => needsActivation(c)
-      ? activationWhatsApp(c, 'llevas 3 días con RateTap.')
-      : `Hola *${c.name}* 👋 Llevas 3 días con RateTap. Tip: pídele a tu equipo que muestren el código QR con la frase "Nos encantaría conocer tu opinión, ¿nos ayudas con una reseña? ⭐". ¿Cómo va hasta ahora?`,
-    subject: (c) => needsActivation(c) ? `Activa tu RateTap: ${c.name}` : `Tip del día 3: ${c.name}`,
-    html: (c) => needsActivation(c)
+    whatsapp: (c) => {
+      if (tailored(c)) {
+        if (c.ratingCount > 0) return progressWhatsApp(c, 'llevas 3 días con RateTap.');
+        return c.mode === 'solo'
+          ? soloActivationWhatsApp(c, 'llevas 3 días con RateTap.')
+          : teamActivationWhatsApp(c, 'llevas 3 días con RateTap.');
+      }
+      return needsActivation(c)
+        ? activationWhatsApp(c, 'llevas 3 días con RateTap.')
+        : `Hola *${c.name}* 👋 Llevas 3 días con RateTap. Tip: pídele a tu equipo que muestren el código QR con la frase "Nos encantaría conocer tu opinión, ¿nos ayudas con una reseña? ⭐". ¿Cómo va hasta ahora?`;
+    },
+    subject: (c) => tailored(c)
+      ? (c.ratingCount > 0 ? `Tu avance en RateTap: ${c.name}` : `Activa tu RateTap: ${c.name}`)
+      : needsActivation(c) ? `Activa tu RateTap: ${c.name}` : `Tip del día 3: ${c.name}`,
+    html: (c) => tailored(c)
+      ? (c.ratingCount > 0
+        ? progressHtml(c, 'Llevas 3 días con RateTap.')
+        : c.mode === 'solo'
+          ? soloActivationHtml(c, 'Llevas 3 días con RateTap.')
+          : teamActivationHtml(c, 'Llevas 3 días con RateTap.'))
+      : needsActivation(c)
       ? activationHtml(c, 'Llevas 3 días con RateTap.')
       : `<p>Hola ${c.name},</p><p>Llevas 3 días con RateTap. El truco que mejor funciona: tu mesero muestra el código QR y dice "Nos encantaría conocer su opinión, ¿nos ayuda con una reseña en Google? ⭐".</p><p><a href="${BASE_URL}/dashboard">Ver mi dashboard →</a></p>`,
   },
@@ -131,13 +230,27 @@ const NURTURE: Record<string, {
     days: 7,
     // The La Estancia case study is only shown to that group's own locations;
     // everyone else gets the outcome without naming a client or its figures.
-    whatsapp: (c) => needsActivation(c)
+    whatsapp: (c) => tailored(c)
+      ? (c.ratingCount > 0
+        ? progressWhatsApp(c, 'llevas una semana con RateTap.')
+        : c.mode === 'solo'
+          ? soloActivationWhatsApp(c, 'llevas una semana con RateTap.')
+          : teamActivationWhatsApp(c, 'llevas una semana con RateTap.'))
+      : needsActivation(c)
       ? activationWhatsApp(c, 'llevas una semana con RateTap.')
       : c.slug.startsWith('estancia')
         ? `*${c.name}*, llevas una semana 🎉 La Estancia (12 restaurantes en México) logró subir consistentemente sus calificaciones en todos sus locales con RateTap. Tus reseñas nuevas ya están trabajando para ti. Panel: ${BASE_URL}/dashboard`
         : `*${c.name}*, llevas una semana 🎉 Los restaurantes que piden la reseña en cada mesa reciben más reseñas. Tus reseñas nuevas ya están trabajando para ti. Panel: ${BASE_URL}/dashboard`,
-    subject: (c) => needsActivation(c) ? `Aún no hay calificaciones: ${c.name}` : `Una semana con RateTap: ${c.name}`,
-    html: (c) => needsActivation(c)
+    subject: (c) => tailored(c)
+      ? (c.ratingCount > 0 ? `Una semana con RateTap: ${c.name}` : `Aún no hay calificaciones: ${c.name}`)
+      : needsActivation(c) ? `Aún no hay calificaciones: ${c.name}` : `Una semana con RateTap: ${c.name}`,
+    html: (c) => tailored(c)
+      ? (c.ratingCount > 0
+        ? progressHtml(c, 'Llevas 7 días con RateTap.')
+        : c.mode === 'solo'
+          ? soloActivationHtml(c, 'Llevas una semana con RateTap.')
+          : teamActivationHtml(c, 'Llevas una semana con RateTap.'))
+      : needsActivation(c)
       ? activationHtml(c, 'Llevas una semana con RateTap.')
       : c.slug.startsWith('estancia')
         ? `<p>Hola ${c.name},</p><p>Llevas 7 días con RateTap. Grupo La Estancia (12 restaurantes en México) ha visto cómo sus reseñas de Google crecen consistentemente desde que usan el sistema.</p><p>Tus reseñas nuevas ya están llegando.</p><p><a href="${BASE_URL}/dashboard">Ver mi progreso →</a></p>`
@@ -165,6 +278,22 @@ async function countRatings(restaurantId: number): Promise<number> {
   const [row] = await db.select({ n: count() }).from(reviews)
     .where(eq(reviews.restaurantId, restaurantId));
   return row?.n ?? 0;
+}
+
+async function countSentToGoogle(restaurantId: number): Promise<number> {
+  const [row] = await db.select({ n: count() }).from(reviews)
+    .where(and(eq(reviews.restaurantId, restaurantId), eq(reviews.sentToGoogle, true)));
+  return row?.n ?? 0;
+}
+
+/** Google review count from the latest snapshot; null when none was ever captured. */
+async function latestGoogleCount(restaurantId: number): Promise<number | null> {
+  const [row] = await db.select({ n: googleRatingSnapshots.reviewCount })
+    .from(googleRatingSnapshots)
+    .where(eq(googleRatingSnapshots.restaurantId, restaurantId))
+    .orderBy(desc(googleRatingSnapshots.capturedAt))
+    .limit(1);
+  return typeof row?.n === 'number' ? row.n : null;
 }
 
 /**
@@ -227,13 +356,30 @@ export async function GET(req: NextRequest) {
 
     // Counts are only needed once something is actually pending; fetch lazily.
     let ctx: Ctx | null = null;
-    const getCtx = async (): Promise<Ctx> => ctx ??= {
-      name: r.name,
-      pilot: r.pilot,
-      slug: r.slug,
-      staffCount: await countActiveStaff(r.id),
-      ratingCount: await countRatings(r.id),
-      hasGoogle: Boolean(r.googlePlaceId || r.googleReviewUrl),
+    const getCtx = async (): Promise<Ctx> => {
+      if (ctx) return ctx;
+      // Only an explicit 'solo' | 'team' is tailored; NULL (and anything else)
+      // stays on the legacy path, with the same queries as before.
+      const mode = r.teamMode === 'solo' || r.teamMode === 'team' ? r.teamMode : 'legacy';
+      const staffCount = await countActiveStaff(r.id);
+      const ratingCount = await countRatings(r.id);
+      let sentToGoogle: number | null = null;
+      let googleCount: number | null = null;
+      if (mode !== 'legacy' && ratingCount > 0) {
+        sentToGoogle = await countSentToGoogle(r.id);
+        googleCount = (await latestGoogleCount(r.id)) ?? r.googleReviewCount ?? null;
+      }
+      return ctx = {
+        name: r.name,
+        pilot: r.pilot,
+        slug: r.slug,
+        mode,
+        staffCount,
+        ratingCount,
+        hasGoogle: Boolean(r.googlePlaceId || r.googleReviewUrl),
+        sentToGoogle,
+        googleCount,
+      };
     };
 
     for (const [eventKey, nurture] of Object.entries(NURTURE)) {
