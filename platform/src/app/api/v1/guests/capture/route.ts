@@ -128,10 +128,13 @@ export async function POST(req: NextRequest) {
     restaurantId: restaurant.id,
   });
 
-  // Lead CAPI — shared eventId with client-side fbq('track','Lead',...,{eventID}).
+  // GuestCapture CAPI — shared eventId with client-side
+  // fbq('trackCustom','GuestCapture',...,{eventID}). Not 'Lead': diners are
+  // not RateTap leads, and the pixel is shared with B2B campaigns.
   const eventId = `guest-${guestId}-${Date.now()}`;
   try {
     await sendLeadEvent({
+      eventName: 'GuestCapture',
       phone: whatsapp,
       eventId,
       custom: {
@@ -141,7 +144,7 @@ export async function POST(req: NextRequest) {
       },
     });
   } catch (err) {
-    console.error('[guest-capture] Lead CAPI failed:', err);
+    console.error('[guest-capture] GuestCapture CAPI failed:', err);
   }
 
   try {

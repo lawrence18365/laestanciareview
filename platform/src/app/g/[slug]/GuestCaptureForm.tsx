@@ -127,9 +127,10 @@ export default function GuestCaptureForm(props: Props) {
     }
     const fbq = (window as unknown as { fbq?: (...args: unknown[]) => void }).fbq;
     if (fbq) {
+      // Custom event, not 'Lead': diners must not count as RateTap B2B leads.
       fbq(
-        'track',
-        'Lead',
+        'trackCustom',
+        'GuestCapture',
         {
           currency: 'MXN',
           value: 0,

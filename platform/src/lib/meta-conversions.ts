@@ -110,11 +110,14 @@ interface LeadEventParams {
   eventId: string;
   eventTimeUnix?: number;
   custom?: Record<string, string | number | null | undefined>;
+  // Defaults to the standard 'Lead'. Diner captures pass 'GuestCapture' so
+  // restaurant guests never count as RateTap B2B leads on the shared pixel.
+  eventName?: string;
 }
 
-// Fired from /api/v1/guests/capture. Client-side fbq('track','Lead',...)
-// fires with the same eventId for deduplication. Phone-only match (guest
-// capture form doesn't collect email).
+// Fired from /api/leads/create (B2B 'Lead') and /api/v1/guests/capture
+// ('GuestCapture'). The client-side fbq call fires with the same eventId for
+// deduplication. Guest capture matches on phone only (no email collected).
 export async function sendLeadEvent(params: LeadEventParams): Promise<void> {
   if (!PIXEL_ID || !ACCESS_TOKEN) {
     console.warn('[meta-capi] META_PIXEL_ID or META_CAPI_ACCESS_TOKEN not set — skipping');
@@ -144,7 +147,7 @@ export async function sendLeadEvent(params: LeadEventParams): Promise<void> {
   const body = {
     data: [
       {
-        event_name: 'Lead',
+        event_name: params.eventName ?? 'Lead',
         event_time: params.eventTimeUnix ?? Math.floor(Date.now() / 1000),
         event_id: params.eventId,
         action_source: 'website',
@@ -163,6 +166,6 @@ export async function sendLeadEvent(params: LeadEventParams): Promise<void> {
   });
   if (!res.ok) {
     const text = await res.text();
-    console.error(`[meta-capi] Lead event failed ${res.status}: ${text}`);
+    console.error(`[meta-capi] ${params.eventName ?? 'Lead'} event failed ${res.status}: ${text}`);
   }
 }
