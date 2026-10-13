@@ -66,6 +66,13 @@ export const t = {
     connectGoogleTitle: 'Conecta tu perfil de Google',
     connectGoogleBody: 'Sin esto, las reseñas no llegan a Google.',
     connectGoogleCta: 'Conectar',
+    // Solo-mode (team_mode = 'solo') empty state. Team/NULL keep the
+    // "Agrega a tus meseros" CTAs in DashboardView.
+    soloCtaSign: '1. Imprime tu letrero',
+    soloCtaWhatsapp: '2. Compártelo por WhatsApp',
+    soloShareMessage: (url: string) => `¿Te gustó? Déjanos tu reseña en Google: ${url}`,
+    soloGoogleLine: (n: number, goal: number) =>
+      `Tienes ${n} ${n === 1 ? 'reseña' : 'reseñas'}. Meta: ${goal}.`,
     rateTapImpact: 'Impacto RateTap',
     googleRatingSinceStart: 'Calificación de Google desde que empezaste con RateTap',
     currentGoogleRating: 'Calificación actual en Google',
@@ -342,6 +349,10 @@ export const t = {
     generalSettings: 'Ajustes Generales',
     managerEmail: 'Email del Gerente',
     managerPhone: 'Teléfono del Gerente',
+    // Solo-mode (team_mode = 'solo') labels: the owner is the only contact.
+    soloEmail: 'Tu email',
+    soloPhone: 'Tu teléfono',
+    soloStaffLink: '¿Contrataste meseros? Agrégalos aquí',
     phoneHint: 'Usado para alertas SMS. Incluye código de país (ej. +52 para México)',
     googleReviewUrl: 'URL de Reseña de Google',
     googleReviewUrlHint: 'Opcional. Si no encuentras tu restaurante arriba, pega aquí tu enlace de Google.',

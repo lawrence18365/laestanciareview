@@ -10,6 +10,7 @@ import {
 } from '@/db/schema';
 import { verifySession } from '@/lib/session';
 import { getRestaurantBySlug } from '@/lib/queries';
+import { redirectIfSolo } from '../../solo-gate';
 import CampaignWorkspace from './CampaignWorkspace';
 
 export default async function CampaignPage({
@@ -22,6 +23,7 @@ export default async function CampaignPage({
   if (session.role !== 'gm') redirect('/overview');
   const restaurant = await getRestaurantBySlug(session.slug);
   if (!restaurant) redirect('/login');
+  redirectIfSolo(restaurant);
 
   const campaignId = Number((await params).id);
   if (!Number.isInteger(campaignId) || campaignId <= 0) notFound();

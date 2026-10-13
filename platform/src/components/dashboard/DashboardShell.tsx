@@ -15,6 +15,7 @@ export default function DashboardShell({
   isOwner,
   isRegional,
   isStaff,
+  isSolo,
   showEventsQuotes,
   slug,
   role,
@@ -27,6 +28,8 @@ export default function DashboardShell({
   isOwner: boolean;
   isRegional?: boolean;
   isStaff?: boolean;
+  /** team_mode === 'solo', read server-side from the restaurant row. */
+  isSolo?: boolean;
   showEventsQuotes?: boolean;
   slug: string;
   role: 'gm' | 'owner' | 'regional';
@@ -47,6 +50,7 @@ export default function DashboardShell({
         isOwner={isOwner}
         isRegional={isRegional}
         isStaff={isStaff}
+        isSolo={isSolo}
         showEventsQuotes={showEventsQuotes}
         onOpenGuide={openGuide}
       />
