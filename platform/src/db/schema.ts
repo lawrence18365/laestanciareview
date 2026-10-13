@@ -64,6 +64,14 @@ export const restaurants = pgTable('restaurants', {
   // Served back through GET /api/logo/[slug] and resolved by
   // lib/brands.ts getBrandForRestaurant().
   logoDataUrl: text('logo_data_url'),
+  // Self-serve onboarding profile (US-14, migration 0034). NULL = legacy
+  // behavior exactly as before: every existing restaurant, including the whole
+  // Grupo Estancia, stays NULL. Only team_mode = 'solo' gets solo UI/messages.
+  // See lib/onboarding-profile.ts.
+  teamMode: text('team_mode'),
+  locationsBand: text('locations_band'),
+  // Places v1 snapshot at signup. Not selected on hot paths.
+  googleProfile: jsonb('google_profile'),
   managerPhone: text('manager_phone'),
   alertPreference: text('alert_preference').notNull().default('all'),
   smsAlerts: boolean('sms_alerts').notNull().default(false),
@@ -90,6 +98,8 @@ export const restaurants = pgTable('restaurants', {
     .defaultNow(),
 }, (t) => [
   index('restaurants_group_key_idx').on(t.groupKey),
+  check('restaurants_team_mode_check', sql`${t.teamMode} in ('solo', 'team')`),
+  check('restaurants_locations_band_check', sql`${t.locationsBand} in ('1', '2-5', '6+')`),
 ]);
 
 export const passwordResetTokens = pgTable(

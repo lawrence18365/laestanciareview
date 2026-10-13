@@ -20,6 +20,7 @@ import {
   PILOT_TRIAL_DAYS,
 } from '@/lib/pilot';
 import { provisionSignupAtomic, SignupConflictError } from '@/lib/signup-provisioning';
+import type { LocationsBand, TeamMode } from '@/lib/onboarding-profile';
 import { generateQrDataUrl, reviewUrlFor } from '@/lib/qr';
 import { sendWhatsAppWelcome } from '@/lib/whatsapp';
 import { sendCompleteRegistrationEvent } from '@/lib/meta-conversions';
@@ -52,6 +53,10 @@ export async function POST(req: NextRequest) {
       );
     }
     const input = parsed.data;
+    // Onboarding answers (US-14) are pass-through only here: signupSchema (T3)
+    // owns their validation. Until it declares them zod strips them, so they
+    // stay null and provisioning keeps today's behavior.
+    const onboarding = input as { teamMode?: TeamMode | null; locationsBand?: LocationsBand | null };
     const isPilot = isValidPilotAccessToken(req.cookies.get(PILOT_ACCESS_COOKIE)?.value);
     pilotRequest = isPilot;
 
@@ -198,6 +203,8 @@ export async function POST(req: NextRequest) {
         shippingAddress,
         trialEndsAt,
         pilot: isPilot,
+        teamMode: onboarding.teamMode ?? null,
+        locationsBand: onboarding.locationsBand ?? null,
         pendingSignupId,
         leadId: lead.id,
       });

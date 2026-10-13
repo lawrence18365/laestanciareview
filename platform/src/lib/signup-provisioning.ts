@@ -2,6 +2,7 @@ import { db, transactionDb } from '@/db';
 import { pendingSignups, restaurants } from '@/db/schema';
 import { generateUniqueSlug, slugify } from '@/lib/slug';
 import { reviewUrlFor } from '@/lib/google-review';
+import type { LocationsBand, TeamMode } from '@/lib/onboarding-profile';
 import { and, eq, sql } from 'drizzle-orm';
 
 /**
@@ -33,6 +34,9 @@ export type SignupRestaurantInput = {
   stripeSubscriptionId?: string | null;
   trialEndsAt: Date;
   pilot?: boolean;
+  /** Onboarding answers (US-14). Omitted/null = legacy behavior. */
+  teamMode?: TeamMode | null;
+  locationsBand?: LocationsBand | null;
 };
 
 export async function provisionSignupRestaurant(input: SignupRestaurantInput) {
@@ -57,6 +61,8 @@ export async function provisionSignupRestaurant(input: SignupRestaurantInput) {
       // Explicitly NULL: a self-serve trial is its own island, never part of
       // an owner/regional group view, digest or escalation (see group-scope).
       groupKey: null,
+      teamMode: input.teamMode ?? null,
+      locationsBand: input.locationsBand ?? null,
       stripeCustomerId: input.stripeCustomerId ?? null,
       stripeSubscriptionId: input.stripeSubscriptionId ?? null,
       subscriptionStatus: 'trialing',
@@ -154,6 +160,8 @@ export async function provisionSignupAtomic(
           shippingAddress: input.shippingAddress ?? null,
           // Explicitly NULL: its own island, see provisionSignupRestaurant.
           groupKey: null,
+          teamMode: input.teamMode ?? null,
+          locationsBand: input.locationsBand ?? null,
           subscriptionStatus: 'trialing',
           trialEndsAt: input.trialEndsAt,
           pilot,
