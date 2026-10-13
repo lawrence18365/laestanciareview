@@ -201,12 +201,98 @@ export default function ContactoForm({ pilotOffer }: { pilotOffer: boolean }) {
                 ? 'Piloto fundador: $0 hoy · 30 días gratis. Las tarjetas NFC se envían cuando decides continuar.'
                 : '30 días gratis, sin tarjeta. Tu cuenta y los QR de tus meseros quedan listos hoy.'}
             </p>
-            {!pilotOffer && (
-              <p style={{ color: 'var(--text-muted, #57534e)', fontSize: '0.8rem', margin: '0.5rem 0 0' }}>
-                Lo usan 12 restaurantes en México.
-              </p>
-            )}
           </div>
+
+          {/* Proof + how-it-works. Cold Meta traffic lands on a bare form today;
+              the non-pilot page carries the velocity evidence and the 3 steps
+              so the form reads as the next step, not the whole pitch. */}
+          {!pilotOffer && (
+            <div style={{
+              background: 'var(--panel-bg, #ffffff)',
+              border: '1px solid var(--border-dark, #1c1917)',
+              padding: '1.25rem',
+              boxShadow: '8px 8px 0px rgba(0,0,0,0.06)',
+              marginBottom: '1.5rem',
+            }}>
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '1rem' }}>
+                <img
+                  src="/contacto/guest-choice-mobile.webp"
+                  alt="Pantalla del cliente: califica y elige Google o comentario privado"
+                  width={96}
+                  height={208}
+                  style={{
+                    width: 96,
+                    height: 208,
+                    flexShrink: 0,
+                    display: 'block',
+                    borderRadius: 12,
+                    border: '1px solid var(--border-dark, #1c1917)',
+                    objectFit: 'cover',
+                    objectPosition: 'top',
+                  }}
+                />
+                <div style={{ minWidth: 0 }}>
+                  <div style={{
+                    fontSize: '1.6rem',
+                    fontWeight: 800,
+                    letterSpacing: '-0.02em',
+                    lineHeight: 1.15,
+                    color: 'var(--text-main, #1c1917)',
+                  }}>
+                    {'< 1 → 3–8'}
+                  </div>
+                  <p style={{ fontSize: '0.85rem', color: 'var(--text-muted, #57534e)', margin: '0.4rem 0 0', lineHeight: 1.4 }}>
+                    reseñas nuevas en Google al día, por restaurante.
+                  </p>
+                  <p style={{ fontSize: '0.72rem', color: 'var(--text-dim, #a8a29e)', margin: '0.5rem 0 0', lineHeight: 1.4 }}>
+                    11 restaurantes reales, antes vs. después.{' '}
+                    <a
+                      href="https://ratetapmx.com/methodology#velocity"
+                      target="_blank"
+                      rel="noopener"
+                      style={{ color: 'var(--text-muted, #57534e)', fontWeight: 700, textDecoration: 'underline' }}
+                    >
+                      Cómo lo medimos
+                    </a>
+                  </p>
+                </div>
+              </div>
+
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: '1fr 1fr 1fr',
+                gap: '0.5rem',
+                marginTop: '1.25rem',
+              }}>
+                {[
+                  { n: '1', label: 'Escanea el QR del mesero' },
+                  { n: '2', label: 'Califica en 2 toques' },
+                  { n: '3', label: 'Elige Google o nota privada' },
+                ].map((step) => (
+                  <div key={step.n} style={{ textAlign: 'center' }}>
+                    <div style={{
+                      width: 24,
+                      height: 24,
+                      borderRadius: '50%',
+                      background: 'var(--text-main, #1c1917)',
+                      color: 'var(--panel-bg, #ffffff)',
+                      fontSize: '0.72rem',
+                      fontWeight: 700,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      margin: '0 auto 0.4rem',
+                    }}>
+                      {step.n}
+                    </div>
+                    <div style={{ fontSize: '0.72rem', color: 'var(--text-muted, #57534e)', lineHeight: 1.35 }}>
+                      {step.label}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           <form
             onSubmit={handleSubmit}
@@ -393,7 +479,9 @@ export default function ContactoForm({ pilotOffer }: { pilotOffer: boolean }) {
             </button>
 
             <p style={{ fontSize: '0.75rem', color: 'var(--text-dim, #a8a29e)', textAlign: 'center', marginTop: '1rem', lineHeight: 1.5 }}>
-              No necesitas tarjeta. Cuando terminen tus 30 días, tú decides si continúas.{' '}
+              {pilotOffer
+                ? 'No necesitas tarjeta. Cuando terminen tus 30 días, tú decides si continúas.'
+                : 'Sin tarjeta. Después de 30 días, MX$700/mes por sucursal si decides continuar.'}{' '}
               Al continuar aceptas la{' '}
               <a href="/privacy" style={{ color: '#1c1917', fontWeight: 700 }}>Política de Privacidad</a>, los{' '}
               <a href="/terms" style={{ color: '#1c1917', fontWeight: 700 }}>Términos</a> y la{' '}
