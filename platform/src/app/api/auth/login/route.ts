@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server';
 import { findLoginCandidates } from '@/lib/queries';
 import { verifyPassword, hashPassword } from '@/lib/auth';
 import { createSession } from '@/lib/session';
+import { setGroupMarker } from '@/lib/group-device';
 import { checkRateLimitAsync, getClientIP, rateLimitResponse } from '@/lib/rate-limit';
 import { requireSameOrigin } from '@/lib/origin';
 import { db } from '@/db';
@@ -82,6 +83,8 @@ export async function POST(req: NextRequest) {
 
     const role = restaurant.isOwner ? 'owner' : restaurant.isRegional ? 'regional' : 'gm';
     await createSession(slug, role, restaurant.isRegional ? (restaurant.region ?? undefined) : undefined);
+    // A group account marks this device as known, so /login keeps its dropdown.
+    if (restaurant.groupKey) await setGroupMarker(restaurant.groupKey);
 
     return Response.json({ ok: true, slug, role });
   } catch {

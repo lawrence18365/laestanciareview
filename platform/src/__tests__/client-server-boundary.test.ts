@@ -140,6 +140,9 @@ function clientReachableGraph(entry: string): Array<{ path: string; via: string 
     if (reached.has(file)) continue;
     reached.set(file, via);
     const mod = load(file);
+    // A 'use server' module is an RPC boundary: the browser bundle only gets a
+    // reference to each action, never the module's own imports.
+    if (via !== '(entry)' && /^\s*['"]use server['"]/.test(mod.source)) continue;
     for (const spec of mod.valueImports) {
       const target = resolveSpecifier(spec, mod.path);
       if (!target) continue;
