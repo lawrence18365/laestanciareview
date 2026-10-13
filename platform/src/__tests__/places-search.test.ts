@@ -113,6 +113,89 @@ describe('GET /api/places/search', () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
+  describe('fallback for address-typed queries', () => {
+    const empty = () => new Response('{}', { status: 200 });
+    const found = () => new Response(JSON.stringify(upstreamBody), { status: 200 });
+    const sentQueries = () => fetchMock.mock.calls.map(([, init]) => JSON.parse(init.body).textQuery);
+    const LA_PRIVADA = 'LA PRIVADA, calle privada de san Andres mz 1 lt 3';
+
+    function reqWith(q: string, city?: string) {
+      const url = new URL('https://app.ratetapmx.com/api/places/search');
+      url.searchParams.set('q', q);
+      if (city !== undefined) url.searchParams.set('city', city);
+      return new NextRequest(url, { headers: { 'x-real-ip': '203.0.113.9' } });
+    }
+
+    it('does not retry when the first query finds something', async () => {
+      fetchMock.mockResolvedValue(found());
+      const res = await GET(reqWith(LA_PRIVADA));
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+      expect((await res.json()).length).toBe(1);
+      expect(res.headers.get('x-places-retried')).toBeNull();
+    });
+
+    it('retries once with just the name when the first query finds nothing', async () => {
+      fetchMock.mockResolvedValueOnce(empty()).mockResolvedValueOnce(found());
+      const res = await GET(reqWith(LA_PRIVADA));
+      expect(sentQueries()).toEqual([LA_PRIVADA, 'LA PRIVADA']);
+      expect(res.status).toBe(200);
+      expect((await res.json())[0].placeId).toBe('ChIJabc');
+      expect(res.headers.get('x-places-retried')).toBe('1');
+    });
+
+    it('makes at most two upstream calls, even when the retry is empty too', async () => {
+      fetchMock.mockImplementation(async () => empty());
+      const res = await GET(reqWith(LA_PRIVADA));
+      expect(fetchMock).toHaveBeenCalledTimes(2);
+      expect(await res.json()).toEqual([]);
+      expect(res.headers.get('x-places-retried')).toBe('1');
+      expect(mocks.checkRateLimitAsync).toHaveBeenCalledTimes(1);
+    });
+
+    it('appends the city to the retry when the caller passes one', async () => {
+      fetchMock.mockImplementation(async () => empty());
+      await GET(reqWith(LA_PRIVADA, 'Ecatepec'));
+      expect(sentQueries()).toEqual([LA_PRIVADA, 'LA PRIVADA Ecatepec']);
+    });
+
+    it('ignores a city over 60 characters', async () => {
+      fetchMock.mockImplementation(async () => empty());
+      await GET(reqWith(LA_PRIVADA, 'x'.repeat(61)));
+      expect(sentQueries()[1]).toBe('LA PRIVADA');
+    });
+
+    it('strips street words and number tokens from the name part', async () => {
+      fetchMock.mockImplementation(async () => empty());
+      await GET(reqWith('Tacos Beto Av. Juárez 123 # 5'));
+      expect(sentQueries()[1]).toBe('Tacos Beto Juárez');
+    });
+
+    it('does not retry when nothing would change', async () => {
+      fetchMock.mockImplementation(async () => empty());
+      const res = await GET(reqWith('xyzzy restaurante'));
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+      expect(res.headers.get('x-places-retried')).toBe('0');
+    });
+
+    it('does not retry when only street words remain', async () => {
+      fetchMock.mockImplementation(async () => empty());
+      await GET(reqWith('Calle 5, Centro'));
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+    });
+
+    it('does not retry on an upstream error, and returns an empty list if only the retry fails', async () => {
+      fetchMock.mockResolvedValue(new Response('{}', { status: 500 }));
+      expect((await GET(reqWith(LA_PRIVADA))).status).toBe(502);
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+
+      fetchMock.mockReset();
+      fetchMock.mockResolvedValueOnce(empty()).mockRejectedValueOnce(new Error('network down'));
+      const res = await GET(reqWith(LA_PRIVADA));
+      expect(res.status).toBe(200);
+      expect(await res.json()).toEqual([]);
+    });
+  });
+
   it('answers 429 once the per-IP limit is exhausted', async () => {
     mocks.checkRateLimitAsync.mockResolvedValue({ allowed: false, remaining: 0, resetAt: Date.now() + 60_000 });
     const res = await GET(req('la estancia'));

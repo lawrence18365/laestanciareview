@@ -2,6 +2,7 @@
 
 import Script from 'next/script';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { track } from '@/lib/analytics-client';
 
 /**
  * Google Places autocomplete for an <input>.
@@ -42,6 +43,8 @@ interface Props {
   required?: boolean;
   autoComplete?: string;
   style?: React.CSSProperties;
+  /** City the caller already knows; the server adds it when it retries a search. */
+  city?: string;
 }
 
 type AddressComponent = { types: string[]; long_name: string };
@@ -148,6 +151,7 @@ function BrowserPlaceSearch({
         style={style}
         autoComplete={autoComplete}
       />
+      <PlaceSearchStatus status="idle" />
     </>
   );
 }
@@ -186,6 +190,21 @@ const resultButtonStyle: React.CSSProperties = {
   cursor: 'pointer',
 };
 
+export const PLACE_SEARCH_HELPER = 'Solo el nombre, sin dirección';
+export const PLACE_SEARCH_EMPTY = 'No lo encontramos. Escribe solo el nombre de tu negocio.';
+
+/** Line under the input: the helper while idle, else what the search is doing. */
+export function PlaceSearchStatus({ status }: { status: 'idle' | 'loading' | 'empty' | 'error' }) {
+  return (
+    <p role="status" style={{ margin: '0.3rem 0 0', fontSize: '0.8rem', opacity: 0.7 }}>
+      {status === 'idle' && PLACE_SEARCH_HELPER}
+      {status === 'loading' && 'Buscando en Google...'}
+      {status === 'empty' && PLACE_SEARCH_EMPTY}
+      {status === 'error' && 'No pudimos buscar ahora. Escribe el nombre a mano.'}
+    </p>
+  );
+}
+
 /**
  * Fallback when there is no browser key: the same input, but suggestions come
  * from our own API. Search runs from the input's change handler (not an effect
@@ -200,6 +219,7 @@ function ServerPlaceSearch({
   required,
   autoComplete = 'off',
   style,
+  city,
 }: Props) {
   const [results, setResults] = useState<ServerResult[]>([]);
   const [status, setStatus] = useState<'idle' | 'loading' | 'empty' | 'error'>('idle');
@@ -229,13 +249,17 @@ function ServerPlaceSearch({
       const ac = new AbortController();
       controller.current = ac;
       try {
-        const res = await fetch(`/api/places/search?q=${encodeURIComponent(q)}`, {
+        const cityParam = city?.trim() ? `&city=${encodeURIComponent(city.trim().slice(0, 60))}` : '';
+        const res = await fetch(`/api/places/search?q=${encodeURIComponent(q)}${cityParam}`, {
           signal: ac.signal,
         });
         if (!res.ok) throw new Error(String(res.status));
         const data = (await res.json()) as ServerResult[];
         setResults(data);
         setStatus(data.length ? 'idle' : 'empty');
+        if (!data.length) {
+          track('place_search_empty', { retried: res.headers.get('x-places-retried') === '1' });
+        }
       } catch (err) {
         if (ac.signal.aborted) return;
         console.error('places search failed', err);
@@ -283,11 +307,7 @@ function ServerPlaceSearch({
           ))}
         </ul>
       )}
-      <p role="status" style={{ margin: status === 'idle' ? 0 : '0.3rem 0 0', fontSize: '0.8rem', opacity: 0.7 }}>
-        {status === 'loading' && 'Buscando en Google...'}
-        {status === 'empty' && 'Sin resultados. Escribe el nombre a mano.'}
-        {status === 'error' && 'No pudimos buscar ahora. Escribe el nombre a mano.'}
-      </p>
+      <PlaceSearchStatus status={status} />
     </div>
   );
 }
