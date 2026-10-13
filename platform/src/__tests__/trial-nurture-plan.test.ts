@@ -135,6 +135,9 @@ const words = (html: string) => text(html).split(' ').filter(Boolean).length;
 const shown = () => h.productEvents.filter((e) => e.eventName === 'upgrade_prompt_shown');
 
 beforeEach(() => {
+  // Noon in Mexico City: inside the send hours and outside the morning bump window.
+  vi.useFakeTimers({ toFake: ['Date'] });
+  vi.setSystemTime(new Date('2026-10-14T18:00:00Z'));
   h.restaurants = [];
   h.events = [...EARLIER];
   h.productEvents = [];
@@ -150,6 +153,7 @@ beforeEach(() => {
   vi.spyOn(console, 'error').mockImplementation(() => {});
 });
 afterEach(() => {
+  vi.useRealTimers();
   vi.unstubAllGlobals();
   vi.restoreAllMocks();
 });

@@ -1,0 +1,46 @@
+name: Hourly trial nurture
+
+on:
+  schedule:
+    # GitHub schedules are UTC. The endpoint enforces the Mexico City send
+    # window (08:00-21:00) and dedupes every message per restaurant, so calls
+    # outside the window, or repeat calls, send nothing. The daily Vercel cron
+    # stays in place; the dedupe makes the extra runs harmless.
+    - cron: '23 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: hourly-trial-nurture
+  cancel-in-progress: false
+
+jobs:
+  trigger:
+    name: Trigger RateTap trial nurture
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Call the protected production endpoint
+        env:
+          CRON_SECRET: ${{ secrets.RATETAP_CRON_SECRET }}
+          CRON_URL: https://app.ratetapmx.com/api/cron/trial-nurture
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if [[ -z "${CRON_SECRET}" ]]; then
+            echo "RATETAP_CRON_SECRET is not configured"
+            exit 1
+          fi
+
+          curl \
+            --fail-with-body \
+            --silent \
+            --show-error \
+            --retry 3 \
+            --retry-all-errors \
+            --max-time 90 \
+            --header "Authorization: Bearer ${CRON_SECRET}" \
+            "${CRON_URL}"

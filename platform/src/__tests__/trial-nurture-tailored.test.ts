@@ -125,6 +125,9 @@ function reset() {
 }
 
 beforeEach(() => {
+  // Noon in Mexico City: inside the send hours and outside the morning bump window.
+  vi.useFakeTimers({ toFake: ['Date'] });
+  vi.setSystemTime(new Date('2026-10-14T18:00:00Z'));
   h.restaurants = [];
   h.events = [];
   h.staffCount = 0;
@@ -141,6 +144,7 @@ beforeEach(() => {
   vi.spyOn(console, 'error').mockImplementation(() => {});
 });
 afterEach(() => {
+  vi.useRealTimers();
   vi.unstubAllEnvs();
   vi.unstubAllGlobals();
   vi.restoreAllMocks();
