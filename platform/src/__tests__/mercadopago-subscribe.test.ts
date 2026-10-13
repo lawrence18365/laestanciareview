@@ -28,7 +28,10 @@ const mocks = vi.hoisted(() => ({
     managerEmail: 'gm@example.com',
     subscriptionStatus: 'trialing',
     trialEndsAt: null as Date | null,
+    groupKey: null as string | null,
+    locationsBand: null as string | null,
   },
+  recordProductEvent: vi.fn(),
 }));
 
 /**
@@ -64,6 +67,7 @@ function flatten(node: unknown, depth = 0): { text: string; params: unknown[] } 
 vi.mock('@/lib/origin', () => ({ requireSameOrigin: vi.fn(() => null) }));
 vi.mock('@/lib/session', () => ({ verifySession: mocks.verifySession }));
 vi.mock('@/lib/queries', () => ({ getRestaurantBySlug: mocks.getRestaurantBySlug }));
+vi.mock('@/lib/product-events', () => ({ recordProductEvent: mocks.recordProductEvent }));
 vi.mock('@/db', () => ({
   db: {
     select: vi.fn(() => ({
@@ -102,15 +106,16 @@ vi.mock('@/lib/mercadopago', async (importOriginal) => {
 });
 
 import { POST } from '@/app/api/billing/mercadopago/subscribe/route';
-import { BILLING_START_DATE, legacyBillingStartDate } from '@/lib/mercadopago';
+import { BILLING_START_DATE, getPriceBreakdown, legacyBillingStartDate } from '@/lib/mercadopago';
 
 const NOW = new Date('2026-08-21T12:00:00.000Z');
 const DAY_MS = 24 * 60 * 60 * 1000;
 
-function subscribeRequest() {
+function subscribeRequest(body?: Record<string, unknown>) {
   return new NextRequest('https://app.ratetapmx.com/api/billing/mercadopago/subscribe', {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
+    ...(body ? { body: JSON.stringify(body) } : {}),
   });
 }
 
@@ -141,6 +146,9 @@ beforeEach(() => {
   mocks.getRestaurantBySlug.mockReset();
   mocks.restaurant.subscriptionStatus = 'trialing';
   mocks.restaurant.trialEndsAt = null;
+  mocks.restaurant.groupKey = 'grupo-estancia'; // default fixture: a Grupo restaurant
+  mocks.restaurant.locationsBand = null;
+  mocks.recordProductEvent.mockReset();
   mocks.getRestaurantBySlug.mockImplementation(async () => ({ ...mocks.restaurant }));
 });
 
@@ -227,5 +235,88 @@ describe('POST /api/billing/mercadopago/subscribe first-charge date', () => {
     expect(requestedStartDate().toISOString()).toBe('2026-09-15T00:00:00.000Z');
     // Reissued in place: no second row for the same restaurant.
     expect(mocks.insertedValues).toHaveLength(0);
+  });
+});
+
+describe('POST /api/billing/mercadopago/subscribe Plan Restaurante pricing', () => {
+  const lastCall = () =>
+    mocks.createPreapproval.mock.calls[0]?.[0] as { amount: number; frequency?: number };
+
+  it('charges a self-serve restaurant MX$299 every month for cycle=monthly', async () => {
+    mocks.restaurant.groupKey = null;
+
+    const response = await POST(subscribeRequest({ cycle: 'monthly' }));
+
+    expect(response.status).toBe(200);
+    expect(lastCall().amount).toBe(299);
+    expect(lastCall().frequency).toBe(1);
+    expect(mocks.insertedValues[0]).toEqual(
+      expect.objectContaining({ amount: '299', totalAmount: '299', baseAmount: '299' }),
+    );
+    expect(mocks.recordProductEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        name: 'checkout_started',
+        restaurantId: 77,
+        properties: { cycle: 'monthly', amount: 299 },
+      }),
+    );
+  });
+
+  it('charges a self-serve restaurant MX$2,490 every 12 months for cycle=annual', async () => {
+    mocks.restaurant.groupKey = null;
+    mocks.restaurant.locationsBand = '1';
+
+    const response = await POST(subscribeRequest({ cycle: 'annual' }));
+
+    expect(response.status).toBe(200);
+    expect(lastCall().amount).toBe(2490);
+    expect(lastCall().frequency).toBe(12);
+    expect(mocks.recordProductEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        name: 'checkout_started',
+        properties: { cycle: 'annual', amount: 2490 },
+      }),
+    );
+  });
+
+  it('defaults a self-serve restaurant with no body to the monthly Plan Restaurante price', async () => {
+    mocks.restaurant.groupKey = null;
+
+    await POST(subscribeRequest());
+
+    expect(lastCall().amount).toBe(299);
+    expect(lastCall().frequency).toBe(1);
+  });
+
+  it('ignores cycle for a Grupo restaurant: old amount, frequency 1', async () => {
+    mocks.restaurant.groupKey = 'grupo-estancia';
+
+    const response = await POST(subscribeRequest({ cycle: 'annual' }));
+
+    expect(response.status).toBe(200);
+    expect(lastCall().amount).toBe(getPriceBreakdown().total);
+    expect(lastCall().amount).not.toBe(2490);
+    expect(lastCall().frequency).toBe(1);
+    expect(mocks.recordProductEvent).toHaveBeenCalledWith(
+      expect.objectContaining({ properties: { cycle: 'monthly', amount: getPriceBreakdown().total } }),
+    );
+  });
+
+  it('keeps the old price path for a self-serve restaurant with locations_band 2-5', async () => {
+    mocks.restaurant.groupKey = null;
+    mocks.restaurant.locationsBand = '2-5';
+
+    const response = await POST(subscribeRequest({ cycle: 'annual' }));
+
+    expect(response.status).toBe(200);
+    expect(lastCall().amount).toBe(getPriceBreakdown().total);
+    expect(lastCall().frequency).toBe(1);
+  });
+
+  it('rejects an unknown cycle without calling Mercado Pago', async () => {
+    const response = await POST(subscribeRequest({ cycle: 'weekly' }));
+
+    expect(response.status).toBe(400);
+    expect(mocks.createPreapproval).not.toHaveBeenCalled();
   });
 });

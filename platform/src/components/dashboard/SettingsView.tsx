@@ -22,6 +22,8 @@ interface BillingInfo {
     processingCharge: number;
     total: number;
   };
+  /** Plan Restaurante prices (self-serve single-location); null keeps priceBreakdown. */
+  planRestaurante: { monthly: number; annual: number } | null;
 }
 
 interface Props {
@@ -774,6 +776,7 @@ function BillingCard({ billing }: { billing: BillingInfo }) {
   const [state, setState] = useState<'idle' | 'loading' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState('');
   const [pendingNote, setPendingNote] = useState(false);
+  const [cycle, setCycle] = useState<'monthly' | 'annual'>('monthly');
 
   useEffect(() => {
     if (new URLSearchParams(window.location.search).get('billing') === 'mercadopago') {
@@ -793,7 +796,16 @@ function BillingCard({ billing }: { billing: BillingInfo }) {
     setErrorMessage('');
 
     try {
-      const res = await fetch('/api/billing/mercadopago/subscribe', { method: 'POST' });
+      const res = await fetch(
+        '/api/billing/mercadopago/subscribe',
+        billing.planRestaurante
+          ? {
+              method: 'POST',
+              headers: { 'content-type': 'application/json' },
+              body: JSON.stringify({ cycle }),
+            }
+          : { method: 'POST' },
+      );
       const data = (await res.json()) as { url?: string; error?: string };
       if (res.ok && data.url) {
         window.location.href = data.url;
@@ -867,6 +879,59 @@ function BillingCard({ billing }: { billing: BillingInfo }) {
         )}
       </div>
 
+      {billing.planRestaurante ? (
+        <div
+          style={{
+            borderTop: '1px solid var(--border-dark)',
+            borderBottom: '1px solid var(--border-dark)',
+            padding: '0.9rem 0',
+            marginBottom: '1rem',
+          }}
+        >
+          <span style={{ ...labelStyle, marginBottom: '0.65rem' }}>
+            {t.billing.planRestauranteName}
+          </span>
+          <div role="radiogroup" aria-label={t.billing.planRestauranteName} style={{ display: 'grid', gap: '0.5rem' }}>
+            {(
+              [
+                ['monthly', t.billing.cycleMonthly, billing.planRestaurante.monthly, t.billing.perMonth],
+                ['annual', t.billing.cycleAnnual, billing.planRestaurante.annual, t.billing.perYear],
+              ] as const
+            ).map(([value, label, price, unit]) => (
+              <label
+                key={value}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: '1rem',
+                  padding: '0.6rem 0.8rem',
+                  border: `1px solid ${cycle === value ? 'var(--text-main)' : 'var(--border-dark)'}`,
+                  cursor: 'pointer',
+                }}
+              >
+                <span style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', color: 'var(--text-main)', fontSize: '0.9rem' }}>
+                  <input
+                    type="radio"
+                    name="billing-cycle"
+                    value={value}
+                    checked={cycle === value}
+                    onChange={() => setCycle(value)}
+                  />
+                  {label}
+                </span>
+                <strong style={{ color: 'var(--text-main)', fontSize: '1rem' }}>
+                  {mxnFormatter.format(price)} {unit}
+                </strong>
+              </label>
+            ))}
+          </div>
+          <p style={{ margin: '0.65rem 0 0', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+            {t.billing.cancelAnytime}
+            {cycle === 'annual' ? ` ${t.billing.annualRenewsNote}` : ''}
+          </p>
+        </div>
+      ) : (
       <div
         style={{
           borderTop: '1px solid var(--border-dark)',
@@ -913,6 +978,7 @@ function BillingCard({ billing }: { billing: BillingInfo }) {
           </div>
         </div>
       </div>
+      )}
 
       {!billing.billingStarted && billingStarts && (
         <p
