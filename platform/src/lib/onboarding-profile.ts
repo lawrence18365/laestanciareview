@@ -33,6 +33,8 @@ export interface GoogleProfile {
   competitors: Competitor[];
   /** ISO timestamp of the Places fetch. */
   fetchedAt: string;
+  /** Google locations sharing this brand name (chain detection, US-15 M5). */
+  chainCount?: number;
 }
 
 export function isSolo(r: { teamMode: string | null }): boolean {
@@ -80,7 +82,9 @@ export function parseGoogleProfile(v: unknown): GoogleProfile | null {
     if (!v || typeof v !== 'object' || Array.isArray(v)) return null;
     const p = v as Record<string, unknown>;
     if (typeof p.fetchedAt !== 'string' || !p.fetchedAt) return null;
+    const chainCount = numOrNull(p.chainCount);
     return {
+      ...(chainCount !== null && chainCount >= 0 ? { chainCount: Math.round(chainCount) } : {}),
       primaryType: strOrNull(p.primaryType),
       types: Array.isArray(p.types)
         ? p.types.filter((t): t is string => typeof t === 'string')

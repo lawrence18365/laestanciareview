@@ -1483,6 +1483,72 @@ export async function sendLargeGroupSignupAlert(p: OwnerSignupParams) {
   }
 }
 
+interface ChainSignupAlertParams {
+  restaurantName: string;
+  contactName: string;
+  email: string;
+  phone: string;
+  city: string;
+  slug: string;
+  /** Google locations that share the signup's brand name. */
+  count: number;
+  /** Up to 5 addresses are shown. */
+  addresses: string[];
+}
+
+/**
+ * Founder alert for a self-serve signup whose name exists at 3+ Google
+ * locations (US-15 M5). Fire-and-forget: it never throws.
+ */
+export async function sendChainSignupAlert(p: ChainSignupAlertParams) {
+  if (!OWNER_NOTIFICATION_EMAIL) {
+    console.error('[sendChainSignupAlert] skipped: missing OWNER_NOTIFICATION_EMAIL / ADMIN_EMAIL');
+    return;
+  }
+
+  try {
+    const trialUrl = `${BASE_URL}/r/${encodeURIComponent(p.slug)}`;
+    const addresses = p.addresses.slice(0, 5);
+    const addressRows = addresses.length
+      ? `<tr><td style="${SECTION_LABEL_STYLE}">Direcciones</td><td>${addresses.map((a) => escapeHtml(a)).join('<br>')}</td></tr>`
+      : '';
+    const content = `
+    <div class="content-pad" style="padding: 28px 24px;">
+      <h1 style="margin: 0 0 12px; font-family: 'Playfair Display', Georgia, 'Times New Roman', serif; font-size: 20px; font-weight: 700; color: #111111;">Posible cadena</h1>
+      <table cellpadding="6" cellspacing="0" style="width: 100%; font-size: 14px; color: #111111;">
+        <tr><td style="${SECTION_LABEL_STYLE}">Negocio</td><td><strong>${escapeHtml(p.restaurantName)}</strong></td></tr>
+        <tr><td style="${SECTION_LABEL_STYLE}">Sucursales</td><td>${p.count} en Google</td></tr>
+        <tr><td style="${SECTION_LABEL_STYLE}">Ciudad</td><td>${escapeHtml(p.city)}</td></tr>
+        <tr><td style="${SECTION_LABEL_STYLE}">Contacto</td><td>${escapeHtml(p.contactName)}</td></tr>
+        <tr><td style="${SECTION_LABEL_STYLE}">Teléfono</td><td>${escapeHtml(p.phone)}</td></tr>
+        <tr><td style="${SECTION_LABEL_STYLE}">Email</td><td><a href="mailto:${escapeHtml(p.email)}">${escapeHtml(p.email)}</a></td></tr>
+        ${addressRows}
+      </table>
+      <p style="margin: 20px 0 0;">
+        <a href="${escapeHtml(trialUrl)}" style="${CTA_STYLE}">Ver su prueba</a>
+      </p>
+    </div>`;
+
+    const result = await sendMail({
+      from: FROM,
+      to: OWNER_NOTIFICATION_EMAIL,
+      subject: `Posible cadena: ${p.restaurantName.replace(/[\r\n]+/g, ' ')} (${p.count} sucursales en Google)`,
+      html: emailLayout(content),
+    });
+
+    if (!result.success || result.skipped) {
+      const reason = result.error
+        ? result.error.message
+        : result.skipped
+          ? 'missing SMTP_USER / SMTP_PASS'
+          : (result.response ?? 'unknown');
+      console.error(`[sendChainSignupAlert] failed to ${OWNER_NOTIFICATION_EMAIL}: ${reason}`);
+    }
+  } catch (err) {
+    console.error('[sendChainSignupAlert] error:', err instanceof Error ? err.message : err);
+  }
+}
+
 interface OwnerConversionParams {
   restaurantName: string;
   contactName: string;
