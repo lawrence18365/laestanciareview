@@ -69,11 +69,8 @@ export const t = {
     connectGoogleTitle: 'Conecta tu perfil de Google',
     connectGoogleBody: 'Sin esto, las reseñas no llegan a Google.',
     connectGoogleCta: 'Conectar',
-    // Solo-mode (team_mode = 'solo') empty state. Team/NULL keep the
-    // "Agrega a tus meseros" CTAs in DashboardView.
-    soloCtaSign: '1. Imprime tu letrero',
-    soloCtaWhatsapp: '2. Compártelo por WhatsApp',
-    soloShareMessage: (url: string) => `¿Cómo te fue? Déjanos tu reseña en Google: ${url}`,
+    // Solo-mode (team_mode = 'solo') empty state uses the shared qrShare
+    // actions. Team/NULL keep the "Agrega a tus meseros" CTAs in DashboardView.
     soloGoogleLine: (n: number, goal: number) =>
       `Tienes ${n} ${n === 1 ? 'reseña' : 'reseñas'}. Meta: ${goal}.`,
     rateTapImpact: 'Impacto RateTap',
@@ -511,6 +508,21 @@ export const t = {
     failedToAdd: 'Error al agregar',
     failedToUpdate: 'Error al actualizar',
     searchPlaceholder: 'Buscar por nombre o código...',
+  },
+
+  // ── No-printer first step for self-serve restaurants (/bienvenida,
+  // /qr-codes, dashboard empty state). A plain, neutral ask: no incentive, no
+  // routing by rating (Google policy). ──
+  qrShare: {
+    showQr: 'Muéstrale este QR a tu próximo cliente',
+    showQrShort: 'Mostrar QR en pantalla',
+    fullscreenAsk: '¿Cómo te fue? Escanea y déjanos tu reseña',
+    close: 'Cerrar',
+    whatsapp: 'Mándalo por WhatsApp a tus clientes',
+    whatsappHelper: 'Envíalo a tus últimos 10 clientes',
+    whatsappMessage: (name: string, url: string) =>
+      `¡Gracias por visitarnos en ${name}! ¿Nos dejas tu opinión? ${url}`,
+    printSign: 'Imprimir letrero',
   },
 
   // ── Restaurant Card ──

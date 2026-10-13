@@ -133,21 +133,25 @@ describe('dashboard empty-state CTAs per team_mode', () => {
     expect(renderToStaticMarkup(<DashboardView {...baseProps} googleReviewCount={12} isSolo={false} />)).toBe(html);
   });
 
-  it('solo gets the letrero CTA, the WhatsApp share CTA and the Google count line', () => {
+  it('solo gets the full-screen QR, the WhatsApp share, the letrero link and the Google count line', () => {
     const html = renderToStaticMarkup(
       <DashboardView
         {...baseProps}
         googleReviewCount={12}
         isSolo
         soloShareUrl="https://app.ratetapmx.com/r/tacos-ana"
+        selfServe={{ restaurantName: 'Tacos Ana', qrDataUrl: 'data:image/png;base64,QR' }}
       />,
     );
     expect(html).toContain('href="/qr-codes/letrero"');
-    expect(html).toContain('1. Imprime tu letrero');
-    expect(html).toContain('2. Compártelo por WhatsApp');
+    expect(html.indexOf('Muéstrale este QR a tu próximo cliente')).toBeGreaterThan(-1);
+    expect(html.indexOf('Mándalo por WhatsApp a tus clientes')).toBeGreaterThan(
+      html.indexOf('Muéstrale este QR a tu próximo cliente'),
+    );
+    expect(html.indexOf('Imprimir letrero')).toBeGreaterThan(html.indexOf('Mándalo por WhatsApp a tus clientes'));
     expect(html).toContain(
       `href="https://wa.me/?text=${encodeURIComponent(
-        '¿Cómo te fue? Déjanos tu reseña en Google: https://app.ratetapmx.com/r/tacos-ana',
+        '¡Gracias por visitarnos en Tacos Ana! ¿Nos dejas tu opinión? https://app.ratetapmx.com/r/tacos-ana',
       )}"`,
     );
     expect(html).toContain('Tienes 12 reseñas. Meta: 32.');
@@ -159,7 +163,7 @@ describe('dashboard empty-state CTAs per team_mode', () => {
     const html = renderToStaticMarkup(
       <DashboardView {...baseProps} googleReviewCount={null} isSolo soloShareUrl="https://x/r/a" />,
     );
-    expect(html).toContain('1. Imprime tu letrero');
+    expect(html).toContain('Imprimir letrero');
     expect(html).not.toContain('Tienes ');
   });
 
@@ -180,7 +184,7 @@ describe('dashboard empty-state CTAs per team_mode', () => {
         isSolo
       />,
     );
-    expect(html).not.toContain('Imprime tu letrero');
+    expect(html).not.toContain('Imprimir letrero');
   });
 });
 

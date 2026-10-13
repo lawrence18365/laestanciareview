@@ -12,6 +12,7 @@
  *   Pago         latest Mercado Pago subscription status
  * Informational, not gates: Con meseros (active staff rows) and QR descargado/compartido.
  * The QR count is restaurant-QR events (restaurant_qr_printed|downloaded|shared),
+ * the no-printer steps (qr_fullscreen_opened, whatsapp_share_clicked),
  * card_qr_downloaded|shared, mesero_qr_generated, and review_page_open with has_card=false.
  *
  * Table columns: forma (restaurants.team_mode) and sucursales (restaurants.locations_band).
@@ -188,7 +189,8 @@ async function main() {
       count(distinct pe.restaurant_id) filter (
         where pe.event_name in (
           'mesero_qr_generated', 'card_qr_downloaded', 'card_qr_shared',
-          'restaurant_qr_printed', 'restaurant_qr_downloaded', 'restaurant_qr_shared'
+          'restaurant_qr_printed', 'restaurant_qr_downloaded', 'restaurant_qr_shared',
+          'qr_fullscreen_opened', 'whatsapp_share_clicked'
         )
            or (pe.event_name = 'review_page_open' and pe.properties->>'has_card' = 'false')
       )::int as qr

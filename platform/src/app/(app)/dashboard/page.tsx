@@ -16,7 +16,7 @@ import { getGoogleRatingTrend, getGoogleRatingHistory, getGoogleReviewsAddedToda
 import { reviewUrlFor } from '@/lib/google-review';
 import { sameGroup } from '@/lib/group-scope';
 import { isSolo } from '@/lib/onboarding-profile';
-import { reviewUrlFor as qrReviewUrlFor } from '@/lib/qr';
+import { generateQrDataUrl, reviewUrlFor as qrReviewUrlFor } from '@/lib/qr';
 import DashboardView from '@/components/dashboard/DashboardView';
 import MapsRankCard from '@/components/dashboard/MapsRankCard';
 import FirstRatingCard from '@/components/dashboard/FirstRatingCard';
@@ -104,6 +104,19 @@ export default async function DashboardPage({
     }
   }
 
+  // Self-serve (solo / team) leads the empty state with the full-screen QR.
+  // NULL team_mode (every legacy / Grupo restaurant) gets nothing extra.
+  let qrShare: { restaurantName: string; qrDataUrl: string | null } | undefined;
+  if (restaurant.teamMode === 'solo' || restaurant.teamMode === 'team') {
+    let qrDataUrl: string | null = null;
+    try {
+      qrDataUrl = await generateQrDataUrl(restaurant.slug);
+    } catch {
+      qrDataUrl = null;
+    }
+    qrShare = { restaurantName: restaurant.name, qrDataUrl };
+  }
+
   return (
     <>
       {showFirstRating && (plan === 'trial' || plan === 'free') && (
@@ -133,6 +146,7 @@ export default async function DashboardPage({
         showGoogleConnect={session.role === 'gm' && reviewUrlFor(restaurant) === null}
         isSolo={isSolo(restaurant)}
         soloShareUrl={isSolo(restaurant) ? qrReviewUrlFor(restaurant.slug) : undefined}
+        selfServe={qrShare}
         hasStaff={hasStaff}
       />
       <div className="page-container" style={{ paddingTop: 0 }}>

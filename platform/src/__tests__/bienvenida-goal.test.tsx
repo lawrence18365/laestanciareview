@@ -91,7 +91,7 @@ describe('goal question rendering', () => {
       expect(out).toContain(label);
     }
     expect(out).not.toContain('Que mi equipo pida reseñas');
-    expect(out.indexOf(QUESTION)).toBeLessThan(out.indexOf('Imprime tu letrero'));
+    expect(out.indexOf(QUESTION)).toBeLessThan(out.indexOf('Muéstrale este QR a tu próximo cliente'));
     // chips are not a second primary (dark filled) button
     expect(out.match(/background:#1c1917/g)).toHaveLength(1);
   });

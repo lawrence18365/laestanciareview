@@ -207,27 +207,33 @@ describe('ReadyView per mode', () => {
     expect(out).toContain('Pégalo en la caja o la bolsa de cada pedido.');
   });
 
-  it('solo: primary letrero link, WhatsApp share secondary, no staff CTA', () => {
+  it('solo: full-screen QR first, WhatsApp second, print link third, no staff CTA', () => {
     const out = html(ready({ ...solo, googleReviewCount: 5 }));
+    const show = out.indexOf('Muéstrale este QR a tu próximo cliente');
+    const wa = out.indexOf('Mándalo por WhatsApp a tus clientes');
+    const print = out.indexOf('Imprimir letrero');
+    expect(show).toBeGreaterThan(-1);
+    expect(wa).toBeGreaterThan(show);
+    expect(print).toBeGreaterThan(wa);
     expect(out).toContain('href="/qr-codes/letrero"');
-    expect(out).toContain('Imprime tu letrero →');
-    expect(out).toContain('Compártelo por WhatsApp');
-    const wa = out.match(/href="(https:\/\/wa\.me\/\?text=[^"]+)"/);
-    expect(wa).not.toBeNull();
-    const decoded = decodeURIComponent(wa![1].replace(/&amp;/g, '&').split('text=')[1]);
-    expect(decoded).toContain('¿Cómo te fue? Déjanos tu reseña en Google');
-    expect(decoded).toContain('https://app.ratetapmx.com/r/pizzeria-lupita');
+    expect(out).not.toContain('Imprime tu letrero');
     expect(out).not.toContain('Agrega a tus meseros');
     // exactly one primary (dark filled) button
     expect(out.match(/background:#1c1917/g)).toHaveLength(1);
   });
 
-  it('team: today\'s staff CTA is primary', () => {
+  it('team: same three actions, staff CTA stays visible below them', () => {
     const out = html(ready({ ...team }));
+    const show = out.indexOf('Muéstrale este QR a tu próximo cliente');
+    const wa = out.indexOf('Mándalo por WhatsApp a tus clientes');
+    const print = out.indexOf('Imprimir letrero');
+    const staff = out.indexOf('Agrega a tus meseros');
+    expect(show).toBeGreaterThan(-1);
+    expect(wa).toBeGreaterThan(show);
+    expect(print).toBeGreaterThan(wa);
+    expect(staff).toBeGreaterThan(print);
     expect(out).toContain('href="/staff"');
-    expect(out).toContain('Agrega a tus meseros →');
     expect(out).toContain('Descargar QR por mesero');
-    expect(out).not.toContain('Imprime tu letrero');
     expect(out.match(/background:#1c1917/g)).toHaveLength(1);
   });
 
@@ -328,7 +334,8 @@ describe('/bienvenida reload with a session', () => {
     expect(out).toContain('src="data:image/png;base64,QR"');
     expect(out).toContain('¡Listo, Pizzería Lupita!');
     expect(out).toContain('Tienes 87 reseñas en Google.');
-    expect(out).toContain('Imprime tu letrero →');
+    expect(out).toContain('Muéstrale este QR a tu próximo cliente');
+    expect(out).toContain('Imprimir letrero');
     expect(out).toContain('Ir a mi panel →');
     expect(out).not.toContain('Tu cuenta ya está lista');
   });
