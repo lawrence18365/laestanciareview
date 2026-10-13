@@ -52,10 +52,12 @@ describe('welcome email tracking', () => {
     expect(html).toMatch(/<img src="https:\/\/app\.ratetapmx\.com\/api\/email\/t\?k=o&amp;t=welcome&amp;r=7&amp;s=[0-9a-f]{32}" width="1" height="1"/);
     const hrefs = [...html.matchAll(/href="([^"]+)"/g)].map((m) => decode(m[1] as string));
     const wrapped = hrefs.filter((h) => h.includes('/api/email/t?k=c'));
-    expect(wrapped.length).toBeGreaterThanOrEqual(3);
-    // Dashboard CTA and the guest review link both go through the tracker.
+    expect(wrapped.length).toBeGreaterThanOrEqual(1);
+    // The dashboard CTA goes through the tracker; the guest review link is left
+    // as-is because owners forward it to diners (their taps aren't owner clicks).
     expect(wrapped.some((h) => h.includes('u=https://app.ratetapmx.com/dashboard'))).toBe(true);
-    expect(wrapped.some((h) => h.includes('/r/taqueria-uno'))).toBe(true);
+    expect(wrapped.some((h) => h.includes('/r/taqueria-uno'))).toBe(false);
+    expect(hrefs).toContain('https://app.ratetapmx.com/r/taqueria-uno');
     // The visible text of the review link is unchanged.
     expect(html).toContain('>https://app.ratetapmx.com/r/taqueria-uno</a>');
   });
@@ -193,5 +195,16 @@ describe('GET /api/email/t', () => {
     url.searchParams.set('u', 'https://wa.me/5210000000000');
     expect((await GET(request(url.toString()))).status).toBe(400);
     expect(mocks.recordProductEvent).not.toHaveBeenCalled();
+  });
+});
+
+describe('guest review links stay unwrapped', () => {
+  it('does not wrap /r/{slug} links that owners forward to diners', async () => {
+    process.env.SESSION_SECRET ??= 'test-session-secret-email-tracking-guest';
+    const { addEmailTracking } = await import('@/lib/email-tracking');
+    const html = '<a href="https://app.ratetapmx.com/r/tacos-ana">link</a><a href="https://app.ratetapmx.com/qr-codes">qr</a>';
+    const out = await addEmailTracking(html, { template: 'hour1', restaurantId: 7 });
+    expect(out).toContain('href="https://app.ratetapmx.com/r/tacos-ana"');
+    expect(out).not.toContain('href="https://app.ratetapmx.com/qr-codes"');
   });
 });

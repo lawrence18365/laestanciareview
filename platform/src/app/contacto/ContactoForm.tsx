@@ -321,7 +321,7 @@ export default function ContactoForm({ pilotOffer }: { pilotOffer: boolean }) {
             }}>
               {pilotOffer
                 ? 'Piloto fundador: empieza por $0 hoy'
-                : 'Más reseñas en Google que el de enfrente.'}
+                : 'Más reseñas en Google, todos los días.'}
             </h1>
             <p style={{ color: 'var(--text-muted, #57534e)', fontSize: '0.95rem', margin: 0 }}>
               {pilotOffer

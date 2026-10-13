@@ -40,7 +40,7 @@ describe('/contacto above the fold', () => {
   it('leads with the ad promise and a one-line subhead, within 30 words', () => {
     const h1 = html.match(/<h1[^>]*>(.*?)<\/h1>/)![1];
     const sub = html.match(/<\/h1><p[^>]*>(.*?)<\/p>/)![1];
-    expect(h1).toBe('Más reseñas en Google que el de enfrente.');
+    expect(h1).toBe('Más reseñas en Google, todos los días.');
     expect(sub).toBe('30 días gratis. Sin tarjeta. Listo en 2 minutos.');
     expect(visibleWords(`${h1} ${sub}`).length).toBeLessThanOrEqual(30);
   });

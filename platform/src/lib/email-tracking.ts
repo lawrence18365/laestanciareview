@@ -33,6 +33,14 @@ function baseUrl(): string {
     .replace(/\/$/, '');
 }
 
+function isGuestReviewLink(raw: string): boolean {
+  try {
+    return new URL(raw).pathname.startsWith('/r/');
+  } catch {
+    return false;
+  }
+}
+
 export function isValidTemplate(template: string): boolean {
   return TEMPLATE_RE.test(template);
 }
@@ -108,7 +116,9 @@ export async function addEmailTracking(
   try {
     const targets = new Set<string>();
     for (const m of html.matchAll(/href="(https:\/\/[^"]+)"/g)) {
-      if (isAllowedRedirect(m[1]) && !m[1].includes(TRACK_PATH)) targets.add(m[1]);
+      // Guest review links (/r/{slug}) get forwarded to diners; wrapping them would log
+      // every diner tap as the owner's email click.
+      if (isAllowedRedirect(m[1]) && !m[1].includes(TRACK_PATH) && !isGuestReviewLink(m[1])) targets.add(m[1]);
     }
     const wrapped = new Map<string, string>();
     for (const target of targets) {
