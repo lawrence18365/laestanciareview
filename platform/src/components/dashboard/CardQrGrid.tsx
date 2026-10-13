@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { cardUrlFor } from '@/lib/qr';
+import { cardUrlFor, reviewUrlFor } from '@/lib/qr';
 import { renderWaiterCard } from '@/lib/qr-card';
 import { track } from '@/lib/analytics-client';
 
@@ -18,6 +18,10 @@ interface Props {
   restaurantName: string;
   logo: string;
   logoDarkBg: boolean;
+  /** PNG data URL of the restaurant's own review QR. */
+  restaurantQr: string;
+  /** 'solo' hides the waiter grid; NULL/'team' keep it exactly as before. */
+  teamMode: string | null;
 }
 
 type ShareNavigator = Navigator & {
@@ -25,7 +29,16 @@ type ShareNavigator = Navigator & {
   share?: (data?: ShareData) => Promise<void>;
 };
 
-export default function CardQrGrid({ staff, slug, restaurantName, logo, logoDarkBg }: Props) {
+export default function CardQrGrid({
+  staff,
+  slug,
+  restaurantName,
+  logo,
+  logoDarkBg,
+  restaurantQr,
+  teamMode,
+}: Props) {
+  const solo = teamMode === 'solo';
   const [previews, setPreviews] = useState<Record<number, string>>({});
   const [canShareFiles, setCanShareFiles] = useState(false);
   const [busyId, setBusyId] = useState<number | null>(null);
@@ -107,6 +120,39 @@ export default function CardQrGrid({ staff, slug, restaurantName, logo, logoDark
     }
   }
 
+  function downloadRestaurantQr() {
+    try {
+      const a = document.createElement('a');
+      a.href = restaurantQr;
+      a.download = `qr-${slug}.png`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      track('restaurant_qr_downloaded');
+    } catch {
+      /* download is best-effort */
+    }
+  }
+
+  // The share sheet carries the PNG when the browser can; otherwise a plain
+  // WhatsApp link with the review URL. Either way: a plain ask, no incentive.
+  async function shareRestaurantQr() {
+    const text = `${restaurantName}: ¿Te gustó? Déjanos tu reseña en Google ${reviewUrlFor(slug)}`;
+    const nav = navigator as ShareNavigator;
+    try {
+      if (canShareFiles && typeof nav.share === 'function') {
+        const blob = await (await fetch(restaurantQr)).blob();
+        const file = new File([blob], `qr-${slug}.png`, { type: 'image/png' });
+        await nav.share.call(nav, { files: [file], text, title: restaurantName });
+      } else {
+        window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank', 'noopener');
+      }
+      track('restaurant_qr_shared');
+    } catch {
+      /* the share sheet is dismissible — silence is correct */
+    }
+  }
+
   async function share(member: StaffMember) {
     const nav = navigator as ShareNavigator;
     const shareFn = nav.share;
@@ -129,16 +175,58 @@ export default function CardQrGrid({ staff, slug, restaurantName, logo, logoDark
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '1rem', flexWrap: 'wrap' }}>
         <div>
           <h2 style={sectionTitle}>Códigos QR</h2>
-          <p style={{ margin: '0.35rem 0 0', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-            Cada mesero guarda su código y lo muestra al cliente.
-          </p>
+          {!solo && (
+            <p style={{ margin: '0.35rem 0 0', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+              Cada mesero guarda su código y lo muestra al cliente.
+            </p>
+          )}
         </div>
-        <a href="/qr-codes/print" target="_blank" rel="noreferrer" style={{ ...btnPrimary, textDecoration: 'none', display: 'inline-block' }}>
-          Imprimir todos
-        </a>
+        {!solo && (
+          <a href="/qr-codes/print" target="_blank" rel="noreferrer" style={{ ...btnPrimary, textDecoration: 'none', display: 'inline-block' }}>
+            Imprimir todos
+          </a>
+        )}
       </div>
 
-      {staff.length === 0 ? (
+      <div style={{ ...cardStyle, marginTop: '0.75rem', marginBottom: '0.75rem' }}>
+        <div style={restaurantQrThumb}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={restaurantQr}
+            alt={`Código QR de ${restaurantName}`}
+            style={{ width: '100%', height: '100%', display: 'block' }}
+          />
+        </div>
+        <div style={infoStyle}>
+          <div style={nameStyle}>{restaurantName}</div>
+          <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap', justifyContent: 'flex-start' }}>
+            <a
+              href="/qr-codes/letrero"
+              target="_blank"
+              rel="noreferrer"
+              style={{ ...btnPrimary, textDecoration: 'none', display: 'inline-block' }}
+            >
+              Imprimir letrero
+            </a>
+            <button onClick={downloadRestaurantQr} style={btnSecondary}>
+              Descargar PNG
+            </button>
+            <button onClick={shareRestaurantQr} style={btnSecondary}>
+              Compartir por WhatsApp
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {solo ? (
+        <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+          ¿Contratas meseros? Agrégalos en{' '}
+          <a href="/staff" style={{ color: 'var(--text-main)', fontWeight: 700 }}>
+            Personal
+          </a>
+          .
+        </p>
+      ) : staff.length === 0 ? (
         <div style={{ ...cardStyle, textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
           Agrega meseros en{' '}
           <a href="/staff" style={{ color: 'var(--text-main)', fontWeight: 700 }}>
@@ -217,6 +305,14 @@ const thumbStyle: React.CSSProperties = {
   alignItems: 'center',
   justifyContent: 'center',
   background: 'var(--bg-base)',
+  overflow: 'hidden',
+};
+
+const restaurantQrThumb: React.CSSProperties = {
+  width: '112px',
+  flex: '0 0 112px',
+  aspectRatio: '1 / 1',
+  background: '#fff',
   overflow: 'hidden',
 };
 
