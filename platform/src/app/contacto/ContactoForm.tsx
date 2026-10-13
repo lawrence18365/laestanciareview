@@ -6,6 +6,7 @@ import GooglePlaceSearch, {
   type PlaceSelection,
 } from '@/components/GooglePlaceSearch';
 import { getSessionId, track } from '@/lib/analytics-client';
+import type { LocationsBand, TeamMode } from '@/lib/onboarding-profile';
 
 const PIXEL_ID = process.env.NEXT_PUBLIC_META_PIXEL_ID ?? '1578821303344121';
 
@@ -16,6 +17,8 @@ type Form = {
   email: string;
   phone: string;
   city: string;
+  locationsBand: '' | LocationsBand;
+  teamMode: '' | TeamMode;
   password: string;
   line1: string;
   line2: string;
@@ -32,6 +35,8 @@ const EMPTY: Form = {
   email: '',
   phone: '',
   city: '',
+  locationsBand: '',
+  teamMode: '',
   password: '',
   line1: '',
   line2: '',
@@ -80,6 +85,7 @@ export default function ContactoForm({ pilotOffer }: { pilotOffer: boolean }) {
   // re-render or a second focus never inflates the step counts.
   const formStartedRef = useRef(false);
   const placeSelectedRef = useRef(false);
+  const shapeSelectedRef = useRef(false);
 
   // Step 1 of the funnel: the form page was viewed. Only booleans and the UTM
   // keys are recorded — never anything the visitor typed.
@@ -106,6 +112,20 @@ export default function ContactoForm({ pilotOffer }: { pilotOffer: boolean }) {
 
   function update<K extends keyof Form>(key: K, value: Form[K]) {
     setForm((f) => ({ ...f, [key]: value }));
+  }
+
+  // The two tap questions. The funnel event fires once, when both are answered,
+  // and carries only the two enum values (never anything typed).
+  function pickShape(key: 'locationsBand' | 'teamMode', value: string) {
+    const next = { ...form, [key]: value } as Form;
+    setForm(next);
+    if (next.locationsBand && next.teamMode && !shapeSelectedRef.current) {
+      shapeSelectedRef.current = true;
+      track('signup_shape_selected', {
+        locations_band: next.locationsBand,
+        team_mode: next.teamMode,
+      });
+    }
   }
 
   // Picking the restaurant from Google is what captures its Place ID — the same
@@ -161,6 +181,8 @@ export default function ContactoForm({ pilotOffer }: { pilotOffer: boolean }) {
           city: form.city,
           password: form.password,
           googlePlaceId: form.googlePlaceId || undefined,
+          locationsBand: form.locationsBand || undefined,
+          teamMode: form.teamMode || undefined,
           analyticsSessionId: getSessionId() ?? undefined,
           ...readMarketingPayload(),
           ...(shippingAddress ? { shippingAddress } : {}),
@@ -235,7 +257,7 @@ export default function ContactoForm({ pilotOffer }: { pilotOffer: boolean }) {
             <p style={{ color: 'var(--text-muted, #57534e)', fontSize: '0.95rem', margin: 0 }}>
               {pilotOffer
                 ? 'Piloto fundador: $0 hoy · 30 días gratis. Las tarjetas NFC se envían cuando decides continuar.'
-                : '30 días gratis, sin tarjeta. Tu cuenta y los QR de tus meseros quedan listos hoy.'}
+                : '30 días gratis, sin tarjeta. Tu QR queda listo hoy.'}
             </p>
           </div>
 
@@ -301,7 +323,7 @@ export default function ContactoForm({ pilotOffer }: { pilotOffer: boolean }) {
                 marginTop: '1.25rem',
               }}>
                 {[
-                  { n: '1', label: 'Escanea el QR del mesero' },
+                  { n: '1', label: 'Tu cliente escanea tu QR' },
                   { n: '2', label: 'Califica en 2 toques' },
                   { n: '3', label: 'Elige Google o nota privada' },
                 ].map((step) => (
@@ -367,6 +389,20 @@ export default function ContactoForm({ pilotOffer }: { pilotOffer: boolean }) {
                 style={inputStyle}
               />
             </Field>
+            <ChoiceGroup
+              legend="¿Cuántas sucursales tienes?"
+              name="locationsBand"
+              value={form.locationsBand}
+              options={LOCATION_OPTIONS}
+              onChange={(v) => pickShape('locationsBand', v)}
+            />
+            <ChoiceGroup
+              legend="¿Quién atiende a tus clientes?"
+              name="teamMode"
+              value={form.teamMode}
+              options={TEAM_OPTIONS}
+              onChange={(v) => pickShape('teamMode', v)}
+            />
 
             <Divider />
             <SectionTitle>Tu contacto</SectionTitle>
@@ -563,6 +599,88 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
       </label>
       {children}
     </div>
+  );
+}
+
+const LOCATION_OPTIONS: { value: LocationsBand; label: string }[] = [
+  { value: '1', label: '1' },
+  { value: '2-5', label: '2 a 5' },
+  { value: '6+', label: '6 o más' },
+];
+
+const TEAM_OPTIONS: { value: TeamMode; label: string }[] = [
+  { value: 'solo', label: 'Solo yo' },
+  { value: 'team', label: 'Tengo meseros' },
+];
+
+// Tap-only required choice: real radio inputs (native `required`, keyboard and
+// screen-reader support) styled as large touch buttons.
+function ChoiceGroup<V extends string>({
+  legend,
+  name,
+  value,
+  options,
+  onChange,
+}: {
+  legend: string;
+  name: string;
+  value: '' | V;
+  options: { value: V; label: string }[];
+  onChange: (value: V) => void;
+}) {
+  return (
+    <fieldset style={{ border: 0, padding: 0, margin: '0 0 1rem', minWidth: 0 }}>
+      <style>{'.rt-choice:focus-within{outline:2px solid #1c1917;outline-offset:2px}'}</style>
+      <legend style={{
+        padding: 0,
+        fontSize: '0.65rem',
+        fontWeight: 700,
+        letterSpacing: '0.1em',
+        textTransform: 'uppercase',
+        color: 'var(--text-muted, #78716c)',
+        marginBottom: '0.4rem',
+      }}>
+        {legend}
+      </legend>
+      <div style={{ display: 'flex', gap: '0.5rem' }}>
+        {options.map((opt) => {
+          const selected = value === opt.value;
+          return (
+            <label
+              key={opt.value}
+              className="rt-choice"
+              style={{
+                position: 'relative',
+                flex: 1,
+                minHeight: 48,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: '0.5rem',
+                textAlign: 'center',
+                border: '1px solid var(--border-dark, #1c1917)',
+                background: selected ? 'var(--text-main, #1c1917)' : 'var(--panel-bg, #ffffff)',
+                color: selected ? 'var(--panel-bg, #ffffff)' : 'var(--text-main, #1c1917)',
+                fontSize: '0.9rem',
+                fontWeight: 700,
+                cursor: 'pointer',
+              }}
+            >
+              <input
+                type="radio"
+                name={name}
+                value={opt.value}
+                checked={selected}
+                required
+                onChange={() => onChange(opt.value)}
+                style={{ position: 'absolute', inset: 0, opacity: 0, margin: 0, cursor: 'pointer' }}
+              />
+              {opt.label}
+            </label>
+          );
+        })}
+      </div>
+    </fieldset>
   );
 }
 

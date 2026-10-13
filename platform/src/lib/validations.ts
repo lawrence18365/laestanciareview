@@ -75,6 +75,10 @@ export const signupSchema = z.object({
   // to the account. Not an identifier for anyone: it is a random per-tab value.
   analyticsSessionId: z.string().trim().max(64).optional(),
   metadata: z.record(z.string(), z.unknown()).optional(),
+  // Onboarding answers (US-14). Optional for older clients: missing = null =
+  // legacy behavior. Anything outside the allowed values is rejected.
+  locationsBand: z.enum(['1', '2-5', '6+']).nullish(),
+  teamMode: z.enum(['solo', 'team']).nullish(),
   // Optional up front: NFC cards only ship once a restaurant converts (first
   // paid Mercado Pago payment), and /contacto hides the address behind a
   // collapsed "optional" toggle. Every field is optional so a partially filled

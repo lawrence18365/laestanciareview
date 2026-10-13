@@ -12,7 +12,7 @@ import {
   trackCommercialEvent,
   upsertCommercialLead,
 } from '@/lib/commercial-tracking';
-import { sendOwnerSignupNotification, sendWelcomeEmail } from '@/lib/email';
+import { sendLargeGroupSignupAlert, sendOwnerSignupNotification, sendWelcomeEmail } from '@/lib/email';
 import { and, eq, sql } from 'drizzle-orm';
 import {
   isValidPilotAccessToken,
@@ -20,7 +20,6 @@ import {
   PILOT_TRIAL_DAYS,
 } from '@/lib/pilot';
 import { provisionSignupAtomic, SignupConflictError } from '@/lib/signup-provisioning';
-import type { LocationsBand, TeamMode } from '@/lib/onboarding-profile';
 import { generateQrDataUrl, reviewUrlFor } from '@/lib/qr';
 import { sendWhatsAppWelcome } from '@/lib/whatsapp';
 import { sendCompleteRegistrationEvent } from '@/lib/meta-conversions';
@@ -53,10 +52,10 @@ export async function POST(req: NextRequest) {
       );
     }
     const input = parsed.data;
-    // Onboarding answers (US-14) are pass-through only here: signupSchema (T3)
-    // owns their validation. Until it declares them zod strips them, so they
-    // stay null and provisioning keeps today's behavior.
-    const onboarding = input as { teamMode?: TeamMode | null; locationsBand?: LocationsBand | null };
+    // Onboarding answers (US-14): validated by signupSchema; missing = null =
+    // legacy behavior.
+    const teamMode = input.teamMode ?? null;
+    const locationsBand = input.locationsBand ?? null;
     const isPilot = isValidPilotAccessToken(req.cookies.get(PILOT_ACCESS_COOKIE)?.value);
     pilotRequest = isPilot;
 
@@ -203,8 +202,8 @@ export async function POST(req: NextRequest) {
         shippingAddress,
         trialEndsAt,
         pilot: isPilot,
-        teamMode: onboarding.teamMode ?? null,
-        locationsBand: onboarding.locationsBand ?? null,
+        teamMode,
+        locationsBand,
         pendingSignupId,
         leadId: lead.id,
       });
@@ -277,6 +276,18 @@ export async function POST(req: NextRequest) {
         slug: restaurant.slug,
         googlePlaceId: input.googlePlaceId,
       }),
+      // 6+ locations: tell the founders. Fire-and-forget; the helper never throws.
+      locationsBand === '6+'
+        ? sendLargeGroupSignupAlert({
+            restaurantName: input.businessName,
+            contactName: input.contactName,
+            email: input.email,
+            phone: input.phone,
+            city: input.city,
+            slug: restaurant.slug,
+            googlePlaceId: input.googlePlaceId,
+          })
+        : Promise.resolve(),
       // No WhatsApp Business API yet: the welcome email is the channel.
       input.phone && process.env.WHATSAPP_API_ENABLED === '1'
         ? sendWhatsAppWelcome({
@@ -307,6 +318,8 @@ export async function POST(req: NextRequest) {
           has_place_id: Boolean(input.googlePlaceId),
           utm_source: input.utmSource ?? null,
           utm_content: input.utmContent ?? null,
+          locations_band: locationsBand,
+          team_mode: teamMode,
         },
       }),
     ]);
