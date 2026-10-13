@@ -10,7 +10,7 @@ import type { LocationsBand, TeamMode } from '@/lib/onboarding-profile';
 
 const PIXEL_ID = process.env.NEXT_PUBLIC_META_PIXEL_ID ?? '1578821303344121';
 
-type Form = {
+export type Form = {
   businessName: string;
   googlePlaceId: string;
   contactName: string;
@@ -45,6 +45,47 @@ const EMPTY: Form = {
   postalCode: '',
   notes: '',
 };
+
+/**
+ * Picking the business from Google fills the business name and the city (and
+ * state). Anything Google did not return keeps what the form already had.
+ */
+export function applyPlaceSelection(f: Form, place: PlaceSelection): Form {
+  return {
+    ...f,
+    businessName: place.name || f.businessName,
+    googlePlaceId: place.placeId,
+    city: place.address.city || f.city,
+    addrCity: place.address.city || f.addrCity,
+    state: place.address.state || f.state,
+  };
+}
+
+/** The first field on the page: the Google business search. */
+export const FIRST_FIELD_ID = 'businessName';
+const FIELD_FOCUSED_KEY = 'rt_signup_field_focused';
+
+/**
+ * `signup_field_focused` fires for the first field only, once per browser
+ * session. The storage flag keeps a reload or a second visit from counting the
+ * same visitor twice; when storage is blocked the caller's per-mount ref is the
+ * only cap. Returns whether the event was emitted.
+ */
+export function trackFirstFieldFocus(
+  targetId: string,
+  storage: Pick<Storage, 'getItem' | 'setItem'> | null,
+  emit: () => void,
+): boolean {
+  if (targetId !== FIRST_FIELD_ID) return false;
+  try {
+    if (storage?.getItem(FIELD_FOCUSED_KEY)) return false;
+    storage?.setItem(FIELD_FOCUSED_KEY, '1');
+  } catch {
+    // Storage blocked: still emit once; the component's ref caps the mount.
+  }
+  emit();
+  return true;
+}
 
 function readMarketingPayload() {
   if (typeof window === 'undefined') return {};
@@ -84,7 +125,11 @@ export default function ContactoForm({ pilotOffer }: { pilotOffer: boolean }) {
   // Funnel instrumentation: each of these fires at most once per mount, so a
   // re-render or a second focus never inflates the step counts.
   const formStartedRef = useRef(false);
+  const fieldFocusedRef = useRef(false);
   const placeSelectedRef = useRef(false);
+  // The city field only appears when Google did not give us one (place without
+  // a locality, or a name typed by hand). Otherwise the pick fills it.
+  const [cityRevealed, setCityRevealed] = useState(false);
   const shapeSelectedRef = useRef(false);
 
   // Step 1 of the funnel: the form page was viewed. Only booleans and the UTM
@@ -108,6 +153,29 @@ export default function ContactoForm({ pilotOffer }: { pilotOffer: boolean }) {
     if (formStartedRef.current) return;
     formStartedRef.current = true;
     track('signup_form_started');
+  }
+
+  // Capture-phase focus on the form: the first-field event for the start rate,
+  // and the manual-city fallback when the visitor moves on without a pick.
+  function handleFormFocus(e: React.FocusEvent<HTMLFormElement>) {
+    markFormStarted();
+    const el = e.target as HTMLElement;
+    if (!fieldFocusedRef.current && el.id === FIRST_FIELD_ID) {
+      fieldFocusedRef.current = true;
+      let storage: Storage | null = null;
+      try {
+        storage = window.sessionStorage;
+      } catch {
+        storage = null;
+      }
+      trackFirstFieldFocus(el.id, storage, () =>
+        track('signup_field_focused', { field: 'place_search' }),
+      );
+    }
+    // Only inputs: a tap on a result button must not shift the layout.
+    if (el.tagName === 'INPUT' && el.id !== FIRST_FIELD_ID && !form.city.trim()) {
+      setCityRevealed(true);
+    }
   }
 
   function update<K extends keyof Form>(key: K, value: Form[K]) {
@@ -137,14 +205,8 @@ export default function ContactoForm({ pilotOffer }: { pilotOffer: boolean }) {
       placeSelectedRef.current = true;
       track('signup_place_selected', { has_place_id: Boolean(place.placeId) });
     }
-    setForm((f) => ({
-      ...f,
-      businessName: place.name || f.businessName,
-      googlePlaceId: place.placeId,
-      city: place.address.city || f.city,
-      addrCity: place.address.city || f.addrCity,
-      state: place.address.state || f.state,
-    }));
+    if (!place.address.city) setCityRevealed(true);
+    setForm((f) => applyPlaceSelection(f, place));
   }
 
   // Everyone who submits this form is provisioned immediately: the restaurant
@@ -155,6 +217,12 @@ export default function ContactoForm({ pilotOffer }: { pilotOffer: boolean }) {
     e.preventDefault();
     setError('');
     setLoginUrl('');
+    if (!form.city.trim()) {
+      // The city is hidden while Google supplies it; if it did not, ask now.
+      setCityRevealed(true);
+      setError('Escribe tu ciudad.');
+      return;
+    }
     setLoading(true);
     track('signup_submit', { has_place_id: Boolean(form.googlePlaceId) });
 
@@ -232,147 +300,56 @@ export default function ContactoForm({ pilotOffer }: { pilotOffer: boolean }) {
       <div style={{
         minHeight: '100vh',
         background: 'var(--bg-base, #f5f0eb)',
-        padding: '2rem 1rem',
+        padding: '1rem 1rem 2rem',
         fontFamily: 'var(--font-sans, -apple-system, BlinkMacSystemFont, sans-serif)',
       }}>
         <div style={{ maxWidth: 640, margin: '0 auto' }}>
-          {/* Header */}
-          <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
+          {/* Header: kept short so the first form field is on screen on a phone. */}
+          <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
             <img
               src="/logos/ratetap_logo_transparent_background.png"
               alt="RateTap"
-              style={{ height: 72, display: 'block', margin: '0 auto 1.5rem' }}
+              style={{ height: 36, display: 'block', margin: '0 auto 0.75rem' }}
             />
             <h1 style={{
-              fontSize: '1.75rem',
+              fontSize: '1.5rem',
+              lineHeight: 1.15,
               fontWeight: 800,
               color: 'var(--text-main, #1c1917)',
               letterSpacing: '-0.02em',
-              margin: '0 0 0.5rem',
+              margin: '0 0 0.4rem',
             }}>
               {pilotOffer
                 ? 'Piloto fundador: empieza por $0 hoy'
-                : 'Más reseñas en Google, todos los días.'}
+                : 'Más reseñas en Google que el de enfrente.'}
             </h1>
             <p style={{ color: 'var(--text-muted, #57534e)', fontSize: '0.95rem', margin: 0 }}>
               {pilotOffer
                 ? 'Piloto fundador: $0 hoy · 30 días gratis. Las tarjetas NFC se envían cuando decides continuar.'
-                : '30 días gratis, sin tarjeta. Tu QR queda listo hoy.'}
+                : '30 días gratis. Sin tarjeta. Listo en 2 minutos.'}
             </p>
           </div>
 
-          {/* Proof + how-it-works. Cold Meta traffic lands on a bare form today;
-              the non-pilot page carries the velocity evidence and the 3 steps
-              so the form reads as the next step, not the whole pitch. */}
-          {!pilotOffer && (
-            <div style={{
-              background: 'var(--panel-bg, #ffffff)',
-              border: '1px solid var(--border-dark, #1c1917)',
-              padding: '1.25rem',
-              boxShadow: '8px 8px 0px rgba(0,0,0,0.06)',
-              marginBottom: '1.5rem',
-            }}>
-              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '1rem' }}>
-                <img
-                  src="/contacto/guest-choice-mobile.webp"
-                  alt="Pantalla del cliente: califica y elige Google o comentario privado"
-                  width={96}
-                  height={208}
-                  style={{
-                    width: 96,
-                    height: 208,
-                    flexShrink: 0,
-                    display: 'block',
-                    borderRadius: 12,
-                    border: '1px solid var(--border-dark, #1c1917)',
-                    objectFit: 'cover',
-                    objectPosition: 'top',
-                  }}
-                />
-                <div style={{ minWidth: 0 }}>
-                  <div style={{
-                    fontSize: '1.6rem',
-                    fontWeight: 800,
-                    letterSpacing: '-0.02em',
-                    lineHeight: 1.15,
-                    color: 'var(--text-main, #1c1917)',
-                  }}>
-                    {'< 1 → 3–8'}
-                  </div>
-                  <p style={{ fontSize: '0.85rem', color: 'var(--text-muted, #57534e)', margin: '0.4rem 0 0', lineHeight: 1.4 }}>
-                    reseñas nuevas en Google al día, por restaurante.
-                  </p>
-                  <p style={{ fontSize: '0.72rem', color: 'var(--text-dim, #a8a29e)', margin: '0.5rem 0 0', lineHeight: 1.4 }}>
-                    11 restaurantes reales, antes vs. después.{' '}
-                    <a
-                      href="https://ratetapmx.com/methodology#velocity"
-                      target="_blank"
-                      rel="noopener"
-                      style={{ color: 'var(--text-muted, #57534e)', fontWeight: 700, textDecoration: 'underline' }}
-                    >
-                      Cómo lo medimos
-                    </a>
-                  </p>
-                </div>
-              </div>
-
-              <div style={{
-                display: 'grid',
-                gridTemplateColumns: '1fr 1fr 1fr',
-                gap: '0.5rem',
-                marginTop: '1.25rem',
-              }}>
-                {[
-                  { n: '1', label: 'Tu cliente escanea tu QR' },
-                  { n: '2', label: 'Califica en 2 toques' },
-                  { n: '3', label: 'Elige Google o nota privada' },
-                ].map((step) => (
-                  <div key={step.n} style={{ textAlign: 'center' }}>
-                    <div style={{
-                      width: 24,
-                      height: 24,
-                      borderRadius: '50%',
-                      background: 'var(--text-main, #1c1917)',
-                      color: 'var(--panel-bg, #ffffff)',
-                      fontSize: '0.72rem',
-                      fontWeight: 700,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      margin: '0 auto 0.4rem',
-                    }}>
-                      {step.n}
-                    </div>
-                    <div style={{ fontSize: '0.72rem', color: 'var(--text-muted, #57534e)', lineHeight: 1.35 }}>
-                      {step.label}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
           <form
             onSubmit={handleSubmit}
-            onFocusCapture={markFormStarted}
+            onFocusCapture={handleFormFocus}
             onInputCapture={markFormStarted}
             style={{
               background: 'var(--panel-bg, #ffffff)',
               border: '1px solid var(--border-dark, #1c1917)',
-              padding: '2rem 1.75rem',
+              padding: '1.25rem 1.25rem 1.5rem',
               boxShadow: '8px 8px 0px rgba(0,0,0,0.06)',
             }}
           >
-            <SectionTitle>Tu negocio</SectionTitle>
-            <Field label="Busca tu restaurante en Google">
+            <Field label="Busca tu negocio en Google">
               <GooglePlaceSearch
                 value={form.businessName}
                 onChange={(v) => update('businessName', v)}
                 onSelect={handlePlaceSelected}
-                inputId="businessName"
+                inputId={FIRST_FIELD_ID}
                 city={form.city}
                 required
-                placeholder="Escribe el nombre y selecciona de la lista"
+                placeholder="Nombre de tu negocio"
                 style={inputStyle}
               />
               {form.googlePlaceId && (
@@ -381,15 +358,18 @@ export default function ContactoForm({ pilotOffer }: { pilotOffer: boolean }) {
                 </small>
               )}
             </Field>
-            <Field label="Ciudad">
-              <input
-                required
-                value={form.city}
-                onChange={(e) => update('city', e.target.value)}
-                placeholder="Ciudad"
-                style={inputStyle}
-              />
-            </Field>
+            {cityRevealed && (
+              <Field label="Ciudad">
+                <input
+                  required
+                  autoComplete="address-level2"
+                  value={form.city}
+                  onChange={(e) => update('city', e.target.value)}
+                  placeholder="Ciudad"
+                  style={inputStyle}
+                />
+              </Field>
+            )}
             <ChoiceGroup
               legend="¿Cuántas sucursales tienes?"
               name="locationsBand"
@@ -405,24 +385,13 @@ export default function ContactoForm({ pilotOffer }: { pilotOffer: boolean }) {
               onChange={(v) => pickShape('teamMode', v)}
             />
 
-            <Divider />
-            <SectionTitle>Tu contacto</SectionTitle>
             <Field label="Tu nombre">
               <input
                 required
+                autoComplete="name"
                 value={form.contactName}
                 onChange={(e) => update('contactName', e.target.value)}
                 placeholder="Nombre y apellido"
-                style={inputStyle}
-              />
-            </Field>
-            <Field label="Email">
-              <input
-                required
-                type="email"
-                value={form.email}
-                onChange={(e) => update('email', e.target.value)}
-                placeholder="tu@email.com"
                 style={inputStyle}
               />
             </Field>
@@ -430,9 +399,21 @@ export default function ContactoForm({ pilotOffer }: { pilotOffer: boolean }) {
               <input
                 required
                 type="tel"
+                autoComplete="tel"
                 value={form.phone}
                 onChange={(e) => update('phone', e.target.value)}
                 placeholder="+52 55 1234 5678"
+                style={inputStyle}
+              />
+            </Field>
+            <Field label="Email">
+              <input
+                required
+                type="email"
+                autoComplete="email"
+                value={form.email}
+                onChange={(e) => update('email', e.target.value)}
+                placeholder="tu@email.com"
                 style={inputStyle}
               />
             </Field>
@@ -440,6 +421,7 @@ export default function ContactoForm({ pilotOffer }: { pilotOffer: boolean }) {
               <input
                 required
                 type="password"
+                autoComplete="new-password"
                 minLength={8}
                 value={form.password}
                 onChange={(e) => update('password', e.target.value)}
@@ -550,37 +532,119 @@ export default function ContactoForm({ pilotOffer }: { pilotOffer: boolean }) {
             >
               {loading
                 ? (pilotOffer ? 'ACTIVANDO TU PILOTO…' : 'ACTIVANDO TU CUENTA…')
-                : (pilotOffer ? 'ACTIVAR MI PILOTO GRATIS' : 'Activar ahora')}
+                : (pilotOffer ? 'ACTIVAR MI PILOTO GRATIS' : 'Crear mi cuenta gratis')}
             </button>
 
             <p style={{ fontSize: '0.75rem', color: 'var(--text-dim, #a8a29e)', textAlign: 'center', marginTop: '1rem', lineHeight: 1.5 }}>
               {pilotOffer
                 ? 'No necesitas tarjeta. Cuando terminen tus 30 días, tú decides si continúas.'
-                : 'Sin tarjeta. Después de 30 días, MX$700/mes por sucursal si decides continuar.'}{' '}
+                : 'Después de 30 días, MX$700/mes por sucursal si decides continuar.'}{' '}
               Al continuar aceptas la{' '}
               <a href="/privacy" style={{ color: '#1c1917', fontWeight: 700 }}>Política de Privacidad</a>, los{' '}
               <a href="/terms" style={{ color: '#1c1917', fontWeight: 700 }}>Términos</a> y la{' '}
               <a href="/cookies" style={{ color: '#1c1917', fontWeight: 700 }}>Política de Cookies</a>.
             </p>
           </form>
+
+          {!pilotOffer && <ProofBlock />}
         </div>
       </div>
     </>
   );
 }
 
-function SectionTitle({ children }: { children: React.ReactNode }) {
+/**
+ * Proof + how-it-works. Cold Meta traffic reads the form first; this block sits
+ * below it so the form is the first thing on screen and the evidence is one
+ * scroll away.
+ */
+function ProofBlock() {
   return (
-    <div style={{
-      fontSize: '0.65rem',
-      fontWeight: 700,
-      letterSpacing: '0.15em',
-      textTransform: 'uppercase',
-      color: 'var(--text-dim, #a8a29e)',
-      marginBottom: '1rem',
-    }}>
-      {children}
-    </div>
+        <div style={{
+          background: 'var(--panel-bg, #ffffff)',
+          border: '1px solid var(--border-dark, #1c1917)',
+          padding: '1.25rem',
+          boxShadow: '8px 8px 0px rgba(0,0,0,0.06)',
+          marginTop: '1.5rem',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: '1rem' }}>
+            <img
+              src="/contacto/guest-choice-mobile.webp"
+              alt="Pantalla del cliente: califica y elige Google o comentario privado"
+              width={96}
+              height={208}
+              style={{
+                width: 96,
+                height: 208,
+                flexShrink: 0,
+                display: 'block',
+                borderRadius: 12,
+                border: '1px solid var(--border-dark, #1c1917)',
+                objectFit: 'cover',
+                objectPosition: 'top',
+              }}
+            />
+            <div style={{ minWidth: 0 }}>
+              <div style={{
+                fontSize: '1.6rem',
+                fontWeight: 800,
+                letterSpacing: '-0.02em',
+                lineHeight: 1.15,
+                color: 'var(--text-main, #1c1917)',
+              }}>
+                {'< 1 → 3–8'}
+              </div>
+              <p style={{ fontSize: '0.85rem', color: 'var(--text-muted, #57534e)', margin: '0.4rem 0 0', lineHeight: 1.4 }}>
+                reseñas nuevas en Google al día, por restaurante.
+              </p>
+              <p style={{ fontSize: '0.72rem', color: 'var(--text-dim, #a8a29e)', margin: '0.5rem 0 0', lineHeight: 1.4 }}>
+                11 restaurantes reales, antes vs. después.{' '}
+                <a
+                  href="https://ratetapmx.com/methodology#velocity"
+                  target="_blank"
+                  rel="noopener"
+                  style={{ color: 'var(--text-muted, #57534e)', fontWeight: 700, textDecoration: 'underline' }}
+                >
+                  Cómo lo medimos
+                </a>
+              </p>
+            </div>
+          </div>
+
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: '1fr 1fr 1fr',
+            gap: '0.5rem',
+            marginTop: '1.25rem',
+          }}>
+            {[
+              { n: '1', label: 'Tu cliente escanea tu QR' },
+              { n: '2', label: 'Califica en 2 toques' },
+              { n: '3', label: 'Elige Google o nota privada' },
+            ].map((step) => (
+              <div key={step.n} style={{ textAlign: 'center' }}>
+                <div style={{
+                  width: 24,
+                  height: 24,
+                  borderRadius: '50%',
+                  background: 'var(--text-main, #1c1917)',
+                  color: 'var(--panel-bg, #ffffff)',
+                  fontSize: '0.72rem',
+                  fontWeight: 700,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  margin: '0 auto 0.4rem',
+                }}>
+                  {step.n}
+                </div>
+                <div style={{ fontSize: '0.72rem', color: 'var(--text-muted, #57534e)', lineHeight: 1.35 }}>
+                  {step.label}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
   );
 }
 

@@ -9,6 +9,7 @@ import { beforeAll, describe, expect, it } from 'vitest';
 const SIGNUP_FUNNEL_EVENTS = [
   'signup_page_view',
   'signup_form_started',
+  'signup_field_focused',
   'signup_place_selected',
   'signup_shape_selected',
   'signup_submit',
@@ -26,6 +27,7 @@ const SIGNUP_FUNNEL_EVENTS = [
 const PUBLIC_SIGNUP_FUNNEL_EVENTS = [
   'signup_page_view',
   'signup_form_started',
+  'signup_field_focused',
   'signup_place_selected',
   'signup_shape_selected',
   'signup_submit',

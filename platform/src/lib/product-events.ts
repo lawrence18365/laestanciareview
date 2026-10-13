@@ -78,6 +78,9 @@ export const PRODUCT_EVENT_NAMES = [
   // exists, so they are authenticated and restaurant-attributed.
   'signup_page_view',
   'signup_form_started',
+  // First field (the Google business search) focused, once per session
+  // (props: {field}). With signup_page_view it gives the form-start rate.
+  'signup_field_focused',
   'signup_place_selected',
   // Google place search came back empty (props: {retried}). Never the query.
   'place_search_empty',
@@ -136,6 +139,7 @@ export const PUBLIC_EVENT_NAMES: readonly ProductEventName[] = [
   // authenticated and deliberately NOT listed here.
   'signup_page_view',
   'signup_form_started',
+  'signup_field_focused',
   'signup_place_selected',
   'place_search_empty',
   'signup_shape_selected',

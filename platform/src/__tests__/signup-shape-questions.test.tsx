@@ -263,7 +263,7 @@ describe('/contacto form', () => {
   it('no longer assumes waiters in the header or steps', () => {
     expect(source).not.toContain('QR de tus meseros');
     expect(source).not.toContain('Escanea el QR del mesero');
-    expect(html).toContain('Tu QR queda listo hoy.');
+    expect(html).toContain('Listo en 2 minutos.');
     expect(html).toContain('Tu cliente escanea tu QR');
   });
 
