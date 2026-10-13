@@ -10,6 +10,10 @@
  *   Google       google_place_id or google_review_url set (guests can be sent to Google)
  *   Activada     first guest rating (Primera calificación). This is the activation gate.
  *   Pago         latest Mercado Pago subscription status
+ * Per-trial columns aperturas/clics count email_opened/email_clicked (welcome and
+ * trial-nurture emails, via /api/email/t). Every count here skips bot rows
+ * (properties.bot = 'true': link previews, crawlers, scanners); the rows stay in
+ * product_events so history is comparable.
  * Informational, not gates: Con meseros (active staff rows) and QR descargado/compartido.
  * The QR count is restaurant-QR events (restaurant_qr_printed|downloaded|shared),
  * the no-printer steps (qr_fullscreen_opened, whatsapp_share_clicked),
@@ -129,6 +133,12 @@ async function main() {
            (r.google_place_id is not null or r.google_review_url is not null) as google,
            (select count(*)::int from staff s where s.restaurant_id = r.id and s.active) as meseros,
            (select count(*)::int from reviews v where v.restaurant_id = r.id) as calif,
+           (select count(*)::int from product_events e
+             where e.restaurant_id = r.id and e.event_name = 'email_opened'
+               and coalesce(e.properties->>'bot', '') <> 'true') as aperturas,
+           (select count(*)::int from product_events e
+             where e.restaurant_id = r.id and e.event_name = 'email_clicked'
+               and coalesce(e.properties->>'bot', '') <> 'true') as clics,
            coalesce((select m.status from mercadopago_subscriptions m
                      where m.restaurant_id = r.id order by m.id desc limit 1), '-') as pago,
            r.subscription_status as estado
@@ -164,6 +174,7 @@ async function main() {
       count(distinct session_id) filter (where event_name = 'signup_submit_failed')::int as submit_failed
     from product_events
     where created_at >= ${since}::date
+      and coalesce(properties->>'bot', '') <> 'true'
   `) as Counts[];
   const sessions = sessionRows[0] ?? {};
 
@@ -173,6 +184,7 @@ async function main() {
       count(distinct session_id) filter (where properties->>'utm_source' = 'meta')::int as meta
     from product_events
     where event_name = 'signup_page_view' and created_at >= ${since}::date
+      and coalesce(properties->>'bot', '') <> 'true'
   `) as Counts[];
   const meta = metaRows[0] ?? {};
 
@@ -197,6 +209,7 @@ async function main() {
     from product_events pe
     join restaurants r on r.id = pe.restaurant_id
     where r.created_at >= ${since}::date
+      and coalesce(pe.properties->>'bot', '') <> 'true'
   `) as Counts[];
   const restaurantEvents = restaurantEventRows[0] ?? {};
 
@@ -227,6 +240,9 @@ async function main() {
   step('Pagando', count((r) => r.pago === 'authorized'));
   console.log(`  Info: con meseros          ${count((r) => Number(r.meseros) > 0)}`);
   console.log(`  Info: QR descargado/compartido ${num(restaurantEvents.qr)}`);
+  console.log(
+    `  Info: emails abiertos ${count((r) => Number(r.aperturas) > 0)} · con clic ${count((r) => Number(r.clics) > 0)} (trials; sin bots)`,
+  );
 
   const totalSessions = num(meta.total);
   const metaSessions = num(meta.meta);

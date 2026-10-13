@@ -8,6 +8,7 @@ import { t } from '@/lib/i18n';
 import { PILOT_TRIAL_DAYS } from '@/lib/pilot';
 import { reviewGoal } from '@/lib/onboarding-profile';
 import { SUPPORT_WHATSAPP_URL } from '@/lib/support';
+import { addEmailTracking } from '@/lib/email-tracking';
 import {
   classifyReview,
   SEVERITY_COLOR,
@@ -1153,6 +1154,8 @@ interface WelcomeEmailParams {
   locationsBand?: string | null;
   /** Google review count at signup, when known. */
   googleReviewCount?: number | null;
+  /** When set, the email carries an open pixel and tracked links (SQ-218). Omitted = untouched. */
+  restaurantId?: number | null;
 }
 
 const WELCOME_STEP_LIST_STYLE =
@@ -1223,6 +1226,7 @@ export async function sendWelcomeEmail({
   teamMode = null,
   locationsBand = null,
   googleReviewCount = null,
+  restaurantId = null,
 }: WelcomeEmailParams) {
   const trialEndStr = trialEndsAt.toLocaleDateString('es-MX', { day: 'numeric', month: 'long', year: 'numeric' });
 
@@ -1263,7 +1267,7 @@ ${welcomeGoalHtml(teamMode, googleReviewCount)}${welcomeStepsHtml(teamMode, loca
     from: FROM,
     to,
     subject: `Bienvenido a RateTap, ${restaurantName} 🎉`,
-    html: emailLayout(content, pilot
+    html: emailLayout(await addEmailTracking(content, { template: 'welcome', restaurantId }), pilot
       ? `Tu piloto fundador es gratis por ${trialDays} días. Puedes cancelar cuando quieras.`
       : `Tu prueba es gratis por ${trialDays} días. Puedes cancelar cuando quieras.`),
   });

@@ -103,6 +103,12 @@ export const PRODUCT_EVENT_NAMES = [
   'upgrade_prompt_clicked',
   'checkout_started',
   'plan_activated',
+  // Welcome / trial-nurture email engagement, written by GET /api/email/t from a
+  // signed open pixel or wrapped link. Props: {template, restaurant_id, device,
+  // os, bot?}. bot=true rows (scanners, prefetchers) are kept but excluded from
+  // trial:funnel. Server-only: not in PUBLIC_EVENT_NAMES.
+  'email_opened',
+  'email_clicked',
 ] as const;
 
 export type ProductEventName = (typeof PRODUCT_EVENT_NAMES)[number];

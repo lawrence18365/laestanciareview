@@ -281,6 +281,7 @@ export async function POST(req: NextRequest) {
           teamMode: teamMode ?? null,
           locationsBand: locationsBand ?? null,
           googleReviewCount,
+          restaurantId: restaurant.id,
         });
       })(),
       sendOwnerSignupNotification({
