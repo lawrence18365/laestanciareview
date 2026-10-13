@@ -256,6 +256,19 @@ export async function POST(req: NextRequest) {
       }),
       (async () => {
         const qrDataUrl = await generateQrDataUrl(restaurant.slug);
+        // The signup fetch stored the Google count (SQ-189); best-effort, unknown is fine.
+        let googleReviewCount: number | null = null;
+        if (onboarding.teamMode) {
+          try {
+            const [row] = await db
+              .select({ n: restaurants.googleReviewCount })
+              .from(restaurants)
+              .where(eq(restaurants.id, restaurant.id));
+            googleReviewCount = row?.n ?? null;
+          } catch {
+            googleReviewCount = null;
+          }
+        }
         await sendWelcomeEmail({
           to: input.email,
           restaurantName: input.businessName,
@@ -265,6 +278,9 @@ export async function POST(req: NextRequest) {
           trialEndsAt,
           trialDays,
           pilot: isPilot,
+          teamMode: onboarding.teamMode ?? null,
+          locationsBand: onboarding.locationsBand ?? null,
+          googleReviewCount,
         });
       })(),
       sendOwnerSignupNotification({

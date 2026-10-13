@@ -6,6 +6,8 @@ import type { GroupShareSummary } from '@/lib/maps-rank-group';
 import { groupShareCities } from '@/components/dashboard/GroupShareCard';
 import { t } from '@/lib/i18n';
 import { PILOT_TRIAL_DAYS } from '@/lib/pilot';
+import { reviewGoal } from '@/lib/onboarding-profile';
+import { SUPPORT_WHATSAPP_URL } from '@/lib/support';
 import {
   classifyReview,
   SEVERITY_COLOR,
@@ -1061,6 +1063,67 @@ interface WelcomeEmailParams {
   trialEndsAt: Date;
   trialDays?: number;
   pilot?: boolean;
+  /** Onboarding profile (US-14). Omitted / null = legacy copy, unchanged. */
+  teamMode?: string | null;
+  locationsBand?: string | null;
+  /** Google review count at signup, when known. */
+  googleReviewCount?: number | null;
+}
+
+const WELCOME_STEP_LIST_STYLE =
+  'margin: 0 0 20px; padding-left: 20px; font-size: 15px; line-height: 1.6; color: #666666;';
+
+/**
+ * Next-steps block of the welcome email. NULL team_mode (every legacy
+ * restaurant, incl. Grupo Estancia) keeps today's two waiter steps exactly.
+ */
+function welcomeStepsHtml(
+  teamMode: string | null | undefined,
+  locationsBand: string | null | undefined,
+): string {
+  const intro = `
+      <p style="margin: 0 0 6px; font-size: 15px; line-height: 1.6; color: #666666;">
+        Dos pasos para empezar:
+      </p>`;
+  if (teamMode === 'solo') {
+    return `${intro}
+      <ol style="${WELCOME_STEP_LIST_STYLE}">
+        <li><a href="${BASE_URL}/qr-codes/letrero" style="color: #111111;">Imprime tu letrero</a>.</li>
+        <li>Pídele la reseña a tu próximo cliente.</li>
+      </ol>`;
+  }
+  const teamSteps = `${intro}
+      <ol style="${WELCOME_STEP_LIST_STYLE}">
+        <li>Agrega a tus meseros.</li>
+        <li>Descarga el código QR de cada mesero en <a href="${BASE_URL}/qr-codes" style="color: #111111;">Códigos QR</a>.</li>
+      </ol>`;
+  if (teamMode === 'team' && locationsBand === '6+') {
+    return `${teamSteps}
+      <p style="margin: 0 0 20px; font-size: 15px; line-height: 1.6; color: #666666;">
+        <a href="${SUPPORT_WHATSAPP_URL}" style="color: #111111;">Agendemos una llamada</a>.
+      </p>`;
+  }
+  return teamSteps;
+}
+
+/** "Hoy tienes N reseñas en Google. Tu meta: M." Tailored restaurants with a known count only. */
+function welcomeGoalHtml(
+  teamMode: string | null | undefined,
+  count: number | null | undefined,
+): string {
+  if (
+    (teamMode !== 'solo' && teamMode !== 'team') ||
+    typeof count !== 'number' ||
+    !Number.isFinite(count) ||
+    count < 0
+  ) {
+    return '';
+  }
+  const n = Math.round(count);
+  return `
+      <p style="margin: 0 0 20px; font-size: 15px; line-height: 1.6; color: #111111;">
+        Hoy tienes <strong style="${FIGURE_STYLE}">${n.toLocaleString('es-MX')}</strong> ${n === 1 ? 'reseña' : 'reseñas'} en Google. Tu meta: <strong style="${FIGURE_STYLE}">${reviewGoal(n).toLocaleString('es-MX')}</strong>.
+      </p>`;
 }
 
 export async function sendWelcomeEmail({
@@ -1072,6 +1135,9 @@ export async function sendWelcomeEmail({
   trialEndsAt,
   trialDays = PILOT_TRIAL_DAYS,
   pilot = false,
+  teamMode = null,
+  locationsBand = null,
+  googleReviewCount = null,
 }: WelcomeEmailParams) {
   const trialEndStr = trialEndsAt.toLocaleDateString('es-MX', { day: 'numeric', month: 'long', year: 'numeric' });
 
@@ -1093,14 +1159,7 @@ export async function sendWelcomeEmail({
       <p style="margin: 0 0 12px; font-size: 15px; line-height: 1.6; color: #666666;">
         Entra en <a href="${BASE_URL}/login" style="color: #111111;">app.ratetapmx.com/login</a> y elige <strong>${escapeHtml(restaurantName)}</strong>.
       </p>
-
-      <p style="margin: 0 0 6px; font-size: 15px; line-height: 1.6; color: #666666;">
-        Dos pasos para empezar:
-      </p>
-      <ol style="margin: 0 0 20px; padding-left: 20px; font-size: 15px; line-height: 1.6; color: #666666;">
-        <li>Agrega a tus meseros.</li>
-        <li>Descarga el código QR de cada mesero en <a href="${BASE_URL}/qr-codes" style="color: #111111;">Códigos QR</a>.</li>
-      </ol>
+${welcomeGoalHtml(teamMode, googleReviewCount)}${welcomeStepsHtml(teamMode, locationsBand)}
 
       <table role="presentation" cellpadding="0" cellspacing="0" style="margin: 0 auto;">
         <tr><td style="background: #111111; border-radius: 0;">
