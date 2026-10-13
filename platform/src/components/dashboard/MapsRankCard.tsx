@@ -1,5 +1,7 @@
 import type { KeywordSummary } from '@/lib/maps-rank';
+import { Lock } from 'lucide-react';
 import { t } from '@/lib/i18n';
+import UpgradeCta from './UpgradeCta';
 
 function band(s: KeywordSummary): string {
   if (s.top3 > 0) return t.mapsRank.top3(s.top3, s.measured);
@@ -14,8 +16,44 @@ function trend(s: KeywordSummary): { arrow: string; label: string } | null {
   return { arrow: '=', label: t.mapsRank.same };
 }
 
-export default function MapsRankCard({ summaries }: { summaries: KeywordSummary[] }) {
-  if (process.env.MAPS_RANK_ENABLED !== 'true' || summaries.length === 0) return null;
+export default function MapsRankCard({
+  summaries,
+  locked = false,
+}: {
+  summaries: KeywordSummary[];
+  /** Free plan: show a teaser with no rank data. The caller does not fetch any. */
+  locked?: boolean;
+}) {
+  if (process.env.MAPS_RANK_ENABLED !== 'true') return null;
+
+  if (locked) {
+    return (
+      <section
+        className="card"
+        style={{ padding: '1.5rem', display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '0.75rem 1.5rem' }}
+      >
+        <Lock size={22} aria-hidden="true" color="var(--text-muted)" />
+        <div style={{ flex: '1 1 220px' }}>
+          <h2 style={{ margin: 0, fontSize: '1.125rem', fontWeight: 600, color: 'var(--text-main)' }}>
+            {t.mapsRank.title}
+          </h2>
+          <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.9375rem', color: 'var(--text-muted)' }}>
+            {t.upgrade.lockedMapsBody}
+          </p>
+        </div>
+        <UpgradeCta
+          placement="paywall_maps"
+          plan="free"
+          className="btn btn-primary"
+          style={{ textDecoration: 'none' }}
+        >
+          {t.upgrade.seePlans}
+        </UpgradeCta>
+      </section>
+    );
+  }
+
+  if (summaries.length === 0) return null;
 
   const runDate = summaries.map((s) => s.runDate).sort().at(-1) ?? '';
 

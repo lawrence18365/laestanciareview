@@ -443,6 +443,49 @@ export const t = {
     mercadoPagoPendingNote: 'Estamos confirmando tu suscripción con Mercado Pago. Tu acceso se actualizará en unos minutos.',
   },
 
+  // ── Upgrade prompts (self-serve Plan Restaurante) ──
+  // Ask copy stays at or under 20 words, helper copy at or under 15.
+  upgrade: {
+    seePlans: 'Ver planes',
+    activatePlan: 'Activa tu plan',
+    trialBanner: (n: number) =>
+      n <= 0
+        ? 'Tu prueba termina hoy · Ver planes'
+        : `Tu prueba termina en ${n} ${n === 1 ? 'día' : 'días'} · Ver planes`,
+    freeBanner:
+      'Plan gratis: tu QR sigue funcionando. Activa tu plan para ver comentarios y alertas.',
+    firstRating: (sentToGoogle: number) =>
+      sentToGoogle > 0
+        ? `¡Tu primera calificación! ${sentToGoogle} ya ${sentToGoogle === 1 ? 'fue' : 'fueron'} a Google.`
+        : '¡Tu primera calificación!',
+    close: 'Cerrar',
+    lockedFeedbackTitle: (n: number) =>
+      n === 0
+        ? 'Aún sin comentarios de clientes'
+        : `${n} ${n === 1 ? 'comentario' : 'comentarios'} de clientes`,
+    lockedFeedbackBody: 'Activa tu plan para leerlos.',
+    lockedMapsBody: 'Mira cómo apareces en Google Maps.',
+    plan: {
+      title: 'Plan Restaurante',
+      monthlyName: 'Mensual',
+      annualName: 'Anual',
+      perMonth: '/mes',
+      perYear: '/año',
+      monthlyEquivalent: (price: string) => `${price}/mes`,
+      monthsFree: (n: number) => `${n} ${n === 1 ? 'mes' : 'meses'} gratis`,
+      included: [
+        'Lee los comentarios de tus clientes',
+        'Alertas de quejas al instante',
+        'Tu posición en Google Maps',
+        'Reporte semanal',
+        'QR sin límite',
+      ],
+      qrAlwaysWorks: 'Tu QR siempre funciona, incluso en el plan gratis.',
+      cancelAnytime: 'Cancela cuando quieras.',
+      annualRenews: 'El plan anual se renueva cada año.',
+    },
+  },
+
   // ── Staff Manager ──
   staffManager: {
     addStaffMember: 'Agregar Miembro del Personal',
