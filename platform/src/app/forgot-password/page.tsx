@@ -1,12 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-
-interface Restaurant {
-  id: number;
-  name: string;
-  slug: string;
-}
+import { useState } from 'react';
+import { t } from '@/lib/i18n';
 
 const labelStyle: React.CSSProperties = {
   display: 'block',
@@ -30,18 +25,10 @@ const inputStyle: React.CSSProperties = {
 };
 
 export default function ForgotPasswordPage() {
-  const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
-  const [slug, setSlug] = useState('');
+  const [identifier, setIdentifier] = useState('');
   const [sent, setSent] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    fetch('/api/auth/restaurants')
-      .then((r) => r.json())
-      .then((data) => setRestaurants(data))
-      .catch(() => setError('Error al cargar restaurantes'));
-  }, []);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -52,7 +39,7 @@ export default function ForgotPasswordPage() {
       const res = await fetch('/api/auth/forgot-password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ slug }),
+        body: JSON.stringify({ identifier: identifier.trim() }),
       });
 
       if (!res.ok) {
@@ -121,7 +108,7 @@ export default function ForgotPasswordPage() {
               &#9993;
             </div>
             <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', lineHeight: 1.6, marginBottom: '1.5rem' }}>
-              Si tu restaurante tiene un email registrado, recibiras un enlace para restablecer tu contraseña.
+              Si la cuenta existe, te enviamos un correo.
             </p>
             <p style={{ fontSize: '0.75rem', color: 'var(--text-dim)', marginBottom: '1.5rem' }}>
               Revisa tu bandeja de entrada y la carpeta de spam.
@@ -146,27 +133,25 @@ export default function ForgotPasswordPage() {
         ) : (
           <form onSubmit={handleSubmit}>
             <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', lineHeight: 1.6, marginBottom: '1.5rem' }}>
-              Selecciona tu restaurante y te enviaremos un enlace para restablecer tu contraseña al email del gerente registrado.
+              Escribe tu restaurante o correo y te enviaremos un enlace para restablecer tu contraseña.
             </p>
 
             <div style={{ marginBottom: '1.5rem' }}>
               <label htmlFor="restaurant" style={labelStyle}>
-                Restaurante
+                {t.login.restaurant}
               </label>
-              <select
+              <input
                 id="restaurant"
-                value={slug}
-                onChange={(e) => setSlug(e.target.value)}
+                type="text"
+                value={identifier}
+                onChange={(e) => setIdentifier(e.target.value)}
                 required
+                autoComplete="username"
+                autoCapitalize="none"
+                maxLength={100}
+                placeholder={t.login.restaurantPlaceholder}
                 style={inputStyle}
-              >
-                <option value="">Selecciona tu restaurante</option>
-                {restaurants.map((r) => (
-                  <option key={r.slug} value={r.slug}>
-                    {r.name}
-                  </option>
-                ))}
-              </select>
+              />
             </div>
 
             {error && (

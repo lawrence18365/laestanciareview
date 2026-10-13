@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server';
-import { getRestaurantBySlug } from '@/lib/queries';
+import { findLoginCandidates } from '@/lib/queries';
 import { generateResetToken } from '@/lib/reset-token';
 import { sendPasswordResetEmail } from '@/lib/email';
 import { checkRateLimitAsync, getClientIP, rateLimitResponse } from '@/lib/rate-limit';
@@ -17,24 +17,26 @@ export async function POST(req: NextRequest) {
   const rl = await checkRateLimitAsync(`reset:${ip}`, RESET_LIMIT, RESET_WINDOW);
   if (!rl.allowed) return rateLimitResponse(rl.resetAt);
 
-  let body: { slug?: string };
+  let body: { identifier?: unknown; slug?: unknown };
   try {
     body = await req.json();
   } catch {
     return Response.json({ error: 'Invalid JSON' }, { status: 400 });
   }
 
-  const { slug } = body;
-  if (!slug || typeof slug !== 'string' || slug.length > 100) {
-    return Response.json({ error: 'Slug is required' }, { status: 400 });
+  // `slug` is the legacy field, kept during the transition.
+  const identifier = body.identifier ?? body.slug;
+  if (typeof identifier !== 'string' || !identifier.trim() || identifier.length > 100) {
+    return Response.json({ error: 'Restaurante o correo requerido' }, { status: 400 });
   }
 
-  // Always return success to avoid leaking which restaurants exist
-  const restaurant = await getRestaurantBySlug(slug);
+  // Always return the same success body to avoid leaking which accounts exist.
+  const candidates = await findLoginCandidates(identifier);
 
-  if (restaurant?.managerEmail) {
+  for (const restaurant of candidates) {
+    if (!restaurant.managerEmail) continue;
     try {
-      const token = await generateResetToken(slug);
+      const token = await generateResetToken(restaurant.slug);
       if (token) {
         const baseUrl = (process.env.NEXT_PUBLIC_BASE_URL ?? 'http://localhost:3000').replace(/\\n/g, '').trim();
         const resetUrl = `${baseUrl}/reset-password?token=${encodeURIComponent(token)}`;
@@ -52,6 +54,6 @@ export async function POST(req: NextRequest) {
 
   return Response.json({
     ok: true,
-    message: 'Si el restaurante tiene un email registrado, se envio un enlace para restablecer la contraseña.',
+    message: 'Si la cuenta existe, te enviamos un correo.',
   });
 }

@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server';
-import { getRestaurantBySlug } from '@/lib/queries';
+import { findLoginCandidates } from '@/lib/queries';
 import { verifyPassword, hashPassword } from '@/lib/auth';
 import { createSession } from '@/lib/session';
 import { checkRateLimitAsync, getClientIP, rateLimitResponse } from '@/lib/rate-limit';
@@ -12,6 +12,9 @@ import { eq } from 'drizzle-orm';
 const LOGIN_LIMIT = 5;
 const LOGIN_WINDOW = 60_000;
 
+// Well-formed PBKDF2 hash nobody can match; only used to equalise timing.
+const DUMMY_HASH = `${'00'.repeat(16)}:100000:${'00'.repeat(32)}`;
+
 export async function POST(req: NextRequest) {
   const csrf = requireSameOrigin(req);
   if (csrf) return csrf;
@@ -21,20 +24,22 @@ export async function POST(req: NextRequest) {
     const rl = await checkRateLimitAsync(`login:${ip}`, LOGIN_LIMIT, LOGIN_WINDOW);
     if (!rl.allowed) return rateLimitResponse(rl.resetAt);
 
-    let parsed: { slug?: unknown; password?: unknown };
+    let parsed: { identifier?: unknown; slug?: unknown; password?: unknown };
     try {
       parsed = await req.json();
     } catch {
       return Response.json({ error: 'Invalid JSON' }, { status: 400 });
     }
-    const { slug, password } = parsed;
+    // `slug` is the legacy field, kept during the transition.
+    const identifier = parsed.identifier ?? parsed.slug;
+    const { password } = parsed;
 
     if (
-      typeof slug !== 'string' ||
+      typeof identifier !== 'string' ||
       typeof password !== 'string' ||
-      !slug ||
+      !identifier.trim() ||
       !password ||
-      slug.length > 100 ||
+      identifier.length > 100 ||
       password.length > 256
     ) {
       return Response.json(
@@ -43,31 +48,31 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const restaurant = await getRestaurantBySlug(slug);
-    if (!restaurant) {
+    // An identifier may match several accounts (shared email, duplicate name):
+    // log in only when exactly one of them accepts the password.
+    const candidates = await findLoginCandidates(identifier);
+    const matches: typeof candidates = [];
+    let checked = 0;
+    for (const candidate of candidates) {
+      if (!candidate.adminPasswordHash) continue;
+      checked++;
+      if (await verifyPassword(password, candidate.adminPasswordHash)) matches.push(candidate);
+    }
+    // Spend the same hashing time when nothing was checked so response timing
+    // does not reveal whether the identifier exists.
+    if (checked === 0) await verifyPassword(password, DUMMY_HASH);
+
+    if (matches.length !== 1) {
       return Response.json(
         { error: 'Credenciales inválidas' },
         { status: 401 },
       );
     }
-
-    if (!restaurant.adminPasswordHash) {
-      return Response.json(
-        { error: 'No hay contraseña configurada para este restaurante' },
-        { status: 401 },
-      );
-    }
-
-    const valid = await verifyPassword(password, restaurant.adminPasswordHash);
-    if (!valid) {
-      return Response.json(
-        { error: 'Credenciales inválidas' },
-        { status: 401 },
-      );
-    }
+    const restaurant = matches[0];
+    const slug = restaurant.slug;
 
     // Auto-upgrade legacy SHA-256 hashes to PBKDF2 on successful login
-    if (!restaurant.adminPasswordHash.includes(':')) {
+    if (restaurant.adminPasswordHash && !restaurant.adminPasswordHash.includes(':')) {
       const upgraded = await hashPassword(password);
       await db
         .update(restaurants)

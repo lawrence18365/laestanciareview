@@ -49,7 +49,13 @@ export const createRestaurantSchema = z.object({
 
 // Self-serve signup (public /contacto form)
 export const signupSchema = z.object({
-  businessName: z.string().min(1).max(200),
+  // No "@": login resolves a typed email before any name, so a business name
+  // containing "@" could otherwise be mistaken for (or shadow) an email.
+  businessName: z
+    .string()
+    .min(1)
+    .max(200)
+    .refine((name) => !name.includes('@'), { message: 'El nombre no puede incluir @' }),
   contactName: z.string().min(1).max(200),
   email: z.string().email().max(254),
   phone: z.string().min(7).max(32),
