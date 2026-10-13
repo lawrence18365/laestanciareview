@@ -16,6 +16,7 @@ import { getGoogleRatingTrend, getGoogleRatingHistory, getGoogleReviewsAddedToda
 import { reviewUrlFor } from '@/lib/google-review';
 import { sameGroup } from '@/lib/group-scope';
 import { isSolo } from '@/lib/onboarding-profile';
+import { planFor } from '@/lib/entitlements';
 import { reviewUrlFor as qrReviewUrlFor } from '@/lib/qr';
 import DashboardView from '@/components/dashboard/DashboardView';
 import MapsRankCard from '@/components/dashboard/MapsRankCard';
@@ -116,7 +117,14 @@ export default async function DashboardPage({
         hasStaff={hasStaff}
       />
       <div className="page-container" style={{ paddingTop: 0 }}>
-        <MapsRankCard summaries={mapsSummaries} />
+        <MapsRankCard
+          summaries={mapsSummaries}
+          plan={planFor({
+            subscriptionStatus: restaurant.subscriptionStatus,
+            groupKey: restaurant.groupKey,
+            locationsBand: restaurant.locationsBand,
+          })}
+        />
       </div>
     </>
   );

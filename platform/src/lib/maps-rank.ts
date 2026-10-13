@@ -1,6 +1,7 @@
 import { db } from '@/db';
 import { restaurants, mapsRankKeywords, mapsRankSamples } from '@/db/schema';
 import { and, eq, isNotNull, sql } from 'drizzle-orm';
+import { canUse, planFor } from '@/lib/entitlements';
 import { weekdayMexico } from '@/lib/mexico-tz';
 import { runGroupShareSweep } from '@/lib/maps-rank-group';
 
@@ -139,8 +140,18 @@ export async function mapWithConcurrency<T, R>(
   return out;
 }
 
+/**
+ * Weekly cost per restaurant: 1 Place Details call plus 9 Text Search calls
+ * (3x3 grid) per active keyword. A self-serve restaurant has one keyword, so
+ * about 10 Places calls a week (roughly 43 a month).
+ *
+ * `restaurantId` sweeps that one restaurant only (signup and backfill one-offs),
+ * skips the weekly plan filter, and never runs the group-share sweep.
+ * Otherwise self-serve restaurants are swept only on a plan that allows Maps
+ * rank (trial or paid); a free one keeps its last sample for the teaser.
+ */
 export async function runMapsRankSweep(
-  opts: { force?: boolean; now?: Date; concurrency?: number } = {},
+  opts: { force?: boolean; now?: Date; concurrency?: number; restaurantId?: number } = {},
 ): Promise<SweepResult> {
   if (process.env.MAPS_RANK_ENABLED !== 'true') {
     return { skipped: 'disabled', restaurants: 0, samples: 0, failed: 0 };
@@ -157,14 +168,38 @@ export async function runMapsRankSweep(
       id: restaurants.id,
       placeId: restaurants.googlePlaceId,
       keyword: mapsRankKeywords.keyword,
+      groupKey: restaurants.groupKey,
+      subscriptionStatus: restaurants.subscriptionStatus,
+      locationsBand: restaurants.locationsBand,
     })
     .from(mapsRankKeywords)
     .innerJoin(restaurants, eq(restaurants.id, mapsRankKeywords.restaurantId))
-    .where(and(eq(mapsRankKeywords.active, true), isNotNull(restaurants.googlePlaceId)));
+    .where(
+      and(
+        eq(mapsRankKeywords.active, true),
+        isNotNull(restaurants.googlePlaceId),
+        opts.restaurantId === undefined ? undefined : eq(restaurants.id, opts.restaurantId),
+      ),
+    );
 
   const byRestaurant = new Map<number, { placeId: string; keywords: string[] }>();
   for (const row of rows) {
     if (!row.placeId) continue;
+    // Group restaurants (group_key set) are never filtered; this only trims free self-serve ones.
+    if (
+      opts.restaurantId === undefined &&
+      row.groupKey === null &&
+      !canUse(
+        planFor({
+          subscriptionStatus: row.subscriptionStatus,
+          groupKey: row.groupKey,
+          locationsBand: row.locationsBand,
+        }),
+        'maps_rank',
+      )
+    ) {
+      continue;
+    }
     const entry = byRestaurant.get(row.id) ?? { placeId: row.placeId, keywords: [] };
     entry.keywords.push(row.keyword);
     byRestaurant.set(row.id, entry);
@@ -223,6 +258,11 @@ export async function runMapsRankSweep(
         'unknown';
       console.error(`[maps-rank] restaurant ${restaurantId} sweep failed: ${code}`);
     }
+  }
+
+  // A one-restaurant sweep never runs the group-share sweep.
+  if (opts.restaurantId !== undefined) {
+    return { restaurants: byRestaurant.size, samples, failed };
   }
 
   // A group-share failure must not fail the per-restaurant sweep above.

@@ -1,5 +1,7 @@
 import { db, transactionDb } from '@/db';
-import { googleRatingSnapshots, pendingSignups, restaurants } from '@/db/schema';
+import { googleRatingSnapshots, mapsRankKeywords, pendingSignups, restaurants } from '@/db/schema';
+import { defaultKeywords } from '@/lib/maps-rank-keywords';
+import { runMapsRankSweep } from '@/lib/maps-rank';
 import { fetchOnboardingGoogleData, type OnboardingGoogleData } from '@/lib/google-onboarding';
 import { generateUniqueSlug, slugify } from '@/lib/slug';
 import { reviewUrlFor } from '@/lib/google-review';
@@ -61,16 +63,55 @@ export async function recordChainDetection(r: ChainCheckInput): Promise<number |
 }
 
 /** Fire-and-forget: runs after the response where Next allows it, detached otherwise. */
-function scheduleChainDetection(r: ChainCheckInput) {
-  const run = async () => {
-    await recordChainDetection(r);
-  };
+function runAfterResponse(run: () => Promise<void>) {
   try {
     after(run);
   } catch {
     // `after()` throws outside a Next.js request scope (unit tests, scripts).
     void run();
   }
+}
+
+function scheduleChainDetection(r: ChainCheckInput) {
+  runAfterResponse(async () => {
+    await recordChainDetection(r);
+  });
+}
+
+/**
+ * Maps rank for a brand-new self-serve restaurant: store its one
+ * category+city keyword and run a single forced sweep for it so the dashboard
+ * has data on day one (about 10 Places calls; later runs are the weekly sweep,
+ * trial/paid only). Does nothing unless MAPS_RANK_ENABLED=true. Never throws.
+ */
+export async function setupSelfServeMapsRank(r: {
+  id: number;
+  city?: string | null;
+  googlePlaceId?: string | null;
+  googleProfile?: unknown;
+}): Promise<void> {
+  if (process.env.MAPS_RANK_ENABLED !== 'true') return;
+  if (!r.googlePlaceId) return;
+  try {
+    const keywords = defaultKeywords({
+      city: r.city ?? null,
+      brand: null,
+      groupKey: null,
+      googleProfile: r.googleProfile,
+    });
+    if (keywords.length === 0) return;
+    await db
+      .insert(mapsRankKeywords)
+      .values(keywords.map((keyword) => ({ restaurantId: r.id, keyword })))
+      .onConflictDoNothing();
+    await runMapsRankSweep({ restaurantId: r.id, force: true });
+  } catch (err) {
+    console.error('[maps-rank] signup setup failed:', err instanceof Error ? err.name : 'unknown');
+  }
+}
+
+function scheduleMapsRankSetup(r: Parameters<typeof setupSelfServeMapsRank>[0]) {
+  runAfterResponse(() => setupSelfServeMapsRank(r));
 }
 
 /**
@@ -192,6 +233,12 @@ export async function provisionSignupRestaurant(input: SignupRestaurantInput) {
     contactName: input.contactName,
     email: input.email,
     phone: input.phone,
+  });
+  scheduleMapsRankSetup({
+    id: restaurant.id,
+    city: input.city,
+    googlePlaceId: input.googlePlaceId,
+    googleProfile: google.data?.profile,
   });
 
   return { id: restaurant.id, slug };
@@ -325,6 +372,12 @@ export async function provisionSignupAtomic(
       contactName: input.contactName,
       email: input.email,
       phone: input.phone,
+    });
+    scheduleMapsRankSetup({
+      id: restaurant.id,
+      city: input.city,
+      googlePlaceId: input.googlePlaceId,
+      googleProfile: google.data?.profile,
     });
   }
   return restaurant;

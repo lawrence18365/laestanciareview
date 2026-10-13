@@ -1,14 +1,29 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const state = vi.hoisted(() => ({
-  joinRows: [] as Array<{ id: number; placeId: string | null; keyword: string }>,
+  joinRows: [] as Array<{
+    id: number;
+    placeId: string | null;
+    keyword: string;
+    groupKey?: string | null;
+    subscriptionStatus?: string;
+    locationsBand?: string | null;
+  }>,
+  wheres: [] as unknown[],
   inserts: [] as Array<Array<{ restaurantId: number; keyword: string; gridPoint: number; status: string; rank: number | null }>>,
 }));
 
 vi.mock('@/db', () => ({
   db: {
     select: () => ({
-      from: () => ({ innerJoin: () => ({ where: async () => state.joinRows }) }),
+      from: () => ({
+        innerJoin: () => ({
+          where: async (w: unknown) => {
+            state.wheres.push(w);
+            return state.joinRows;
+          },
+        }),
+      }),
     }),
     insert: () => ({
       values: (rows: never[]) => ({
@@ -20,6 +35,7 @@ vi.mock('@/db', () => ({
   },
 }));
 
+import { PgDialect } from 'drizzle-orm/pg-core';
 import { gridPoints, runMapsRankSweep, searchRank, summarizeSamples, isSweepDay } from '@/lib/maps-rank';
 import { defaultKeywords } from '@/lib/maps-rank-keywords';
 
@@ -182,6 +198,70 @@ describe('runMapsRankSweep', () => {
     expect(state.inserts).toHaveLength(1);
     expect(state.inserts[0].every((r) => r.restaurantId === 2)).toBe(true);
   });
+
+  function stubPlaces() {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string, init?: RequestInit) => {
+        if (init?.method === 'POST') return Response.json({ places: [] });
+        if (url.includes('/places/')) {
+          return Response.json({ location: { latitude: CENTER.lat, longitude: CENTER.lng } });
+        }
+        return new Response('', { status: 404 });
+      }),
+    );
+  }
+
+  const mixedRows = [
+    { id: 1, placeId: 'p1', keyword: 'pizzería Los Mochis', groupKey: null, subscriptionStatus: 'canceled', locationsBand: '1' },
+    { id: 2, placeId: 'p2', keyword: 'pizzería Los Mochis', groupKey: null, subscriptionStatus: 'trialing', locationsBand: '1' },
+    { id: 3, placeId: 'p3', keyword: 'mariscos León', groupKey: null, subscriptionStatus: 'active', locationsBand: null },
+    { id: 4, placeId: 'p4', keyword: 'cortes León', groupKey: 'estancia', subscriptionStatus: 'canceled', locationsBand: null },
+  ];
+
+  it('weekly sweep skips free self-serve restaurants but keeps trial, paid and group ones', async () => {
+    vi.stubEnv('MAPS_RANK_ENABLED', 'true');
+    state.joinRows = mixedRows;
+    stubPlaces();
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    const result = await runMapsRankSweep({ now: SUNDAY_NOON_MX, concurrency: 2 });
+    expect(result.restaurants).toBe(3);
+    const swept = new Set(state.inserts.flat().map((r) => r.restaurantId));
+    expect(swept).toEqual(new Set([2, 3, 4]));
+  });
+
+  it('restaurantId filters the query, sweeps even a free restaurant and skips the group sweep', async () => {
+    vi.stubEnv('MAPS_RANK_ENABLED', 'true');
+    state.wheres.length = 0;
+    state.joinRows = [mixedRows[0]];
+    stubPlaces();
+
+    const result = await runMapsRankSweep({ restaurantId: 1, force: true, now: MONDAY_NOON_MX });
+    expect(result).toEqual({ restaurants: 1, samples: 9, failed: 0 });
+    expect(result).not.toHaveProperty('group');
+    const { sql: text, params } = new PgDialect().sqlToQuery(state.wheres[0] as never);
+    expect(text).toContain('"restaurants"."id" = $');
+    expect(params).toContain(1);
+  });
+
+  it('without restaurantId the query has no restaurant id filter', async () => {
+    vi.stubEnv('MAPS_RANK_ENABLED', 'true');
+    state.wheres.length = 0;
+    state.joinRows = [];
+    await runMapsRankSweep({ now: SUNDAY_NOON_MX });
+    const { sql: text } = new PgDialect().sqlToQuery(state.wheres[0] as never);
+    expect(text).not.toContain('"restaurants"."id" = $');
+  });
+
+  it('restaurantId does nothing when MAPS_RANK_ENABLED is off', async () => {
+    vi.stubEnv('MAPS_RANK_ENABLED', 'false');
+    state.wheres.length = 0;
+    await expect(runMapsRankSweep({ restaurantId: 1, force: true })).resolves.toMatchObject({
+      skipped: 'disabled',
+    });
+    expect(state.wheres).toHaveLength(0);
+  });
 });
 
 describe('summarizeSamples', () => {
@@ -250,5 +330,45 @@ describe('defaultKeywords', () => {
 
   it('returns nothing without a city', () => {
     expect(defaultKeywords({ city: null, brand: 'estancia' })).toEqual([]);
+  });
+
+  describe('self-serve (groupKey null)', () => {
+    const profile = (primaryType: string | null) => ({
+      primaryType,
+      types: [],
+      fetchedAt: '2026-10-13T00:00:00.000Z',
+    });
+    const selfServe = (city: string | null, googleProfile?: unknown) =>
+      defaultKeywords({ city, brand: null, groupKey: null, googleProfile });
+
+    it.each([
+      ['seafood_restaurant', 'Caltzontzin', 'marisquería Caltzontzin'],
+      ['pizza_restaurant', 'Los Mochis', 'pizzería Los Mochis'],
+      ['taco_restaurant', 'León', 'taquería León'],
+      ['sushi_restaurant', 'León', 'restaurante León'],
+    ])('%s becomes one keyword', (type, city, expected) => {
+      expect(selfServe(city, profile(type))).toEqual([expected]);
+    });
+
+    it('falls back to "restaurante {city}" with no profile or a bad one', () => {
+      expect(selfServe('Puebla')).toEqual(['restaurante Puebla']);
+      expect(selfServe('Puebla', null)).toEqual(['restaurante Puebla']);
+      expect(selfServe('Puebla', { primaryType: 'pizza_restaurant' })).toEqual(['restaurante Puebla']);
+    });
+
+    it('returns nothing without a city', () => {
+      expect(selfServe(null, profile('pizza_restaurant'))).toEqual([]);
+      expect(selfServe('  ', profile('pizza_restaurant'))).toEqual([]);
+    });
+
+    it('leaves group and brand keywords byte-identical', () => {
+      expect(defaultKeywords({ city: 'León', brand: 'estancia', groupKey: 'estancia' })).toEqual([
+        'restaurante de cortes León',
+        'cortes argentinos León',
+        'restaurante argentino León',
+      ]);
+      expect(defaultKeywords({ city: 'Juárez', brand: null, groupKey: 'estancia' })).toEqual([]);
+      expect(defaultKeywords({ city: 'Juárez', brand: null })).toEqual([]);
+    });
   });
 });
