@@ -44,6 +44,7 @@ export const createRestaurantSchema = z.object({
   googleReviewUrl: z.string().url().max(500).optional(),
   googleThreshold: z.number().int().min(1).max(5).optional(),
   adminPassword: z.string().min(8).max(128).optional(),
+  groupKey: z.string().trim().min(1).max(100).optional(),
 });
 
 // Self-serve signup (public /contacto form)

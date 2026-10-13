@@ -3,6 +3,8 @@ import { db } from '@/db';
 import { restaurants } from '@/db/schema';
 import { requireAdminKey, unauthorizedResponse, hashPassword } from '@/lib/auth';
 import { createRestaurantSchema } from '@/lib/validations';
+import { verifySession } from '@/lib/session';
+import { getGroupKeyBySlug } from '@/lib/queries';
 
 export async function GET(req: NextRequest) {
   if (!requireAdminKey(req)) return unauthorizedResponse();
@@ -40,10 +42,24 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const { adminPassword, ...data } = parsed.data;
+  const { adminPassword, groupKey, ...data } = parsed.data;
+
+  // An owner or regional session creates inside its own group. The group is
+  // read from the DB by slug, never taken from the body, and a different
+  // explicit groupKey is refused.
+  let resolvedGroupKey = groupKey ?? null;
+  const session = await verifySession();
+  if (session && (session.role === 'owner' || session.role === 'regional')) {
+    const ownGroup = await getGroupKeyBySlug(session.slug);
+    if (groupKey !== undefined && groupKey !== ownGroup) {
+      return Response.json({ error: 'Forbidden' }, { status: 403 });
+    }
+    resolvedGroupKey = ownGroup;
+  }
 
   const values: typeof restaurants.$inferInsert = {
     ...data,
+    groupKey: resolvedGroupKey,
     adminPasswordHash: adminPassword
       ? await hashPassword(adminPassword)
       : null,

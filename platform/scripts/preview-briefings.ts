@@ -14,9 +14,10 @@ async function main() {
   const { getGoogleRatingTrendBatch } = await import('../src/lib/google-places');
 
   const weekStart = lastCompleteWeekStart();
-  const signals = await getWeeklySignals(weekStart);
-  const guestStats = await getGuestSignals(weekStart);
-  const serviceStats = await getServiceSignals(weekStart);
+  const groupKey = 'grupo-estancia';
+  const signals = await getWeeklySignals(weekStart, groupKey);
+  const guestStats = await getGuestSignals(weekStart, groupKey);
+  const serviceStats = await getServiceSignals(weekStart, new Date(), groupKey);
   const trends = await getGoogleRatingTrendBatch(signals.map((s) => s.restaurantId));
 
   const toLoc = (s: (typeof signals)[number]) => {
@@ -54,7 +55,7 @@ async function main() {
 
   for (const region of ['central', 'veracruz', 'queretaro']) {
     const scoped = signals.filter((s) => s.region === region);
-    const bdays = await getUpcomingBirthdays(new Date(), region);
+    const bdays = await getUpcomingBirthdays(new Date(), groupKey, region);
     console.log(`  region ${region}: ${scoped.length} locations, ${bdays.length} birthdays in window`);
   }
   console.log('\nRendering HTML (nothing is sent — SMTP creds are blanked)...');
@@ -63,7 +64,7 @@ async function main() {
   const o = await sendOwnerBriefing({ to: 'preview@example.com', weekStart, locations: signals.map(toLoc), dashboardUrl: 'https://app.ratetapmx.com/overview' });
   console.log('owner send result:', JSON.stringify(o));
   const vcr = signals.filter((s) => s.region === 'veracruz');
-  const bd = await getUpcomingBirthdays(new Date(), 'veracruz');
+  const bd = await getUpcomingBirthdays(new Date(), groupKey, 'veracruz');
   const r = await sendRegionalBriefing({ to: 'preview@example.com', regionName: 'Regional Veracruz', weekStart, locations: vcr.map(toLoc), birthdays: bd, dashboardUrl: 'https://app.ratetapmx.com/overview' });
   console.log('regional send result:', JSON.stringify(r));
 }
