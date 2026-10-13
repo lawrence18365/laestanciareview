@@ -90,7 +90,6 @@ function BienvenidaInner({
   useEffect(() => {
     if (!hasSignupAccess) return;
     let cancelled = false;
-    let pollId: ReturnType<typeof setInterval> | undefined;
 
     async function poll() {
       try {
@@ -110,7 +109,8 @@ function BienvenidaInner({
       }
     }
 
-    pollId = setInterval(poll, 2000);
+    // Declared before the first poll() so poll can clear it on ready.
+    const pollId = setInterval(poll, 2000);
     poll();
     // Hard timeout: 30 seconds. Payment succeeded — webhook is just slow.
     const timeoutId = setTimeout(() => {
