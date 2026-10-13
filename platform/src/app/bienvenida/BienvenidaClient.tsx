@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import Script from 'next/script';
 import { SUPPORT_WHATSAPP_URL } from '@/lib/support';
 import GooglePlaceSearch, { type PlaceSelection } from '@/components/GooglePlaceSearch';
+import { track } from '@/lib/analytics-client';
 
 const PIXEL_ID = process.env.NEXT_PUBLIC_META_PIXEL_ID ?? '1578821303344121';
 
@@ -64,6 +65,28 @@ function BienvenidaInner({
   const [placeError, setPlaceError] = useState('');
   const [timedOut, setTimedOut] = useState(false);
   const pixelFiredRef = useRef(false);
+  // Onboarding funnel: one event per step, per mount.
+  const readyShownRef = useRef(false);
+  const timedOutTrackedRef = useRef(false);
+  const googleSearchRef = useRef(false);
+
+  // Step 1 of the onboarding screen: the account is ready.
+  useEffect(() => {
+    if (!status?.ready || readyShownRef.current) return;
+    readyShownRef.current = true;
+    track('onboarding_ready_shown', {
+      google_connected: Boolean(status.googleConnected),
+      pilot: Boolean(status.pilot),
+    });
+  }, [status?.ready, status?.googleConnected, status?.pilot]);
+
+  // The 30s poll timeout fired: the account was not ready in time. This is the
+  // only onboarding step the visitor reaches before the session cookie is set.
+  useEffect(() => {
+    if (!timedOut || timedOutTrackedRef.current) return;
+    timedOutTrackedRef.current = true;
+    track('onboarding_timed_out');
+  }, [timedOut]);
 
   useEffect(() => {
     const signupId = status?.signupId;
@@ -124,6 +147,14 @@ function BienvenidaInner({
     };
   }, [hasSignupAccess]);
 
+  function handlePlaceQueryChange(value: string) {
+    setPlaceQuery(value);
+    if (!googleSearchRef.current && value.trim()) {
+      googleSearchRef.current = true;
+      track('onboarding_google_search');
+    }
+  }
+
   async function handlePlaceSelected(place: PlaceSelection) {
     if (!place.placeId || placeSaving) return;
     setPlaceSaving(true);
@@ -137,7 +168,9 @@ function BienvenidaInner({
       });
       if (!res.ok) throw new Error('save-failed');
       setGoogleConnected(true);
+      track('onboarding_google_saved');
     } catch {
+      track('onboarding_google_save_failed');
       setPlaceError('No se pudo guardar. Intenta de nuevo.');
     } finally {
       setPlaceSaving(false);
@@ -149,7 +182,11 @@ function BienvenidaInner({
       <div style={{ textAlign: 'center' }}>
         <div style={{ fontSize: '2.5rem', marginBottom: '0.5rem' }}>✅</div>
         <h1 style={h1Style}>Tu cuenta ya está lista</h1>
-        <a href={sessionPanelHref} style={{ ...primaryButtonStyle, marginTop: '1.25rem' }}>
+        <a
+          href={sessionPanelHref}
+          style={{ ...primaryButtonStyle, marginTop: '1.25rem' }}
+          onClick={() => track('onboarding_cta_click', { target: 'panel' })}
+        >
           Ir a mi panel →
         </a>
       </div>
@@ -248,7 +285,7 @@ function BienvenidaInner({
           <GooglePlaceSearch
             inputId="bienvenida-place"
             value={placeQuery}
-            onChange={setPlaceQuery}
+            onChange={handlePlaceQueryChange}
             onSelect={handlePlaceSelected}
             placeholder="Escribe el nombre y elígelo"
             style={{
@@ -268,12 +305,17 @@ function BienvenidaInner({
         </div>
       )}
 
-      <a href="/staff" style={primaryButtonStyle}>
+      <a
+        href="/staff"
+        style={primaryButtonStyle}
+        onClick={() => track('onboarding_cta_click', { target: 'staff' })}
+      >
         Agrega a tus meseros →
       </a>
 
       <a
         href="/qr-codes"
+        onClick={() => track('onboarding_cta_click', { target: 'qr' })}
         style={{
           display: 'block',
           textAlign: 'center',

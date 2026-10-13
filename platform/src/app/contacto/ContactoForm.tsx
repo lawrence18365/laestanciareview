@@ -1,10 +1,11 @@
 'use client';
 
 import Script from 'next/script';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import GooglePlaceSearch, {
   type PlaceSelection,
 } from '@/components/GooglePlaceSearch';
+import { getSessionId, track } from '@/lib/analytics-client';
 
 const PIXEL_ID = process.env.NEXT_PUBLIC_META_PIXEL_ID ?? '1578821303344121';
 
@@ -75,6 +76,33 @@ export default function ContactoForm({ pilotOffer }: { pilotOffer: boolean }) {
   const [error, setError] = useState('');
   const [loginUrl, setLoginUrl] = useState('');
   const [loading, setLoading] = useState(false);
+  // Funnel instrumentation: each of these fires at most once per mount, so a
+  // re-render or a second focus never inflates the step counts.
+  const formStartedRef = useRef(false);
+  const placeSelectedRef = useRef(false);
+
+  // Step 1 of the funnel: the form page was viewed. Only booleans and the UTM
+  // keys are recorded — never anything the visitor typed.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const get = (name: string) => params.get(name)?.trim() || undefined;
+    const properties: Record<string, unknown> = { pilot: pilotOffer };
+    const utmSource = get('utm_source');
+    const utmMedium = get('utm_medium');
+    const utmCampaign = get('utm_campaign');
+    const utmContent = get('utm_content');
+    if (utmSource) properties.utm_source = utmSource;
+    if (utmMedium) properties.utm_medium = utmMedium;
+    if (utmCampaign) properties.utm_campaign = utmCampaign;
+    if (utmContent) properties.utm_content = utmContent;
+    track('signup_page_view', properties);
+  }, [pilotOffer]);
+
+  function markFormStarted() {
+    if (formStartedRef.current) return;
+    formStartedRef.current = true;
+    track('signup_form_started');
+  }
 
   function update<K extends keyof Form>(key: K, value: Form[K]) {
     setForm((f) => ({ ...f, [key]: value }));
@@ -85,6 +113,10 @@ export default function ContactoForm({ pilotOffer }: { pilotOffer: boolean }) {
   // and state Google returns prefill the address block; anything the guest has
   // already typed wins.
   function handlePlaceSelected(place: PlaceSelection) {
+    if (!placeSelectedRef.current) {
+      placeSelectedRef.current = true;
+      track('signup_place_selected', { has_place_id: Boolean(place.placeId) });
+    }
     setForm((f) => ({
       ...f,
       businessName: place.name || f.businessName,
@@ -104,6 +136,7 @@ export default function ContactoForm({ pilotOffer }: { pilotOffer: boolean }) {
     setError('');
     setLoginUrl('');
     setLoading(true);
+    track('signup_submit', { has_place_id: Boolean(form.googlePlaceId) });
 
     try {
       const shippingAddress = form.line1.trim()
@@ -128,12 +161,14 @@ export default function ContactoForm({ pilotOffer }: { pilotOffer: boolean }) {
           city: form.city,
           password: form.password,
           googlePlaceId: form.googlePlaceId || undefined,
+          analyticsSessionId: getSessionId() ?? undefined,
           ...readMarketingPayload(),
           ...(shippingAddress ? { shippingAddress } : {}),
         }),
       });
       const data = await res.json();
       if (!res.ok || !data.url) {
+        track('signup_submit_failed', { status: res.status });
         const friendly =
           res.status >= 500
             ? 'No pudimos activar tu cuenta en este momento. Inténtalo de nuevo en unos minutos o escríbenos por WhatsApp.'
@@ -152,6 +187,7 @@ export default function ContactoForm({ pilotOffer }: { pilotOffer: boolean }) {
       }
       window.location.href = data.url;
     } catch {
+      track('signup_submit_failed', { status: null, network: true });
       setError('Error de red. Intenta de nuevo.');
       setLoading(false);
     }
@@ -296,6 +332,8 @@ export default function ContactoForm({ pilotOffer }: { pilotOffer: boolean }) {
 
           <form
             onSubmit={handleSubmit}
+            onFocusCapture={markFormStarted}
+            onInputCapture={markFormStarted}
             style={{
               background: 'var(--panel-bg, #ffffff)',
               border: '1px solid var(--border-dark, #1c1917)',

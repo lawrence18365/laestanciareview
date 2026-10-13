@@ -4,6 +4,7 @@
  *
  *   npm run trial:funnel                       signups since 2026-10-12 (Meta launch)
  *   npm run trial:funnel -- --since 2026-10-01
+ *   npm run trial:funnel -- --slug tacos-del-centro   one restaurant's timeline
  *
  * Stages per restaurant (each a fact in the DB, nothing inferred):
  *   Google   google_place_id or google_review_url set (guests can be sent to Google)
@@ -11,6 +12,23 @@
  *   Calif    submitted guest ratings
  *   Pago     latest Mercado Pago subscription status
  * Source is the signup's commercial lead UTM (utm_source/utm_content).
+ *
+ * Two extra views are printed after the raw table:
+ *
+ *  1. The /contacto funnel (see sections 1 of the signup-funnel spec). The
+ *     first five steps are per-tab session ids from `product_events` and only
+ *     exist from the day the events shipped, which is why the first event's
+ *     date is printed alongside them. From "Cuenta creada" on, the steps are
+ *     restaurant-level and use the same restaurant set as the table above.
+ *     "Error al enviar" is printed but is NOT the denominator of the next step:
+ *     a failed submit did not prevent a retry that succeeded.
+ *
+ *  2. With `--slug`, a single restaurant's timeline. It shows every
+ *     `product_events` row for that restaurant plus every row carrying one of
+ *     the session ids seen on its rows — that second half is what stitches the
+ *     anonymous /contacto steps to the account, through the session_id that
+ *     `signup_completed` carries. DB milestones (restaurant created, first
+ *     staff, first review, latest Mercado Pago subscription) are interleaved.
  */
 process.env.DOTENV_CONFIG_QUIET ??= 'true';
 import { config } from 'dotenv';
@@ -19,16 +37,52 @@ config({ path: '.env.local' });
 
 const LAUNCH = '2026-10-12';
 
-function sinceArg(): string {
-  const i = process.argv.indexOf('--since');
+/** `--name value`, or undefined when absent (a following `--flag` is not a value). */
+function argValue(name: string): string | undefined {
+  const i = process.argv.indexOf(`--${name}`);
   const v = i > -1 ? process.argv[i + 1] : undefined;
+  return v && !v.startsWith('--') ? v : undefined;
+}
+
+function sinceArg(): string {
+  const v = argValue('since');
   return v && /^\d{4}-\d{2}-\d{2}$/.test(v) ? v : LAUNCH;
 }
+
+function slugArg(): string | undefined {
+  const v = argValue('slug');
+  if (v === undefined) return undefined;
+  if (!/^[a-z0-9-]{1,100}$/.test(v)) {
+    console.error(`error: --slug "${v}" is not a valid slug`);
+    process.exit(2);
+  }
+  return v;
+}
+
+/** Percentage of the previous step, or a dash when there is nothing to divide by. */
+function pct(step: number, previous: number): string {
+  if (previous <= 0) return '—';
+  return `${((100 * step) / previous).toFixed(1)}%`;
+}
+
+function truncate(value: unknown, max: number): string {
+  if (value === null || value === undefined) return '';
+  const text = typeof value === 'string' ? value : JSON.stringify(value);
+  return text.length > max ? `${text.slice(0, max - 1)}…` : text;
+}
+
+type Counts = Record<string, number | string | null>;
 
 async function main() {
   const { neon } = await import('@neondatabase/serverless');
   const sql = neon(process.env.DATABASE_URL!);
   const since = sinceArg();
+  const slug = slugArg();
+
+  if (slug) {
+    await printTimeline(sql, slug);
+    return;
+  }
 
   const rows = (await sql`
     select r.slug,
@@ -59,6 +113,167 @@ async function main() {
   console.log(`  Con meseros        ${count((r) => Number(r.meseros) > 0)}`);
   console.log(`  Con calificaciones ${count((r) => Number(r.calif) > 0)}`);
   console.log(`  Pagando            ${count((r) => r.pago === 'authorized' || r.estado === 'active')}`);
+
+  // --- /contacto funnel, step by step -------------------------------------
+  const sessionRows = (await sql`
+    select
+      count(distinct session_id) filter (where event_name = 'signup_page_view')::int as viewed,
+      count(distinct session_id) filter (where event_name = 'signup_form_started')::int as started,
+      count(distinct session_id) filter (where event_name = 'signup_place_selected')::int as place_selected,
+      count(distinct session_id) filter (where event_name = 'signup_submit')::int as submitted,
+      count(distinct session_id) filter (where event_name = 'signup_submit_failed')::int as submit_failed
+    from product_events
+    where created_at >= ${since}::date
+  `) as Counts[];
+  const sessions = sessionRows[0] ?? {};
+
+  const metaRows = (await sql`
+    select
+      count(distinct session_id)::int as total,
+      count(distinct session_id) filter (where properties->>'utm_source' = 'meta')::int as meta
+    from product_events
+    where event_name = 'signup_page_view' and created_at >= ${since}::date
+  `) as Counts[];
+  const meta = metaRows[0] ?? {};
+
+  const firstViewRows = (await sql`
+    select to_char(min(created_at) at time zone 'America/Mexico_City', 'YYYY-MM-DD') as day
+    from product_events
+    where event_name = 'signup_page_view'
+  `) as Counts[];
+  const firstViewDay = (firstViewRows[0]?.day as string | null) ?? null;
+
+  const restaurantEventRows = (await sql`
+    select
+      count(distinct pe.restaurant_id) filter (where pe.event_name = 'onboarding_ready_shown')::int as ready,
+      count(distinct pe.restaurant_id) filter (
+        where pe.event_name in ('mesero_qr_generated', 'card_qr_downloaded', 'card_qr_shared')
+      )::int as qr
+    from product_events pe
+    join restaurants r on r.id = pe.restaurant_id
+    where r.created_at >= ${since}::date
+  `) as Counts[];
+  const restaurantEvents = restaurantEventRows[0] ?? {};
+
+  const num = (value: unknown): number => Number(value ?? 0);
+
+  let previous: number | null = null;
+  const step = (label: string, value: number, asDenominator = true) => {
+    const base = previous;
+    console.log(
+      `  ${label.padEnd(28)}${String(value).padStart(6)}${
+        base === null ? '' : `   ${pct(value, base)}`
+      }`,
+    );
+    if (asDenominator) previous = value;
+  };
+
+  console.log('');
+  console.log(`Funnel /contacto -> pago (desde ${since}):`);
+  step('Vieron /contacto', num(sessions.viewed));
+  step('Empezaron el formulario', num(sessions.started));
+  step('Eligieron su negocio en Google', num(sessions.place_selected));
+  step('Enviaron', num(sessions.submitted));
+  step('Error al enviar', num(sessions.submit_failed), false);
+  step('Cuenta creada', n);
+  step('Vieron su cuenta lista', num(restaurantEvents.ready));
+  step('Google conectado', count((r) => r.google === true));
+  step('Con meseros', count((r) => Number(r.meseros) > 0));
+  step('QR descargado/compartido', num(restaurantEvents.qr));
+  step('Primera calificacion', count((r) => Number(r.calif) > 0));
+  step('Pagando', count((r) => r.pago === 'authorized'));
+
+  const totalSessions = num(meta.total);
+  const metaSessions = num(meta.meta);
+  console.log(
+    `  Sesiones de /contacto: Meta ${metaSessions} · otras ${Math.max(0, totalSessions - metaSessions)}`,
+  );
+  console.log(
+    firstViewDay
+      ? `Eventos de /contacto desde ${firstViewDay}`
+      : 'Eventos de /contacto desde — (sin eventos signup_page_view)',
+  );
+}
+
+/**
+ * Every event that belongs to one restaurant: its own rows plus every row from
+ * the session ids seen on those rows (the anonymous /contacto steps), with DB
+ * milestones interleaved. All timestamps are America/Mexico_City.
+ */
+async function printTimeline(
+  sql: (strings: TemplateStringsArray, ...values: unknown[]) => Promise<unknown[]>,
+  slug: string,
+) {
+  const target = (await sql`
+    select id, slug, name from restaurants where slug = ${slug} limit 1
+  `) as Array<{ id: number; slug: string; name: string }>;
+
+  const restaurant = target[0];
+  if (!restaurant) {
+    console.error(`error: no restaurant with slug "${slug}"`);
+    process.exit(1);
+  }
+
+  const rows = (await sql`
+    with target as (
+      select id, slug, created_at from restaurants where slug = ${slug} limit 1
+    ),
+    sessions as (
+      select distinct session_id
+      from product_events
+      where restaurant_id = (select id from target) and session_id is not null
+    ),
+    timeline as (
+      select pe.created_at as at, pe.event_name as event, pe.role as role,
+             pe.path as path, pe.properties as properties
+        from product_events pe
+       where pe.restaurant_id = (select id from target)
+          or pe.session_id in (select session_id from sessions)
+      union all
+      select r.created_at, 'restaurant_created', 'owner', null,
+             jsonb_build_object('slug', r.slug)
+        from target r
+      union all
+      select s.ts, 'first_staff_created', 'staff', null, jsonb_build_object('count', s.n)
+        from (select min(created_at) as ts, count(*)::int as n
+                from staff where restaurant_id = (select id from target)) s
+       where s.ts is not null
+      union all
+      select v.ts, 'first_review', null, null, jsonb_build_object('count', v.n)
+        from (select min(created_at) as ts, count(*)::int as n
+                from reviews where restaurant_id = (select id from target)) v
+       where v.ts is not null
+      union all
+      select p.updated_at, 'mercadopago_subscription', null, null,
+             jsonb_build_object('status', p.status)
+        from (select status, updated_at from mercadopago_subscriptions
+               where restaurant_id = (select id from target)
+               order by id desc limit 1) p
+    )
+    select to_char(at at time zone 'America/Mexico_City', 'MM-DD HH24:MI:SS') as time,
+           event, role, path, properties
+      from timeline
+     order by at, event
+  `) as Array<Record<string, unknown>>;
+
+  console.log(`Timeline de ${restaurant.name} (${restaurant.slug}) — America/Mexico_City\n`);
+  console.log(
+    'tiempo'.padEnd(16) + 'evento'.padEnd(30) + 'rol'.padEnd(10) + 'path'.padEnd(62) + 'properties',
+  );
+  console.log('-'.repeat(140));
+  if (rows.length === 0) {
+    console.log('(sin eventos)');
+    return;
+  }
+  for (const row of rows) {
+    console.log(
+      String(row.time ?? '').padEnd(16) +
+        truncate(row.event, 29).padEnd(30) +
+        truncate(row.role, 9).padEnd(10) +
+        truncate(row.path, 60).padEnd(62) +
+        truncate(row.properties, 80),
+    );
+  }
 }
 
 main().catch((err) => {

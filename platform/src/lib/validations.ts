@@ -63,6 +63,10 @@ export const signupSchema = z.object({
   utmTerm: z.string().trim().max(200).optional(),
   utmContent: z.string().trim().max(200).optional(),
   offer: z.string().trim().max(120).optional(),
+  // Per-tab analytics session id from the /contacto client, written as
+  // `signup_completed.session_id` so the anonymous funnel steps can be stitched
+  // to the account. Not an identifier for anyone: it is a random per-tab value.
+  analyticsSessionId: z.string().trim().max(64).optional(),
   metadata: z.record(z.string(), z.unknown()).optional(),
   // Optional up front: NFC cards only ship once a restaurant converts (first
   // paid Mercado Pago payment), and /contacto hides the address behind a

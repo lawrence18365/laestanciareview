@@ -60,6 +60,25 @@ export const PRODUCT_EVENT_NAMES = [
   // invisible for four days — every server-side check was green while every
   // browser showed "Algo salio mal". See analytics-client.trackClientError.
   'client_error',
+  // Self-serve signup funnel: /contacto form -> account provisioned -> the
+  // /bienvenida onboarding screen. The anonymous steps (page view, form
+  // started, place picked, submit, submit failure) carry only the per-tab
+  // session id; `signup_completed` is written server-side by the signup route
+  // and is the row that stitches that session to the new restaurant through
+  // its session_id. The onboarding_* steps fire after the session cookie
+  // exists, so they are authenticated and restaurant-attributed.
+  'signup_page_view',
+  'signup_form_started',
+  'signup_place_selected',
+  'signup_submit',
+  'signup_submit_failed',
+  'signup_completed',
+  'onboarding_ready_shown',
+  'onboarding_timed_out',
+  'onboarding_google_search',
+  'onboarding_google_saved',
+  'onboarding_google_save_failed',
+  'onboarding_cta_click',
 ] as const;
 
 export type ProductEventName = (typeof PRODUCT_EVENT_NAMES)[number];
@@ -86,6 +105,17 @@ export const PUBLIC_EVENT_NAMES: readonly ProductEventName[] = [
   'push_notification_shown',
   'push_permission_result',
   'client_error',
+  // The /contacto funnel steps that run before the visitor has a session, plus
+  // the onboarding screen's hard timeout (the visitor is still on a public
+  // page when it fires). `signup_completed` is server-only and the remaining
+  // onboarding_* events fire after the session cookie exists, so they are
+  // authenticated and deliberately NOT listed here.
+  'signup_page_view',
+  'signup_form_started',
+  'signup_place_selected',
+  'signup_submit',
+  'signup_submit_failed',
+  'onboarding_timed_out',
 ];
 
 export interface ProductEventInput {

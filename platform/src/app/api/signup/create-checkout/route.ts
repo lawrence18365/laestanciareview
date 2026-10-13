@@ -23,6 +23,7 @@ import { provisionSignupAtomic, SignupConflictError } from '@/lib/signup-provisi
 import { generateQrDataUrl, reviewUrlFor } from '@/lib/qr';
 import { sendWhatsAppWelcome } from '@/lib/whatsapp';
 import { sendCompleteRegistrationEvent } from '@/lib/meta-conversions';
+import { recordProductEvent } from '@/lib/product-events';
 import {
   serializeSignupAccess,
   SIGNUP_ACCESS_COOKIE,
@@ -282,6 +283,24 @@ export async function POST(req: NextRequest) {
         email: input.email,
         phone: input.phone,
         eventId: pendingSignupId,
+      }),
+      // The one funnel event written server-side. `sessionId` is the per-tab
+      // analytics session from /contacto: it is what links this restaurant to
+      // the anonymous signup_page_view/…_submit rows in the funnel report.
+      // Inside Promise.allSettled and never awaited on its own result, so a
+      // failure here (it never throws) cannot fail the signup.
+      recordProductEvent({
+        name: 'signup_completed',
+        restaurantId: restaurant.id,
+        role: 'owner',
+        sessionId: input.analyticsSessionId ?? null,
+        path: '/contacto',
+        properties: {
+          pilot: isPilot,
+          has_place_id: Boolean(input.googlePlaceId),
+          utm_source: input.utmSource ?? null,
+          utm_content: input.utmContent ?? null,
+        },
       }),
     ]);
 
