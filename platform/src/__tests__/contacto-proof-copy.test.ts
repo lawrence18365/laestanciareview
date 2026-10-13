@@ -15,7 +15,7 @@ describe('contacto proof copy', () => {
     expect(source).toContain('11 restaurantes reales');
     expect(source).toContain('MX$700/mes por sucursal');
     expect(source).toContain('/contacto/guest-choice-mobile.webp');
-    expect(source).toContain('Escanea el QR del mesero');
+    expect(source).toContain('Tu cliente escanea tu QR');
   });
 
   it('no longer claims 12 restaurants', () => {

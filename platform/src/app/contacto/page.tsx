@@ -7,7 +7,7 @@ import { cookies } from 'next/headers';
 export const metadata: Metadata = {
   title: 'Prueba RateTap 30 días gratis | Más reseñas en Google',
   description:
-    'Cada mesero lleva su QR y tu cliente califica en 10 segundos. Activa tu restaurante hoy: 30 días gratis, sin tarjeta.',
+    'Tu cliente escanea tu QR y califica en 10 segundos. Activa tu restaurante hoy: 30 días gratis, sin tarjeta.',
   openGraph: {
     title: 'Prueba RateTap 30 días gratis',
     description: 'Más reseñas en Google, todos los días. 30 días gratis, sin tarjeta.',
