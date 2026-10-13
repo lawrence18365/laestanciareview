@@ -2,6 +2,7 @@ import { verifySession } from '@/lib/session';
 import { redirect } from 'next/navigation';
 import { getRestaurantBySlug, getLatestMercadopagoSubscription } from '@/lib/queries';
 import { getBrandForRestaurant } from '@/lib/brands';
+import { isSolo } from '@/lib/onboarding-profile';
 import SettingsView from '@/components/dashboard/SettingsView';
 import {
   computeBillingStartDate,
@@ -27,6 +28,7 @@ export default async function SettingsPage() {
 
   return (
     <SettingsView
+      isSolo={isSolo(restaurant)}
       settings={{
         name: restaurant.name,
         slug: restaurant.slug,

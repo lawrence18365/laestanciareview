@@ -36,6 +36,31 @@ const regionalLinks = [
   { href: '/settings', label: t.nav.settings },
 ];
 
+// Solo mode (team_mode = 'solo'): guest capture and campaigns need staff to
+// redeem, so v1 hides them, and "Personal" moves out of the primary nav into a
+// link in Settings. NULL / team keeps the full GM nav.
+const SOLO_HIDDEN_HREFS = new Set(['/guests', '/campaigns', '/staff']);
+
+export function navLinksFor({
+  isOwner,
+  isRegional,
+  isSolo,
+  showEventsQuotes,
+  isStaff,
+}: {
+  isOwner?: boolean;
+  isRegional?: boolean;
+  isSolo?: boolean;
+  showEventsQuotes?: boolean;
+  isStaff?: boolean;
+}) {
+  const baseLinks = isRegional ? regionalLinks : isOwner ? ownerLinks : gmLinks;
+  const visibleLinks = baseLinks
+    .filter((link) => showEventsQuotes || !('eventsQuotes' in link))
+    .filter((link) => !(isSolo && !isOwner && !isRegional && SOLO_HIDDEN_HREFS.has(link.href)));
+  return isStaff ? [...visibleLinks, ...staffLinks] : visibleLinks;
+}
+
 export default function DashboardNav({
   restaurantName,
   logoSrc: _logoSrc,
@@ -44,6 +69,7 @@ export default function DashboardNav({
   isOwner,
   isRegional,
   isStaff,
+  isSolo,
   showEventsQuotes,
   onOpenGuide,
 }: {
@@ -54,15 +80,15 @@ export default function DashboardNav({
   isOwner?: boolean;
   isRegional?: boolean;
   isStaff?: boolean;
+  /** Server-derived from the restaurant row (team_mode === 'solo'). */
+  isSolo?: boolean;
   /** Leads and quotes links are shown only for La Estancia (see hasEventsQuotes). */
   showEventsQuotes?: boolean;
   onOpenGuide?: () => void;
 }) {
   const router = useRouter();
   const pathname = usePathname();
-  const baseLinks = isRegional ? regionalLinks : isOwner ? ownerLinks : gmLinks;
-  const visibleLinks = baseLinks.filter((link) => showEventsQuotes || !('eventsQuotes' in link));
-  const navLinks = isStaff ? [...visibleLinks, ...staffLinks] : visibleLinks;
+  const navLinks = navLinksFor({ isOwner, isRegional, isSolo, showEventsQuotes, isStaff });
   const [mobileOpen, setMobileOpen] = useState(false);
 
   async function handleLogout() {

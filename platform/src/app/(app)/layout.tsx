@@ -6,6 +6,7 @@ import { getBrandForRestaurant, hasEventsQuotes } from '@/lib/brands';
 import { t } from '@/lib/i18n';
 import { getKnownGroupKey } from '@/lib/group-device';
 import GroupDeviceMarker from '@/app/login/GroupDeviceMarker';
+import { isSolo } from '@/lib/onboarding-profile';
 import DashboardShell from '@/components/dashboard/DashboardShell';
 import SubscriptionBlocked from '@/components/dashboard/SubscriptionBlocked';
 
@@ -64,6 +65,7 @@ export default async function AppLayout({
         isOwner={isMultiView}
         isRegional={isRegional}
         isStaff={isRateTapStaff(session)}
+        isSolo={isSolo(restaurant)}
         showEventsQuotes={hasEventsQuotes(session.slug)}
         slug={session.slug}
         role={session.role}

@@ -14,6 +14,8 @@ import {
 import { getGoogleRatingTrend, getGoogleRatingHistory, getGoogleReviewsAddedToday } from '@/lib/google-places';
 import { reviewUrlFor } from '@/lib/google-review';
 import { sameGroup } from '@/lib/group-scope';
+import { isSolo } from '@/lib/onboarding-profile';
+import { reviewUrlFor as qrReviewUrlFor } from '@/lib/qr';
 import DashboardView from '@/components/dashboard/DashboardView';
 import MapsRankCard from '@/components/dashboard/MapsRankCard';
 import { getMapsRankSummary, type KeywordSummary } from '@/lib/maps-rank';
@@ -106,6 +108,8 @@ export default async function DashboardPage({
         googleReviewCount={restaurant.googleReviewCount ?? null}
         googleReviewsToday={googleReviewsToday}
         showGoogleConnect={session.role === 'gm' && reviewUrlFor(restaurant) === null}
+        isSolo={isSolo(restaurant)}
+        soloShareUrl={isSolo(restaurant) ? qrReviewUrlFor(restaurant.slug) : undefined}
       />
       <div className="page-container" style={{ paddingTop: 0 }}>
         <MapsRankCard summaries={mapsSummaries} />

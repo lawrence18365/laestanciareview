@@ -5,6 +5,7 @@ import { guests, guestVisits, staff } from '@/db/schema';
 import { verifySession } from '@/lib/session';
 import { getRestaurantBySlug } from '@/lib/queries';
 import { todayBirthdayKeyMexico } from '@/lib/mexico-tz';
+import { redirectIfSolo } from '../solo-gate';
 import GuestsTable, { type Filter } from './GuestsTable';
 
 const VALID_FILTERS: Filter[] = ['all', 'today', 'birthdays', 'absent60', 'vip'];
@@ -20,6 +21,7 @@ export default async function GuestsPage({
 
   const restaurant = await getRestaurantBySlug(session.slug);
   if (!restaurant) redirect('/login');
+  redirectIfSolo(restaurant);
 
   const todayMmdd = todayBirthdayKeyMexico();
   const { filter: filterParam } = await searchParams;

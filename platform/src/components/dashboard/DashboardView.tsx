@@ -5,6 +5,7 @@ import { downloadCSV } from '@/lib/csv';
 import { t } from '@/lib/i18n';
 import { track } from '@/lib/analytics-client';
 import { RATING_BASELINE_NOTE } from '@/lib/rating-baseline';
+import { reviewGoal } from '@/lib/onboarding-profile';
 
 function fmt(n: number): string {
   return n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
@@ -95,6 +96,13 @@ interface Props {
    * Computed on the server — see (app)/dashboard/page.tsx.
    */
   showGoogleConnect?: boolean;
+  /**
+   * team_mode === 'solo', read server-side from the restaurant row. Only the
+   * empty-state CTAs change; NULL / team keep "Agrega a tus meseros".
+   */
+  isSolo?: boolean;
+  /** Public /r/{slug} link, shared by the solo "Compártelo por WhatsApp" CTA. */
+  soloShareUrl?: string;
 }
 
 /* ── Main Component ── */
@@ -113,7 +121,13 @@ export default function DashboardView({
   googleReviewCount,
   googleReviewsToday,
   showGoogleConnect = false,
+  isSolo = false,
+  soloShareUrl,
 }: Props) {
+  // Plain ask, no offer and no rating routing (Google policy).
+  const soloWhatsappHref = soloShareUrl
+    ? `https://wa.me/?text=${encodeURIComponent(t.dashboard.soloShareMessage(soloShareUrl))}`
+    : '/qr-codes';
   const firstReview = roiStats.firstReviewAt ? new Date(roiStats.firstReviewAt) : null;
   const weeksActive = useMemo(() => {
     if (!firstReview) return 0;
@@ -197,18 +211,23 @@ export default function DashboardView({
           }}>
             Aún no hay reseñas
           </h2>
+          {isSolo && googleReviewCount !== null && (
+            <p style={{ margin: 0, fontSize: '0.9375rem', color: 'var(--text-muted)' }}>
+              {t.dashboard.soloGoogleLine(googleReviewCount, reviewGoal(googleReviewCount))}
+            </p>
+          )}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', alignItems: 'center', marginTop: '0.5rem' }}>
-            <a href="/staff" style={{
+            <a href={isSolo ? '/qr-codes/letrero' : '/staff'} style={{
               padding: '0.75rem 1.5rem', background: 'var(--text-main)', color: '#fff',
               textDecoration: 'none', fontSize: '0.9375rem', fontWeight: 600,
             }}>
-              1. Agrega a tus meseros
+              {isSolo ? t.dashboard.soloCtaSign : '1. Agrega a tus meseros'}
             </a>
-            <a href="/qr-codes" style={{
+            <a href={isSolo ? soloWhatsappHref : '/qr-codes'} style={{
               padding: '0.75rem 1.5rem', border: '1px solid var(--text-main)', color: 'var(--text-main)',
               textDecoration: 'none', fontSize: '0.9375rem', fontWeight: 600,
             }}>
-              2. Descarga sus códigos QR
+              {isSolo ? t.dashboard.soloCtaWhatsapp : '2. Descarga sus códigos QR'}
             </a>
           </div>
         </div>

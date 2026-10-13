@@ -418,7 +418,7 @@ export default function GuestsTable({
 
 // ── Hero metrics banner ──────────────────────────────────────────────────────
 
-function HeroMetrics({
+export function HeroMetrics({
   metrics,
   justUpdated,
 }: {
@@ -439,7 +439,7 @@ function HeroMetrics({
 
       <div className="hero-stats">
         <HeroStat value={metrics.total} label="Invitados" highlight={justUpdated} />
-        <HeroStat value={metrics.activeStaff} label="Meseros" />
+        {metrics.activeStaff > 0 && <HeroStat value={metrics.activeStaff} label="Meseros" />}
         <HeroStat value={hoursLabel} label="En operación" />
         <HeroStat value={metrics.validated} label="Cortesías" />
       </div>

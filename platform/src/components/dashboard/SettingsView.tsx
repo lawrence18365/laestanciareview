@@ -40,6 +40,8 @@ interface Props {
     whatsappAlerts: boolean;
   };
   billing: BillingInfo;
+  /** team_mode === 'solo', read server-side from the restaurant row. */
+  isSolo?: boolean;
 }
 
 const card: React.CSSProperties = {
@@ -164,7 +166,7 @@ async function encodeLogoFile(file: File): Promise<string> {
   }
 }
 
-export default function SettingsView({ settings, billing }: Props) {
+export default function SettingsView({ settings, billing, isSolo = false }: Props) {
   const [googleReviewUrl, setGoogleReviewUrl] = useState(settings.googleReviewUrl);
   const [googlePlaceId, setGooglePlaceId] = useState(settings.googlePlaceId);
   const [placeQuery, setPlaceQuery] = useState(settings.name);
@@ -522,7 +524,7 @@ export default function SettingsView({ settings, billing }: Props) {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
             <div>
               <label style={labelStyle} htmlFor="managerEmail">
-                {t.settings.managerEmail}
+                {isSolo ? t.settings.soloEmail : t.settings.managerEmail}
               </label>
               <input
                 id="managerEmail"
@@ -536,7 +538,7 @@ export default function SettingsView({ settings, billing }: Props) {
 
             <div>
               <label style={labelStyle} htmlFor="managerPhone">
-                {t.settings.managerPhone}
+                {isSolo ? t.settings.soloPhone : t.settings.managerPhone}
               </label>
               <input
                 id="managerPhone"
@@ -675,6 +677,13 @@ export default function SettingsView({ settings, billing }: Props) {
             </div>
           </div>
         </form>
+        {isSolo && (
+          <p style={{ margin: '1rem 0 0', fontSize: '0.875rem' }}>
+            <a href="/staff" style={{ color: 'var(--text-main)', fontWeight: 600 }}>
+              {t.settings.soloStaffLink}
+            </a>
+          </p>
+        )}
       </section>
 
       {/* Billing */}

@@ -4,6 +4,7 @@ import { db } from '@/db';
 import { campaignBookings, campaignContacts, eventCampaigns } from '@/db/schema';
 import { verifySession } from '@/lib/session';
 import { getRestaurantBySlug } from '@/lib/queries';
+import { redirectIfSolo } from '../solo-gate';
 import CampaignsDashboard from './CampaignsDashboard';
 
 export default async function CampaignsPage() {
@@ -12,6 +13,7 @@ export default async function CampaignsPage() {
   if (session.role !== 'gm') redirect('/overview');
   const restaurant = await getRestaurantBySlug(session.slug);
   if (!restaurant) redirect('/login');
+  redirectIfSolo(restaurant);
 
   const campaigns = await db
     .select({
