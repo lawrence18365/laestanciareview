@@ -13,7 +13,7 @@ async function main() {
   const weekEnd = new Date(weekStart.getTime() + 7 * 24 * 60 * 60 * 1000);
   console.log(`Reporting week: ${weekStart.toDateString()} → ${new Date(weekEnd.getTime() - 1).toDateString()}\n`);
 
-  const rows = await getWeeklySignals(weekStart);
+  const rows = await getWeeklySignals(weekStart, 'grupo-estancia');
   rows.sort((a, b) => Number(b.signal.actionable) - Number(a.signal.actionable));
 
   for (const r of rows) {
