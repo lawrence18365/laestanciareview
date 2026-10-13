@@ -13,6 +13,7 @@ const PLACES_BASE = 'https://places.googleapis.com/v1';
 const FIELD_MASK = 'places.id,places.displayName,places.formattedAddress,places.addressComponents';
 const MIN_QUERY = 3;
 const MAX_QUERY = 80;
+const MAX_CITY = 60;
 const SEARCH_LIMIT = 30;
 const SEARCH_WINDOW = 10 * 60_000;
 const UPSTREAM_TIMEOUT_MS = 8_000;
@@ -51,6 +52,52 @@ function toResult(p: UpstreamPlace) {
   };
 }
 
+async function searchText(textQuery: string, key: string) {
+  const upstream = await fetch(`${PLACES_BASE}/places:searchText`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Goog-Api-Key': key,
+      'X-Goog-FieldMask': FIELD_MASK,
+    },
+    body: JSON.stringify({ textQuery, pageSize: 5, languageCode: 'es', regionCode: 'MX' }),
+    cache: 'no-store',
+    signal: AbortSignal.timeout(UPSTREAM_TIMEOUT_MS),
+  });
+  if (!upstream.ok) throw new Error(`upstream ${upstream.status}`);
+  const data = (await upstream.json()) as { places?: UpstreamPlace[] };
+  return (data.places ?? []).map(toResult).filter((r) => r.placeId && r.name);
+}
+
+// Street words (and their dotted forms) that mean the text is an address, not a name.
+const STREET_WORDS = new Set([
+  'calle', 'av', 'avenida', 'col', 'colonia', 'mz', 'manzana', 'lt', 'lote',
+  'numero', 'no', 'num', 'cp', 'c.p',
+]);
+
+function stripAccents(s: string): string {
+  return s.normalize('NFD').replace(/[̀-ͯ]/g, '');
+}
+
+/**
+ * "LA PRIVADA, calle privada de san Andres mz 1 lt 3" -> "LA PRIVADA":
+ * keep the text before the first comma, dash or #, drop street words and
+ * digit-only tokens, then add the city when the caller has one.
+ */
+function simplifyQuery(q: string, city: string): string {
+  const head = q.split(/[,#-]/)[0];
+  const name = head
+    .split(/\s+/)
+    .filter((t) => {
+      const w = stripAccents(t.toLowerCase()).replace(/[.:°º]+$/, '');
+      return w && !STREET_WORDS.has(w) && !/^\d+$/.test(w);
+    })
+    .join(' ')
+    .trim();
+  if (!name) return '';
+  return city ? `${name} ${city}` : name;
+}
+
 export async function GET(req: NextRequest) {
   const rl = await checkRateLimitAsync(`places-search:${getClientIP(req)}`, SEARCH_LIMIT, SEARCH_WINDOW);
   if (!rl.allowed) {
@@ -70,27 +117,28 @@ export async function GET(req: NextRequest) {
     return reply({ error: 'Search unavailable' }, 503);
   }
 
+  const rawCity = (req.nextUrl.searchParams.get('city') ?? '').trim();
+  const city = rawCity.length <= MAX_CITY ? rawCity : '';
+
+  let results: ReturnType<typeof toResult>[];
   try {
-    const upstream = await fetch(`${PLACES_BASE}/places:searchText`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Goog-Api-Key': key,
-        'X-Goog-FieldMask': FIELD_MASK,
-      },
-      body: JSON.stringify({ textQuery: q, pageSize: 5, languageCode: 'es', regionCode: 'MX' }),
-      cache: 'no-store',
-      signal: AbortSignal.timeout(UPSTREAM_TIMEOUT_MS),
-    });
-    if (!upstream.ok) {
-      console.error(`places-search: upstream ${upstream.status}`);
-      return reply({ error: 'Search failed' }, 502);
-    }
-    const data = (await upstream.json()) as { places?: UpstreamPlace[] };
-    const results = (data.places ?? []).map(toResult).filter((r) => r.placeId && r.name);
-    return reply(results);
+    results = await searchText(q, key);
   } catch (err) {
     console.error('places-search: upstream error', err instanceof Error ? err.message : err);
     return reply({ error: 'Search failed' }, 502);
   }
+  if (results.length > 0) return reply(results);
+
+  // Nothing found. People paste "NAME, street, mz 1 lt 3" into the name box and
+  // Google matches nothing, so retry once with just the name (plus the city).
+  // Still one request for the rate limit; at most two upstream calls.
+  const simplified = simplifyQuery(q, city);
+  if (!simplified || simplified === q) return reply([], 200, { 'X-Places-Retried': '0' });
+  try {
+    results = await searchText(simplified, key);
+  } catch (err) {
+    console.error('places-search: retry error', err instanceof Error ? err.message : err);
+    results = [];
+  }
+  return reply(results, 200, { 'X-Places-Retried': '1' });
 }

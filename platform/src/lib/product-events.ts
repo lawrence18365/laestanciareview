@@ -75,6 +75,8 @@ export const PRODUCT_EVENT_NAMES = [
   'signup_page_view',
   'signup_form_started',
   'signup_place_selected',
+  // Google place search came back empty (props: {retried}). Never the query.
+  'place_search_empty',
   'signup_shape_selected',
   'signup_submit',
   'signup_submit_failed',
@@ -128,6 +130,7 @@ export const PUBLIC_EVENT_NAMES: readonly ProductEventName[] = [
   'signup_page_view',
   'signup_form_started',
   'signup_place_selected',
+  'place_search_empty',
   'signup_shape_selected',
   'signup_submit',
   'signup_submit_failed',

@@ -370,6 +370,7 @@ export default function ContactoForm({ pilotOffer }: { pilotOffer: boolean }) {
                 onChange={(v) => update('businessName', v)}
                 onSelect={handlePlaceSelected}
                 inputId="businessName"
+                city={form.city}
                 required
                 placeholder="Escribe el nombre y selecciona de la lista"
                 style={inputStyle}
