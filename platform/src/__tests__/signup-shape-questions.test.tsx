@@ -222,7 +222,7 @@ describe('sendLargeGroupSignupAlert', () => {
     const mail = arg[0];
     expect(mail.to).toBe('founders@example.com');
     expect(mail.subject).toBe('Nuevo registro: grupo de 6+ sucursales');
-    for (const piece of ['Grupo &lt;Brasa&gt;', 'Monterrey', 'Ana López', '+52 55 1234 5678', 'ana@example.com', '/r/grupo-brasa']) {
+    for (const piece of ['Grupo &lt;Brasa&gt;', 'Monterrey', 'Ana López', '+52 55 1234 5678', 'ana@example.com', '/commercial-leads']) {
       expect(mail.html).toContain(piece);
     }
   });

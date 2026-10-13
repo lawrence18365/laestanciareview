@@ -1532,7 +1532,7 @@ export async function sendLargeGroupSignupAlert(p: OwnerSignupParams) {
   }
 
   try {
-    const trialUrl = `${BASE_URL}/r/${encodeURIComponent(p.slug)}`;
+    const trialUrl = `${BASE_URL}/commercial-leads`;
     const content = `
     <div class="content-pad" style="padding: 28px 24px;">
       <h1 style="margin: 0 0 12px; font-family: 'Playfair Display', Georgia, 'Times New Roman', serif; font-size: 20px; font-weight: 700; color: #111111;">Grupo de 6+ sucursales</h1>
@@ -1544,7 +1544,7 @@ export async function sendLargeGroupSignupAlert(p: OwnerSignupParams) {
         <tr><td style="${SECTION_LABEL_STYLE}">Email</td><td><a href="mailto:${escapeHtml(p.email)}">${escapeHtml(p.email)}</a></td></tr>
       </table>
       <p style="margin: 20px 0 0;">
-        <a href="${escapeHtml(trialUrl)}" style="${CTA_STYLE}">Ver su prueba</a>
+        <a href="${escapeHtml(trialUrl)}" style="${CTA_STYLE}">Ver en leads</a>
       </p>
     </div>`;
 
@@ -1592,7 +1592,7 @@ export async function sendChainSignupAlert(p: ChainSignupAlertParams) {
   }
 
   try {
-    const trialUrl = `${BASE_URL}/r/${encodeURIComponent(p.slug)}`;
+    const trialUrl = `${BASE_URL}/commercial-leads`;
     const addresses = p.addresses.slice(0, 5);
     const addressRows = addresses.length
       ? `<tr><td style="${SECTION_LABEL_STYLE}">Direcciones</td><td>${addresses.map((a) => escapeHtml(a)).join('<br>')}</td></tr>`
@@ -1610,7 +1610,7 @@ export async function sendChainSignupAlert(p: ChainSignupAlertParams) {
         ${addressRows}
       </table>
       <p style="margin: 20px 0 0;">
-        <a href="${escapeHtml(trialUrl)}" style="${CTA_STYLE}">Ver su prueba</a>
+        <a href="${escapeHtml(trialUrl)}" style="${CTA_STYLE}">Ver en leads</a>
       </p>
     </div>`;
 
