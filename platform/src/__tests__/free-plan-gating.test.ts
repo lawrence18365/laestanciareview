@@ -77,6 +77,7 @@ describe('dashboard API redacts guest comments for the free plan', () => {
     ['trial', { subscriptionStatus: 'trialing', groupKey: null }],
     ['paid', { subscriptionStatus: 'active', groupKey: null }],
     ['Grupo location, active', { subscriptionStatus: 'active', groupKey: 'grupo-estancia' }],
+    ['Grupo location, lapsed (blocked, never redacted)', { subscriptionStatus: 'canceled', groupKey: 'grupo-estancia' }],
   ])('%s gets the full comments, unchanged', async (_label, over) => {
     mocks.restaurant = restaurant(over);
 

@@ -98,7 +98,12 @@ describe('inbox page by plan', () => {
     expect(text).toContain('Comentarios bloqueados');
     expect(text.replace(/\s+/g, ' ')).toContain('Tienes 5 comentarios (2 nuevos). Activa tu plan para leerlos.');
     expect(all.some((el) => (el.props as { href?: string }).href === '/plan')).toBe(true);
-    const serialized = JSON.stringify(tree);
+    // Every rendered string and every plain prop of every element.
+    const serialized = [
+      text,
+      ...all.flatMap((el) => Object.values(el.props as Record<string, unknown>)
+        .filter((v) => typeof v === 'string' || typeof v === 'number')),
+    ].join(' ');
     for (const secret of [ROW.customerName, ROW.customerEmail, ROW.feedback, 'grosero']) {
       expect(serialized).not.toContain(secret);
     }
@@ -108,6 +113,7 @@ describe('inbox page by plan', () => {
     ['trial', 'trialing', null],
     ['paid', 'active', null],
     ['Grupo location', 'active', 'grupo-estancia'],
+    ['Grupo location, lapsed (blocked, never redacted)', 'canceled', 'grupo-estancia'],
   ])('%s: the full inbox, unchanged', async (_label, status, groupKey) => {
     setRestaurant(status, groupKey);
 

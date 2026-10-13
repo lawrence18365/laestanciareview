@@ -2,7 +2,7 @@ import { verifySession } from '@/lib/session';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { getRestaurantBySlug, getAllFeedback, getFeedbackCounts } from '@/lib/queries';
-import { canUse, planFor } from '@/lib/entitlements';
+import { canUse, isSelfServe, planFor } from '@/lib/entitlements';
 import { getComplaintSlaStats } from '@/lib/complaint-sla';
 import { RESOLUTIONS, type Resolution } from '@/lib/review-recovery';
 import FeedbackInbox from '@/components/dashboard/FeedbackInbox';
@@ -31,9 +31,10 @@ export default async function InboxPage({
   const restaurant = await getRestaurantBySlug(session.slug);
   if (!restaurant) redirect('/login');
 
-  // Enforced here, on the server: a plan without feedback_text never has the
-  // comment text or guest contact fetched, let alone sent to the browser.
-  const canReadText = canUse(planFor(restaurant), 'feedback_text');
+  // Enforced here, on the server: a self-serve plan without feedback_text never
+  // has the comment text or guest contact fetched, let alone sent to the browser.
+  // Grupo locations (group_key set) are never redacted.
+  const canReadText = !isSelfServe(restaurant) || canUse(planFor(restaurant), 'feedback_text');
   const [feedback, feedbackCounts, complaintStats] = await Promise.all([
     canReadText ? getAllFeedback(restaurant.id) : Promise.resolve([]),
     canReadText ? Promise.resolve(null) : getFeedbackCounts(restaurant.id),
