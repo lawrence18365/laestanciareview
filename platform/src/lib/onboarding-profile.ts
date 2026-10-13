@@ -45,6 +45,52 @@ export function isGroupLead(r: { locationsBand: string | null }): boolean {
   return r.locationsBand === '6+';
 }
 
+/**
+ * The optional "¿Qué quieres lograr?" answer, stored as `google_profile.goal`
+ * (a jsonb merge, so no migration). `team_asks` is only offered to team_mode
+ * 'team'.
+ */
+export const SIGNUP_GOALS = [
+  'more_reviews',
+  'beat_competitor',
+  'customer_feedback',
+  'team_asks',
+] as const;
+export type SignupGoal = (typeof SIGNUP_GOALS)[number];
+
+const GOAL_LABELS: Record<SignupGoal, string> = {
+  more_reviews: 'Más reseñas en Google',
+  beat_competitor: 'Ganarle a la competencia en Maps',
+  customer_feedback: 'Saber qué opinan mis clientes',
+  team_asks: 'Que mi equipo pida reseñas',
+};
+
+/** The chips to show, in order. The team chip only for team_mode 'team'. */
+export function goalOptions(teamMode: string | null): Array<{ goal: SignupGoal; label: string }> {
+  return SIGNUP_GOALS.filter((g) => g !== 'team_asks' || teamMode === 'team').map((goal) => ({
+    goal,
+    label: GOAL_LABELS[goal],
+  }));
+}
+
+/**
+ * Only self-serve restaurants with an onboarding profile are asked: group_key
+ * NULL and team_mode set. NULL team_mode (every Grupo Estancia location) and
+ * any group member never see the question and cannot answer it.
+ */
+export function canAskGoal(r: { groupKey?: string | null; teamMode: string | null }): boolean {
+  return (r.groupKey ?? null) === null && (r.teamMode === 'solo' || r.teamMode === 'team');
+}
+
+/** `google_profile.goal` if it is a known goal, else null. Never throws. */
+export function goalFromProfile(raw: unknown): SignupGoal | null {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
+  const g = (raw as Record<string, unknown>).goal;
+  return typeof g === 'string' && (SIGNUP_GOALS as readonly string[]).includes(g)
+    ? (g as SignupGoal)
+    : null;
+}
+
 function strOrNull(v: unknown): string | null {
   return typeof v === 'string' ? v : null;
 }

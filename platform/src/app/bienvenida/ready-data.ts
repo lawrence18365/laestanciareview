@@ -10,7 +10,9 @@
  * screen exactly as it was before US-14.
  */
 import {
+  canAskGoal,
   competitorLine,
+  goalFromProfile,
   parseGoogleProfile,
   reviewGoal,
   type GoogleProfile,
@@ -48,6 +50,25 @@ export function readyProfileFields(r: RestaurantProfileRow): ReadyProfileFields 
         : null,
     googleProfile: parseGoogleProfile(r.googleProfile),
   };
+}
+
+/**
+ * The optional goal question on the ready screen. Present only for a self-serve
+ * restaurant (group_key NULL, team_mode set) that has not answered yet, so a
+ * legacy / Grupo row gets nothing added to its payload and an answered one never
+ * sees it again.
+ */
+export interface GoalQuestion {
+  teamMode: TeamMode;
+}
+
+export function goalQuestionFor(r: {
+  groupKey?: string | null;
+  teamMode: string | null;
+  googleProfile: unknown;
+}): { goalQuestion: GoalQuestion } | Record<string, never> {
+  if (!canAskGoal(r) || goalFromProfile(r.googleProfile) !== null) return {};
+  return { goalQuestion: { teamMode: r.teamMode as TeamMode } };
 }
 
 /** Which version of the ready screen to show. */

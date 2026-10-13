@@ -87,6 +87,9 @@ export const PRODUCT_EVENT_NAMES = [
   'onboarding_cta_click',
   // Which pieces of the tailored ready screen's personal line showed.
   'onboarding_personal_line_shown',
+  // The one optional tap-only goal question on /bienvenida. Props: {goal}.
+  // Written server-side by POST /api/onboarding/goal.
+  'signup_goal_selected',
   // Plan Restaurante (US-15): upgrade prompts and checkout. Props:
   // upgrade_prompt_*: {placement, plan}; checkout_started: {cycle, amount};
   // plan_activated: {cycle}.

@@ -1,7 +1,7 @@
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import BienvenidaClient, { type StatusResponse } from './BienvenidaClient';
-import { readyMode, readyProfileFields } from './ready-data';
+import { goalQuestionFor, readyMode, readyProfileFields } from './ready-data';
 import { SIGNUP_ACCESS_COOKIE } from '@/lib/signup-access';
 import { PILOT_TRIAL_DAYS } from '@/lib/pilot';
 import { verifySession } from '@/lib/session';
@@ -33,6 +33,7 @@ async function loadReadyForSession(slug: string): Promise<StatusResponse | null>
       qrDataUrl: await generateQrDataUrl(r.slug),
       googleConnected: googleReviewUrlFor(r) !== null,
       ...fields,
+      ...goalQuestionFor(r),
     };
   } catch {
     return null;

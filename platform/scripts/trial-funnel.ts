@@ -18,6 +18,9 @@
  * Both print '-' for NULL, and for every row before migration 0034. The values are read
  * through to_jsonb(r), so a missing column yields NULL instead of a query error.
  * "Por forma" and "Por sucursales" split signups, activated, and paying by those values.
+ * meta is the answer to the /bienvenida goal question (google_profile.goal, written by
+ * POST /api/onboarding/goal); '-' when unanswered, for every legacy row, and before 0034.
+ * "Por meta" splits signups, activated, and paying the same way.
  *
  * Source is the signup's commercial lead UTM (utm_source/utm_content).
  *
@@ -87,16 +90,18 @@ function isPaying(r: TrialRow): boolean {
 }
 
 /** Signups, activated (first rating), and paying for each value of one column. */
-function printSplit(rows: TrialRow[], key: 'forma' | 'sucursales', title: string) {
-  const values = [...new Set(rows.map((r) => String(r[key])))].sort();
+function printSplit(rows: TrialRow[], key: 'forma' | 'sucursales' | 'meta', title: string) {
+  // A row without the value (older query shape, NULL) counts as '-'.
+  const valueOf = (r: TrialRow) => String(r[key] ?? '-');
+  const values = [...new Set(rows.map(valueOf))].sort();
   console.log(`\n${title}:`);
-  console.log(`  ${'valor'.padEnd(10)}${'signups'.padStart(9)}${'activadas'.padStart(11)}${'pagando'.padStart(9)}`);
+  console.log(`  ${'valor'.padEnd(18)}${'signups'.padStart(9)}${'activadas'.padStart(11)}${'pagando'.padStart(9)}`);
   for (const value of values) {
-    const group = rows.filter((r) => String(r[key]) === value);
+    const group = rows.filter((r) => valueOf(r) === value);
     const activated = group.filter((r) => Number(r.calif) > 0).length;
     const paying = group.filter(isPaying).length;
     console.log(
-      `  ${value.padEnd(10)}${String(group.length).padStart(9)}${String(activated).padStart(11)}${String(paying).padStart(9)}`,
+      `  ${value.padEnd(18)}${String(group.length).padStart(9)}${String(activated).padStart(11)}${String(paying).padStart(9)}`,
     );
   }
 }
@@ -119,6 +124,7 @@ async function main() {
            coalesce(cl.utm_content, '-') as anuncio,
            coalesce(to_jsonb(r)->>'team_mode', '-') as forma,
            coalesce(to_jsonb(r)->>'locations_band', '-') as sucursales,
+           coalesce(to_jsonb(r)->'google_profile'->>'goal', '-') as meta,
            (r.google_place_id is not null or r.google_review_url is not null) as google,
            (select count(*)::int from staff s where s.restaurant_id = r.id and s.active) as meseros,
            (select count(*)::int from reviews v where v.restaurant_id = r.id) as calif,
@@ -145,6 +151,7 @@ async function main() {
 
   printSplit(rows, 'forma', 'Por forma (team_mode)');
   printSplit(rows, 'sucursales', 'Por sucursales (locations_band)');
+  printSplit(rows, 'meta', 'Por meta (google_profile.goal)');
 
   // --- /contacto funnel, step by step -------------------------------------
   const sessionRows = (await sql`
