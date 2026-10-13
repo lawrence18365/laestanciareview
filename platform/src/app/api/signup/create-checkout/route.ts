@@ -310,7 +310,7 @@ export async function POST(req: NextRequest) {
       recordProductEvent({
         name: 'signup_completed',
         restaurantId: restaurant.id,
-        role: 'owner',
+        role: 'gm',
         sessionId: input.analyticsSessionId ?? null,
         path: '/contacto',
         properties: {
