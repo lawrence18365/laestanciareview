@@ -1,5 +1,6 @@
 import { db, transactionDb } from '@/db';
-import { pendingSignups, restaurants } from '@/db/schema';
+import { googleRatingSnapshots, pendingSignups, restaurants } from '@/db/schema';
+import { fetchOnboardingGoogleData, type OnboardingGoogleData } from '@/lib/google-onboarding';
 import { generateUniqueSlug, slugify } from '@/lib/slug';
 import { reviewUrlFor } from '@/lib/google-review';
 import type { LocationsBand, TeamMode } from '@/lib/onboarding-profile';
@@ -39,8 +40,41 @@ export type SignupRestaurantInput = {
   locationsBand?: LocationsBand | null;
 };
 
+/**
+ * Google numbers for the restaurant row. Empty when there is no place ID or
+ * the (time-capped, never-throwing) fetch failed, so signup always proceeds.
+ */
+async function googleColumns(placeId: string | null | undefined) {
+  const data: OnboardingGoogleData | null = placeId
+    ? await fetchOnboardingGoogleData(placeId)
+    : null;
+  if (!data || (data.rating === null && data.profile === null)) {
+    return { data: null, values: {} };
+  }
+  return {
+    data,
+    values: {
+      googleRating: data.rating,
+      googleReviewCount: data.reviewCount,
+      googleRatingUpdatedAt: data.rating !== null ? new Date() : null,
+      googleProfile: data.profile,
+    },
+  };
+}
+
+/**
+ * One baseline row in google_rating_snapshots for the brand-new restaurant.
+ * No same-day check is needed: the restaurant id was created a moment ago, so
+ * it has no snapshot yet, and `captured_at` (now) is today in Mexico time.
+ */
+function baselineSnapshot(restaurantId: number, data: OnboardingGoogleData | null) {
+  if (!data || data.rating === null || data.reviewCount === null) return null;
+  return { restaurantId, rating: data.rating, reviewCount: data.reviewCount };
+}
+
 export async function provisionSignupRestaurant(input: SignupRestaurantInput) {
   const slug = await generateUniqueSlug(input.businessName);
+  const google = await googleColumns(input.googlePlaceId);
 
   const [restaurant] = await db
     .insert(restaurants)
@@ -68,8 +102,18 @@ export async function provisionSignupRestaurant(input: SignupRestaurantInput) {
       subscriptionStatus: 'trialing',
       trialEndsAt: input.trialEndsAt,
       pilot: input.pilot ?? false,
+      ...google.values,
     })
     .returning({ id: restaurants.id });
+
+  const baseline = baselineSnapshot(restaurant.id, google.data);
+  if (baseline) {
+    try {
+      await db.insert(googleRatingSnapshots).values(baseline);
+    } catch {
+      // The baseline is a nicety; never fail signup over it.
+    }
+  }
 
   return { id: restaurant.id, slug };
 }
@@ -87,6 +131,9 @@ export async function provisionSignupAtomic(
   input: SignupRestaurantInput & { pendingSignupId: string; leadId: number },
 ) {
   const pilot = input.pilot ?? false;
+  // Fetched before the transaction: it holds a global advisory lock, and the
+  // 3s Google budget must not be spent inside it.
+  const google = await googleColumns(input.googlePlaceId);
 
   return transactionDb.transaction(async (tx) => {
     // Match the migration trigger's advisory lock. Taking it before the
@@ -165,8 +212,12 @@ export async function provisionSignupAtomic(
           subscriptionStatus: 'trialing',
           trialEndsAt: input.trialEndsAt,
           pilot,
+          ...google.values,
         })
         .returning({ id: restaurants.id, slug: restaurants.slug });
+
+      const baseline = baselineSnapshot(restaurant.id, google.data);
+      if (baseline) await tx.insert(googleRatingSnapshots).values(baseline);
     }
 
     await tx

@@ -2,12 +2,12 @@ import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { AuditTracker } from '@/components/audit/AuditTracker';
 import { PilotCta } from '@/components/audit/PilotCta';
+import { getNearbyCompetitors as getNearbyCompetitorsShared } from '@/lib/competitors';
 
 // ─── CONFIG ───
 const API_KEY = process.env.GOOGLE_PLACES_API_KEY;
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'https://app.ratetapmx.com';
 const WHATSAPP_NUMBER = process.env.PROSPECT_WHATSAPP || '523311479086';
-const NEARBY_RADIUS = 3000;
 
 // Cache audit pages for 24h to minimize API costs
 const REVALIDATE = 86400;
@@ -39,19 +39,18 @@ async function getPlaceDetails(placeId: string): Promise<PlaceDetails | null> {
   return data.result;
 }
 
+// Competitor lookup lives in lib/competitors (shared with signup onboarding).
+// Same filters as before; this page keeps its own sort (best rating first).
 async function getNearbyCompetitors(lat: number, lng: number, excludePlaceId: string): Promise<NearbyPlace[]> {
   if (!API_KEY) return [];
-  const url = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${lat},${lng}&radius=${NEARBY_RADIUS}&type=restaurant&key=${API_KEY}`;
-  const res = await fetch(url, { next: { revalidate: REVALIDATE } });
-  const data = await res.json();
-  const results: NearbyPlace[] = (data.results || [])
-    .filter((p: NearbyPlace & { place_id: string }) => p.place_id !== excludePlaceId && p.rating && p.user_ratings_total >= 10)
-    .map((p: NearbyPlace & { place_id: string }) => ({
-      place_id: p.place_id,
-      name: p.name,
-      rating: p.rating,
-      user_ratings_total: p.user_ratings_total,
-    }));
+  const results: NearbyPlace[] = (
+    await getNearbyCompetitorsShared(lat, lng, excludePlaceId, { revalidate: REVALIDATE })
+  ).map((p) => ({
+    place_id: p.placeId,
+    name: p.name,
+    rating: p.rating,
+    user_ratings_total: p.userRatingsTotal,
+  }));
   return results.sort((a: NearbyPlace, b: NearbyPlace) => b.rating - a.rating);
 }
 
