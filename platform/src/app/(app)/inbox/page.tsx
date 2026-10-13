@@ -1,6 +1,6 @@
 import { verifySession } from '@/lib/session';
 import { redirect } from 'next/navigation';
-import { getRestaurantBySlug, getAllFeedback, getROIStats } from '@/lib/queries';
+import { getRestaurantBySlug, getAllFeedback, getFeedbackCounts } from '@/lib/queries';
 import { canUse, isSelfServe, planFor } from '@/lib/entitlements';
 import LockedFeedbackCard from '@/components/dashboard/LockedFeedbackCard';
 import { getComplaintSlaStats } from '@/lib/complaint-sla';
@@ -38,9 +38,7 @@ export default async function InboxPage({
 
   const [feedback, feedbackCount, complaintStats] = await Promise.all([
     feedbackLocked ? null : getAllFeedback(restaurant.id),
-    feedbackLocked
-      ? getROIStats(restaurant.id, restaurant.googleThreshold).then((s) => Number(s.feedbackCount))
-      : 0,
+    feedbackLocked ? getFeedbackCounts(restaurant.id).then((c) => c.total) : 0,
     getComplaintSlaStats(restaurant.id, new Date()),
   ]);
   const reviewedPercent = percentage(

@@ -1,7 +1,8 @@
 import { eq } from 'drizzle-orm';
 import { db } from '@/db';
 import { reviews } from '@/db/schema';
-import { sendFeedbackAlert } from '@/lib/email';
+import { sendFeedbackAlert, sendFeedbackTeaser, FREE_FEEDBACK_TEASER } from '@/lib/email';
+import { planFor, type PlanInput } from '@/lib/entitlements';
 import { sendSMSAlert } from '@/lib/sms';
 import { sendWhatsAppAlert } from '@/lib/whatsapp';
 import { sendPushToRestaurant } from '@/lib/push';
@@ -54,7 +55,7 @@ export interface AlertChannelResult {
 
 export type AlertChannelMap = Record<string, AlertChannelResult>;
 
-export interface FeedbackAlertRestaurant {
+export interface FeedbackAlertRestaurant extends PlanInput {
   name: string;
   managerEmail: string | null;
   managerPhone: string | null;
@@ -116,6 +117,64 @@ function record(channels: AlertChannelMap, key: string, result: AlertChannelResu
   channels[key] = result;
 }
 
+/**
+ * The free-plan alert: a fixed line and a link to /plan. Nothing here reads the
+ * guest's name, contact or comment, so none of it can reach the channel. SMS and
+ * WhatsApp would carry the comment text, so they are skipped rather than
+ * trimmed, and there is no escalation for free.
+ */
+async function sendFreePlanTeaser(
+  review: FeedbackAlertReview,
+  restaurant: FeedbackAlertRestaurant,
+  classification: ReviewClassification,
+  channels: AlertChannelMap,
+): Promise<void> {
+  const attempts: Promise<void>[] = [];
+
+  if (restaurant.managerEmail) {
+    attempts.push(
+      sendFeedbackTeaser({ to: restaurant.managerEmail, restaurantName: restaurant.name })
+        .then((result) => {
+          if (result.success === false) {
+            record(channels, 'email', { ok: false, error: result.error?.message ?? 'send skipped' });
+          } else {
+            record(channels, 'email', { ok: true });
+          }
+        }).catch((err) => {
+          record(channels, 'email', { ok: false, error: errorMessage(err) });
+        }),
+    );
+  } else {
+    record(channels, 'email', { ok: false, skipped: 'no_email' });
+  }
+
+  record(channels, 'sms', { ok: false, skipped: 'free_plan' });
+  record(channels, 'whatsapp', { ok: false, skipped: 'free_plan' });
+
+  attempts.push(
+    sendPushToRestaurant(review.restaurantId, {
+      title: 'Nuevo comentario',
+      body: FREE_FEEDBACK_TEASER,
+      url: '/plan',
+      tag: `review-${review.id}`,
+    }, {
+      kind: pushKindFor(classification.severity),
+      subjectType: 'review',
+      subjectId: review.id,
+    }).then((result) => {
+      if (result.targeted > 0) {
+        record(channels, 'push', { ok: true });
+      } else {
+        record(channels, 'push', { ok: false, skipped: 'no_devices' });
+      }
+    }).catch((err) => {
+      record(channels, 'push', { ok: false, error: errorMessage(err) });
+    }),
+  );
+
+  await Promise.all(attempts);
+}
+
 export async function dispatchFeedbackAlerts(
   review: FeedbackAlertReview,
   restaurant: FeedbackAlertRestaurant,
@@ -134,14 +193,19 @@ export async function dispatchFeedbackAlerts(
 
   // ── GM channels (location account only) ─────────────────────────────────
   const pref = restaurant.alertPreference ?? 'all';
-  if (
-    shouldSendFor(
-      pref,
-      review.rating,
-      restaurant.googleThreshold,
-      classification.actionable,
-    )
-  ) {
+  const sendNow = shouldSendFor(
+    pref,
+    review.rating,
+    restaurant.googleThreshold,
+    classification.actionable,
+  );
+  // Free self-serve plan (US-15): a teaser instead of the alert. Trial, paid
+  // and every Grupo restaurant (group_key set) take the full path below.
+  const isFreePlan = planFor(restaurant) === 'free';
+
+  if (isFreePlan) {
+    if (sendNow) await sendFreePlanTeaser(review, restaurant, classification, channels);
+  } else if (sendNow) {
     const attempts: Promise<void>[] = [];
 
     if (restaurant.managerEmail) {
@@ -255,7 +319,10 @@ export async function dispatchFeedbackAlerts(
   // for every other actionable review) without acting. Alerting them here would
   // let leadership see a GM's restaurant before the GM does. The entry below
   // keeps the row honest about which path owns the escalation.
-  record(channels, 'escalation', { ok: false, skipped: 'deferred_to_sla' });
+  record(channels, 'escalation', {
+    ok: false,
+    skipped: isFreePlan ? 'free_plan' : 'deferred_to_sla',
+  });
 
   // ── Write back the per-channel truth ────────────────────────────────────
   const entries = Object.entries(channels);

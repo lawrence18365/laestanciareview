@@ -28,6 +28,7 @@ import {
   and,
   asc,
   eq,
+  inArray,
   isNotNull,
   isNull,
   lt,
@@ -39,6 +40,7 @@ import {
 import { db } from '@/db';
 import { restaurants, reviews } from '@/db/schema';
 import { sendFeedbackAlert } from '@/lib/email';
+import { planFor } from '@/lib/entitlements';
 import { sameGroup } from '@/lib/group-scope';
 import { sendPushToRestaurant } from '@/lib/push';
 import { inboxLinkFor } from '@/lib/review-recovery';
@@ -201,6 +203,8 @@ export interface OverdueComplaintRow {
   region: string | null;
   /** The complaint location's group; NULL = self-serve island (no owner/regional fan-out). */
   groupKey: string | null;
+  /** Drives the plan: a free self-serve location never escalates. */
+  subscriptionStatus: string;
   restaurantIsOwner: boolean;
   restaurantIsRegional: boolean;
 }
@@ -246,6 +250,7 @@ export async function getOverdueComplaints(now: Date): Promise<OverdueComplaint[
       restaurantName: restaurants.name,
       region: restaurants.region,
       groupKey: restaurants.groupKey,
+      subscriptionStatus: restaurants.subscriptionStatus,
       restaurantIsOwner: restaurants.isOwner,
       restaurantIsRegional: restaurants.isRegional,
     })
@@ -260,6 +265,12 @@ export async function getOverdueComplaints(now: Date): Promise<OverdueComplaint[
         isNull(reviews.escalatedAt),
         eq(restaurants.isOwner, false),
         eq(restaurants.isRegional, false),
+        // No escalation for a free self-serve plan: only group locations or an
+        // active/trialing restaurant are ever swept. (Mirrors planFor().)
+        or(
+          isNotNull(restaurants.groupKey),
+          inArray(restaurants.subscriptionStatus, ['active', 'trialing']),
+        ),
       ),
     )
     .orderBy(asc(reviews.createdAt));
@@ -282,6 +293,7 @@ export async function getOverdueComplaints(now: Date): Promise<OverdueComplaint[
       if (row.status === 'resolved') return false;
       if (row.escalatedAt !== null) return false;
       if (row.restaurantIsOwner || row.restaurantIsRegional) return false;
+      if (planFor(row) === 'free') return false;
       if (row.createdAt.getTime() >= shortestCutoff.getTime()) return false;
 
       const ageHours = (now.getTime() - row.createdAt.getTime()) / HOUR_MS;

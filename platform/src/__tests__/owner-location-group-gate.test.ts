@@ -21,11 +21,13 @@ vi.mock('@/lib/queries', () => ({
     slug,
     name: slug,
     groupKey: mocks.targetGroup,
+    subscriptionStatus: 'active',
   })),
   getStaffList: vi.fn(async () => [{ id: 1, name: 'Ana' }]),
   getLeaderboard: vi.fn(async () => []),
   getWeeklyStats: vi.fn(async () => ({})),
   getRecentFeedback: vi.fn(async () => []),
+  getFeedbackCounts: vi.fn(async () => ({ total: 0, unread: 0 })),
 }));
 
 import { GET as staffGET } from '@/app/api/staff/route';

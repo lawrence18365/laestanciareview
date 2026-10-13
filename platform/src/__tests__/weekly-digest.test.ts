@@ -15,6 +15,7 @@ const mocks = vi.hoisted(() => ({
   getRegionalAccounts: vi.fn(),
   getGoogleRatingTrend: vi.fn(),
   sendWeeklyDigest: vi.fn(),
+  sendWeeklyDigestTeaser: vi.fn(),
   sendOwnerDigest: vi.fn(),
   sendOwnerBriefing: vi.fn(() => Promise.resolve({ success: true })),
   sendRegionalBriefing: vi.fn(() => Promise.resolve({ success: true })),
@@ -59,6 +60,7 @@ vi.mock('@/lib/google-places', () => ({
 
 vi.mock('@/lib/email', () => ({
   sendWeeklyDigest: mocks.sendWeeklyDigest,
+  sendWeeklyDigestTeaser: mocks.sendWeeklyDigestTeaser,
   sendOwnerDigest: mocks.sendOwnerDigest,
   sendOwnerBriefing: mocks.sendOwnerBriefing,
   sendRegionalBriefing: mocks.sendRegionalBriefing,
@@ -156,7 +158,83 @@ describe('weekly digest skippedNoEmail reporting', () => {
   });
 });
 
-const signal = (restaurantId: number, name: string) => ({
+describe('weekly digest by plan (US-15)', () => {
+  const run = () => GET(new NextRequest(
+    'http://localhost/api/cron/weekly-digest',
+    { headers: { authorization: 'Bearer test-cron-secret' } },
+  ));
+  const gm = (id: number, over: Record<string, unknown>) => ({
+    id,
+    slug: `gm-${id}`,
+    name: `GM ${id}`,
+    managerEmail: `gm${id}@example.com`,
+    isOwner: false,
+    googleThreshold: 4,
+    googlePlaceId: null,
+    ...over,
+  });
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    process.env.CRON_SECRET = 'test-cron-secret';
+    mocks.getOwnerAccounts.mockResolvedValue([]);
+    mocks.getOperationalRestaurants.mockResolvedValue([]);
+    mocks.getRegionalAccounts.mockResolvedValue([]);
+    mocks.getStaffAnomalies.mockResolvedValue([]);
+    mocks.getLastWeekStats.mockResolvedValue({ totalReviews: 12, avgRating: 4, googleSends: 7, intercepted: 1 });
+    mocks.getWeekBeforeLastStats.mockResolvedValue(weekStats);
+    mocks.getLastWeekLeaderboard.mockResolvedValue([]);
+    mocks.restaurantHasStaff.mockResolvedValue(true);
+    mocks.getNewFeedbackCount.mockResolvedValue(0);
+    mocks.getGoogleRatingTrend.mockResolvedValue(null);
+    mocks.sendWeeklyDigest.mockResolvedValue({ success: true });
+    mocks.sendWeeklyDigestTeaser.mockResolvedValue({ success: true });
+    mocks.sendPushToRestaurant.mockResolvedValue({ targeted: 0, sent: 0, failed: 0 });
+    mocks.getWeeklySignals.mockResolvedValue([]);
+    mocks.getGroupShareSummary.mockResolvedValue([]);
+  });
+
+  afterEach(() => {
+    delete process.env.CRON_SECRET;
+    vi.restoreAllMocks();
+  });
+
+  it('sends a free self-serve restaurant the two-count teaser, not the full digest', async () => {
+    mocks.getRestaurantsWithEmail.mockResolvedValue([
+      gm(1, { subscriptionStatus: 'canceled', groupKey: null }),
+    ]);
+
+    const body = await (await run()).json();
+
+    expect(body.gm.sent).toBe(1);
+    expect(mocks.sendWeeklyDigest).not.toHaveBeenCalled();
+    expect(mocks.sendWeeklyDigestTeaser).toHaveBeenCalledWith({
+      to: 'gm1@example.com',
+      restaurantName: 'GM 1',
+      ratings: 12,
+      sentToGoogle: 7,
+    });
+    // The paid detail is not even fetched for a free restaurant.
+    expect(mocks.getLastWeekLeaderboard).not.toHaveBeenCalled();
+    expect(mocks.getNewFeedbackCount).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ['trial', { subscriptionStatus: 'trialing', groupKey: null }],
+    ['paid', { subscriptionStatus: 'active', groupKey: null }],
+    ['Grupo location', { subscriptionStatus: 'active', groupKey: 'grupo-estancia' }],
+    ['Grupo location, lapsed', { subscriptionStatus: 'canceled', groupKey: 'grupo-estancia' }],
+  ])('%s keeps the full digest', async (_label, over) => {
+    mocks.getRestaurantsWithEmail.mockResolvedValue([gm(1, over)]);
+
+    await run();
+
+    expect(mocks.sendWeeklyDigest).toHaveBeenCalledTimes(1);
+    expect(mocks.sendWeeklyDigestTeaser).not.toHaveBeenCalled();
+  });
+});
+
+const signal =(restaurantId: number, name: string) => ({
   restaurantId,
   name,
   region: 'centro',

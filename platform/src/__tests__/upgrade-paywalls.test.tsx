@@ -35,6 +35,7 @@ vi.mock('@/lib/queries', () => ({
     intercepted: 0,
     firstReviewAt: null,
   })),
+  getFeedbackCounts: vi.fn(async () => ({ total: mocks.feedbackCount, unread: 0 })),
   getGroupKeyBySlug: vi.fn(async () => null),
   getWeeklyStats: vi.fn(async () => ({})),
   getLastWeekStats: vi.fn(async () => ({})),

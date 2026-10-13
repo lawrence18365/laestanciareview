@@ -95,6 +95,7 @@ function complaint(overrides: Record<string, unknown> = {}) {
     restaurantName: 'Centro',
     region: 'centro',
     groupKey: 'grupo-estancia',
+    subscriptionStatus: 'active',
     restaurantIsOwner: false,
     restaurantIsRegional: false,
     ...overrides,
@@ -450,6 +451,40 @@ describe('complaint SLA', () => {
     // attempt and nothing else: exactly one channel merge exists in total.
     const merges = mocks.updatedValues.filter((values) => 'alertChannels' in values);
     expect(merges).toHaveLength(1);
+  });
+
+  describe('free plan (US-15): no escalation', () => {
+    it('never escalates a complaint at a free self-serve location', async () => {
+      mocks.selectRows.push([
+        complaint({ restaurantId: 98, groupKey: null, subscriptionStatus: 'canceled' }),
+      ]);
+
+      await expect(getOverdueComplaints(now)).resolves.toEqual([]);
+
+      mocks.selectRows.push(
+        [complaint({ restaurantId: 98, groupKey: null, subscriptionStatus: 'canceled' })],
+        [ownerAccount],
+      );
+      const result = await escalateOverdueComplaints(now);
+
+      expect(result).toMatchObject({ escalated: 0, noChannel: 0 });
+      expect(mocks.sendPushToRestaurant).not.toHaveBeenCalled();
+      expect(mocks.sendFeedbackAlert).not.toHaveBeenCalled();
+      // Nothing was claimed, so a later upgrade can still see the complaint.
+      expect(mocks.updatedValues).toEqual([]);
+    });
+
+    it.each([
+      ['trialing self-serve', { groupKey: null, subscriptionStatus: 'trialing' }],
+      ['paid self-serve', { groupKey: null, subscriptionStatus: 'active' }],
+      ['Grupo location, any status', { groupKey: 'grupo-estancia', subscriptionStatus: 'canceled' }],
+    ])('still escalates %s as before', async (_label, over) => {
+      mocks.selectRows.push([complaint(over)]);
+
+      const overdue = await getOverdueComplaints(now);
+
+      expect(overdue.map((row) => row.id)).toEqual([41]);
+    });
   });
 
   it('returns 401 when the cron request has no authorization secret', async () => {

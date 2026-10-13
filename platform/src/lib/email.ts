@@ -445,6 +445,91 @@ export async function sendFeedbackAlert({
 }
 
 // ────────────────────────────────────────────────────────────
+// Free-plan teasers (US-15): counts only, never guest data
+// ────────────────────────────────────────────────────────────
+
+/** What a free self-serve restaurant is told in place of a feedback alert. */
+export const FREE_FEEDBACK_TEASER = 'Recibiste un comentario nuevo. Activa tu plan para verlo.';
+
+/** Weekly digest line for a free self-serve restaurant. Counts only. */
+export function freeWeeklyTeaserText(ratings: number, sentToGoogle: number): string {
+  return `Esta semana: ${ratings} calificaciones, ${sentToGoogle} a Google. Activa tu plan para ver el detalle.`;
+}
+
+/**
+ * Teaser in place of sendFeedbackAlert for a free-plan restaurant. Takes no
+ * guest name, contact, rating or comment text on purpose, so none can leak.
+ */
+export async function sendFeedbackTeaser({
+  to,
+  restaurantName,
+}: {
+  to: string;
+  restaurantName: string;
+}) {
+  const content = `
+    <div class="content-pad" style="padding: 28px 32px 32px; text-align: center;">
+      <h1 style="margin: 0 0 12px; font-family: 'Playfair Display', Georgia, 'Times New Roman', serif; font-size: 20px; font-weight: 700; color: #111111;">${escapeHtml(restaurantName)}</h1>
+      <p style="margin: 0 0 24px; font-size: 15px; line-height: 1.6; color: #111111;">${FREE_FEEDBACK_TEASER}</p>
+      <a href="${BASE_URL}/plan" style="${CTA_STYLE}">Ver el plan</a>
+    </div>`;
+
+  const result = await sendMail({
+    from: FROM,
+    to,
+    subject: `Nuevo comentario en ${restaurantName}`,
+    html: emailLayout(content),
+  });
+
+  if (!result.success || result.skipped) {
+    const reason = result.error
+      ? result.error.message
+      : result.skipped
+        ? 'missing SMTP_USER / SMTP_PASS'
+        : (result.response ?? 'unknown');
+    console.error(`[sendFeedbackTeaser] failed to ${to}: ${reason}`);
+  }
+  return result;
+}
+
+/** Weekly digest for a free-plan restaurant: two counts and a link to /plan. */
+export async function sendWeeklyDigestTeaser({
+  to,
+  restaurantName,
+  ratings,
+  sentToGoogle,
+}: {
+  to: string;
+  restaurantName: string;
+  ratings: number;
+  sentToGoogle: number;
+}) {
+  const content = `
+    <div class="content-pad" style="padding: 28px 32px 32px; text-align: center;">
+      <h1 style="margin: 0 0 12px; font-family: 'Playfair Display', Georgia, 'Times New Roman', serif; font-size: 20px; font-weight: 700; color: #111111;">${escapeHtml(restaurantName)}</h1>
+      <p style="margin: 0 0 24px; font-size: 15px; line-height: 1.6; color: #111111;">${freeWeeklyTeaserText(ratings, sentToGoogle)}</p>
+      <a href="${BASE_URL}/plan" style="${CTA_STYLE}">Ver el plan</a>
+    </div>`;
+
+  const result = await sendMail({
+    from: FROM,
+    to,
+    subject: `Tu semana en RateTap: ${restaurantName}`,
+    html: emailLayout(content),
+  });
+
+  if (!result.success || result.skipped) {
+    const reason = result.error
+      ? result.error.message
+      : result.skipped
+        ? 'missing SMTP_USER / SMTP_PASS'
+        : (result.response ?? 'unknown');
+    console.error(`[sendWeeklyDigestTeaser] failed to ${to}: ${reason}`);
+  }
+  return result;
+}
+
+// ────────────────────────────────────────────────────────────
 // Weekly Digest
 // ────────────────────────────────────────────────────────────
 

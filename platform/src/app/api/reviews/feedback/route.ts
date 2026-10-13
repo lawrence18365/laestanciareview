@@ -101,6 +101,9 @@ export async function POST(req: NextRequest) {
       whatsappAlerts: restaurants.whatsappAlerts,
       googleThreshold: restaurants.googleThreshold,
       region: restaurants.region,
+      subscriptionStatus: restaurants.subscriptionStatus,
+      groupKey: restaurants.groupKey,
+      locationsBand: restaurants.locationsBand,
     })
     .from(restaurants)
     .where(eq(restaurants.id, updated.restaurantId))

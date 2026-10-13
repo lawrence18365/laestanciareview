@@ -71,8 +71,13 @@ const mocks = vi.hoisted(() => {
     // Contract: `true` when the notice went out, `false` when it did not.
     sendOwnerConversionNotification: vi.fn(async () => true),
     sendPurchaseEvent: vi.fn(async () => true),
+    recordProductEvent: vi.fn(async () => undefined),
   };
 });
+
+vi.mock('@/lib/product-events', () => ({
+  recordProductEvent: mocks.recordProductEvent,
+}));
 
 vi.mock('@/lib/email', () => ({
   sendOwnerConversionNotification: mocks.sendOwnerConversionNotification,
@@ -488,6 +493,8 @@ describe('mercadopago webhook route', () => {
     mocks.sendOwnerConversionNotification.mockResolvedValue(true);
     mocks.sendPurchaseEvent.mockReset();
     mocks.sendPurchaseEvent.mockResolvedValue(true);
+    mocks.recordProductEvent.mockClear();
+    mocks.restaurantRow.groupKey = null;
     mocks.getPreapproval.mockResolvedValue({
       id: 'preapproval-123',
       status: 'authorized',
@@ -580,6 +587,111 @@ describe('mercadopago webhook route', () => {
     expect(subscriptionUpdate?.values).toEqual(
       expect.objectContaining({ status: 'authorized' }),
     );
+  });
+
+  describe('plan_activated (US-15)', () => {
+    const authorizedPaymentPayload = {
+      id: 'evt-activated-payment',
+      type: 'subscription_authorized_payment',
+      action: 'created',
+      data: { id: 'authorized-payment-1' },
+    };
+
+    it('records plan_activated with the annual cycle from the preapproval frequency', async () => {
+      mocks.getPreapproval.mockResolvedValue({
+        id: 'preapproval-123',
+        status: 'authorized',
+        external_reference: '77',
+        payer_email: 'gm@example.com',
+        auto_recurring: { frequency: 12, frequency_type: 'months' },
+      });
+
+      await webhookPOST(webhookRequest(eventPayload));
+
+      expect(mocks.recordProductEvent).toHaveBeenCalledTimes(1);
+      expect(mocks.recordProductEvent).toHaveBeenCalledWith({
+        name: 'plan_activated',
+        restaurantId: 77,
+        properties: { cycle: 'annual' },
+      });
+      // The status transition is exactly what it was before the event existed.
+      expect(mocks.updatedRows.find((r) => r.table === restaurants)?.values).toEqual({
+        subscriptionStatus: 'active',
+        billingProvider: 'mercadopago',
+      });
+    });
+
+    it('falls back to the charged amount for the cycle, and omits it when unknown', async () => {
+      mocks.subscriptionRows = [{ ...mocks.defaultSubscriptionRow(), totalAmount: '299.00' }];
+      await webhookPOST(webhookRequest(eventPayload));
+      expect(mocks.recordProductEvent).toHaveBeenLastCalledWith(
+        expect.objectContaining({ properties: { cycle: 'monthly' } }),
+      );
+
+      mocks.seenEventIds.clear();
+      mocks.restaurantStatus = 'canceled';
+      mocks.subscriptionRows = [mocks.defaultSubscriptionRow()]; // 727.00: neither plan price
+      await webhookPOST(webhookRequest(eventPayload));
+      expect(mocks.recordProductEvent).toHaveBeenLastCalledWith(
+        expect.objectContaining({ properties: {} }),
+      );
+    });
+
+    it('records it on the first approved payment too', async () => {
+      mocks.getAuthorizedPayment.mockResolvedValue({
+        id: 'authorized-payment-1',
+        status: 'approved',
+        preapproval_id: 'preapproval-123',
+        payment: { id: 'payment-1', status: 'approved', transaction_amount: 727 },
+      });
+
+      await webhookPOST(webhookRequest(authorizedPaymentPayload));
+
+      expect(mocks.recordProductEvent).toHaveBeenCalledTimes(1);
+      expect(mocks.recordProductEvent).toHaveBeenCalledWith(
+        expect.objectContaining({ name: 'plan_activated', restaurantId: 77 }),
+      );
+    });
+
+    it('does not record it again when the restaurant is already active', async () => {
+      mocks.restaurantStatus = 'active';
+
+      await webhookPOST(webhookRequest(eventPayload));
+
+      expect(mocks.recordProductEvent).not.toHaveBeenCalled();
+    });
+
+    it('does not record it for a rejected payment or a cancelled preapproval', async () => {
+      mocks.getAuthorizedPayment.mockResolvedValue({
+        id: 'authorized-payment-1',
+        status: 'rejected',
+        preapproval_id: 'preapproval-123',
+        payment: { id: 'payment-1', status: 'rejected' },
+      });
+      await webhookPOST(webhookRequest(authorizedPaymentPayload));
+
+      mocks.seenEventIds.clear();
+      mocks.getPreapproval.mockResolvedValue({
+        id: 'preapproval-123',
+        status: 'cancelled',
+        external_reference: '77',
+      });
+      await webhookPOST(webhookRequest(eventPayload));
+
+      expect(mocks.recordProductEvent).not.toHaveBeenCalled();
+    });
+
+    it('stays out of the Grupo flow: the status flips as before and no Plan Restaurante event is written', async () => {
+      mocks.restaurantRow.groupKey = 'grupo-estancia';
+
+      await webhookPOST(webhookRequest(eventPayload));
+
+      expect(mocks.recordProductEvent).not.toHaveBeenCalled();
+      expect(mocks.updatedRows.find((r) => r.table === restaurants)?.values).toEqual({
+        subscriptionStatus: 'active',
+        billingProvider: 'mercadopago',
+      });
+    });
   });
 
   it('holds a cancelled preapproval at trialing while the restaurant own trial is still running', async () => {

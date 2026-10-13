@@ -1,8 +1,9 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { FeedbackAlertReview } from '@/lib/feedback-alerts';
 
 const mocks = vi.hoisted(() => ({
   sendFeedbackAlert: vi.fn(),
+  sendFeedbackTeaser: vi.fn(),
   sendSMSAlert: vi.fn(),
   sendWhatsAppAlert: vi.fn(),
   sendPushToRestaurant: vi.fn(),
@@ -32,7 +33,11 @@ vi.mock('@/db', () => ({
   },
 }));
 
-vi.mock('@/lib/email', () => ({ sendFeedbackAlert: mocks.sendFeedbackAlert }));
+vi.mock('@/lib/email', () => ({
+  sendFeedbackAlert: mocks.sendFeedbackAlert,
+  sendFeedbackTeaser: mocks.sendFeedbackTeaser,
+  FREE_FEEDBACK_TEASER: 'Recibiste un comentario nuevo. Activa tu plan para verlo.',
+}));
 vi.mock('@/lib/sms', () => ({ sendSMSAlert: mocks.sendSMSAlert }));
 vi.mock('@/lib/whatsapp', () => ({ sendWhatsAppAlert: mocks.sendWhatsAppAlert }));
 vi.mock('@/lib/push', () => ({ sendPushToRestaurant: mocks.sendPushToRestaurant }));
@@ -77,6 +82,9 @@ function makeRestaurant(overrides: Record<string, unknown> = {}) {
     whatsappAlerts: false,
     googleThreshold: 4,
     region: 'centro',
+    // A Grupo location: the full alert path, exactly as before the free plan.
+    subscriptionStatus: 'active',
+    groupKey: 'grupo-estancia',
     ...overrides,
   } as Parameters<typeof dispatchFeedbackAlerts>[1];
 }
@@ -378,5 +386,115 @@ describe('the GM is told one consistent story about the review', () => {
     expect(calls[0].kind).toBe(
       result.classification.severity === 'praise' ? 'positive_review' : 'low_review',
     );
+  });
+});
+
+describe('dispatchFeedbackAlerts on the free plan (US-15)', () => {
+  const GUEST = {
+    customerName: 'María Fernández',
+    customerEmail: 'maria.fernandez@example.com',
+    feedback: 'El mesero fue grosero y la sopa llegó fría',
+  };
+  const freeRestaurant = (over: Record<string, unknown> = {}) =>
+    makeRestaurant({ subscriptionStatus: 'canceled', groupKey: null, ...over });
+
+  /** Everything every channel was handed, flattened, so one absence check covers all of it. */
+  const everythingSent = () => JSON.stringify([
+    mocks.sendFeedbackTeaser.mock.calls,
+    mocks.sendPushToRestaurant.mock.calls,
+    mocks.sendFeedbackAlert.mock.calls,
+    mocks.sendSMSAlert.mock.calls,
+    mocks.sendWhatsAppAlert.mock.calls,
+  ]);
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mocks.updatedValues.length = 0;
+    process.env.SMS_ALERTS_ENABLED = 'true';
+    process.env.WHATSAPP_ALERTS_ENABLED = 'true';
+    mocks.sendFeedbackAlert.mockResolvedValue(emailSuccess);
+    mocks.sendFeedbackTeaser.mockResolvedValue(emailSuccess);
+    mocks.sendPushToRestaurant.mockResolvedValue({ targeted: 1, sent: 1, failed: 0 });
+  });
+
+  afterEach(() => {
+    delete process.env.SMS_ALERTS_ENABLED;
+    delete process.env.WHATSAPP_ALERTS_ENABLED;
+  });
+
+  it('sends a teaser with no guest name, contact or comment text on any channel', async () => {
+    const result = await dispatchFeedbackAlerts(
+      makeReview({ ...GUEST, rating: 1 }),
+      freeRestaurant({ whatsappAlerts: true }),
+    );
+
+    expect(mocks.sendFeedbackAlert).not.toHaveBeenCalled();
+    expect(mocks.sendSMSAlert).not.toHaveBeenCalled();
+    expect(mocks.sendWhatsAppAlert).not.toHaveBeenCalled();
+    expect(mocks.sendFeedbackTeaser).toHaveBeenCalledTimes(1);
+    expect(mocks.sendFeedbackTeaser.mock.calls[0][0]).toEqual({
+      to: 'gm@example.com',
+      restaurantName: 'La Estancia Centro',
+    });
+    expect(mocks.sendPushToRestaurant).toHaveBeenCalledTimes(1);
+    expect(mocks.sendPushToRestaurant.mock.calls[0][1]).toMatchObject({
+      title: 'Nuevo comentario',
+      body: 'Recibiste un comentario nuevo. Activa tu plan para verlo.',
+      url: '/plan',
+    });
+    expect(mocks.sendPushToRestaurant.mock.calls[0][1]).not.toHaveProperty('rid');
+
+    const sent = everythingSent();
+    for (const secret of [
+      GUEST.customerName,
+      GUEST.customerEmail,
+      GUEST.feedback,
+      'grosero',
+      'fría',
+      'Ana', // the waiter's name is not in the teaser either
+    ]) {
+      expect(sent).not.toContain(secret);
+    }
+
+    expect(result.channels.email).toEqual({ ok: true });
+    expect(result.channels.push).toEqual({ ok: true });
+    expect(result.channels.sms).toEqual({ ok: false, skipped: 'free_plan' });
+    expect(result.channels.whatsapp).toEqual({ ok: false, skipped: 'free_plan' });
+    expect(result.channels.escalation).toEqual({ ok: false, skipped: 'free_plan' });
+  });
+
+  it.each([
+    ['trialing self-serve', { subscriptionStatus: 'trialing', groupKey: null }],
+    ['paid self-serve', { subscriptionStatus: 'active', groupKey: null }],
+  ])('%s still gets the full alert', async (_label, over) => {
+    await dispatchFeedbackAlerts(makeReview({ ...GUEST }), makeRestaurant(over));
+
+    expect(mocks.sendFeedbackTeaser).not.toHaveBeenCalled();
+    expect(mocks.sendFeedbackAlert).toHaveBeenCalledTimes(1);
+    expect(mocks.sendFeedbackAlert.mock.calls[0][0]).toMatchObject({
+      customerName: GUEST.customerName,
+      customerEmail: GUEST.customerEmail,
+      feedback: GUEST.feedback,
+    });
+    expect(mocks.sendPushToRestaurant.mock.calls[0][1]).toMatchObject({
+      body: expect.stringContaining('grosero'),
+    });
+  });
+
+  it('leaves a Grupo location with a lapsed status on today\'s path (blocked, never free)', async () => {
+    await dispatchFeedbackAlerts(
+      makeReview({ ...GUEST }),
+      makeRestaurant({ subscriptionStatus: 'canceled', groupKey: 'grupo-estancia' }),
+    );
+
+    expect(mocks.sendFeedbackTeaser).not.toHaveBeenCalled();
+    expect(mocks.sendFeedbackAlert).toHaveBeenCalledTimes(1);
+  });
+
+  it('respects an alert preference of off even for the teaser', async () => {
+    await dispatchFeedbackAlerts(makeReview(), freeRestaurant({ alertPreference: 'off' }));
+
+    expect(mocks.sendFeedbackTeaser).not.toHaveBeenCalled();
+    expect(mocks.sendPushToRestaurant).not.toHaveBeenCalled();
   });
 });

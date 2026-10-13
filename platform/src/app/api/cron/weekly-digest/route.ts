@@ -15,7 +15,8 @@ import {
   getStaffAnomalies,
 } from '@/lib/anomalies';
 import { getGoogleRatingTrend } from '@/lib/google-places';
-import { sendWeeklyDigest, sendOwnerBriefing, sendRegionalBriefing, type BriefingLocation } from '@/lib/email';
+import { sendWeeklyDigest, sendWeeklyDigestTeaser, sendOwnerBriefing, sendRegionalBriefing, type BriefingLocation } from '@/lib/email';
+import { planFor } from '@/lib/entitlements';
 import type { GroupShareSummary } from '@/lib/maps-rank-group';
 import {
   getWeeklySignals,
@@ -113,6 +114,24 @@ export async function GET(req: NextRequest) {
     }
 
     try {
+      // Free self-serve plan (US-15): two counts and a link to /plan. The
+      // staff, anomaly, complaint and Google-trend detail is a paid feature.
+      if (planFor(r) === 'free') {
+        const lastWeek = await getLastWeekStats(r.id, r.googleThreshold);
+        const result = await sendWeeklyDigestTeaser({
+          to: r.managerEmail,
+          restaurantName: r.name,
+          ratings: lastWeek.totalReviews,
+          sentToGoogle: lastWeek.googleSends,
+        });
+        if (result.success) {
+          gmSent++;
+        } else {
+          gmFailed++;
+        }
+        continue;
+      }
+
       const [lastWeek, weekBefore, topPerformers, unresolvedCount, googleTrend, hasStaff] =
         await Promise.all([
           getLastWeekStats(r.id, r.googleThreshold),
