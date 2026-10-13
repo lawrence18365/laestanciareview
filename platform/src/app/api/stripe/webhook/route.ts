@@ -223,6 +223,7 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
       qrDataUrl,
       reviewUrl,
       trialEndsAt,
+      restaurantId: restaurant.id,
     }),
     sendOwnerSignupNotification({
       restaurantName: signup.businessName,

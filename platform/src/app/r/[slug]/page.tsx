@@ -1,4 +1,6 @@
 import { notFound } from 'next/navigation';
+import { headers } from 'next/headers';
+import { classifyUserAgent } from '@/lib/analytics-client';
 import { getRestaurantBySlug, getStaffByCode } from '@/lib/queries';
 import { getBrandForRestaurant } from '@/lib/brands';
 import { recordProductEvent } from '@/lib/product-events';
@@ -21,6 +23,11 @@ export default async function ReviewPage({ params, searchParams }: PageProps) {
   const staffMember = staffCode ? await getStaffByCode(restaurant.id, staffCode) : null;
   const brand = getBrandForRestaurant(restaurant);
 
+  // Link-preview bots (WhatsApp, Facebook, ...) fetch this page when a link is
+  // pasted. Flag, never drop, so history stays comparable; trial:funnel skips
+  // bot=true. Only derived fields are stored, never the raw User-Agent.
+  const ua = classifyUserAgent((await headers()).get('user-agent'));
+
   // Fire-and-forget: analytics must never block the render path.
   void recordProductEvent({
     name: 'review_page_open',
@@ -28,7 +35,13 @@ export default async function ReviewPage({ params, searchParams }: PageProps) {
     staffId: staffMember?.id ?? null,
     role: 'guest',
     path: `/r/${slug}`,
-    properties: { staff_code: staffCode || null, has_card: !!card },
+    properties: {
+      staff_code: staffCode || null,
+      has_card: !!card,
+      device: ua.device,
+      os: ua.os,
+      ...(ua.bot ? { bot: true } : {}),
+    },
   });
 
   return (

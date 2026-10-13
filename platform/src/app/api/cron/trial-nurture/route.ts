@@ -32,6 +32,7 @@ import { reviewGoal } from '@/lib/onboarding-profile';
 import { getPriceBreakdown } from '@/lib/mercadopago';
 import { planFor, selfServePrice, usesPlanRestaurantePrice } from '@/lib/entitlements';
 import { recordProductEvent } from '@/lib/product-events';
+import { addEmailTracking } from '@/lib/email-tracking';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -552,7 +553,11 @@ export async function GET(req: NextRequest) {
             from: FROM,
             to,
             subject: nurture.subject(c),
-            html: nurture.html(c),
+            // Open pixel + wrapped links (SQ-218); no-op when signing is unavailable.
+            html: await addEmailTracking(nurture.html(c), {
+              template: `nurture_${eventKey}`,
+              restaurantId: r.id,
+            }),
           });
           if (!result.success) {
             throw new Error(result.error?.message ?? 'SMTP send skipped');

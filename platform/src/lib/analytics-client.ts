@@ -10,6 +10,42 @@ const TRACK_URL = '/api/analytics/track';
 /** Bundle this client is running. Inlined at build time by next.config.ts. */
 export const BUILD_SHA = process.env.NEXT_PUBLIC_BUILD_SHA ?? 'unknown';
 
+export type DeviceKind = 'mobile' | 'tablet' | 'desktop';
+export type DeviceOs = 'ios' | 'android' | 'other';
+
+export interface UserAgentInfo {
+  device: DeviceKind;
+  os: DeviceOs;
+  /** Link-preview fetcher or crawler: a request, not a person. */
+  bot: boolean;
+}
+
+/**
+ * Link-preview fetchers and crawlers. WhatsApp, Facebook and Telegram open a
+ * link the moment it is pasted into a chat, which made one ad-click look like
+ * several page opens. The named list is explicit; the tail catches the rest.
+ */
+const BOT_UA =
+  /facebookexternalhit|facebot|whatsapp|telegrambot|twitterbot|slackbot|linkedinbot|googlebot|bingbot|discordbot|bot|crawler|spider|preview/i;
+
+/**
+ * Coarse device facts from a User-Agent. Pure and dependency-free so the server
+ * (review page, email tracker) and the browser (/contacto) share one table.
+ * The raw string is never stored: callers keep only the returned fields.
+ */
+export function classifyUserAgent(ua: string | null | undefined): UserAgentInfo {
+  const s = ua ?? '';
+  const bot = BOT_UA.test(s);
+  const os: DeviceOs = /iPhone|iPad|iPod/i.test(s) ? 'ios' : /Android/i.test(s) ? 'android' : 'other';
+  let device: DeviceKind = 'desktop';
+  if (/iPad|Tablet|PlayBook|Silk/i.test(s) || (/Android/i.test(s) && !/Mobile/i.test(s))) {
+    device = 'tablet';
+  } else if (/iPhone|iPod|Android|Mobile|Windows Phone|BlackBerry|Opera Mini/i.test(s)) {
+    device = 'mobile';
+  }
+  return { device, os, bot };
+}
+
 /** Stable-per-tab session id, persisted in sessionStorage. */
 export function getSessionId(): string | null {
   if (typeof window === 'undefined') return null;
@@ -52,6 +88,13 @@ export function track(
 ): void {
   if (typeof window === 'undefined') return;
   try {
+    // The /contacto page view carries device facts from the browser's own UA
+    // (client-recorded events have no server hop). Fields only, no raw UA.
+    let deviceProps: Record<string, unknown> = {};
+    if (name === 'signup_page_view' && typeof navigator !== 'undefined') {
+      const { device, os, bot } = classifyUserAgent(navigator.userAgent);
+      deviceProps = { device, os, ...(bot ? { bot: true } : {}) };
+    }
     const payload = JSON.stringify({
       events: [
         {
@@ -64,7 +107,7 @@ export function track(
           restaurant_slug: opts?.restaurantSlug,
           // build_sha rides on every event so a stale client is identifiable
           // without a schema change.
-          properties: { ...(properties ?? {}), build_sha: BUILD_SHA },
+          properties: { ...(properties ?? {}), ...deviceProps, build_sha: BUILD_SHA },
         },
       ],
     });
