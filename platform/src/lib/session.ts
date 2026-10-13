@@ -46,7 +46,7 @@ async function getSigningKey(): Promise<CryptoKey> {
 }
 
 /** HMAC-SHA256 sign a message with the derived session key. */
-async function hmacSign(message: string): Promise<string> {
+export async function hmacSign(message: string): Promise<string> {
   const encoder = new TextEncoder();
   const key = await getSigningKey();
   const sig = await crypto.subtle.sign('HMAC', key, encoder.encode(message));

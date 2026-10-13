@@ -111,6 +111,20 @@ export async function findLoginCandidates(identifier: string) {
 }
 
 /**
+ * The login dropdown of a known group device: every account of one group (owner
+ * and regional included), ordered by name. Only ever called with a group_key
+ * taken from a verified rt_group marker; an empty key returns nothing.
+ */
+export async function listGroupAccounts(groupKey: string): Promise<Array<{ name: string; slug: string }>> {
+  if (!groupKey) return [];
+  return db
+    .select({ name: restaurants.name, slug: restaurants.slug })
+    .from(restaurants)
+    .where(eq(restaurants.groupKey, groupKey))
+    .orderBy(restaurants.name);
+}
+
+/**
  * The group_key of an account (null when it has none or does not exist). The
  * owner/regional views resolve the viewer's group from this and pass it to the
  * scoped queries below; a null key means those queries return nothing.

@@ -4,6 +4,8 @@ import { getRestaurantBySlug, getNewFeedbackCount } from '@/lib/queries';
 import { redirect } from 'next/navigation';
 import { getBrandForRestaurant, hasEventsQuotes } from '@/lib/brands';
 import { t } from '@/lib/i18n';
+import { getKnownGroupKey } from '@/lib/group-device';
+import GroupDeviceMarker from '@/app/login/GroupDeviceMarker';
 import DashboardShell from '@/components/dashboard/DashboardShell';
 import SubscriptionBlocked from '@/components/dashboard/SubscriptionBlocked';
 
@@ -34,6 +36,11 @@ export default async function AppLayout({
     );
   }
 
+  // Group accounts' devices keep the login dropdown after logout: ask the
+  // server (a layout cannot set cookies) to mark this device once.
+  const needsGroupMarker =
+    !!restaurant.groupKey && (await getKnownGroupKey()) !== restaurant.groupKey;
+
   const brand = getBrandForRestaurant(restaurant);
   const isOwner = session.role === 'owner';
   const isRegional = session.role === 'regional';
@@ -48,6 +55,7 @@ export default async function AppLayout({
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg-base)' }}>
+      {needsGroupMarker && <GroupDeviceMarker />}
       <DashboardShell
         restaurantName={displayName}
         logoSrc={brand.logo}
