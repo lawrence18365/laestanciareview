@@ -393,6 +393,15 @@ describe('GET /api/signup/status', () => {
     expect(body.googleProfile.competitors).toHaveLength(3);
   });
 
+  it('offers the goal question to an unanswered self-serve restaurant only', async () => {
+    mocks.selectQueue = [[pending], [{ ...restaurant, teamMode: 'team', locationsBand: '2-5', googleProfile: null }]];
+    expect((await call()).goalQuestion).toEqual({ teamMode: 'team' });
+    mocks.selectQueue = [[pending], [{ ...restaurant, teamMode: 'solo', locationsBand: '1', googleProfile: { goal: 'more_reviews' } }]];
+    expect('goalQuestion' in (await call())).toBe(false);
+    mocks.selectQueue = [[pending], [{ ...restaurant, teamMode: null, locationsBand: null, googleProfile: null }]];
+    expect('goalQuestion' in (await call())).toBe(false);
+  });
+
   it('is all null for a legacy restaurant', async () => {
     mocks.selectQueue = [
       [pending],

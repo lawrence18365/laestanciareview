@@ -5,8 +5,8 @@ import Script from 'next/script';
 import { SUPPORT_WHATSAPP_URL } from '@/lib/support';
 import GooglePlaceSearch, { type PlaceSelection } from '@/components/GooglePlaceSearch';
 import { track } from '@/lib/analytics-client';
-import { qrPlacementTip } from '@/lib/onboarding-profile';
-import { personalLine, readyMode, type ReadyProfileFields } from './ready-data';
+import { goalOptions, qrPlacementTip, type SignupGoal } from '@/lib/onboarding-profile';
+import { personalLine, readyMode, type GoalQuestion, type ReadyProfileFields } from './ready-data';
 
 const PIXEL_ID = process.env.NEXT_PUBLIC_META_PIXEL_ID ?? '1578821303344121';
 
@@ -20,6 +20,8 @@ export interface StatusResponse extends Partial<ReadyProfileFields> {
   pilot?: boolean;
   googleConnected?: boolean;
   signupId?: string;
+  /** Present only for a self-serve restaurant that has not answered yet. */
+  goalQuestion?: GoalQuestion;
 }
 
 export default function BienvenidaClient({
@@ -322,6 +324,8 @@ export function ReadyView({
         )}
       </div>
 
+      {status.goalQuestion && <GoalQuestionView teamMode={status.goalQuestion.teamMode} />}
+
       <div style={{
         textAlign: 'center',
         padding: '1.5rem',
@@ -440,6 +444,74 @@ export function ReadyView({
         )}
       </p>
     </>
+  );
+}
+
+/**
+ * One optional, tap-only question. Tapping a chip saves it and swaps the chips
+ * for "✓ Gracias"; it never blocks the CTAs, and a failed save just lets the
+ * visitor tap again. The server stops offering it once answered.
+ */
+export function GoalQuestionView({ teamMode }: { teamMode: string }) {
+  const [state, setState] = useState<'idle' | 'saving' | 'done'>('idle');
+  const [error, setError] = useState('');
+
+  async function choose(goal: SignupGoal) {
+    if (state !== 'idle') return;
+    setState('saving');
+    setError('');
+    try {
+      const res = await fetch('/api/onboarding/goal', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ goal }),
+      });
+      // 409 = already answered (another tab): same outcome for the visitor.
+      if (!res.ok && res.status !== 409) throw new Error('save-failed');
+      setState('done');
+    } catch {
+      setState('idle');
+      setError('No se pudo guardar. Intenta de nuevo.');
+    }
+  }
+
+  if (state === 'done') {
+    return (
+      <p style={{ fontSize: '0.85rem', fontWeight: 600, color: '#15803d', textAlign: 'center', margin: '0 0 1.25rem' }}>
+        ✓ Gracias
+      </p>
+    );
+  }
+
+  return (
+    <div role="group" aria-labelledby="goal-question" style={{ marginBottom: '1.25rem' }}>
+      <div id="goal-question" style={{ fontSize: '0.9rem', fontWeight: 700, color: '#1c1917', marginBottom: 8, textAlign: 'center' }}>
+        ¿Qué quieres lograr?
+      </div>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, justifyContent: 'center' }}>
+        {goalOptions(teamMode).map(({ goal, label }) => (
+          <button
+            key={goal}
+            type="button"
+            disabled={state === 'saving'}
+            onClick={() => choose(goal)}
+            style={{
+              minHeight: 44,
+              padding: '0.5rem 0.9rem',
+              border: '1px solid #1c1917',
+              background: '#fff',
+              color: '#1c1917',
+              fontSize: '0.85rem',
+              fontWeight: 600,
+              cursor: 'pointer',
+            }}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+      {error && <p style={{ fontSize: '0.8rem', color: '#b91c1c', textAlign: 'center', margin: '0.5rem 0 0' }}>{error}</p>}
+    </div>
   );
 }
 
