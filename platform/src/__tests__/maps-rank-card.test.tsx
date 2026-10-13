@@ -35,13 +35,12 @@ describe('MapsRankCard', () => {
     expect(render([summary({ top3: 2 })])).toBe('');
   });
 
-  it('shows a self-serve summary the same way and passes the plan through', () => {
+  it('shows a self-serve summary the same way as a group one', () => {
     const html = renderToStaticMarkup(
-      <MapsRankCard summaries={[summary({ keyword: 'pizzería Los Mochis', top3: 2 })]} plan="free" />,
+      <MapsRankCard summaries={[summary({ keyword: 'pizzería Los Mochis', top3: 2 })]} />,
     );
     expect(html).toContain('pizzería Los Mochis');
     expect(html).toContain('top 3 en 2 de 9 puntos');
-    expect(html).toContain('data-plan="free"');
   });
 
   it('renders nothing when there are no summaries', () => {

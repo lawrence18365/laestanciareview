@@ -16,10 +16,11 @@ import { getGoogleRatingTrend, getGoogleRatingHistory, getGoogleReviewsAddedToda
 import { reviewUrlFor } from '@/lib/google-review';
 import { sameGroup } from '@/lib/group-scope';
 import { isSolo } from '@/lib/onboarding-profile';
-import { planFor } from '@/lib/entitlements';
 import { reviewUrlFor as qrReviewUrlFor } from '@/lib/qr';
 import DashboardView from '@/components/dashboard/DashboardView';
 import MapsRankCard from '@/components/dashboard/MapsRankCard';
+import FirstRatingCard from '@/components/dashboard/FirstRatingCard';
+import { canUse, isSelfServe, planFor } from '@/lib/entitlements';
 import { getMapsRankSummary, type KeywordSummary } from '@/lib/maps-rank';
 
 export default async function DashboardPage({
@@ -84,9 +85,18 @@ export default async function DashboardPage({
     ? await getGoogleReviewsAddedToday(restaurant.id, restaurant.googleReviewCount ?? null)
     : null;
 
+  // Self-serve upgrade surfaces. Grupo restaurants (group_key set) get none, so
+  // their render is unchanged.
+  const selfServe = isSelfServe(restaurant);
+  const plan = planFor(restaurant);
+  const mapsLocked = selfServe && !canUse(plan, 'maps_rank');
+  const showFirstRating =
+    selfServe && (plan === 'trial' || plan === 'free') && Number(roiStats.totalReviews) >= 1;
+
   // The dashboard must never break on Maps rank data: any failure renders no card.
+  // A locked card gets no data at all.
   let mapsSummaries: KeywordSummary[] = [];
-  if (process.env.MAPS_RANK_ENABLED === 'true') {
+  if (process.env.MAPS_RANK_ENABLED === 'true' && !mapsLocked) {
     try {
       mapsSummaries = await getMapsRankSummary(restaurant.id);
     } catch {
@@ -96,6 +106,15 @@ export default async function DashboardPage({
 
   return (
     <>
+      {showFirstRating && (plan === 'trial' || plan === 'free') && (
+        <div className="page-container" style={{ paddingBottom: 0 }}>
+          <FirstRatingCard
+            slug={restaurant.slug}
+            plan={plan}
+            sentToGoogle={Number(roiStats.googleSends)}
+          />
+        </div>
+      )}
       {/* showGoogleConnect is GM-only: an owner or regional reaches this page
           through ?slug, and the fix (Ajustes) is not theirs to make. */}
       <DashboardView
@@ -117,14 +136,7 @@ export default async function DashboardPage({
         hasStaff={hasStaff}
       />
       <div className="page-container" style={{ paddingTop: 0 }}>
-        <MapsRankCard
-          summaries={mapsSummaries}
-          plan={planFor({
-            subscriptionStatus: restaurant.subscriptionStatus,
-            groupKey: restaurant.groupKey,
-            locationsBand: restaurant.locationsBand,
-          })}
-        />
+        <MapsRankCard summaries={mapsSummaries} locked={mapsLocked} />
       </div>
     </>
   );

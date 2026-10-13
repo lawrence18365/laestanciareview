@@ -6,6 +6,8 @@ import OnboardingWizard from './OnboardingWizard';
 import FeatureAnnouncementBanner from './FeatureAnnouncementBanner';
 import PushNotificationBanner from './PushNotificationBanner';
 import ProductAnalytics from './ProductAnalytics';
+import UpgradeBanner from './UpgradeBanner';
+import type { UpgradeState } from './upgrade-state';
 
 export default function DashboardShell({
   restaurantName,
@@ -19,6 +21,7 @@ export default function DashboardShell({
   showEventsQuotes,
   slug,
   role,
+  upgrade,
   children,
 }: {
   restaurantName: string;
@@ -33,6 +36,8 @@ export default function DashboardShell({
   showEventsQuotes?: boolean;
   slug: string;
   role: 'gm' | 'owner' | 'regional';
+  /** Self-serve trial countdown / free plan banner. Absent for Grupo restaurants. */
+  upgrade?: UpgradeState | null;
   children: React.ReactNode;
 }) {
   const [guideOpen, setGuideOpen] = useState(false);
@@ -54,6 +59,7 @@ export default function DashboardShell({
         showEventsQuotes={showEventsQuotes}
         onOpenGuide={openGuide}
       />
+      <UpgradeBanner upgrade={upgrade} />
       <FeatureAnnouncementBanner slug={slug} />
       <PushNotificationBanner accountKey={slug} />
       <ProductAnalytics slug={slug} role={role} />

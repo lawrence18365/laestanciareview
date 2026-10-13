@@ -9,6 +9,7 @@ import GroupDeviceMarker from '@/app/login/GroupDeviceMarker';
 import { isSolo } from '@/lib/onboarding-profile';
 import { planFor } from '@/lib/entitlements';
 import DashboardShell from '@/components/dashboard/DashboardShell';
+import { upgradeStateFor } from '@/components/dashboard/upgrade-state';
 import SubscriptionBlocked from '@/components/dashboard/SubscriptionBlocked';
 
 export default async function AppLayout({
@@ -69,6 +70,7 @@ export default async function AppLayout({
         showEventsQuotes={hasEventsQuotes(session.slug)}
         slug={session.slug}
         role={session.role}
+        upgrade={upgradeStateFor(restaurant)}
       >
         {children}
       </DashboardShell>

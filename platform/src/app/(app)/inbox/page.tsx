@@ -1,6 +1,8 @@
 import { verifySession } from '@/lib/session';
 import { redirect } from 'next/navigation';
-import { getRestaurantBySlug, getAllFeedback } from '@/lib/queries';
+import { getRestaurantBySlug, getAllFeedback, getROIStats } from '@/lib/queries';
+import { canUse, isSelfServe, planFor } from '@/lib/entitlements';
+import LockedFeedbackCard from '@/components/dashboard/LockedFeedbackCard';
 import { getComplaintSlaStats } from '@/lib/complaint-sla';
 import { RESOLUTIONS, type Resolution } from '@/lib/review-recovery';
 import FeedbackInbox from '@/components/dashboard/FeedbackInbox';
@@ -29,8 +31,16 @@ export default async function InboxPage({
   const restaurant = await getRestaurantBySlug(session.slug);
   if (!restaurant) redirect('/login');
 
-  const [feedback, complaintStats] = await Promise.all([
-    getAllFeedback(restaurant.id),
+  // Free self-serve plan: counts only. The comment rows are never loaded, so
+  // no text can reach the page (M3 enforces the same rule in the data layer).
+  const feedbackLocked =
+    isSelfServe(restaurant) && !canUse(planFor(restaurant), 'feedback_text');
+
+  const [feedback, feedbackCount, complaintStats] = await Promise.all([
+    feedbackLocked ? null : getAllFeedback(restaurant.id),
+    feedbackLocked
+      ? getROIStats(restaurant.id, restaurant.googleThreshold).then((s) => Number(s.feedbackCount))
+      : 0,
     getComplaintSlaStats(restaurant.id, new Date()),
   ]);
   const reviewedPercent = percentage(
@@ -115,17 +125,21 @@ export default async function InboxPage({
         </div>
       </section>
 
-      <FeedbackInbox
-        focusReviewId={focusReviewId}
-        focusSource={focusSource}
-        initialFeedback={feedback.map((f) => ({
-          ...f,
-          resolution: f.resolution && RESOLUTIONS.includes(f.resolution as Resolution)
-            ? f.resolution as Resolution
-            : null,
-          createdAt: f.createdAt.toISOString(),
-        }))}
-      />
+      {feedback === null ? (
+        <LockedFeedbackCard count={feedbackCount} />
+      ) : (
+        <FeedbackInbox
+          focusReviewId={focusReviewId}
+          focusSource={focusSource}
+          initialFeedback={feedback.map((f) => ({
+            ...f,
+            resolution: f.resolution && RESOLUTIONS.includes(f.resolution as Resolution)
+              ? f.resolution as Resolution
+              : null,
+            createdAt: f.createdAt.toISOString(),
+          }))}
+        />
+      )}
     </div>
   );
 }
