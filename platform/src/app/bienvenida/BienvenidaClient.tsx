@@ -90,6 +90,7 @@ function BienvenidaInner({
   useEffect(() => {
     if (!hasSignupAccess) return;
     let cancelled = false;
+    let pollId: ReturnType<typeof setInterval> | undefined;
 
     async function poll() {
       try {
@@ -97,6 +98,9 @@ function BienvenidaInner({
         const data = (await res.json()) as StatusResponse;
         if (cancelled) return;
         if (data.ready) {
+          // The ready response consumes the one-time signup cookie, so every
+          // later poll would 400. Stop polling once we have it.
+          clearInterval(pollId);
           setGoogleConnected(Boolean(data.googleConnected));
           setStatus(data);
           return;
@@ -106,8 +110,8 @@ function BienvenidaInner({
       }
     }
 
+    pollId = setInterval(poll, 2000);
     poll();
-    const pollId = setInterval(poll, 2000);
     // Hard timeout: 30 seconds. Payment succeeded — webhook is just slow.
     const timeoutId = setTimeout(() => {
       if (!cancelled) setTimedOut(true);
