@@ -121,8 +121,9 @@ function BienvenidaInner({
         if (cancelled) return;
         if (data.ready) {
           // The ready response consumes the one-time signup cookie, so every
-          // later poll would 400. Stop polling once we have it.
+          // later poll would 400. Stop polling (and the timeout) once we have it.
           clearInterval(pollId);
+          clearTimeout(timeoutId);
           setGoogleConnected(Boolean(data.googleConnected));
           setStatus(data);
           return;
@@ -132,13 +133,13 @@ function BienvenidaInner({
       }
     }
 
-    // Declared before the first poll() so poll can clear it on ready.
+    // Declared before the first poll() so poll can clear them on ready.
     const pollId = setInterval(poll, 2000);
-    poll();
-    // Hard timeout: 30 seconds. Payment succeeded — webhook is just slow.
+    // Hard timeout: 30 seconds. Signup went through — provisioning is just slow.
     const timeoutId = setTimeout(() => {
       if (!cancelled) setTimedOut(true);
     }, 30_000);
+    poll();
 
     return () => {
       cancelled = true;
@@ -196,7 +197,7 @@ function BienvenidaInner({
   if (!hasSignupAccess) {
     return <Shell>
       <h1 style={h1Style}>Falta información</h1>
-      <p>No encontramos tu sesión de pago. <a href="/contacto" style={{ color: '#1c1917', fontWeight: 600 }}>Intenta de nuevo</a>.</p>
+      <p>No encontramos tu registro. <a href="/contacto" style={{ color: '#1c1917', fontWeight: 600 }}>Intenta de nuevo</a>.</p>
     </Shell>;
   }
 
@@ -205,7 +206,7 @@ function BienvenidaInner({
       return <Shell>
         <div style={{ textAlign: 'center' }}>
           <div style={{ fontSize: '2rem', marginBottom: '0.75rem' }}>✉️</div>
-          <h1 style={h1Style}>Tu pago fue exitoso</h1>
+          <h1 style={h1Style}>Recibimos tu registro</h1>
           <p style={{ color: '#57534e', lineHeight: 1.6, marginBottom: '1.25rem' }}>
             Estamos terminando de activar tu cuenta — normalmente tarda menos de 5 minutos.
             Te enviamos un email con tu QR y el acceso a tu panel en cuanto esté lista.
