@@ -5,6 +5,7 @@ import {
   and,
   gte,
   lt,
+  isNotNull,
   sql,
   desc,
   count,
@@ -178,7 +179,27 @@ export async function getStaffByCode(restaurantId: number, code: string) {
   return rows[0] ?? null;
 }
 
-/** Staff leaderboard: average rating + review count per staff member this week. */
+/**
+ * Whether a restaurant has any staff row (active or not). The staff ranking
+ * cards are hidden when it has none, e.g. a solo owner who only uses the
+ * restaurant QR. Inactive staff count: their history still ranks.
+ */
+export async function restaurantHasStaff(restaurantId: number): Promise<boolean> {
+  const rows = await db
+    .select({ id: staff.id })
+    .from(staff)
+    .where(eq(staff.restaurantId, restaurantId))
+    .limit(1);
+  return rows.length > 0;
+}
+
+/**
+ * Staff leaderboard: average rating + review count per staff member this week.
+ * No-card ratings (restaurant QR, `staff_code IS NULL`) come back as a row with
+ * a null staffCode; the views show them as one unranked "QR del restaurante"
+ * line and keep them out of the ranking. Ratings whose code matches no current
+ * staff row (removed staff) keep their code and stay in the ranking.
+ */
 export async function getLeaderboard(restaurantId: number) {
   const monday = startOfWeekMexico();
 
@@ -578,6 +599,9 @@ export async function getLastWeekLeaderboard(restaurantId: number, limit = 5) {
         eq(reviews.restaurantId, restaurantId),
         gte(reviews.createdAt, lastMonday),
         sql`${reviews.createdAt} < ${thisMonday}`,
+        // No-card (restaurant QR) ratings are never a "top mesero"; the digest
+        // totals still count them. Filtered in SQL so they can't use a limit slot.
+        isNotNull(reviews.staffCode),
       ),
     )
     .groupBy(reviews.staffName, reviews.staffCode)

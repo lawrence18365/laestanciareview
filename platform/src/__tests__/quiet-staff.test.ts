@@ -16,6 +16,7 @@ const mocks = vi.hoisted(() => ({
   getLastWeekStats: vi.fn(),
   getWeekBeforeLastStats: vi.fn(),
   getLastWeekLeaderboard: vi.fn(),
+  restaurantHasStaff: vi.fn(),
   getNewFeedbackCount: vi.fn(),
   getOverviewStats: vi.fn(),
   getStaffAnomalies: vi.fn(),
@@ -61,6 +62,7 @@ vi.mock('@/lib/queries', () => ({
   getLastWeekStats: mocks.getLastWeekStats,
   getWeekBeforeLastStats: mocks.getWeekBeforeLastStats,
   getLastWeekLeaderboard: mocks.getLastWeekLeaderboard,
+  restaurantHasStaff: mocks.restaurantHasStaff,
   getNewFeedbackCount: mocks.getNewFeedbackCount,
   getOverviewStats: mocks.getOverviewStats,
 }));
@@ -288,6 +290,7 @@ describe('weekly digest staff anomaly push wiring', () => {
         : []
     ));
     mocks.getNewFeedbackCount.mockResolvedValue(0);
+    mocks.restaurantHasStaff.mockResolvedValue(true);
     mocks.getGoogleRatingTrend.mockResolvedValue(null);
     mocks.getComplaintSlaStats.mockResolvedValue({
       received: 0,

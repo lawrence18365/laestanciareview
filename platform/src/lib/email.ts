@@ -470,6 +470,8 @@ interface WeeklyDigestParams {
   staffAnomalies?: StaffAnomaly[];
   dashboardUrl: string;
   googleTrend?: GoogleTrendDigest | null;
+  /** False only for a restaurant with no staff: the "Top meseros" block is then omitted. */
+  hasStaff?: boolean;
 }
 
 export async function sendWeeklyDigest({
@@ -482,6 +484,7 @@ export async function sendWeeklyDigest({
   staffAnomalies = [],
   dashboardUrl,
   googleTrend,
+  hasStaff = true,
 }: WeeklyDigestParams) {
   const reviewsDelta = lastWeek.totalReviews - weekBefore.totalReviews;
   const ratingDelta = lastWeek.avgRating && weekBefore.avgRating
@@ -520,7 +523,16 @@ export async function sendWeeklyDigest({
         </td>
       </tr>`;
     }).join('')
-    : `<tr><td colspan="3" style="padding: 16px; color: #A3A3A3; font-style: italic; font-size: 14px; text-align: center;">Sin opiniones capturadas la semana pasada</td></tr>`;
+    : `<tr><td colspan="3" style="padding: 16px; color: #A3A3A3; font-style: italic; font-size: 14px; text-align: center;">${lastWeek.totalReviews > 0 ? 'Sin opiniones con tarjeta de mesero la semana pasada' : 'Sin opiniones capturadas la semana pasada'}</td></tr>`;
+
+  const leaderboardSection = hasStaff ? `<!-- Leaderboard -->
+    <div style="margin: 0 28px 24px; background: #FFFFFF; border: 1px solid #111111; border-radius: 0;">
+      <p style="margin: 0; padding: 14px 16px 10px; ${SECTION_LABEL_STYLE}">Top meseros por experiencia del cliente</p>
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+        ${leaderboardRows}
+      </table>
+    </div>
+` : '';
 
   const staffAnomalySection = staffAnomalies.length > 0 ? `
     <div style="margin: 0 28px 24px; padding: 16px; background: rgba(217,119,6,0.08); border: 1px solid #111111; border-left: 6px solid #D97706; border-radius: 0;">
@@ -587,14 +599,7 @@ export async function sendWeeklyDigest({
     ${unresolvedBanner}
     ${staffAnomalySection}
 
-    <!-- Leaderboard -->
-    <div style="margin: 0 28px 24px; background: #FFFFFF; border: 1px solid #111111; border-radius: 0;">
-      <p style="margin: 0; padding: 14px 16px 10px; ${SECTION_LABEL_STYLE}">Top meseros por experiencia del cliente</p>
-      <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
-        ${leaderboardRows}
-      </table>
-    </div>
-
+    ${leaderboardSection}
     <!-- CTA -->
     <div style="padding: 0 28px 32px; text-align: center;">
       <a href="${dashboardUrl}" style="${CTA_STYLE}">

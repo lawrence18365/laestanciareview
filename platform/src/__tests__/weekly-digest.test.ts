@@ -7,6 +7,7 @@ const mocks = vi.hoisted(() => ({
   getLastWeekStats: vi.fn(),
   getWeekBeforeLastStats: vi.fn(),
   getLastWeekLeaderboard: vi.fn(),
+  restaurantHasStaff: vi.fn(),
   getNewFeedbackCount: vi.fn(),
   getOverviewStats: vi.fn(),
   getStaffAnomalies: vi.fn(),
@@ -34,6 +35,7 @@ vi.mock('@/lib/queries', () => ({
   getLastWeekStats: mocks.getLastWeekStats,
   getWeekBeforeLastStats: mocks.getWeekBeforeLastStats,
   getLastWeekLeaderboard: mocks.getLastWeekLeaderboard,
+  restaurantHasStaff: mocks.restaurantHasStaff,
   getNewFeedbackCount: mocks.getNewFeedbackCount,
   getOverviewStats: mocks.getOverviewStats,
   getOperationalRestaurants: mocks.getOperationalRestaurants,
@@ -105,6 +107,7 @@ describe('weekly digest skippedNoEmail reporting', () => {
     mocks.getLastWeekStats.mockResolvedValue(weekStats);
     mocks.getWeekBeforeLastStats.mockResolvedValue(weekStats);
     mocks.getLastWeekLeaderboard.mockResolvedValue([]);
+    mocks.restaurantHasStaff.mockResolvedValue(true);
     mocks.getNewFeedbackCount.mockResolvedValue(0);
     mocks.getOverviewStats.mockResolvedValue([]);
     mocks.getGoogleRatingTrend.mockResolvedValue(null);
@@ -197,6 +200,7 @@ describe('weekly digest group share', () => {
     mocks.getLastWeekStats.mockResolvedValue(weekStats);
     mocks.getWeekBeforeLastStats.mockResolvedValue(weekStats);
     mocks.getLastWeekLeaderboard.mockResolvedValue([]);
+    mocks.restaurantHasStaff.mockResolvedValue(true);
     mocks.getNewFeedbackCount.mockResolvedValue(0);
     mocks.getOverviewStats.mockResolvedValue([]);
     mocks.getGoogleRatingTrend.mockResolvedValue(null);

@@ -8,6 +8,7 @@ import {
   getGoogleConversionRate,
   getAllTimeStaffRanking,
   getROIStats,
+  restaurantHasStaff,
 } from '@/lib/queries';
 import { getGoogleRatingTrend } from '@/lib/google-places';
 import AnalyticsView from '@/components/dashboard/AnalyticsView';
@@ -20,7 +21,7 @@ export default async function AnalyticsPage() {
   const restaurant = await getRestaurantBySlug(session.slug);
   if (!restaurant) redirect('/login');
 
-  const [weeklyStats, allTimeStats, dailyCounts, conversion, staffRanking, roiStats, googleTrend] =
+  const [weeklyStats, allTimeStats, dailyCounts, conversion, staffRanking, roiStats, googleTrend, hasStaff] =
     await Promise.all([
       getWeeklyStats(restaurant.id),
       getAllTimeStats(restaurant.id),
@@ -31,6 +32,7 @@ export default async function AnalyticsPage() {
       restaurant.googlePlaceId
         ? getGoogleRatingTrend(restaurant.id)
         : null,
+      restaurantHasStaff(restaurant.id),
     ]);
 
   return (
@@ -42,6 +44,7 @@ export default async function AnalyticsPage() {
       staffRanking={staffRanking}
       roiStats={roiStats}
       googleTrend={googleTrend}
+      hasStaff={hasStaff}
     />
   );
 }
