@@ -20,8 +20,16 @@
  * failed WhatsApp never makes the email send again. A plain `day3` row from
  * before this split counts as both channels sent.
  *
- * Schedule: every day at noon Mexico City (18:00 UTC)
- * Vercel cron: "0 18 * * *"
+ * Early bumps (SQ-220), self-serve trials with 0 ratings only (group_key NULL,
+ * not a founder pilot): `hour1` 1-20 hours after signup, and `morning` the next
+ * calendar morning in Mexico City (08:00-11:00, at least 12 hours after signup).
+ * Day 1 is skipped when an early bump went out in the last 20 hours.
+ *
+ * Send hours: nothing is sent outside 08:00-21:00 Mexico City; the next run
+ * picks it up. Every message is deduped per restaurant, so extra runs are harmless.
+ *
+ * Schedule: hourly at :23 via .github/workflows/hourly-trial-nurture.yml, plus
+ * the daily Vercel cron at noon Mexico City (18:00 UTC), "0 18 * * *".
  */
 import { NextRequest } from 'next/server';
 import { db } from '@/db';
@@ -32,6 +40,7 @@ import { reviewGoal } from '@/lib/onboarding-profile';
 import { getPriceBreakdown } from '@/lib/mercadopago';
 import { planFor, selfServePrice, usesPlanRestaurantePrice } from '@/lib/entitlements';
 import { recordProductEvent } from '@/lib/product-events';
+import { mexicoHour } from '@/lib/mexico-tz';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -140,6 +149,31 @@ function progressHtml(c: Ctx, lead: string): string {
   return `<p>Hola ${c.name},</p><p>${lead} ${progressText(c)}</p><p><a href="${BASE_URL}/dashboard">Ver mi panel →</a></p>`;
 }
 
+// ── Early bumps (SQ-220): hour1 and morning, 0 ratings ─────────────────────
+// Each message is 60 words or fewer. The CTA opens the dashboard, whose empty
+// state leads with the full-screen QR (login-gated); the review link is a
+// plain secondary link the owner can forward by WhatsApp. The ask is neutral:
+// no incentive, no star count.
+
+const esc = (s: string) =>
+  s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+
+const reviewLink = (c: Ctx) => `${BASE_URL}/r/${c.slug}`;
+
+function earlyBumpHtml(c: Ctx, body: string): string {
+  const link = reviewLink(c);
+  return `<p>Hola ${esc(c.name)},</p><p>${body}</p><p><a href="${BASE_URL}/dashboard" style="${BUTTON}">Abrir mi QR</a></p><p style="color:#6b7280;font-size:13px">Para mandarlo por WhatsApp, reenvía este enlace: <a href="${link}">${link}</a></p>`;
+}
+
+const HOUR1_BODY = 'Muéstralo en tu teléfono a tu próximo cliente al cobrar. Toma 10 segundos.';
+
+function morningBody(c: Ctx): string {
+  const ask = c.mode === 'team'
+    ? 'Pide a tu equipo que muestre el QR al cobrar.'
+    : 'Muéstrale el QR a tu próximo cliente al cobrar.';
+  return `Aún no hay calificaciones de tus clientes. ${ask} También puedes mandar el enlace por WhatsApp a tus últimos clientes.`;
+}
+
 const SOLO_STEPS = ['Imprime tu letrero', 'Pídele la reseña a tu próximo cliente'] as const;
 
 function soloActivationWhatsApp(c: Ctx, lead: string): string {
@@ -236,6 +270,21 @@ const NURTURE: Record<string, {
   subject: (c: Ctx) => string;
   html: (c: Ctx) => string;
 }> = {
+  // Early bumps. Timing and audience are decided in GET (`days` is unused).
+  hour1: {
+    days: 0,
+    applies: (c) => c.ratingCount === 0,
+    whatsapp: (c) => `*${c.name}*, tu QR ya está listo. ${HOUR1_BODY}\nÁbrelo aquí: ${BASE_URL}/dashboard`,
+    subject: (c) => `Tu QR de ${c.name} ya está listo`,
+    html: (c) => earlyBumpHtml(c, HOUR1_BODY),
+  },
+  morning: {
+    days: 0,
+    applies: (c) => c.ratingCount === 0,
+    whatsapp: (c) => `*${c.name}*, ${morningBody(c)}\nÁbrelo aquí: ${BASE_URL}/dashboard\nTu enlace: ${reviewLink(c)}`,
+    subject: () => '¿Ya tienes tu primera calificación?',
+    html: (c) => earlyBumpHtml(c, morningBody(c)),
+  },
   day1: {
     days: 1,
     applies: (c) => {
@@ -359,6 +408,46 @@ const NURTURE: Record<string, {
 /** Only send a post-trial message inside a window, so a long-lapsed restaurant is never backfilled. */
 const FREE_WINDOW_DAYS = 7;
 
+const HOUR_MS = 3_600_000;
+const SEND_HOUR_START = 8; // 08:00 Mexico City, inclusive
+const SEND_HOUR_END = 21; // 21:00 Mexico City, exclusive
+const MORNING_HOUR_END = 11;
+const EARLY_BUMP_SPACING_MS = 20 * HOUR_MS; // day1 skips after a recent hour1/morning
+const MORNING_AFTER_HOUR1_MS = 6 * HOUR_MS; // no same-morning back-to-back
+
+const inSendWindow = (now: Date) => {
+  const h = mexicoHour(now);
+  return h >= SEND_HOUR_START && h < SEND_HOUR_END;
+};
+
+/** "2026-10-13", the Mexico City calendar day of an instant. */
+const mxDay = (d: Date) => d.toLocaleDateString('en-CA', { timeZone: 'America/Mexico_City' });
+
+const nextDay = (day: string) => new Date(Date.parse(`${day}T00:00:00Z`) + 86_400_000).toISOString().slice(0, 10);
+
+/** Is the hour1 / morning timing window open right now for this signup time? */
+function earlyBumpDue(key: 'hour1' | 'morning', createdAt: Date, now: Date): boolean {
+  if (!inSendWindow(now)) return false;
+  const age = now.getTime() - createdAt.getTime();
+  if (key === 'hour1') return age >= HOUR_MS && age < 20 * HOUR_MS;
+  return age >= 12 * HOUR_MS
+    && mexicoHour(now) < MORNING_HOUR_END
+    && mxDay(now) === nextDay(mxDay(createdAt));
+}
+
+/** When the newest `${key}:*` (or plain `${key}`) row was sent; null if none, or no timestamp. */
+function lastSentAt(rows: Array<{ event: string; sentAt?: unknown }>, key: string): Date | null {
+  let latest: Date | null = null;
+  for (const e of rows) {
+    if (e.event !== key && !e.event.startsWith(`${key}:`)) continue;
+    if (!(e.sentAt instanceof Date)) continue;
+    if (!latest || e.sentAt > latest) latest = e.sentAt;
+  }
+  return latest;
+}
+
+const within = (at: Date | null, now: Date, ms: number) => at !== null && now.getTime() - at.getTime() < ms;
+
 /** "5 de noviembre", in Mexico City time. */
 function mxDate(d: Date): string {
   return d.toLocaleDateString('es-MX', { day: 'numeric', month: 'long', timeZone: 'America/Mexico_City' });
@@ -435,6 +524,13 @@ export async function GET(req: NextRequest) {
   const auth = req.headers.get('authorization')?.replace('Bearer ', '');
   if (!auth || auth !== CRON_SECRET) {
     return Response.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  // The trigger runs hourly: outside the Mexico City send hours nothing goes
+  // out, and the next in-window run picks it up.
+  const now = new Date();
+  if (!inSendWindow(now)) {
+    return Response.json({ processed: 0, skipped: 'outside_send_hours' });
   }
 
   // Trials, plus lapsed self-serve restaurants (the free plan, US-15). Paying
@@ -519,6 +615,20 @@ export async function GET(req: NextRequest) {
         eligible = isFreePlan && sinceEnd >= nurture.days && sinceEnd < nurture.days + FREE_WINDOW_DAYS;
       } else if (isFreePlan) {
         eligible = false;
+      } else if (eventKey === 'hour1' || eventKey === 'morning') {
+        // Self-serve trials only (Grupo and founder pilots are never selected);
+        // 0 ratings is checked with the counts in `applies`.
+        eligible = r.groupKey === null && !r.pilot
+          && earlyBumpDue(eventKey, r.createdAt, now)
+          && (eventKey === 'hour1'
+            ? lastSentAt(sentRows, 'morning') === null
+            : !within(lastSentAt(sentRows, 'hour1'), now, MORNING_AFTER_HOUR1_MS));
+      } else if (eventKey === 'day1' && (
+        within(lastSentAt(sentRows, 'hour1'), now, EARLY_BUMP_SPACING_MS)
+        || within(lastSentAt(sentRows, 'morning'), now, EARLY_BUMP_SPACING_MS)
+      )) {
+        // An early bump just went out: no back-to-back email.
+        eligible = false;
       } else if (eventKey === 'day12') {
         // The ending warning keys off trialEndsAt only: without an end date (or
         // once it has passed) "termina en 3 días" would be false.
@@ -577,6 +687,8 @@ export async function GET(req: NextRequest) {
 
       if (delivered) {
         if (eventKey === 'day25') endingNoted = true;
+        // Keep the spacing rules honest inside this run: morning after hour1, day1 after either.
+        sentRows.push({ id: 0, restaurantId: r.id, event: `${eventKey}:sent`, sentAt: now });
         processed++;
         console.log(`[trial-nurture] ${eventKey} → ${r.name}`);
       }

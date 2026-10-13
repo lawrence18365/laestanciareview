@@ -90,6 +90,9 @@ const words = (html: string) =>
   html.replace(/<[^>]+>/g, ' ').split(/\s+/).filter(Boolean).length;
 
 beforeEach(() => {
+  // Noon in Mexico City: inside the send hours and outside the morning bump window.
+  vi.useFakeTimers({ toFake: ['Date'] });
+  vi.setSystemTime(new Date('2026-10-14T18:00:00Z'));
   h.restaurants = [];
   h.events = [];
   h.staffCount = 0;
@@ -104,6 +107,7 @@ beforeEach(() => {
   vi.spyOn(console, 'error').mockImplementation(() => {});
 });
 afterEach(() => {
+  vi.useRealTimers();
   vi.unstubAllEnvs();
   vi.unstubAllGlobals();
   vi.restoreAllMocks();
@@ -149,6 +153,8 @@ describe('trial nurture day1 activation nudge', () => {
   });
 
   it('does not send before the restaurant is one day old', async () => {
+    // Already rated: the SQ-220 hour-1 bump only goes to trials with 0 ratings.
+    h.ratingCount = 1;
     h.restaurants = [restaurant({ createdAt: new Date(Date.now() - 0.5 * DAY) })];
     await GET(request());
     expect(mails()).toHaveLength(0);
