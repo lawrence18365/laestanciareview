@@ -11,6 +11,7 @@ import {
   avg,
   asc,
   getTableColumns,
+  type SQL,
 } from 'drizzle-orm';
 import { startOfWeek } from 'date-fns';
 import { startOfWeekMexico, startOfTodayMexico } from '@/lib/mexico-tz';
@@ -51,6 +52,62 @@ export async function getRestaurantBySlug(slug: string) {
     .where(eq(restaurants.slug, slug))
     .limit(1);
   return rows[0] ?? null;
+}
+
+/** Most accounts one login identifier may resolve to (bounds PBKDF2 work). */
+const LOGIN_CANDIDATE_LIMIT = 10;
+
+/** Case-, accent- and extra-whitespace-insensitive form used to match names. */
+export function normalizeLoginName(value: string): string {
+  return value
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .toLowerCase();
+}
+
+/**
+ * Resolve a login identifier to candidate accounts, first non-empty tier wins:
+ * - without "@": slug (case-insensitive), then restaurant name
+ *   (case/accent-insensitive, trimmed), then manager_email;
+ * - with "@": manager_email first, so a typed email can never be shadowed by a
+ *   business name (signup rejects names containing "@"), then slug, then name.
+ * Each tier is ordered by id before the cap, so the oldest accounts always fall
+ * inside it. Returns full rows minus the logo; may hold several accounts (shared
+ * email, duplicate name), so the caller must disambiguate by password.
+ */
+export async function findLoginCandidates(identifier: string) {
+  const raw = identifier.trim();
+  if (!raw) return [];
+  const columns = restaurantColumnsWithoutLogo();
+  const lowered = raw.toLowerCase();
+  const normalized = normalizeLoginName(raw);
+
+  const tier = (where: SQL) =>
+    db
+      .select(columns)
+      .from(restaurants)
+      .where(where)
+      .orderBy(restaurants.id)
+      .limit(LOGIN_CANDIDATE_LIMIT);
+
+  const tiers: Array<() => ReturnType<typeof tier>> = [
+    () => tier(sql`lower(${restaurants.slug}) = ${lowered}`),
+    () =>
+      tier(
+        sql`lower(trim(regexp_replace(translate(${restaurants.name}, 'áéíóúüñÁÉÍÓÚÜÑ', 'aeiouunAEIOUUN'), '\\s+', ' ', 'g'))) = ${normalized}`,
+      ),
+    () => tier(sql`lower(trim(${restaurants.managerEmail})) = ${lowered}`),
+  ];
+  const [bySlug, byName, byEmail] = tiers;
+  const order = raw.includes('@') ? [byEmail, bySlug, byName] : [bySlug, byName, byEmail];
+
+  for (const run of order) {
+    const rows = await run();
+    if (rows.length > 0) return rows;
+  }
+  return [];
 }
 
 /**

@@ -45,14 +45,14 @@ export const t = {
   login: {
     title: 'RateTap',
     subtitle: 'Inicio de Sesión',
-    restaurant: 'Restaurante',
-    selectRestaurant: 'Selecciona tu restaurante',
+    restaurant: 'Restaurante o correo',
+    restaurantPlaceholder: 'Ej. Estancia León o tu correo',
+    restaurantHelp: 'Escribe el nombre de tu restaurante o tu correo.',
     password: 'Contraseña',
     enterPassword: 'Ingresa tu contraseña',
     signingIn: 'Iniciando sesión...',
     signIn: 'Iniciar Sesión',
     somethingWrong: 'Algo salió mal',
-    failedToLoad: 'Error al cargar restaurantes',
     forgotPassword: '¿Olvidaste tu contraseña?',
   },
 

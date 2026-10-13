@@ -4,25 +4,23 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { t } from '@/lib/i18n';
 
-interface Restaurant {
-  id: number;
-  name: string;
-  slug: string;
-}
+const IDENTIFIER_KEY = 'ratetap:login-identifier';
 
 export default function LoginPage() {
   const router = useRouter();
-  const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
-  const [slug, setSlug] = useState('');
+  const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
+  // Pre-fill the last identifier that logged in on this device.
   useEffect(() => {
-    fetch('/api/auth/restaurants')
-      .then((r) => r.json())
-      .then((data) => setRestaurants(data))
-      .catch(() => setError(t.login.failedToLoad));
+    try {
+      const saved = localStorage.getItem(IDENTIFIER_KEY);
+      if (saved) setIdentifier(saved);
+    } catch {
+      // storage unavailable: leave the field empty
+    }
   }, []);
 
   async function handleSubmit(e: React.FormEvent) {
@@ -34,7 +32,7 @@ export default function LoginPage() {
       const res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ slug, password }),
+        body: JSON.stringify({ identifier: identifier.trim(), password }),
       });
 
       const data = await res.json();
@@ -42,6 +40,12 @@ export default function LoginPage() {
       if (!res.ok) {
         setError(data.error || t.login.somethingWrong);
         return;
+      }
+
+      try {
+        localStorage.setItem(IDENTIFIER_KEY, identifier.trim());
+      } catch {
+        // storage unavailable: nothing to remember
       }
 
       router.push(data.role === 'owner' || data.role === 'regional' ? '/overview' : '/dashboard');
@@ -102,11 +106,17 @@ export default function LoginPage() {
             }}>
               {t.login.restaurant}
             </label>
-            <select
+            <input
               id="restaurant"
-              value={slug}
-              onChange={(e) => setSlug(e.target.value)}
+              type="text"
+              value={identifier}
+              onChange={(e) => setIdentifier(e.target.value)}
               required
+              autoComplete="username"
+              autoCapitalize="none"
+              maxLength={100}
+              placeholder={t.login.restaurantPlaceholder}
+              aria-describedby="restaurant-help"
               style={{
                 width: '100%',
                 padding: '0.65rem 0.75rem',
@@ -117,14 +127,10 @@ export default function LoginPage() {
                 background: 'var(--panel-bg)',
                 color: 'var(--text-main)',
               }}
-            >
-              <option value="">{t.login.selectRestaurant}</option>
-              {restaurants.map((r) => (
-                <option key={r.slug} value={r.slug}>
-                  {r.name}
-                </option>
-              ))}
-            </select>
+            />
+            <div id="restaurant-help" style={{ fontSize: '0.7rem', color: 'var(--text-dim)', marginTop: '0.35rem' }}>
+              {t.login.restaurantHelp}
+            </div>
           </div>
 
           <div style={{ marginBottom: '1.5rem' }}>
