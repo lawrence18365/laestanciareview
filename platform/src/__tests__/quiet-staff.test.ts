@@ -230,6 +230,7 @@ describe('weekly digest staff anomaly push wiring', () => {
       isOwner: false,
       isRegional: false,
       region: 'north',
+      groupKey: 'grupo-estancia',
       googleThreshold: 4,
       googlePlaceId: null,
     };
@@ -241,6 +242,7 @@ describe('weekly digest staff anomaly push wiring', () => {
       isOwner: false,
       isRegional: false,
       region: 'south',
+      groupKey: 'grupo-estancia',
       googleThreshold: 4,
       googlePlaceId: null,
     };
@@ -254,6 +256,7 @@ describe('weekly digest staff anomaly push wiring', () => {
       isOwner: true,
       isRegional: false,
       region: null,
+      groupKey: 'grupo-estancia',
     }]);
     mocks.getRegionalAccounts.mockResolvedValue([{
       id: 91,
@@ -263,6 +266,7 @@ describe('weekly digest staff anomaly push wiring', () => {
       isOwner: false,
       isRegional: true,
       region: 'north',
+      groupKey: 'grupo-estancia',
     }]);
     mocks.getOverviewStats.mockResolvedValue([
       { restaurantId: 1, restaurantName: 'Norte', weeklyReviews: 20, weeklyAvg: 4.8, weeklyGoogle: 12, weeklyIntercepted: 1 },

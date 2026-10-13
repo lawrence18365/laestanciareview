@@ -6,6 +6,7 @@ import {
   staff,
 } from '@/db/schema';
 import { startOfTodayMexico } from '@/lib/mexico-tz';
+import { sameGroup } from '@/lib/group-scope';
 
 const DAY_MS = 86_400_000;
 
@@ -25,6 +26,8 @@ export interface LocationAnomaly {
   restaurantId: number;
   name: string;
   region: string | null;
+  /** The location's group. NULL = self-serve island: no owner/regional alert. */
+  groupKey: string | null;
   expected3d: number;
   actual3d: number;
   dropPct: number;
@@ -142,6 +145,7 @@ export async function getLocationAnomalies(
       restaurantId: restaurants.id,
       name: restaurants.name,
       region: restaurants.region,
+      groupKey: restaurants.groupKey,
       reviewDate: sql<string | null>`(${reviews.createdAt} at time zone 'America/Mexico_City')::date::text`,
       reviewCount: countSql`count(${reviews.id})`,
     })
@@ -164,6 +168,7 @@ export async function getLocationAnomalies(
       restaurants.id,
       restaurants.name,
       restaurants.region,
+      restaurants.groupKey,
       sql`(${reviews.createdAt} at time zone 'America/Mexico_City')::date`,
     );
 
@@ -171,6 +176,7 @@ export async function getLocationAnomalies(
     restaurantId: number;
     name: string;
     region: string | null;
+    groupKey: string | null;
     countsByDate: Map<string, number>;
   }>();
 
@@ -181,6 +187,7 @@ export async function getLocationAnomalies(
         restaurantId: row.restaurantId,
         name: row.name,
         region: row.region,
+        groupKey: row.groupKey ?? null,
         countsByDate: new Map(),
       };
       locations.set(row.restaurantId, location);
@@ -217,6 +224,7 @@ export async function getLocationAnomalies(
         restaurantId: location.restaurantId,
         name: location.name,
         region: location.region,
+        groupKey: location.groupKey,
         expected3d,
         actual3d,
         dropPct: 1 - actual3d / expected3d,
@@ -279,7 +287,9 @@ export async function runDailyLocationAnomalyCheck(now = new Date()) {
     };
     const recipients = new Map(
       [...owners, ...regionalAccounts]
-        .filter((account) => (
+        // Same group only: a NULL-group location (self-serve trial) alerts
+        // its own devices above, never an owner or regional account.
+        .filter((account) => sameGroup(account.groupKey, anomaly.groupKey) && (
           account.isOwner
           || (
             account.isRegional

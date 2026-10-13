@@ -1,7 +1,7 @@
 import { verifySession } from '@/lib/session';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
-import { getOverviewStats, getNewFeedbackCount, getROIStats, getWeeklyHistory, getTotalReviewsBefore, getWeeklyHistoryByRestaurant } from '@/lib/queries';
+import { getGroupKeyBySlug, getOverviewStats, getNewFeedbackCount, getROIStats, getWeeklyHistory, getTotalReviewsBefore, getWeeklyHistoryByRestaurant } from '@/lib/queries';
 import { getGoogleRatingTrendBatch } from '@/lib/google-places';
 import { getComplaintSlaStats, type ComplaintSlaStats } from '@/lib/complaint-sla';
 import { getAlertCoverage } from '@/lib/product-analytics';
@@ -21,13 +21,15 @@ export default async function OverviewPage() {
   // Owner & regional managers only
   if (session.role !== 'owner' && session.role !== 'regional') redirect('/dashboard');
 
-  const stats = await getOverviewStats(session.role === 'regional' ? session.region : undefined);
+  // Everything below is scoped to the viewer's group; no group_key sees nothing.
+  const groupKey = await getGroupKeyBySlug(session.slug);
+  const stats = await getOverviewStats(groupKey, session.role === 'regional' ? session.region : undefined);
 
   // Group share of Maps top 3: owner accounts only, and a failure just hides the card.
   let groupShare: GroupShareSummary[] = [];
   if (session.role === 'owner' && process.env.MAPS_RANK_ENABLED === 'true') {
     try {
-      groupShare = await getGroupShareSummary();
+      groupShare = await getGroupShareSummary(groupKey);
     } catch (err) {
       console.error('[overview] group share failed:', err);
     }
@@ -43,7 +45,7 @@ export default async function OverviewPage() {
   const regionFilter = session.role === 'regional' ? session.region : undefined;
 
   const [alertCoverage, , , googleTrends, weeklyHistory, baselineTotal, weeklyByRestaurant] = await Promise.all([
-    getAlertCoverage(regionFilter),
+    getAlertCoverage(groupKey, regionFilter),
     // Unresolved feedback per location
     Promise.all(
       stats.map(async (r) => {
@@ -59,15 +61,15 @@ export default async function OverviewPage() {
     // Google trends per location
     getGoogleRatingTrendBatch(restaurantIds),
     // Weekly history (last 12 weeks)
-    getWeeklyHistory(regionFilter, 12),
+    getWeeklyHistory(groupKey, regionFilter, 12),
     // Total reviews before the 12-week window (for cumulative baseline)
     (() => {
       const d = new Date();
       d.setDate(d.getDate() - 12 * 7);
-      return getTotalReviewsBefore(startOfWeek(d, { weekStartsOn: 1 }), regionFilter);
+      return getTotalReviewsBefore(startOfWeek(d, { weekStartsOn: 1 }), groupKey, regionFilter);
     })(),
     // Per-restaurant weekly history (last 12 weeks)
-    getWeeklyHistoryByRestaurant(regionFilter, 12),
+    getWeeklyHistoryByRestaurant(groupKey, regionFilter, 12),
     // Complaint response times per scoped location
     Promise.all(
       stats.map(async (r) => {

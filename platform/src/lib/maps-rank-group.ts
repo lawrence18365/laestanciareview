@@ -33,12 +33,18 @@ export type GroupShareSummary = {
 
 type GroupRow = { city: string; keyword: string; runDate: string; status: string; groupTop3: number; holderIds: number[] };
 
-/** Group = our locations only. Owner and regional accounts are excluded, as in the owner briefing. */
+/**
+ * Group = our locations only. Owner and regional accounts are excluded, as in
+ * the owner briefing, and so is every location with no group_key (self-serve
+ * trials are their own island: they are never swept as part of the group, so
+ * they can neither hold a group top-3 slot nor appear in a group summary).
+ */
 const groupLocationWhere = and(
   isNotNull(restaurants.googlePlaceId),
   isNotNull(restaurants.city),
   eq(restaurants.isOwner, false),
   eq(restaurants.isRegional, false),
+  isNotNull(restaurants.groupKey),
 );
 
 export async function runGroupShareSweep(
@@ -230,7 +236,11 @@ export function summarizeGroupShare(rows: GroupRow[], names: Map<number, string>
   );
 }
 
-export async function getGroupShareSummary(): Promise<GroupShareSummary[]> {
+/** Fail closed: a viewer with no group_key gets nothing. */
+export async function getGroupShareSummary(
+  groupKey: string | null | undefined,
+): Promise<GroupShareSummary[]> {
+  if (!groupKey) return [];
   const [rows, locations] = await Promise.all([
     db
       .select({
@@ -245,7 +255,7 @@ export async function getGroupShareSummary(): Promise<GroupShareSummary[]> {
     db
       .select({ id: restaurants.id, name: restaurants.name })
       .from(restaurants)
-      .where(groupLocationWhere),
+      .where(and(groupLocationWhere, eq(restaurants.groupKey, groupKey))),
   ]);
   return summarizeGroupShare(rows, new Map(locations.map((l) => [l.id, l.name])));
 }

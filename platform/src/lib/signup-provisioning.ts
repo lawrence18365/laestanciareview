@@ -54,6 +54,9 @@ export async function provisionSignupRestaurant(input: SignupRestaurantInput) {
       }),
       adminPasswordHash: input.passwordHash,
       shippingAddress: input.shippingAddress ?? null,
+      // Explicitly NULL: a self-serve trial is its own island, never part of
+      // an owner/regional group view, digest or escalation (see group-scope).
+      groupKey: null,
       stripeCustomerId: input.stripeCustomerId ?? null,
       stripeSubscriptionId: input.stripeSubscriptionId ?? null,
       subscriptionStatus: 'trialing',
@@ -149,6 +152,8 @@ export async function provisionSignupAtomic(
           }),
           adminPasswordHash: input.passwordHash,
           shippingAddress: input.shippingAddress ?? null,
+          // Explicitly NULL: its own island, see provisionSignupRestaurant.
+          groupKey: null,
           subscriptionStatus: 'trialing',
           trialEndsAt: input.trialEndsAt,
           pilot,

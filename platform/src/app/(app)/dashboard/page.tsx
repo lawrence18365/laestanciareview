@@ -1,6 +1,7 @@
 import { verifySession } from '@/lib/session';
 import { redirect } from 'next/navigation';
 import {
+  getGroupKeyBySlug,
   getRestaurantBySlug,
   getWeeklyStats,
   getLastWeekStats,
@@ -12,6 +13,7 @@ import {
 } from '@/lib/queries';
 import { getGoogleRatingTrend, getGoogleRatingHistory, getGoogleReviewsAddedToday } from '@/lib/google-places';
 import { reviewUrlFor } from '@/lib/google-review';
+import { sameGroup } from '@/lib/group-scope';
 import DashboardView from '@/components/dashboard/DashboardView';
 import MapsRankCard from '@/components/dashboard/MapsRankCard';
 import { getMapsRankSummary, type KeywordSummary } from '@/lib/maps-rank';
@@ -34,6 +36,12 @@ export default async function DashboardPage({
   const targetSlug = isMultiView && params.slug ? params.slug : session.slug;
   const restaurant = await getRestaurantBySlug(targetSlug);
   if (!restaurant) redirect(isMultiView ? '/overview' : '/login');
+
+  // Owner/regional accounts can only open locations of their own group.
+  if (isMultiView && restaurant.slug !== session.slug) {
+    const viewerGroup = await getGroupKeyBySlug(session.slug);
+    if (!sameGroup(viewerGroup, restaurant.groupKey)) redirect('/overview');
+  }
 
   // Regional managers can only view restaurants in their region
   if (session.role === 'regional' && restaurant.region !== session.region) {

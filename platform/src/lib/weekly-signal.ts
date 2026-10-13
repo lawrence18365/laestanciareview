@@ -17,6 +17,7 @@ import { and, eq, gte, lt, lte, sql, inArray, isNotNull, ne } from 'drizzle-orm'
 import { classifyLocation, type LocationSignalResult } from '@/lib/location-signal';
 import { URGENT_MAX_RATING, RESOLVE_TARGET_HOURS } from '@/lib/complaint-sla';
 import { birthdayWindowKeys } from '@/lib/guest-messages';
+import { groupLocationConditions } from '@/lib/group-scope';
 
 /** product_events started recording on this date. Nothing exists before it. */
 export const TELEMETRY_START = new Date('2026-08-21T00:00:00.000Z');
@@ -67,19 +68,22 @@ export interface WeeklyLocationSignal {
 }
 
 /**
- * Weekly signal for every operational location, optionally scoped to a region.
+ * Weekly signal for every operational location of one group, optionally scoped
+ * to a region. A null/empty `groupKey` matches nothing (fail closed), and a
+ * location with no group_key is never part of any group's signal.
  *
  * `weekStart` is the Monday of the week being reported; the comparison window
  * is the seven days before it.
  */
 export async function getWeeklySignals(
   weekStart: Date,
+  groupKey: string | null | undefined,
   region?: string,
 ): Promise<WeeklyLocationSignal[]> {
   const weekEnd = new Date(weekStart.getTime() + 7 * 24 * 60 * 60 * 1000);
   const priorStart = new Date(weekStart.getTime() - 7 * 24 * 60 * 60 * 1000);
 
-  const where = [eq(restaurants.isOwner, false), eq(restaurants.isRegional, false)];
+  const where = groupLocationConditions(groupKey);
   if (region) where.push(eq(restaurants.region, region));
 
   const locations = await db
@@ -183,11 +187,12 @@ export interface GuestSignal {
 /** Guest-book counts per location for the reported week. */
 export async function getGuestSignals(
   weekStart: Date,
+  groupKey: string | null | undefined,
   region?: string,
 ): Promise<Map<number, GuestSignal>> {
   const weekEnd = new Date(weekStart.getTime() + 7 * 24 * 60 * 60 * 1000);
 
-  const where = [eq(restaurants.isOwner, false), eq(restaurants.isRegional, false)];
+  const where = groupLocationConditions(groupKey);
   if (region) where.push(eq(restaurants.region, region));
 
   const locations = await db
@@ -264,12 +269,13 @@ const COMPLAINT_MAX_RATING = 3;
 export async function getServiceSignals(
   weekStart: Date,
   now: Date = new Date(),
+  groupKey: string | null | undefined,
   region?: string,
 ): Promise<Map<number, ServiceSignal>> {
   const weekEnd = new Date(weekStart.getTime() + WEEK_MS);
   const overdueCutoff = new Date(now.getTime() - RESOLVE_TARGET_HOURS * HOUR_MS);
 
-  const where = [eq(restaurants.isOwner, false), eq(restaurants.isRegional, false)];
+  const where = groupLocationConditions(groupKey);
   if (region) where.push(eq(restaurants.region, region));
 
   const locations = await db
@@ -352,13 +358,13 @@ export interface UpcomingBirthday {
  */
 export async function getUpcomingBirthdays(
   from: Date,
+  groupKey: string | null | undefined,
   region?: string,
 ): Promise<UpcomingBirthday[]> {
   const keys = birthdayWindowKeys(from);
 
   const where = [
-    eq(restaurants.isOwner, false),
-    eq(restaurants.isRegional, false),
+    ...groupLocationConditions(groupKey),
     inArray(guests.birthdayMmdd, keys),
   ];
   if (region) where.push(eq(restaurants.region, region));

@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation';
 import { verifySession } from '@/lib/session';
+import { getGroupKeyBySlug } from '@/lib/queries';
 import {
   FEATURE_SOURCES,
   getCampaignAnalytics,
@@ -327,16 +328,18 @@ export default async function InsightsPage({
   const { days: daysParam } = await searchParams;
   const days: 7 | 30 = daysParam === '7' ? 7 : 30;
 
+  const groupKey = await getGroupKeyBySlug(session.slug);
+
   const [summary, comparison, adoption, reviewFunnel, guestFunnel, campaigns, push, problems] =
     await Promise.all([
-      getGroupSummary(days),
-      getLocationComparison(days),
-      getFeatureAdoptionMatrix(),
-      getReviewFunnel(days),
-      getGuestFunnel(days),
-      getCampaignAnalytics(),
-      getPushAnalytics(days),
-      getProblemLocations(),
+      getGroupSummary(groupKey, days),
+      getLocationComparison(groupKey, days),
+      getFeatureAdoptionMatrix(groupKey),
+      getReviewFunnel(groupKey, days),
+      getGuestFunnel(groupKey, days),
+      getCampaignAnalytics(groupKey),
+      getPushAnalytics(groupKey, days),
+      getProblemLocations(groupKey),
     ]);
 
   const featureKeys = adoption.features;

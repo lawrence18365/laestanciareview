@@ -24,6 +24,7 @@ import {
   lastCompleteWeekStart,
 } from '@/lib/weekly-signal';
 import { signalLabel } from '@/lib/location-signal';
+import { sameGroup } from '@/lib/group-scope';
 import { getGoogleRatingTrendBatch } from '@/lib/google-places';
 import { sendPushToRestaurant } from '@/lib/push';
 import { isoWeekMexico } from '@/lib/mexico-tz';
@@ -60,6 +61,8 @@ export async function GET(req: NextRequest) {
   const regionalSkippedNoEmail: string[] = [];
   const gmSkippedNoEmail: string[] = [];
   const ownerSkippedNoEmail: string[] = [];
+  const ownerSkippedNoGroup: string[] = [];
+  const regionalSkippedNoGroup: string[] = [];
 
   const [restaurants, operational, owners, regionalAccounts] = await Promise.all([
     getRestaurantsWithEmail(),
@@ -149,17 +152,41 @@ export async function GET(req: NextRequest) {
   // week (verified 2026-09-10, all twelve showed double-digit falls).
   const briefingWeekStart = lastCompleteWeekStart(digestNow);
 
-  const [allSignals, allGuestSignals, allServiceSignals] = await Promise.all([
-    getWeeklySignals(briefingWeekStart),
-    getGuestSignals(briefingWeekStart),
-    getServiceSignals(briefingWeekStart, digestNow),
-  ]);
-  const ratingTrends = await getGoogleRatingTrendBatch(allSignals.map((s) => s.restaurantId));
+  //
+  // Every briefing is scoped to its recipient's group_key: an owner or regional
+  // account only ever receives its own group's locations, and an account with no
+  // group_key receives no briefing at all (fail closed). Signals are computed
+  // once per distinct group.
+  const briefingGroupKeys = [
+    ...new Set(
+      [...owners, ...regionalAccounts]
+        .map((account) => account.groupKey)
+        .filter((key): key is string => typeof key === 'string' && key !== ''),
+    ),
+  ];
+  const briefingData = new Map<string, {
+    allSignals: Awaited<ReturnType<typeof getWeeklySignals>>;
+    allGuestSignals: Awaited<ReturnType<typeof getGuestSignals>>;
+    allServiceSignals: Awaited<ReturnType<typeof getServiceSignals>>;
+    ratingTrends: Awaited<ReturnType<typeof getGoogleRatingTrendBatch>>;
+  }>();
+  for (const groupKey of briefingGroupKeys) {
+    const [allSignals, allGuestSignals, allServiceSignals] = await Promise.all([
+      getWeeklySignals(briefingWeekStart, groupKey),
+      getGuestSignals(briefingWeekStart, groupKey),
+      getServiceSignals(briefingWeekStart, digestNow, groupKey),
+    ]);
+    const ratingTrends = await getGoogleRatingTrendBatch(allSignals.map((s) => s.restaurantId));
+    briefingData.set(groupKey, { allSignals, allGuestSignals, allServiceSignals, ratingTrends });
+  }
 
-  const toBriefingLocation = (sig: (typeof allSignals)[number]): BriefingLocation => {
-    const guestStats = allGuestSignals.get(sig.restaurantId);
-    const serviceStats = allServiceSignals.get(sig.restaurantId);
-    const trend = ratingTrends[sig.restaurantId] ?? null;
+  const toBriefingLocation = (
+    sig: Awaited<ReturnType<typeof getWeeklySignals>>[number],
+    data: NonNullable<ReturnType<typeof briefingData.get>>,
+  ): BriefingLocation => {
+    const guestStats = data.allGuestSignals.get(sig.restaurantId);
+    const serviceStats = data.allServiceSignals.get(sig.restaurantId);
+    const trend = data.ratingTrends[sig.restaurantId] ?? null;
     return {
       name: sig.name,
       totalGuests: guestStats?.totalGuests ?? 0,
@@ -182,14 +209,16 @@ export async function GET(req: NextRequest) {
   };
 
   // Group share is opt-in. A failure omits the section so the briefing still sends.
-  let groupShare: GroupShareSummary[] | undefined;
+  const groupShareByGroup = new Map<string, GroupShareSummary[]>();
   if (process.env.MAPS_RANK_EMAIL_ENABLED === 'true') {
-    // Dynamic import: the group share module pulls in the DB client, which needs DATABASE_URL at load time.
-    try {
-      const { getGroupShareSummary } = await import('@/lib/maps-rank-group');
-      groupShare = await getGroupShareSummary();
-    } catch (err) {
-      console.error('[digest] group share failed:', err);
+    for (const groupKey of briefingGroupKeys) {
+      // Dynamic import: the group share module pulls in the DB client, which needs DATABASE_URL at load time.
+      try {
+        const { getGroupShareSummary } = await import('@/lib/maps-rank-group');
+        groupShareByGroup.set(groupKey, await getGroupShareSummary(groupKey));
+      } catch (err) {
+        console.error('[digest] group share failed:', err);
+      }
     }
   }
 
@@ -199,11 +228,18 @@ export async function GET(req: NextRequest) {
       ownerSkippedNoEmail.push(owner.slug);
       continue;
     }
+    const data = owner.groupKey ? briefingData.get(owner.groupKey) : undefined;
+    if (!owner.groupKey || !data) {
+      console.warn(`[digest] ${owner.slug} has no group_key; skipping briefing`);
+      ownerSkippedNoGroup.push(owner.slug);
+      continue;
+    }
+    const groupShare = groupShareByGroup.get(owner.groupKey);
     try {
       const result = await sendOwnerBriefing({
         to: owner.managerEmail,
         weekStart: briefingWeekStart,
-        locations: allSignals.map(toBriefingLocation),
+        locations: data.allSignals.map((sig) => toBriefingLocation(sig, data)),
         dashboardUrl: `${baseUrl}/overview`,
         groupName: owner.name,
         groupShare,
@@ -227,14 +263,20 @@ export async function GET(req: NextRequest) {
       regionalSkippedNoEmail.push(account.slug);
       continue;
     }
+    const data = account.groupKey ? briefingData.get(account.groupKey) : undefined;
+    if (!account.groupKey || !data) {
+      console.warn(`[digest] ${account.slug} has no group_key; skipping briefing`);
+      regionalSkippedNoGroup.push(account.slug);
+      continue;
+    }
     try {
-      const scoped = allSignals.filter((s) => s.region === account.region);
-      const birthdays = await getUpcomingBirthdays(digestNow, account.region);
+      const scoped = data.allSignals.filter((s) => s.region === account.region);
+      const birthdays = await getUpcomingBirthdays(digestNow, account.groupKey, account.region);
       const result = await sendRegionalBriefing({
         to: account.managerEmail,
         regionName: account.name,
         weekStart: briefingWeekStart,
-        locations: scoped.map(toBriefingLocation),
+        locations: scoped.map((sig) => toBriefingLocation(sig, data)),
         birthdays: birthdays.map((b) => ({
           locationName: b.locationName,
           guestName: b.guestName,
@@ -255,9 +297,13 @@ export async function GET(req: NextRequest) {
     [...owners, ...regionalAccounts].map((account) => [account.id, account]),
   ).values();
   for (const account of escalationAccounts) {
+    // Same group only; an account (or location) with no group_key matches nothing.
+    const groupLocations = anomalousLocations.filter(({ restaurant }) =>
+      sameGroup(account.groupKey, restaurant.groupKey),
+    );
     const scopedLocations = account.isOwner
-      ? anomalousLocations
-      : anomalousLocations.filter(({ restaurant }) => restaurant.region === account.region);
+      ? groupLocations
+      : groupLocations.filter(({ restaurant }) => restaurant.region === account.region);
     const locationsWithAnomalies = scopedLocations.filter(
       ({ staffAnomalies }) => staffAnomalies.length > 0,
     );
@@ -283,8 +329,18 @@ export async function GET(req: NextRequest) {
 
   return Response.json({
     gm: { sent: gmSent, failed: gmFailed, skippedNoEmail: gmSkippedNoEmail },
-    owner: { sent: ownerSent, failed: ownerFailed, skippedNoEmail: ownerSkippedNoEmail },
-    regional: { sent: regionalSent, failed: regionalFailed, skippedNoEmail: regionalSkippedNoEmail },
+    owner: {
+      sent: ownerSent,
+      failed: ownerFailed,
+      skippedNoEmail: ownerSkippedNoEmail,
+      skippedNoGroup: ownerSkippedNoGroup,
+    },
+    regional: {
+      sent: regionalSent,
+      failed: regionalFailed,
+      skippedNoEmail: regionalSkippedNoEmail,
+      skippedNoGroup: regionalSkippedNoGroup,
+    },
     staffAnomalyPush: {
       sent: staffAnomalyPushSent,
       targeted: staffAnomalyPushTargeted,

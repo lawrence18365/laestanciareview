@@ -3,7 +3,8 @@ import { db } from '@/db';
 import { staff } from '@/db/schema';
 import { requireAdminKey, unauthorizedResponse } from '@/lib/auth';
 import { createStaffSchema } from '@/lib/validations';
-import { getRestaurantBySlug, getStaffList } from '@/lib/queries';
+import { getGroupKeyBySlug, getRestaurantBySlug, getStaffList } from '@/lib/queries';
+import { sameGroup } from '@/lib/group-scope';
 import { verifySession } from '@/lib/session';
 
 export async function GET(req: NextRequest) {
@@ -27,6 +28,14 @@ export async function GET(req: NextRequest) {
   const restaurant = await getRestaurantBySlug(slug);
   if (!restaurant) {
     return Response.json({ error: 'Restaurant not found' }, { status: 404 });
+  }
+
+  // An owner reads other locations only inside their own group.
+  if (session.role === 'owner' && session.slug !== slug) {
+    const viewerGroup = await getGroupKeyBySlug(session.slug);
+    if (!sameGroup(viewerGroup, restaurant.groupKey)) {
+      return Response.json({ error: 'Forbidden' }, { status: 403 });
+    }
   }
 
   const list = await getStaffList(restaurant.id);
@@ -62,6 +71,13 @@ export async function POST(req: NextRequest) {
   const restaurant = await getRestaurantBySlug(restaurantSlug);
   if (!restaurant) {
     return Response.json({ error: 'Restaurant not found' }, { status: 404 });
+  }
+
+  if (session.role === 'owner' && session.slug !== restaurantSlug) {
+    const viewerGroup = await getGroupKeyBySlug(session.slug);
+    if (!sameGroup(viewerGroup, restaurant.groupKey)) {
+      return Response.json({ error: 'Forbidden' }, { status: 403 });
+    }
   }
 
   const [created] = await db

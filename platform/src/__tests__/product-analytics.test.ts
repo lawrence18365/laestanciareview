@@ -52,12 +52,12 @@ describe('getAlertCoverage', () => {
         }),
       }));
 
-    await expect(pa.getAlertCoverage()).resolves.toEqual({
+    await expect(pa.getAlertCoverage('grupo-estancia')).resolves.toEqual({
       covered: 2,
       total: 3,
       missing: ['Norte sin dispositivo'],
     });
-    await expect(pa.getAlertCoverage('norte')).resolves.toEqual({
+    await expect(pa.getAlertCoverage('grupo-estancia', 'norte')).resolves.toEqual({
       covered: 1,
       total: 2,
       missing: ['Norte sin dispositivo'],
