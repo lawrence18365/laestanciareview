@@ -74,6 +74,13 @@ describe('/qr-codes restaurant QR card', () => {
     expect(html).toContain('Compartir por WhatsApp');
   });
 
+  it.each([['solo'], ['team']])('team_mode=%s offers the full-screen QR first; NULL does not', async (mode) => {
+    const html = await renderQrCodes(mode);
+    expect(html).toContain('Mostrar QR en pantalla');
+    expect(html.indexOf('Mostrar QR en pantalla')).toBeLessThan(html.indexOf('Imprimir letrero'));
+    expect(await renderQrCodes(null)).not.toContain('Mostrar QR en pantalla');
+  });
+
   it('NULL team_mode keeps the waiter grid exactly as before, below the new card', async () => {
     const html = await renderQrCodes(null);
     expect(html).toContain('Ana Meseros');

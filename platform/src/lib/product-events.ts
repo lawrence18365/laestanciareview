@@ -58,6 +58,10 @@ export const PRODUCT_EVENT_NAMES = [
   'restaurant_qr_printed',
   'restaurant_qr_downloaded',
   'restaurant_qr_shared',
+  // No-printer first step for self-serve restaurants. Props: {placement} =
+  // bienvenida | qr_codes | dashboard. Counted in the trial funnel's QR step.
+  'qr_fullscreen_opened',
+  'whatsapp_share_clicked',
   // Client-side crashes. Until this existed, a browser exception was recorded
   // NOWHERE: global-error.tsx calls Sentry.captureException, and
   // NEXT_PUBLIC_SENTRY_DSN is set in no environment, so the SDK disables itself

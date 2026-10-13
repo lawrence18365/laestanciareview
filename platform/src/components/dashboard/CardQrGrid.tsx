@@ -4,6 +4,8 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { cardUrlFor, reviewUrlFor } from '@/lib/qr';
 import { renderWaiterCard } from '@/lib/qr-card';
 import { track } from '@/lib/analytics-client';
+import { t } from '@/lib/i18n';
+import { QrFullscreenButton } from './QrShare';
 
 interface StaffMember {
   id: number;
@@ -39,6 +41,9 @@ export default function CardQrGrid({
   teamMode,
 }: Props) {
   const solo = teamMode === 'solo';
+  // Self-serve (solo / team) can show the QR on the phone instead of printing it.
+  // NULL (every legacy / Grupo restaurant) keeps today's card.
+  const selfServe = teamMode === 'solo' || teamMode === 'team';
   const [previews, setPreviews] = useState<Record<number, string>>({});
   const [canShareFiles, setCanShareFiles] = useState(false);
   const [busyId, setBusyId] = useState<number | null>(null);
@@ -200,11 +205,21 @@ export default function CardQrGrid({
         <div style={infoStyle}>
           <div style={nameStyle}>{restaurantName}</div>
           <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap', justifyContent: 'flex-start' }}>
+            {selfServe && (
+              <QrFullscreenButton
+                placement="qr_codes"
+                restaurantName={restaurantName}
+                qrSrc={restaurantQr}
+                style={btnPrimary}
+              >
+                {t.qrShare.showQrShort}
+              </QrFullscreenButton>
+            )}
             <a
               href="/qr-codes/letrero"
               target="_blank"
               rel="noreferrer"
-              style={{ ...btnPrimary, textDecoration: 'none', display: 'inline-block' }}
+              style={{ ...(selfServe ? btnSecondary : btnPrimary), textDecoration: 'none', display: 'inline-block' }}
             >
               Imprimir letrero
             </a>

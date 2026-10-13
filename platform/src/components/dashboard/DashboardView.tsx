@@ -6,6 +6,16 @@ import { t } from '@/lib/i18n';
 import { track } from '@/lib/analytics-client';
 import { RATING_BASELINE_NOTE } from '@/lib/rating-baseline';
 import { reviewGoal } from '@/lib/onboarding-profile';
+import { QrFullscreenButton, whatsappCustomersHref } from './QrShare';
+
+const emptyCtaPrimary: React.CSSProperties = {
+  padding: '0.75rem 1.5rem', background: 'var(--text-main)', color: '#fff',
+  textDecoration: 'none', fontSize: '0.9375rem', fontWeight: 600,
+};
+const emptyCtaSecondary: React.CSSProperties = {
+  padding: '0.75rem 1.5rem', border: '1px solid var(--text-main)', color: 'var(--text-main)',
+  textDecoration: 'none', fontSize: '0.9375rem', fontWeight: 600,
+};
 
 function fmt(n: number): string {
   return n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
@@ -104,6 +114,12 @@ interface Props {
   /** Public /r/{slug} link, shared by the solo "Compártelo por WhatsApp" CTA. */
   soloShareUrl?: string;
   /**
+   * Set only for a self-serve restaurant (team_mode solo / team): the empty
+   * state then leads with the full-screen QR. NULL (legacy / Grupo) keeps today's
+   * CTAs. qrDataUrl is null if the QR could not be generated.
+   */
+  selfServe?: { restaurantName: string; qrDataUrl: string | null };
+  /**
    * False only when the restaurant has no staff rows at all: the staff ranking
    * card is then hidden instead of showing an empty ranking. Defaults to true so
    * every legacy caller renders as before.
@@ -129,11 +145,12 @@ export default function DashboardView({
   showGoogleConnect = false,
   isSolo = false,
   soloShareUrl,
+  selfServe,
   hasStaff = true,
 }: Props) {
   // Plain ask, no offer and no rating routing (Google policy).
   const soloWhatsappHref = soloShareUrl
-    ? `https://wa.me/?text=${encodeURIComponent(t.dashboard.soloShareMessage(soloShareUrl))}`
+    ? whatsappCustomersHref(selfServe?.restaurantName ?? '', soloShareUrl)
     : '/qr-codes';
   // No-card ratings (restaurant QR, staff_code IS NULL) never take a ranking
   // slot; they show as one plain line. Ratings from a removed staff code keep
@@ -231,18 +248,42 @@ export default function DashboardView({
             </p>
           )}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', alignItems: 'center', marginTop: '0.5rem' }}>
-            <a href={isSolo ? '/qr-codes/letrero' : '/staff'} style={{
-              padding: '0.75rem 1.5rem', background: 'var(--text-main)', color: '#fff',
-              textDecoration: 'none', fontSize: '0.9375rem', fontWeight: 600,
-            }}>
-              {isSolo ? t.dashboard.soloCtaSign : '1. Agrega a tus meseros'}
-            </a>
-            <a href={isSolo ? soloWhatsappHref : '/qr-codes'} style={{
-              padding: '0.75rem 1.5rem', border: '1px solid var(--text-main)', color: 'var(--text-main)',
-              textDecoration: 'none', fontSize: '0.9375rem', fontWeight: 600,
-            }}>
-              {isSolo ? t.dashboard.soloCtaWhatsapp : '2. Descarga sus códigos QR'}
-            </a>
+            {selfServe?.qrDataUrl && (
+              <QrFullscreenButton
+                placement="dashboard"
+                restaurantName={selfServe.restaurantName}
+                qrSrc={selfServe.qrDataUrl}
+                style={{ ...emptyCtaPrimary, border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}
+              >
+                {t.qrShare.showQr}
+              </QrFullscreenButton>
+            )}
+            {isSolo ? (
+              <>
+                <a
+                  href={soloWhatsappHref}
+                  onClick={() => track('whatsapp_share_clicked', { placement: 'dashboard' })}
+                  style={emptyCtaSecondary}
+                >
+                  {t.qrShare.whatsapp}
+                </a>
+                <p style={{ margin: '-0.4rem 0 0', fontSize: '0.8125rem', color: 'var(--text-muted)' }}>
+                  {t.qrShare.whatsappHelper}
+                </p>
+                <a href="/qr-codes/letrero" style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-main)' }}>
+                  {t.qrShare.printSign}
+                </a>
+              </>
+            ) : (
+              <>
+                <a href="/staff" style={selfServe ? emptyCtaSecondary : emptyCtaPrimary}>
+                  1. Agrega a tus meseros
+                </a>
+                <a href="/qr-codes" style={emptyCtaSecondary}>
+                  2. Descarga sus códigos QR
+                </a>
+              </>
+            )}
           </div>
         </div>
       )}

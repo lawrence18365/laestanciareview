@@ -75,6 +75,15 @@ describe('trial-funnel "Por meta"', () => {
     expect(out).not.toContain('undefined');
   });
 
+  it('counts the no-printer QR events in the QR step', async () => {
+    await runFunnel([row({})]);
+    const qrQuery = state.queries.find((q) => q.includes("'restaurant_qr_printed'"));
+    expect(qrQuery).toBeDefined();
+    for (const name of ['qr_fullscreen_opened', 'whatsapp_share_clicked', 'restaurant_qr_shared', 'card_qr_shared']) {
+      expect(qrQuery).toContain(`'${name}'`);
+    }
+  });
+
   it('still prints the other two splits, unchanged', async () => {
     const out = await runFunnel([row({ forma: 'team', sucursales: '2-5', calif: 1 })]);
     expect(out).toContain('Por forma (team_mode):');

@@ -5,6 +5,8 @@ import Script from 'next/script';
 import { SUPPORT_WHATSAPP_URL } from '@/lib/support';
 import GooglePlaceSearch, { type PlaceSelection } from '@/components/GooglePlaceSearch';
 import { track } from '@/lib/analytics-client';
+import { t } from '@/lib/i18n';
+import { QrFullscreenButton, whatsappCustomersHref } from '@/components/dashboard/QrShare';
 import { goalOptions, qrPlacementTip, type SignupGoal } from '@/lib/onboarding-profile';
 import { personalLine, readyMode, type GoalQuestion, type ReadyProfileFields } from './ready-data';
 
@@ -303,8 +305,11 @@ export function ReadyView({
     track('onboarding_cta_click', mode === 'legacy' ? { target } : { target, mode });
   }
 
-  const shareText = `${status.restaurantName ?? ''}: ¿Cómo te fue? Déjanos tu reseña en Google ${status.reviewUrl ?? ''}`.trim();
-  const whatsappShareUrl = `https://wa.me/?text=${encodeURIComponent(shareText)}`;
+  // Solo and team are the self-serve shapes: no printer needed for the first
+  // step. Legacy (NULL team_mode, Grupo Estancia) and 6+ groups are unchanged.
+  const selfServe = mode === 'solo' || mode === 'team';
+  const restaurantName = status.restaurantName ?? '';
+  const whatsappCustomersUrl = whatsappCustomersHref(restaurantName, status.reviewUrl ?? '');
 
   return (
     <>
@@ -388,20 +393,51 @@ export function ReadyView({
         </div>
       )}
 
-      {mode === 'solo' && (
+      {selfServe && (
         <>
-          <a href="/qr-codes/letrero" style={primaryButtonStyle} onClick={() => clicked('letrero')}>
-            Imprime tu letrero →
-          </a>
+          {status.qrDataUrl && (
+            <QrFullscreenButton
+              placement="bienvenida"
+              restaurantName={restaurantName}
+              qrSrc={status.qrDataUrl}
+              style={primaryButtonOnButton}
+            >
+              {t.qrShare.showQr}
+            </QrFullscreenButton>
+          )}
           <a
-            href={whatsappShareUrl}
+            href={whatsappCustomersUrl}
             target="_blank"
             rel="noopener noreferrer"
-            onClick={() => clicked('whatsapp_share')}
+            onClick={() => {
+              clicked('whatsapp_share');
+              track('whatsapp_share_clicked', { placement: 'bienvenida' });
+            }}
             style={secondaryButtonStyle}
           >
-            Compártelo por WhatsApp
+            {t.qrShare.whatsapp}
           </a>
+          <p style={{ fontSize: '0.8rem', color: '#57534e', textAlign: 'center', margin: '0.4rem 0 0' }}>
+            {t.qrShare.whatsappHelper}
+          </p>
+          <p style={{ textAlign: 'center', margin: '0.9rem 0 0' }}>
+            <a href="/qr-codes/letrero" style={textLinkStyle} onClick={() => clicked('letrero')}>
+              {t.qrShare.printSign}
+            </a>
+          </p>
+        </>
+      )}
+
+      {mode === 'team' && (
+        <>
+          <a href="/staff" onClick={() => clicked('staff')} style={{ ...secondaryButtonStyle, marginTop: '1.25rem' }}>
+            Agrega a tus meseros →
+          </a>
+          <p style={{ textAlign: 'center', margin: '0.75rem 0 0' }}>
+            <a href="/qr-codes" onClick={() => clicked('qr')} style={textLinkStyle}>
+              Descargar QR por mesero
+            </a>
+          </p>
         </>
       )}
 
@@ -422,7 +458,7 @@ export function ReadyView({
         </>
       )}
 
-      {(mode === 'team' || mode === 'legacy') && (
+      {mode === 'legacy' && (
         <>
           <a href="/staff" style={primaryButtonStyle} onClick={() => clicked('staff')}>
             Agrega a tus meseros →
@@ -526,6 +562,24 @@ const primaryButtonStyle: React.CSSProperties = {
   fontSize: '0.85rem',
   letterSpacing: '0.1em',
   textTransform: 'uppercase',
+};
+
+// The primary action when it is a <button> (the full-screen QR), not a link.
+const primaryButtonOnButton: React.CSSProperties = {
+  ...primaryButtonStyle,
+  width: '100%',
+  minHeight: 44,
+  border: 'none',
+  cursor: 'pointer',
+  fontFamily: 'inherit',
+  boxSizing: 'border-box',
+};
+
+const textLinkStyle: React.CSSProperties = {
+  color: '#1c1917',
+  fontWeight: 600,
+  fontSize: '0.85rem',
+  textDecoration: 'underline',
 };
 
 const secondaryButtonStyle: React.CSSProperties = {
