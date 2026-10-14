@@ -295,7 +295,9 @@ export default function ContactoForm({ pilotOffer }: { pilotOffer: boolean }) {
           currency: 'MXN',
         });
       }
-      window.location.href = data.url;
+      // replace, not href: Back from /bienvenida must not land on the filled form
+      // (4 of 11 trials did, one re-submitted into a 409).
+      window.location.replace(data.url);
     } catch {
       track('signup_submit_failed', { status: null, network: true });
       setError('Error de red. Intenta de nuevo.');
