@@ -8,7 +8,17 @@ import { track } from '@/lib/analytics-client';
 import { t } from '@/lib/i18n';
 import { QrFullscreenButton, whatsappCustomersHref } from '@/components/dashboard/QrShare';
 import { goalOptions, qrPlacementTip, staffNoun, type SignupGoal } from '@/lib/onboarding-profile';
-import { personalLine, readyMode, type GoalQuestion, type ReadyProfileFields } from './ready-data';
+import {
+  MAPS_ZONES,
+  personalLine,
+  readyMode,
+  startMapsCardPoll,
+  type GoalQuestion,
+  type MapsCardData,
+  type MapsCardResponse,
+  type MapsCardState,
+  type ReadyProfileFields,
+} from './ready-data';
 
 const PIXEL_ID = process.env.NEXT_PUBLIC_META_PIXEL_ID ?? '1578821303344121';
 
@@ -330,6 +340,8 @@ export function ReadyView({
         )}
       </div>
 
+      {selfServe && <MapsCardSlot />}
+
       {status.goalQuestion && <GoalQuestionView teamMode={status.goalQuestion.teamMode} />}
 
       <div style={{
@@ -482,6 +494,81 @@ export function ReadyView({
       </p>
     </>
   );
+}
+
+/** The Maps card body, or the muted waiting line. Exported for tests. */
+export function MapsPlaceView({ state }: { state: MapsCardState }) {
+  if (state.phase === 'hidden') return null;
+  if (state.phase === 'waiting') {
+    return (
+      <p style={{ fontSize: '0.85rem', color: '#78716c', textAlign: 'center', margin: '0 0 1.25rem' }}>
+        Buscando tu lugar en Google Maps…
+      </p>
+    );
+  }
+  const { keyword, found, best } = state.card;
+  return (
+    <section
+      aria-label="Tu lugar en Google Maps"
+      style={{
+        padding: '1rem 1.25rem',
+        background: '#faf8f6',
+        border: '1px solid #e7e5e4',
+        marginBottom: '1.25rem',
+      }}
+    >
+      <h2 style={{ fontSize: '1rem', fontWeight: 700, color: '#1c1917', margin: '0 0 0.4rem' }}>
+        Tu lugar en Google Maps
+      </h2>
+      {found > 0 ? (
+        <>
+          <p style={{ fontSize: '0.9rem', color: '#44403c', margin: 0 }}>
+            Para «{keyword}» apareces en {found} de {MAPS_ZONES} zonas cerca de ti.
+          </p>
+          {best !== null && (
+            <p style={{ fontSize: '0.9rem', fontWeight: 600, color: '#1c1917', margin: '0.25rem 0 0' }}>
+              Tu mejor lugar: #{best}.
+            </p>
+          )}
+        </>
+      ) : (
+        <>
+          <p style={{ fontSize: '0.9rem', color: '#44403c', margin: 0 }}>
+            Para «{keyword}» no apareces en las {MAPS_ZONES} zonas cerca de ti.
+          </p>
+          <p style={{ fontSize: '0.9rem', fontWeight: 600, color: '#1c1917', margin: '0.25rem 0 0' }}>
+            Las reseñas nuevas te ayudan a subir.
+          </p>
+        </>
+      )}
+    </section>
+  );
+}
+
+async function loadMapsCard(): Promise<MapsCardResponse | null> {
+  const res = await fetch('/api/onboarding/maps-card', { cache: 'no-store' });
+  return res.ok ? ((await res.json()) as MapsCardResponse) : null;
+}
+
+/**
+ * The Maps rank card. The signup sweep writes its samples seconds after the
+ * account exists, so this polls (5 s, up to 90 s) and renders nothing, not an
+ * error, if they never show up.
+ */
+function MapsCardSlot() {
+  const [state, setState] = useState<MapsCardState>({ phase: 'waiting' });
+  const trackedRef = useRef(false);
+
+  useEffect(() => startMapsCardPoll(loadMapsCard, setState), []);
+
+  const card: MapsCardData | null = state.phase === 'card' ? state.card : null;
+  useEffect(() => {
+    if (!card || trackedRef.current) return;
+    trackedRef.current = true;
+    track('maps_card_shown', { found: card.found, best: card.best, placement: 'bienvenida' });
+  }, [card]);
+
+  return <MapsPlaceView state={state} />;
 }
 
 /**
