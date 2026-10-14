@@ -102,6 +102,9 @@ export const PRODUCT_EVENT_NAMES = [
   // The one optional tap-only goal question on /bienvenida. Props: {goal}.
   // Written server-side by POST /api/onboarding/goal.
   'signup_goal_selected',
+  // Optional free-text "¿Qué esperabas lograr?" after a goal chip. Props: {text}
+  // (1-280 chars). Written server-side by POST /api/onboarding/expectation.
+  'signup_expectation',
   // Plan Restaurante (US-15): upgrade prompts and checkout. Props:
   // upgrade_prompt_*: {placement, plan}; checkout_started: {cycle, amount};
   // plan_activated: {cycle}.

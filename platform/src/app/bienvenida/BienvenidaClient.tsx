@@ -513,9 +513,12 @@ export function GoalQuestionView({ teamMode }: { teamMode: string }) {
 
   if (state === 'done') {
     return (
-      <p style={{ fontSize: '0.85rem', fontWeight: 600, color: '#15803d', textAlign: 'center', margin: '0 0 1.25rem' }}>
-        ✓ Gracias
-      </p>
+      <div style={{ marginBottom: '1.25rem' }}>
+        <p style={{ fontSize: '0.85rem', fontWeight: 600, color: '#15803d', textAlign: 'center', margin: '0 0 0.75rem' }}>
+          ✓ Gracias
+        </p>
+        <ExpectationField />
+      </div>
     );
   }
 
@@ -548,6 +551,78 @@ export function GoalQuestionView({ teamMode }: { teamMode: string }) {
       </div>
       {error && <p style={{ fontSize: '0.8rem', color: '#b91c1c', textAlign: 'center', margin: '0.5rem 0 0' }}>{error}</p>}
     </div>
+  );
+}
+
+/**
+ * Optional free text shown after a goal chip. One answer per restaurant: a
+ * 409 (already answered in another tab) hides it, same as a successful save
+ * ends it with "¡Gracias!".
+ */
+function ExpectationField() {
+  const [text, setText] = useState('');
+  const [state, setState] = useState<'idle' | 'saving' | 'saved' | 'hidden'>('idle');
+  const [error, setError] = useState('');
+
+  if (state === 'hidden') return null;
+  if (state === 'saved') {
+    return (
+      <p style={{ fontSize: '0.85rem', fontWeight: 600, color: '#15803d', textAlign: 'center', margin: 0 }}>
+        ¡Gracias!
+      </p>
+    );
+  }
+
+  async function send(e: React.FormEvent) {
+    e.preventDefault();
+    const value = text.trim();
+    if (!value || state === 'saving') return;
+    setState('saving');
+    setError('');
+    try {
+      const res = await fetch('/api/onboarding/expectation', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: value }),
+      });
+      if (res.status === 409) {
+        setState('hidden');
+        return;
+      }
+      if (!res.ok) throw new Error('save-failed');
+      setState('saved');
+    } catch {
+      setState('idle');
+      setError('No se pudo guardar. Intenta de nuevo.');
+    }
+  }
+
+  return (
+    <form onSubmit={send} style={{ maxWidth: 420, margin: '0 auto' }}>
+      <label htmlFor="expectation-input" style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: '#1c1917', marginBottom: 6, textAlign: 'center' }}>
+        ¿Qué esperabas lograr? (opcional)
+      </label>
+      <div style={{ display: 'flex', gap: 8 }}>
+        <input
+          id="expectation-input"
+          type="text"
+          value={text}
+          maxLength={280}
+          placeholder="Ej. salir primero en Google Maps"
+          disabled={state === 'saving'}
+          onChange={(e) => setText(e.target.value)}
+          style={{ flex: 1, minHeight: 44, padding: '0.5rem 0.75rem', border: '1px solid #d6d3d1', fontSize: '0.9rem' }}
+        />
+        <button
+          type="submit"
+          disabled={state === 'saving' || text.trim().length === 0}
+          style={{ minHeight: 44, padding: '0.5rem 0.9rem', border: '1px solid #1c1917', background: '#fff', color: '#1c1917', fontSize: '0.85rem', fontWeight: 600, cursor: 'pointer' }}
+        >
+          Enviar
+        </button>
+      </div>
+      {error && <p style={{ fontSize: '0.8rem', color: '#b91c1c', textAlign: 'center', margin: '0.5rem 0 0' }}>{error}</p>}
+    </form>
   );
 }
 

@@ -130,6 +130,9 @@ async function main() {
            coalesce(to_jsonb(r)->>'team_mode', '-') as forma,
            coalesce(to_jsonb(r)->>'locations_band', '-') as sucursales,
            coalesce(to_jsonb(r)->'google_profile'->>'goal', '-') as meta,
+           coalesce(left((select e.properties->>'text' from product_events e
+                          where e.restaurant_id = r.id and e.event_name = 'signup_expectation'
+                          order by e.id limit 1), 40), '-') as espera,
            (r.google_place_id is not null or r.google_review_url is not null) as google,
            (select count(*)::int from staff s where s.restaurant_id = r.id and s.active) as meseros,
            (select count(*)::int from reviews v where v.restaurant_id = r.id) as calif,
