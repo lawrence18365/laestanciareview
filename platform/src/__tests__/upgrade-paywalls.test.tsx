@@ -252,3 +252,24 @@ describe('first-rating card', () => {
     expect(t.upgrade.firstRating(0)).toBe('¡Tu primera calificación!');
   });
 });
+
+describe('plan name (SQ-228)', () => {
+  it('is "Plan Completo" in billing and in the upgrade prompts', () => {
+    expect(t.billing.planRestauranteName).toBe('Plan Completo');
+    expect(t.upgrade.plan.title).toBe('Plan Completo');
+  });
+
+  it('no upgrade or plan string names a restaurant or a waiter', () => {
+    const strings: string[] = [];
+    const walk = (v: unknown) => {
+      if (typeof v === 'string') strings.push(v);
+      else if (typeof v === 'function') walk((v as (...a: unknown[]) => unknown)(2, '1 de enero'));
+      else if (Array.isArray(v)) v.forEach(walk);
+      else if (v && typeof v === 'object') Object.values(v).forEach(walk);
+    };
+    walk(t.upgrade);
+    walk(t.billing.planRestauranteName);
+    expect(strings.length).toBeGreaterThan(10);
+    for (const s of strings) expect(s).not.toMatch(/restaurante|mesero/i);
+  });
+});

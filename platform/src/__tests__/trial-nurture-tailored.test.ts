@@ -406,3 +406,101 @@ describe('trial nurture tailored: shared behavior', () => {
     for (const html of collected) expect(words(html)).toBeLessThanOrEqual(60);
   });
 });
+
+// SQ-228: non-food businesses (a dentist) never read mesero / mesa / restaurante
+// wording; food and drink and legacy rows (no profile) keep today's text.
+const profile = (primaryType: string, types: string[]) => ({
+  primaryType,
+  types,
+  fetchedAt: '2026-10-13T00:00:00.000Z',
+});
+const DENTIST = profile('dentist', ['dentist', 'health']);
+const RESTAURANT = profile('restaurant', ['restaurant', 'food']);
+const FOOD_WORDS = /mesero|mesa\b|restaurante/i;
+
+describe('trial nurture: non-food wording', () => {
+  it('a dentist gets no mesero / mesa / restaurante wording in any nurture template', async () => {
+    let sent = 0;
+    for (const teamMode of [null, 'solo', 'team']) {
+      for (const days of [1, 3, 7]) {
+        for (const [staffCount, ratingCount] of [[0, 0], [2, 0], [0, 5], [2, 5]]) {
+          reset();
+          h.restaurants = [at(days, {
+            name: 'Dental Uno',
+            slug: 'dental-uno',
+            teamMode,
+            googleProfile: DENTIST,
+          })];
+          h.staffCount = staffCount;
+          h.ratingCount = ratingCount;
+          h.sentToGoogleCount = 3;
+          h.snapshotCount = 99;
+          await GET(request());
+          sent += mails().length;
+          for (const t of everyText()) expect(t).not.toMatch(FOOD_WORDS);
+        }
+      }
+    }
+    expect(sent).toBeGreaterThanOrEqual(20);
+  });
+
+  it('a dentist team with no staff is asked to add "tu equipo"', async () => {
+    h.restaurants = [at(3, { teamMode: 'team', googleProfile: DENTIST })];
+    await GET(request());
+    const [m] = bySubject(/Activa tu RateTap/);
+    expect(m.html).toContain('Agrega a tu equipo');
+    const staffMsgs = whatsapps().filter((b) => b.includes('/staff'));
+    expect(staffMsgs.length).toBeGreaterThan(0);
+    for (const b of staffMsgs) expect(b).toMatch(/Agrega(r)? a tu equipo/);
+  });
+
+  it('legacy day-3 tip and day-7 proof line are neutral for a dentist, even on an estancia slug', async () => {
+    h.restaurants = [at(3, { slug: 'estancia-dental', googleProfile: DENTIST })];
+    h.staffCount = 2;
+    h.ratingCount = 5;
+    await GET(request());
+    expect(bySubject(/Tip del día 3/)[0].html).toContain('tú o tu equipo muestran el código QR');
+
+    reset();
+    h.restaurants = [at(7, { slug: 'estancia-dental', googleProfile: DENTIST })];
+    await GET(request());
+    const [m] = bySubject(/Una semana con RateTap/);
+    expect(m.html).toContain('Los negocios que piden la reseña a cada cliente reciben más reseñas.');
+    expect(m.html).not.toMatch(/Estancia|12 restaurantes/);
+    const week = whatsapps().find((b) => /una semana/.test(b)) as string;
+    expect(week).toContain('Los negocios que piden la reseña a cada cliente');
+    expect(week).not.toMatch(/Estancia|12 restaurantes/);
+  });
+
+  it('food and drink keep today\'s text, with or without a profile', async () => {
+    for (const googleProfile of [RESTAURANT, null, undefined]) {
+      reset();
+      h.restaurants = [at(3, { googleProfile })];
+      h.staffCount = 2;
+      h.ratingCount = 5;
+      await GET(request());
+      expect(bySubject(/Tip del día 3/)[0].html).toContain('tu mesero muestra el código QR');
+
+      reset();
+      h.restaurants = [at(7, { googleProfile })];
+      await GET(request());
+      expect(bySubject(/Una semana con RateTap/)[0].html)
+        .toContain('Los restaurantes que piden la reseña en cada mesa reciben más reseñas.');
+
+      reset();
+      h.restaurants = [at(1, { teamMode: 'team', googleProfile })];
+      h.staffCount = 0;
+      h.ratingCount = 0;
+      await GET(request());
+      expect(mails()[0].html).toContain('Agrega a tus meseros');
+    }
+  });
+
+  it('the La Estancia proof line stays for a food place on an estancia slug', async () => {
+    h.restaurants = [at(7, { slug: 'estancia-leon', googleProfile: RESTAURANT })];
+    h.staffCount = 2;
+    h.ratingCount = 5;
+    await GET(request());
+    expect(bySubject(/Una semana con RateTap/)[0].html).toContain('12 restaurantes');
+  });
+});

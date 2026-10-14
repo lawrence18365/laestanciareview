@@ -21,6 +21,7 @@ import {
 } from '@/lib/pilot';
 import { provisionSignupAtomic, SignupConflictError } from '@/lib/signup-provisioning';
 import { generateQrDataUrl, reviewUrlFor } from '@/lib/qr';
+import { isFoodOrDrink, parseGoogleProfile } from '@/lib/onboarding-profile';
 import { sendWhatsAppWelcome } from '@/lib/whatsapp';
 import { sendCompleteRegistrationEvent } from '@/lib/meta-conversions';
 import { recordProductEvent } from '@/lib/product-events';
@@ -258,13 +259,15 @@ export async function POST(req: NextRequest) {
         const qrDataUrl = await generateQrDataUrl(restaurant.slug);
         // The signup fetch stored the Google count (SQ-189); best-effort, unknown is fine.
         let googleReviewCount: number | null = null;
+        let foodOrDrink = true;
         if (teamMode) {
           try {
             const [row] = await db
-              .select({ n: restaurants.googleReviewCount })
+              .select({ n: restaurants.googleReviewCount, profile: restaurants.googleProfile })
               .from(restaurants)
               .where(eq(restaurants.id, restaurant.id));
             googleReviewCount = row?.n ?? null;
+            foodOrDrink = isFoodOrDrink(parseGoogleProfile(row?.profile));
           } catch {
             googleReviewCount = null;
           }
@@ -281,6 +284,7 @@ export async function POST(req: NextRequest) {
           teamMode: teamMode ?? null,
           locationsBand: locationsBand ?? null,
           googleReviewCount,
+          foodOrDrink,
           restaurantId: restaurant.id,
         });
       })(),

@@ -169,7 +169,7 @@ describe('day 25: trial ending', () => {
     const body = text(mail.html);
     expect(body).toContain('Llevas 12 calificaciones; 48 reseñas en Google.');
     expect(body).toMatch(/Tu prueba termina el \d{1,2} de \p{L}+\./u);
-    expect(body).toContain('Plan Restaurante desde MX$299/mes');
+    expect(body).toContain('Plan Completo desde MX$299/mes');
     expect(body).toContain('Cancela cuando quieras.');
     expect(mail.html).toContain('https://app.ratetapmx.com/plan');
     expect(mail.subject).toMatch(/^Tu prueba termina el /);
@@ -252,7 +252,7 @@ describe('free plan: post-trial days 3 and 10', () => {
     const body = text(mail.html);
     expect(body).toContain('12 calificaciones, 7 a Google, 3 comentarios');
     expect(body).toContain('Los comentarios están bloqueados. Activa tu plan para leerlos.');
-    expect(body).toContain('Plan Restaurante desde MX$299/mes');
+    expect(body).toContain('Plan Completo desde MX$299/mes');
     expect(body).toContain('Cancela cuando quieras.');
     expect(mail.html).toContain('https://app.ratetapmx.com/plan');
     expect(words(mail.html)).toBeLessThanOrEqual(60);
@@ -326,5 +326,30 @@ describe('free plan: post-trial days 3 and 10', () => {
     await GET(request());
 
     expect(h.events).toEqual(['free_d3:email']);
+  });
+});
+
+describe('non-food plan wording (SQ-228)', () => {
+  const dentist = {
+    name: 'Dental Uno',
+    slug: 'dental-uno',
+    googleProfile: { primaryType: 'dentist', types: ['dentist'], fetchedAt: '2026-10-13T00:00:00.000Z' },
+  };
+
+  it('day 25 names the Plan Completo and has no mesero / mesa / restaurante wording', async () => {
+    h.restaurants = [restaurant(dentist)];
+    await GET(request());
+    expect(mails()).toHaveLength(1);
+    const body = text(mails()[0].html);
+    expect(body).toContain('Plan Completo desde MX$299/mes');
+    expect(`${mails()[0].subject} ${body}`).not.toMatch(/mesero|mesa\b|restaurante/i);
+  });
+
+  it('the free-plan teaser says Plan Completo, not Plan Restaurante', async () => {
+    h.restaurants = [lapsed(3, dentist)];
+    await GET(request());
+    const body = text(mails()[0].html);
+    expect(body).toContain('Plan Completo desde MX$299/mes');
+    expect(body).not.toContain('Plan Restaurante');
   });
 });

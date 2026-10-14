@@ -346,6 +346,8 @@ interface FeedbackAlertParams {
    * just recomputes the identical answer.
    */
   severity?: ReviewSeverity;
+  /** False for a non-food business: the staff section reads "Equipo", not "Mesero". Omitted = true. */
+  foodOrDrink?: boolean;
 }
 
 export async function sendFeedbackAlert({
@@ -359,6 +361,7 @@ export async function sendFeedbackAlert({
   feedback,
   subjectPrefix,
   severity,
+  foodOrDrink = true,
 }: FeedbackAlertParams) {
   const filledStars = '★'.repeat(rating);
   const emptyStars = '☆'.repeat(5 - rating);
@@ -413,7 +416,7 @@ export async function sendFeedbackAlert({
         ${staffName ? `
         <tr>
           <td style="padding: 10px 0;">
-            <span style="${SECTION_LABEL_STYLE}">Mesero</span><br/>
+            <span style="${SECTION_LABEL_STYLE}">${foodOrDrink ? 'Mesero' : 'Equipo'}</span><br/>
             <span style="font-size: 15px; font-weight: 500; color: #111111;">${escapeHtml(staffName)}</span>
           </td>
         </tr>` : ''}
@@ -560,6 +563,8 @@ interface WeeklyDigestParams {
   googleTrend?: GoogleTrendDigest | null;
   /** False only for a restaurant with no staff: the "Top meseros" block is then omitted. */
   hasStaff?: boolean;
+  /** False for a non-food business: the leaderboard reads "Top de tu equipo". Omitted = true. */
+  foodOrDrink?: boolean;
 }
 
 export async function sendWeeklyDigest({
@@ -573,6 +578,7 @@ export async function sendWeeklyDigest({
   dashboardUrl,
   googleTrend,
   hasStaff = true,
+  foodOrDrink = true,
 }: WeeklyDigestParams) {
   const reviewsDelta = lastWeek.totalReviews - weekBefore.totalReviews;
   const ratingDelta = lastWeek.avgRating && weekBefore.avgRating
@@ -611,11 +617,11 @@ export async function sendWeeklyDigest({
         </td>
       </tr>`;
     }).join('')
-    : `<tr><td colspan="3" style="padding: 16px; color: #A3A3A3; font-style: italic; font-size: 14px; text-align: center;">${lastWeek.totalReviews > 0 ? 'Sin opiniones con tarjeta de mesero la semana pasada' : 'Sin opiniones capturadas la semana pasada'}</td></tr>`;
+    : `<tr><td colspan="3" style="padding: 16px; color: #A3A3A3; font-style: italic; font-size: 14px; text-align: center;">${lastWeek.totalReviews > 0 ? (foodOrDrink ? 'Sin opiniones con tarjeta de mesero la semana pasada' : 'Sin opiniones con el código de tu equipo la semana pasada') : 'Sin opiniones capturadas la semana pasada'}</td></tr>`;
 
   const leaderboardSection = hasStaff ? `<!-- Leaderboard -->
     <div style="margin: 0 28px 24px; background: #FFFFFF; border: 1px solid #111111; border-radius: 0;">
-      <p style="margin: 0; padding: 14px 16px 10px; ${SECTION_LABEL_STYLE}">Top meseros por experiencia del cliente</p>
+      <p style="margin: 0; padding: 14px 16px 10px; ${SECTION_LABEL_STYLE}">${foodOrDrink ? 'Top meseros por experiencia del cliente' : 'Top de tu equipo'}</p>
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
         ${leaderboardRows}
       </table>
@@ -1154,6 +1160,8 @@ interface WelcomeEmailParams {
   locationsBand?: string | null;
   /** Google review count at signup, when known. */
   googleReviewCount?: number | null;
+  /** False for a non-food business: team steps say "tu equipo", not "meseros". Omitted = true. */
+  foodOrDrink?: boolean;
   /** When set, the email carries an open pixel and tracked links (SQ-218). Omitted = untouched. */
   restaurantId?: number | null;
 }
@@ -1168,6 +1176,7 @@ const WELCOME_STEP_LIST_STYLE =
 function welcomeStepsHtml(
   teamMode: string | null | undefined,
   locationsBand: string | null | undefined,
+  foodOrDrink = true,
 ): string {
   const intro = `
       <p style="margin: 0 0 6px; font-size: 15px; line-height: 1.6; color: #666666;">
@@ -1182,8 +1191,8 @@ function welcomeStepsHtml(
   }
   const teamSteps = `${intro}
       <ol style="${WELCOME_STEP_LIST_STYLE}">
-        <li>Agrega a tus meseros.</li>
-        <li>Descarga el código QR de cada mesero en <a href="${BASE_URL}/qr-codes" style="color: #111111;">Códigos QR</a>.</li>
+        <li>${foodOrDrink ? 'Agrega a tus meseros.' : 'Agrega a tu equipo.'}</li>
+        <li>${foodOrDrink ? 'Descarga el código QR de cada mesero' : 'Descarga el código QR de cada persona de tu equipo'} en <a href="${BASE_URL}/qr-codes" style="color: #111111;">Códigos QR</a>.</li>
       </ol>`;
   if (teamMode === 'team' && locationsBand === '6+') {
     return `${teamSteps}
@@ -1226,6 +1235,7 @@ export async function sendWelcomeEmail({
   teamMode = null,
   locationsBand = null,
   googleReviewCount = null,
+  foodOrDrink = true,
   restaurantId = null,
 }: WelcomeEmailParams) {
   const trialEndStr = trialEndsAt.toLocaleDateString('es-MX', { day: 'numeric', month: 'long', year: 'numeric' });
@@ -1248,7 +1258,7 @@ export async function sendWelcomeEmail({
       <p style="margin: 0 0 12px; font-size: 15px; line-height: 1.6; color: #666666;">
         Entra en <a href="${BASE_URL}/login" style="color: #111111;">app.ratetapmx.com/login</a> y elige <strong>${escapeHtml(restaurantName)}</strong>.
       </p>
-${welcomeGoalHtml(teamMode, googleReviewCount)}${welcomeStepsHtml(teamMode, locationsBand)}
+${welcomeGoalHtml(teamMode, googleReviewCount)}${welcomeStepsHtml(teamMode, locationsBand, foodOrDrink)}
 
       <table role="presentation" cellpadding="0" cellspacing="0" style="margin: 0 auto;">
         <tr><td style="background: #111111; border-radius: 0;">
