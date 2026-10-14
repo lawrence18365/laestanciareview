@@ -28,7 +28,8 @@ export function defaultKeywords(r: {
     return [`mariscos ${city}`, `restaurante de mariscos ${city}`];
   }
   if (r.groupKey === null) {
-    return [`${categoryLabel(parseGoogleProfile(r.googleProfile)?.primaryType ?? null)} ${city}`];
+    const profile = parseGoogleProfile(r.googleProfile);
+    return [`${categoryLabel(profile?.primaryType ?? null, profile?.primaryTypeLabel)} ${city}`];
   }
   // Generic "restaurante {city}" ranks nobody useful for a group (SQ-159); founders add keywords by hand.
   return [];

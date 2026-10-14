@@ -7,7 +7,7 @@ import GooglePlaceSearch, { type PlaceSelection } from '@/components/GooglePlace
 import { track } from '@/lib/analytics-client';
 import { t } from '@/lib/i18n';
 import { QrFullscreenButton, whatsappCustomersHref } from '@/components/dashboard/QrShare';
-import { goalOptions, qrPlacementTip, type SignupGoal } from '@/lib/onboarding-profile';
+import { goalOptions, qrPlacementTip, staffNoun, type SignupGoal } from '@/lib/onboarding-profile';
 import { personalLine, readyMode, type GoalQuestion, type ReadyProfileFields } from './ready-data';
 
 const PIXEL_ID = process.env.NEXT_PUBLIC_META_PIXEL_ID ?? '1578821303344121';
@@ -259,6 +259,7 @@ export function ReadyView({
     googleProfile: status.googleProfile ?? null,
   };
   const mode = readyMode(fields);
+  const staffNeedsNoun = staffNoun(fields.googleProfile) === 'tu equipo';
   const line = mode === 'legacy' ? null : personalLine(fields);
   const reload = panelHref !== null;
 
@@ -431,11 +432,11 @@ export function ReadyView({
       {mode === 'team' && (
         <>
           <a href="/staff" onClick={() => clicked('staff')} style={{ ...secondaryButtonStyle, marginTop: '1.25rem' }}>
-            Agrega a tus meseros →
+            {staffNeedsNoun ? 'Agrega a tu equipo →' : 'Agrega a tus meseros →'}
           </a>
           <p style={{ textAlign: 'center', margin: '0.75rem 0 0' }}>
             <a href="/qr-codes" onClick={() => clicked('qr')} style={textLinkStyle}>
-              Descargar QR por mesero
+              {staffNeedsNoun ? 'Descargar QR por persona' : 'Descargar QR por mesero'}
             </a>
           </p>
         </>
@@ -453,7 +454,7 @@ export function ReadyView({
             Agenda una llamada →
           </a>
           <a href="/staff" onClick={() => clicked('staff')} style={secondaryButtonStyle}>
-            Agrega a tus meseros
+            {staffNeedsNoun ? 'Agrega a tu equipo' : 'Agrega a tus meseros'}
           </a>
         </>
       )}
@@ -461,10 +462,10 @@ export function ReadyView({
       {mode === 'legacy' && (
         <>
           <a href="/staff" style={primaryButtonStyle} onClick={() => clicked('staff')}>
-            Agrega a tus meseros →
+            {staffNeedsNoun ? 'Agrega a tu equipo →' : 'Agrega a tus meseros →'}
           </a>
           <a href="/qr-codes" onClick={() => clicked('qr')} style={secondaryButtonStyle}>
-            Descargar QR por mesero
+            {staffNeedsNoun ? 'Descargar QR por persona' : 'Descargar QR por mesero'}
           </a>
         </>
       )}

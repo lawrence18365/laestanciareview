@@ -15,7 +15,7 @@ import {
 import { getGoogleRatingTrend, getGoogleRatingHistory, getGoogleReviewsAddedToday } from '@/lib/google-places';
 import { reviewUrlFor } from '@/lib/google-review';
 import { sameGroup } from '@/lib/group-scope';
-import { isSolo } from '@/lib/onboarding-profile';
+import { isSolo, parseGoogleProfile, staffNoun } from '@/lib/onboarding-profile';
 import { generateQrDataUrl, reviewUrlFor as qrReviewUrlFor } from '@/lib/qr';
 import DashboardView from '@/components/dashboard/DashboardView';
 import MapsRankCard from '@/components/dashboard/MapsRankCard';
@@ -147,6 +147,7 @@ export default async function DashboardPage({
         isSolo={isSolo(restaurant)}
         soloShareUrl={isSolo(restaurant) ? qrReviewUrlFor(restaurant.slug) : undefined}
         selfServe={qrShare}
+        staffNoun={selfServe ? staffNoun(parseGoogleProfile(restaurant.googleProfile)) : 'meseros'}
         hasStaff={hasStaff}
       />
       <div className="page-container" style={{ paddingTop: 0 }}>

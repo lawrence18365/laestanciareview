@@ -35,6 +35,11 @@ export interface GoogleProfile {
   fetchedAt: string;
   /** Google locations sharing this brand name (chain detection, US-15 M5). */
   chainCount?: number;
+  /**
+   * Places `primaryTypeDisplayName.text` (languageCode es), e.g. "Dentista".
+   * Absent on legacy rows; parseGoogleProfile returns null for those.
+   */
+  primaryTypeLabel?: string | null;
 }
 
 export function isSolo(r: { teamMode: string | null }): boolean {
@@ -95,6 +100,13 @@ function strOrNull(v: unknown): string | null {
   return typeof v === 'string' ? v : null;
 }
 
+/** Trimmed non-empty string, else null. */
+export function cleanLabel(v: unknown): string | null {
+  if (typeof v !== 'string') return null;
+  const s = v.trim();
+  return s ? s : null;
+}
+
 function boolOrNull(v: unknown): boolean | null {
   return typeof v === 'boolean' ? v : null;
 }
@@ -132,6 +144,7 @@ export function parseGoogleProfile(v: unknown): GoogleProfile | null {
     return {
       ...(chainCount !== null && chainCount >= 0 ? { chainCount: Math.round(chainCount) } : {}),
       primaryType: strOrNull(p.primaryType),
+      primaryTypeLabel: cleanLabel(p.primaryTypeLabel),
       types: Array.isArray(p.types)
         ? p.types.filter((t): t is string => typeof t === 'string')
         : [],
@@ -167,12 +180,75 @@ const CATEGORY_LABELS: Record<string, string> = {
   bakery: 'panadería',
 };
 
-/** es-MX noun for a Places `primaryType`. Fallback: 'restaurante'. */
-export function categoryLabel(primaryType: string | null): string {
-  if (typeof primaryType !== 'string') return 'restaurante';
-  return Object.prototype.hasOwnProperty.call(CATEGORY_LABELS, primaryType)
-    ? CATEGORY_LABELS[primaryType]
-    : 'restaurante';
+/** Places types for food and drink places that are not named `*_restaurant` / `*_bar`. */
+const FOOD_DRINK_TYPES = new Set([
+  'restaurant',
+  'bar',
+  'cafe',
+  'coffee_shop',
+  'bakery',
+  'meal_takeaway',
+  'meal_delivery',
+  'night_club',
+  'steak_house',
+  'pub',
+  'diner',
+  'food_court',
+  'ice_cream_shop',
+  'juice_shop',
+  'sandwich_shop',
+  'tea_house',
+  'donut_shop',
+  'dessert_shop',
+  'bagel_shop',
+  'brewery',
+]);
+
+function isFoodType(t: string): boolean {
+  return FOOD_DRINK_TYPES.has(t) || t.endsWith('_restaurant') || t.endsWith('_bar');
+}
+
+/**
+ * true for restaurants, bars, cafes, bakeries, takeout/delivery food, night
+ * clubs (primaryType or types). A place with no type information at all
+ * (null profile, legacy row) counts as food: unknown keeps today's behavior.
+ * The generic `food` / `store` types do not count, so a liquor store is not food.
+ */
+export function isFoodOrDrink(
+  profile: { primaryType: string | null; types: string[] } | null,
+): boolean {
+  if (!profile) return true;
+  const types = Array.isArray(profile.types) ? profile.types : [];
+  const primary = typeof profile.primaryType === 'string' && profile.primaryType ? profile.primaryType : null;
+  if (primary === null && types.length === 0) return true;
+  if (primary !== null && isFoodType(primary)) return true;
+  return types.some(isFoodType);
+}
+
+/**
+ * Spanish noun for the people who ask for reviews: 'meseros' for food/drink or
+ * a null profile (legacy), 'tu equipo' otherwise.
+ */
+export function staffNoun(profile: GoogleProfile | null): 'meseros' | 'tu equipo' {
+  return profile && !isFoodOrDrink(profile) ? 'tu equipo' : 'meseros';
+}
+
+/**
+ * es-MX noun for a Places `primaryType`: the table label first; else the
+ * lowercased Places display name (`primaryTypeLabel`, e.g. "dentista"); else
+ * 'restaurante' when the place is food/drink or unknown; else 'negocio'.
+ */
+export function categoryLabel(
+  primaryType: string | null,
+  primaryTypeLabel?: string | null,
+): string {
+  const type = typeof primaryType === 'string' ? primaryType : null;
+  if (type !== null && Object.prototype.hasOwnProperty.call(CATEGORY_LABELS, type)) {
+    return CATEGORY_LABELS[type];
+  }
+  const label = cleanLabel(primaryTypeLabel);
+  if (label) return label.toLocaleLowerCase('es-MX');
+  return isFoodOrDrink({ primaryType: type, types: [] }) ? 'restaurante' : 'negocio';
 }
 
 /** Where to put the QR. Each tip is <= 15 words. */
@@ -180,8 +256,15 @@ export function qrPlacementTip(p: GoogleProfile | null, mode: TeamMode | null): 
   if (p && (p.delivery === true || p.takeout === true)) {
     return 'Pégalo en la caja o la bolsa de cada pedido.';
   }
-  if (mode === 'team') return 'Cada mesero muestra su QR al cobrar.';
-  return 'Ponlo en la caja de cobro o en cada mesa.';
+  const nonFood = p !== null && !isFoodOrDrink(p);
+  if (mode === 'team') {
+    return nonFood
+      ? 'Cada persona de tu equipo muestra su QR al cobrar.'
+      : 'Cada mesero muestra su QR al cobrar.';
+  }
+  return nonFood
+    ? 'Ponlo en tu mostrador o en la recepción.'
+    : 'Ponlo en la caja de cobro o en cada mesa.';
 }
 
 /** Suggested first goal: today's count plus 20 (0 when unknown). */

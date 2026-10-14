@@ -176,6 +176,63 @@ describe('findComparableCompetitors / onboarding (mock fetch)', () => {
     expect(out.map((c) => c.name)).toEqual(['Uno']);
   });
 
+  it('non-food: one category search, never type=restaurant, no restaurant results', async () => {
+    fetchMock.mockImplementation(async () =>
+      jsonResponse({
+        results: [apiPlace('d1', 'Dental Sur', 40, 0.002), apiPlace('d2', 'Clínica Norte', 90, 0.004)],
+      }),
+    );
+    const out = await findComparableCompetitors(21.12, -101.68, 'self', {
+      reviewCount: 50,
+      primaryType: 'dentist',
+      primaryTypeLabel: 'Dentista',
+      types: ['dentist', 'health'],
+    });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const url = String(fetchMock.mock.calls[0][0]);
+    expect(url).not.toContain('type=restaurant');
+    expect(url).not.toContain('type=');
+    expect(url).toContain('keyword=dentista');
+    expect(out.map((c) => c.name)).toEqual(['Dental Sur', 'Clínica Norte']);
+  });
+
+  it('non-food without a Places label searches by its own primaryType; with nothing usable it makes no call', async () => {
+    fetchMock.mockResolvedValue(jsonResponse({ results: [apiPlace('l1', 'Lavandería Uno', 40, 0.002)] }));
+    await findComparableCompetitors(21.12, -101.68, 'self', {
+      reviewCount: 50,
+      primaryType: 'laundry',
+      types: ['laundry'],
+    });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const url = String(fetchMock.mock.calls[0][0]);
+    expect(url).toContain('type=laundry');
+    expect(url).not.toContain('type=restaurant');
+    expect(url).not.toContain('keyword=');
+
+    fetchMock.mockClear();
+    const none = await findComparableCompetitors(21.12, -101.68, 'self', {
+      reviewCount: 50,
+      primaryType: null,
+      types: ['dentist'],
+    });
+    expect(none).toEqual([]);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('food stays unchanged even when it carries a Places label (type=restaurant, table keyword)', async () => {
+    fetchMock.mockResolvedValue(jsonResponse({ results: [apiPlace('p1', 'Uno', 60, 0.001)] }));
+    await findComparableCompetitors(21.12, -101.68, 'self', {
+      reviewCount: 60,
+      primaryType: 'pizza_restaurant',
+      primaryTypeLabel: 'Pizzería',
+      types: ['pizza_restaurant', 'restaurant'],
+    });
+    const urls = fetchMock.mock.calls.map((c) => String(c[0]));
+    expect(urls).toHaveLength(2);
+    expect(urls.every((u) => u.includes('type=restaurant'))).toBe(true);
+    expect(urls.filter((u) => u.includes('keyword=pizzer%C3%ADa'))).toHaveLength(1);
+  });
+
   it('onboarding: La Privada-like place gets local competitors, not the chains', async () => {
     fetchMock.mockImplementation(async (url: string) => {
       const u = String(url);
