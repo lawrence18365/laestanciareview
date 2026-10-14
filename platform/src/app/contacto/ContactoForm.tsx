@@ -117,11 +117,25 @@ function readMarketingPayload() {
   };
 }
 
+/** Google's free Business Profile signup, for owners who are not on Maps yet. */
+export const GOOGLE_PROFILE_CREATE_URL = 'https://business.google.com/create';
+
+/**
+ * RateTap only works for a business on Google Maps. A submit without a Google
+ * pick stops once on the Maps step; "continuar" lets a real listing the search
+ * missed through (the founder alert flags it as "sin Place ID").
+ */
+export function needsMapsGate(form: Pick<Form, 'googlePlaceId'>, confirmedOnMaps: boolean): boolean {
+  return !form.googlePlaceId && !confirmedOnMaps;
+}
+
 export default function ContactoForm({ pilotOffer }: { pilotOffer: boolean }) {
   const [form, setForm] = useState<Form>(EMPTY);
   const [error, setError] = useState('');
   const [loginUrl, setLoginUrl] = useState('');
   const [loading, setLoading] = useState(false);
+  const [mapsGate, setMapsGate] = useState(false);
+  const confirmedOnMapsRef = useRef(false);
   // Funnel instrumentation: each of these fires at most once per mount, so a
   // re-render or a second focus never inflates the step counts.
   const formStartedRef = useRef(false);
@@ -206,6 +220,7 @@ export default function ContactoForm({ pilotOffer }: { pilotOffer: boolean }) {
       track('signup_place_selected', { has_place_id: Boolean(place.placeId) });
     }
     if (!place.address.city) setCityRevealed(true);
+    if (place.placeId) setMapsGate(false);
     setForm((f) => applyPlaceSelection(f, place));
   }
 
@@ -217,6 +232,11 @@ export default function ContactoForm({ pilotOffer }: { pilotOffer: boolean }) {
     e.preventDefault();
     setError('');
     setLoginUrl('');
+    if (needsMapsGate(form, confirmedOnMapsRef.current)) {
+      if (!mapsGate) track('signup_maps_gate', { choice: 'shown' });
+      setMapsGate(true);
+      return;
+    }
     if (!form.city.trim()) {
       // The city is hidden while Google supplies it; if it did not, ask now.
       setCityRevealed(true);
@@ -488,6 +508,40 @@ export default function ContactoForm({ pilotOffer }: { pilotOffer: boolean }) {
               </Row>
             </details>
             </>)}
+
+            {mapsGate && (
+              <div role="alert" style={{
+                padding: '0.9rem',
+                marginTop: '1rem',
+                border: '1px solid var(--border-dark, #1c1917)',
+                background: '#fef3c7',
+                color: 'var(--text-main, #1c1917)',
+              }}>
+                <p style={{ margin: '0 0 0.25rem', fontWeight: 800 }}>Necesitas estar en Google Maps.</p>
+                <p style={{ margin: '0 0 0.75rem', fontSize: '0.85rem' }}>Elígelo de la lista de arriba.</p>
+                <a
+                  href={GOOGLE_PROFILE_CREATE_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => track('signup_maps_gate', { choice: 'create_profile' })}
+                  style={{ display: 'block', minHeight: 44, padding: '0.7rem', textAlign: 'center', background: 'var(--text-main, #1c1917)', color: '#fff', fontWeight: 700, textDecoration: 'none', boxSizing: 'border-box' }}
+                >
+                  Crear mi perfil gratis
+                </a>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    track('signup_maps_gate', { choice: 'continue' });
+                    confirmedOnMapsRef.current = true;
+                    setMapsGate(false);
+                    e.currentTarget.form?.requestSubmit();
+                  }}
+                  style={{ display: 'block', width: '100%', minHeight: 44, marginTop: '0.5rem', padding: '0.7rem', background: 'transparent', border: '1px solid var(--border-dark, #1c1917)', color: 'inherit', font: 'inherit', fontWeight: 600, cursor: 'pointer' }}
+                >
+                  Ya estoy en Google, continuar
+                </button>
+              </div>
+            )}
 
             {error && (
               <div style={{

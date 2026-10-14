@@ -84,6 +84,9 @@ export const PRODUCT_EVENT_NAMES = [
   'signup_place_selected',
   // Google place search came back empty (props: {retried}). Never the query.
   'place_search_empty',
+  // Submit without a Google pick: the "Necesitas estar en Google Maps" step
+  // (props: {choice: 'shown' | 'create_profile' | 'continue'}).
+  'signup_maps_gate',
   'signup_shape_selected',
   'signup_submit',
   'signup_submit_failed',
@@ -148,6 +151,7 @@ export const PUBLIC_EVENT_NAMES: readonly ProductEventName[] = [
   'signup_field_focused',
   'signup_place_selected',
   'place_search_empty',
+  'signup_maps_gate',
   'signup_shape_selected',
   'signup_submit',
   'signup_submit_failed',
