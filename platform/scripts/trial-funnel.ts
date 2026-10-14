@@ -27,6 +27,21 @@
  * POST /api/onboarding/goal); '-' when unanswered, for every legacy row, and before 0034.
  * "Por meta" splits signups, activated, and paying the same way.
  *
+ * Cohort metrics (did the trial come back, did real guests rate it):
+ *   dias     distinct America/Mexico_City dates with a non-bot product_events row for the
+ *            restaurant (signup day included).
+ *   volvio   true when any such event falls on a Mexico-City date later than the date the
+ *            restaurant was created. It compares calendar dates, so an event 10 minutes
+ *            after a 23:55 signup already counts as a return.
+ *   real7d   reviews with created_at > restaurant created_at + 30 minutes and
+ *            <= restaurant created_at + 7 days. The first 30 minutes are excluded because the
+ *            owner tests their own QR then. reviews has no source column, so this is a time
+ *            rule, not proof the guest was a stranger. `calif` still counts all ratings.
+ * "Volvieron otro día" counts volvio; "Calificación real (7 días)" counts real7d >= 1, and a trial
+ * younger than 7 days counts as soon as it has one (K aún en ventana = trials still inside 7 days).
+ * `--split YYYY-MM-DD` (Mexico-City date) prints the Funnel block twice, signups created before
+ * that date ("Antes de") and from it ("Desde").
+ *
  * Source is the signup's commercial lead UTM (utm_source/utm_content).
  *
  * Two extra views are printed after the raw table:
@@ -75,6 +90,17 @@ function slugArg(): string | undefined {
   return v;
 }
 
+/** `--split YYYY-MM-DD` (a Mexico-City date), or undefined when absent. */
+function splitArg(): string | undefined {
+  const v = argValue('split');
+  if (v === undefined) return undefined;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(v)) {
+    console.error(`error: --split "${v}" is not a YYYY-MM-DD date`);
+    process.exit(2);
+  }
+  return v;
+}
+
 /** Percentage of the previous step, or a dash when there is nothing to divide by. */
 function pct(step: number, previous: number): string {
   if (previous <= 0) return '—';
@@ -92,6 +118,20 @@ type TrialRow = Record<string, string | number | boolean>;
 
 function isPaying(r: TrialRow): boolean {
   return r.pago === 'authorized' || r.estado === 'active';
+}
+
+/** The trial-level Funnel block. `title` is appended when the block is one half of a --split. */
+function printFunnel(rows: TrialRow[], title = '') {
+  const count = (f: (r: TrialRow) => boolean) => rows.filter(f).length;
+  console.log(title ? `Funnel (${title}):` : 'Funnel:');
+  console.log(`  Signups            ${rows.length}`);
+  console.log(`  Google conectado   ${count((r) => r.google === true)}`);
+  console.log(`  Primera calificación ${count((r) => Number(r.calif) > 0)}`);
+  console.log(`  Volvieron otro día  ${count((r) => r.volvio === true)}`);
+  console.log(
+    `  Calificación real (7 días)  ${count((r) => Number(r.real7d) >= 1)}  (${count((r) => r.en_ventana === true)} aún en ventana)`,
+  );
+  console.log(`  Pagando            ${count(isPaying)}`);
 }
 
 /** Signups, activated (first rating), and paying for each value of one column. */
@@ -139,6 +179,21 @@ async function main() {
            (select count(*)::int from product_events e
              where e.restaurant_id = r.id and e.event_name = 'email_clicked'
                and coalesce(e.properties->>'bot', '') <> 'true') as clics,
+           (select count(distinct (e.created_at at time zone 'America/Mexico_City')::date)::int
+              from product_events e
+             where e.restaurant_id = r.id
+               and coalesce(e.properties->>'bot', '') <> 'true') as dias,
+           exists (select 1 from product_events e
+                    where e.restaurant_id = r.id
+                      and coalesce(e.properties->>'bot', '') <> 'true'
+                      and (e.created_at at time zone 'America/Mexico_City')::date
+                          > (r.created_at at time zone 'America/Mexico_City')::date) as volvio,
+           (select count(*)::int from reviews v
+             where v.restaurant_id = r.id
+               and v.created_at > r.created_at + interval '30 minutes'
+               and v.created_at <= r.created_at + interval '7 days') as real7d,
+           to_char(r.created_at at time zone 'America/Mexico_City', 'YYYY-MM-DD') as creado_dia,
+           (r.created_at > now() - interval '7 days') as en_ventana,
            coalesce((select m.status from mercadopago_subscriptions m
                      where m.restaurant_id = r.id order by m.id desc limit 1), '-') as pago,
            r.subscription_status as estado
@@ -150,15 +205,18 @@ async function main() {
   `) as Array<Record<string, string | number | boolean>>;
 
   console.log(`Trials since ${since}: ${rows.length}\n`);
-  if (rows.length) console.table(rows);
+  // creado_dia / en_ventana only feed the Funnel lines and --split; they are not table columns.
+  if (rows.length) console.table(rows.map(({ creado_dia: _d, en_ventana: _w, ...shown }) => shown));
 
   const n = rows.length;
   const count = (f: (r: Record<string, string | number | boolean>) => boolean) => rows.filter(f).length;
-  console.log('Funnel:');
-  console.log(`  Signups            ${n}`);
-  console.log(`  Google conectado   ${count((r) => r.google === true)}`);
-  console.log(`  Primera calificación ${count((r) => Number(r.calif) > 0)}`);
-  console.log(`  Pagando            ${count(isPaying)}`);
+  const split = splitArg();
+  if (split) {
+    printFunnel(rows.filter((r) => String(r.creado_dia) < split), `Antes de ${split}`);
+    printFunnel(rows.filter((r) => String(r.creado_dia) >= split), `Desde ${split}`);
+  } else {
+    printFunnel(rows);
+  }
 
   printSplit(rows, 'forma', 'Por forma (team_mode)');
   printSplit(rows, 'sucursales', 'Por sucursales (locations_band)');
