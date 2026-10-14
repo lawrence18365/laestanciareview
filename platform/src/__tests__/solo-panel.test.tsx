@@ -133,22 +133,28 @@ describe('dashboard empty-state CTAs per team_mode', () => {
     expect(renderToStaticMarkup(<DashboardView {...baseProps} googleReviewCount={12} isSolo={false} />)).toBe(html);
   });
 
-  it('solo gets the full-screen QR, the WhatsApp share, the letrero link and the Google count line', () => {
+  it('solo gets the ask-today card, the full-screen QR, the letrero link and the Google count line', () => {
     const html = renderToStaticMarkup(
       <DashboardView
         {...baseProps}
         googleReviewCount={12}
         isSolo
-        soloShareUrl="https://app.ratetapmx.com/r/tacos-ana"
-        selfServe={{ restaurantName: 'Tacos Ana', qrDataUrl: 'data:image/png;base64,QR' }}
+        selfServe={{
+          restaurantName: 'Tacos Ana',
+          qrDataUrl: 'data:image/png;base64,QR',
+          reviewUrl: 'https://app.ratetapmx.com/r/tacos-ana',
+          askTodayCount: 0,
+          reviewCounts: null,
+        }}
       />,
     );
     expect(html).toContain('href="/qr-codes/letrero"');
-    expect(html.indexOf('Muéstrale este QR a tu próximo cliente')).toBeGreaterThan(-1);
-    expect(html.indexOf('Mándalo por WhatsApp a tus clientes')).toBeGreaterThan(
-      html.indexOf('Muéstrale este QR a tu próximo cliente'),
-    );
-    expect(html.indexOf('Imprimir letrero')).toBeGreaterThan(html.indexOf('Mándalo por WhatsApp a tus clientes'));
+    const ask = html.indexOf('Pide 5 reseñas hoy');
+    const show = html.indexOf('Muéstrale este QR a tu próximo cliente');
+    expect(ask).toBeGreaterThan(-1);
+    expect(show).toBeGreaterThan(ask);
+    expect(html.indexOf('Imprimir letrero')).toBeGreaterThan(show);
+    expect(html).toContain('0 de 5 hoy');
     expect(html).toContain(
       `href="https://wa.me/?text=${encodeURIComponent(
         '¡Gracias por visitarnos en Tacos Ana! ¿Nos dejas tu opinión? https://app.ratetapmx.com/r/tacos-ana',
@@ -161,7 +167,7 @@ describe('dashboard empty-state CTAs per team_mode', () => {
 
   it('solo without a Google count shows no count line', () => {
     const html = renderToStaticMarkup(
-      <DashboardView {...baseProps} googleReviewCount={null} isSolo soloShareUrl="https://x/r/a" />,
+      <DashboardView {...baseProps} googleReviewCount={null} isSolo />,
     );
     expect(html).toContain('Imprimir letrero');
     expect(html).not.toContain('Tienes ');
@@ -169,7 +175,7 @@ describe('dashboard empty-state CTAs per team_mode', () => {
 
   it('solo with a count of 0 starts the goal at 20', () => {
     const html = renderToStaticMarkup(
-      <DashboardView {...baseProps} googleReviewCount={0} isSolo soloShareUrl="https://x/r/a" />,
+      <DashboardView {...baseProps} googleReviewCount={0} isSolo />,
     );
     expect(html).toContain('Tienes 0 reseñas. Meta: 20.');
   });

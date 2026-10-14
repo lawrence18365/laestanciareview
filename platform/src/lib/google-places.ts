@@ -171,6 +171,41 @@ export async function getGoogleRatingTrend(restaurantId: number) {
 }
 
 /**
+ * Google review counts for the "since you joined" counter: the first snapshot
+ * at/after the restaurant was created, and the newest one. Null with fewer than
+ * two snapshots (first and newest are the same row), so a lone baseline never
+ * reads as progress.
+ */
+export async function getGoogleReviewCountsSinceJoin(
+  restaurantId: number,
+  joinedAt: Date,
+): Promise<{ baseline: number; latest: number } | null> {
+  const [firstRows, latestRows] = await Promise.all([
+    db
+      .select({ id: googleRatingSnapshots.id, reviewCount: googleRatingSnapshots.reviewCount })
+      .from(googleRatingSnapshots)
+      .where(
+        and(
+          eq(googleRatingSnapshots.restaurantId, restaurantId),
+          gte(googleRatingSnapshots.capturedAt, joinedAt),
+        ),
+      )
+      .orderBy(asc(googleRatingSnapshots.capturedAt))
+      .limit(1),
+    db
+      .select({ id: googleRatingSnapshots.id, reviewCount: googleRatingSnapshots.reviewCount })
+      .from(googleRatingSnapshots)
+      .where(eq(googleRatingSnapshots.restaurantId, restaurantId))
+      .orderBy(desc(googleRatingSnapshots.capturedAt))
+      .limit(1),
+  ]);
+  const first = firstRows[0];
+  const latest = latestRows[0];
+  if (!first || !latest || first.id === latest.id) return null;
+  return { baseline: first.reviewCount, latest: latest.reviewCount };
+}
+
+/**
  * Google reviews added today: live cached count minus the most recent
  * snapshot captured before Mexico-midnight today. Returns null when there's
  * no prior snapshot to diff against.

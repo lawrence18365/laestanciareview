@@ -6,6 +6,8 @@ import { SIGNUP_ACCESS_COOKIE } from '@/lib/signup-access';
 import { PILOT_TRIAL_DAYS } from '@/lib/pilot';
 import { verifySession } from '@/lib/session';
 import { getRestaurantBySlug } from '@/lib/queries';
+import { whatsappSharesToday } from '@/lib/ask-today';
+import { getGoogleReviewCountsSinceJoin } from '@/lib/google-places';
 import { generateQrDataUrl, reviewUrlFor } from '@/lib/qr';
 import { reviewUrlFor as googleReviewUrlFor } from '@/lib/google-review';
 
@@ -24,7 +26,16 @@ async function loadReadyForSession(slug: string): Promise<StatusResponse | null>
     const r = await getRestaurantBySlug(slug);
     if (!r) return null;
     const fields = readyProfileFields(r);
-    if (readyMode(fields) === 'legacy') return null;
+    const mode = readyMode(fields);
+    if (mode === 'legacy') return null;
+    // Only the self-serve card and counter read these; group keeps today's screen.
+    const selfServe = mode === 'solo' || mode === 'team';
+    const [askTodayCount, reviewCounts] = selfServe
+      ? await Promise.all([
+          whatsappSharesToday(r.id),
+          getGoogleReviewCountsSinceJoin(r.id, r.createdAt).catch(() => null),
+        ])
+      : [0, null];
     return {
       ready: true,
       slug: r.slug,
@@ -33,6 +44,8 @@ async function loadReadyForSession(slug: string): Promise<StatusResponse | null>
       qrDataUrl: await generateQrDataUrl(r.slug),
       googleConnected: googleReviewUrlFor(r) !== null,
       ...fields,
+      askTodayCount,
+      reviewCounts,
       ...goalQuestionFor(r),
     };
   } catch {

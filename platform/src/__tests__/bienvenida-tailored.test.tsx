@@ -207,14 +207,14 @@ describe('ReadyView per mode', () => {
     expect(out).toContain('Pégalo en la caja o la bolsa de cada pedido.');
   });
 
-  it('solo: full-screen QR first, WhatsApp second, print link third, no staff CTA', () => {
+  it('solo: ask-today card first, full-screen QR second, print link third, no staff CTA', () => {
     const out = html(ready({ ...solo, googleReviewCount: 5 }));
+    const wa = out.indexOf('Pide 5 reseñas hoy');
     const show = out.indexOf('Muéstrale este QR a tu próximo cliente');
-    const wa = out.indexOf('Mándalo por WhatsApp a tus clientes');
     const print = out.indexOf('Imprimir letrero');
-    expect(show).toBeGreaterThan(-1);
-    expect(wa).toBeGreaterThan(show);
-    expect(print).toBeGreaterThan(wa);
+    expect(wa).toBeGreaterThan(-1);
+    expect(show).toBeGreaterThan(wa);
+    expect(print).toBeGreaterThan(show);
     expect(out).toContain('href="/qr-codes/letrero"');
     expect(out).not.toContain('Imprime tu letrero');
     expect(out).not.toContain('Agrega a tus meseros');
@@ -224,13 +224,13 @@ describe('ReadyView per mode', () => {
 
   it('team: same three actions, staff CTA stays visible below them', () => {
     const out = html(ready({ ...team }));
+    const wa = out.indexOf('Pide 5 reseñas hoy');
     const show = out.indexOf('Muéstrale este QR a tu próximo cliente');
-    const wa = out.indexOf('Mándalo por WhatsApp a tus clientes');
     const print = out.indexOf('Imprimir letrero');
     const staff = out.indexOf('Agrega a tus meseros');
-    expect(show).toBeGreaterThan(-1);
-    expect(wa).toBeGreaterThan(show);
-    expect(print).toBeGreaterThan(wa);
+    expect(wa).toBeGreaterThan(-1);
+    expect(show).toBeGreaterThan(wa);
+    expect(print).toBeGreaterThan(show);
     expect(staff).toBeGreaterThan(print);
     expect(out).toContain('href="/staff"');
     expect(out).toContain('Descargar QR por mesero');
