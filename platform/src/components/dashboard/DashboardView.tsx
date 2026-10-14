@@ -119,6 +119,8 @@ interface Props {
    * CTAs. qrDataUrl is null if the QR could not be generated.
    */
   selfServe?: { restaurantName: string; qrDataUrl: string | null };
+  /** 'tu equipo' for a non-food self-serve business; default 'meseros'. */
+  staffNoun?: 'meseros' | 'tu equipo';
   /**
    * False only when the restaurant has no staff rows at all: the staff ranking
    * card is then hidden instead of showing an empty ranking. Defaults to true so
@@ -146,6 +148,7 @@ export default function DashboardView({
   isSolo = false,
   soloShareUrl,
   selfServe,
+  staffNoun = 'meseros',
   hasStaff = true,
 }: Props) {
   // Plain ask, no offer and no rating routing (Google policy).
@@ -277,7 +280,7 @@ export default function DashboardView({
             ) : (
               <>
                 <a href="/staff" style={selfServe ? emptyCtaSecondary : emptyCtaPrimary}>
-                  1. Agrega a tus meseros
+                  {staffNoun === 'tu equipo' ? '1. Agrega a tu equipo' : '1. Agrega a tus meseros'}
                 </a>
                 <a href="/qr-codes" style={emptyCtaSecondary}>
                   2. Descarga sus códigos QR

@@ -25,6 +25,8 @@ Results are not guaranteed consistent across identical calls ([source](https://d
 | Defaults | From `cuisine` + `city`: `restaurante de {cuisine} {city}`, `{dish} {city}`, `{cuisine} cerca de mí` |
 | Examples | `restaurante de cortes León`, `arrachera León`, `steakhouse cerca de mí` |
 
+Self-serve keyword (one per business): the business's own Google category plus the city. The noun is the table label (`pizzería`, `taquería`), else the lowercased Places `primaryTypeDisplayName` stored in `google_profile.primaryTypeLabel` (`dentista Tecate`, `lavandería Veracruz`). `restaurante` is the fallback only for food/drink or unknown places; any other business falls back to `negocio`. Existing wrong keywords are fixed with `scripts/backfill-selfserve-maps-rank.ts --fix-category` (dry run first, `--apply` swaps the rows).
+
 ## 3. Cost
 
 Source: [pricing table, updated 2026-10-08](https://developers.google.com/maps/billing-and-pricing/pricing), [pricing overview](https://mapsplatform.google.com/pricing/).

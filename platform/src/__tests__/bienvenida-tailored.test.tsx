@@ -237,6 +237,23 @@ describe('ReadyView per mode', () => {
     expect(out.match(/background:#1c1917/g)).toHaveLength(1);
   });
 
+  it('team non-food (dentist): "tu equipo" wording, no waiter words; food team unchanged', () => {
+    const dentist: GoogleProfile = { ...profile, primaryType: 'dentist', types: ['dentist', 'health'] };
+    const out = html(ready({ ...team, googleProfile: dentist }));
+    expect(out).toContain('Agrega a tu equipo →');
+    expect(out).toContain('Descargar QR por persona');
+    expect(out).toContain('Cada persona de tu equipo muestra su QR al cobrar.');
+    expect(out).not.toMatch(/mesero/);
+
+    const solo1 = html(ready({ ...solo, googleProfile: dentist }));
+    expect(solo1).toContain('Ponlo en tu mostrador o en la recepción.');
+
+    const food = html(ready({ ...team, googleProfile: profile }));
+    expect(food).toContain('Agrega a tus meseros →');
+    expect(food).toContain('Descargar QR por mesero');
+    expect(food).not.toContain('Agrega a tu equipo');
+  });
+
   it('6+: schedule-a-call is primary, staff CTA secondary', () => {
     const out = html(ready({ ...group }));
     expect(out).toContain(`href="${SUPPORT_WHATSAPP_URL}"`);

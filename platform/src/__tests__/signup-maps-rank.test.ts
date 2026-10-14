@@ -133,6 +133,31 @@ describe('signup Maps rank one-off', () => {
     expect(keywordInserts()).toEqual([]);
   });
 
+  it('a dentist gets its own category keyword, never "restaurante"', async () => {
+    vi.stubEnv('MAPS_RANK_ENABLED', 'true');
+    mocks.sweep.mockResolvedValue({ samples: 9, failed: 0 });
+    const profile = (extra: Record<string, unknown>) => ({
+      primaryType: 'dentist',
+      types: ['dentist', 'health'],
+      fetchedAt: '2026-10-14T00:00:00.000Z',
+      ...extra,
+    });
+
+    await setupSelfServeMapsRank({
+      id: 8,
+      city: 'Tecate',
+      googlePlaceId: 'p',
+      googleProfile: profile({ primaryTypeLabel: 'Dentista' }),
+    });
+    // Legacy non-food row without a label: "negocio", still not "restaurante".
+    await setupSelfServeMapsRank({ id: 9, city: 'Tecate', googlePlaceId: 'p', googleProfile: profile({}) });
+
+    expect(keywordInserts()).toEqual([
+      [{ restaurantId: 8, keyword: 'dentista Tecate' }],
+      [{ restaurantId: 9, keyword: 'negocio Tecate' }],
+    ]);
+  });
+
   it('never throws when the sweep fails', async () => {
     vi.stubEnv('MAPS_RANK_ENABLED', 'true');
     mocks.sweep.mockRejectedValue(new Error('places down'));

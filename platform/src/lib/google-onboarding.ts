@@ -24,11 +24,14 @@
  * response bodies.
  */
 import { findComparableCompetitors, placesApiKey } from '@/lib/competitors';
-import type { Competitor, GoogleProfile } from '@/lib/onboarding-profile';
+import { cleanLabel, type Competitor, type GoogleProfile } from '@/lib/onboarding-profile';
 
 const PLACES_BASE = 'https://places.googleapis.com/v1';
+// primaryTypeDisplayName rides in the same details call (no extra request, no
+// higher SKU tier than the Enterprise + Atmosphere fields already in the mask);
+// languageCode=es makes it a Spanish noun such as "Dentista" (SQ-223).
 const FIELD_MASK =
-  'rating,userRatingCount,primaryType,types,takeout,delivery,dineIn,location,formattedAddress';
+  'rating,userRatingCount,primaryType,primaryTypeDisplayName,types,takeout,delivery,dineIn,location,formattedAddress';
 export const ONBOARDING_BUDGET_MS = 3000;
 
 export type OnboardingGoogleData = {
@@ -44,6 +47,7 @@ interface PlaceV1 {
   rating?: number;
   userRatingCount?: number;
   primaryType?: string;
+  primaryTypeDisplayName?: { text?: unknown; languageCode?: string };
   types?: unknown;
   takeout?: boolean;
   delivery?: boolean;
@@ -62,7 +66,7 @@ async function load(placeId: string, signal: AbortSignal): Promise<OnboardingGoo
   const key = placesApiKey();
   if (!key) throw new FetchCode('no_key');
 
-  const res = await fetch(`${PLACES_BASE}/places/${encodeURIComponent(placeId)}`, {
+  const res = await fetch(`${PLACES_BASE}/places/${encodeURIComponent(placeId)}?languageCode=es`, {
     headers: { 'X-Goog-Api-Key': key, 'X-Goog-FieldMask': FIELD_MASK },
     cache: 'no-store',
     signal,
@@ -75,6 +79,7 @@ async function load(placeId: string, signal: AbortSignal): Promise<OnboardingGoo
   const hasLocation = typeof lat === 'number' && typeof lng === 'number';
 
   const primaryType = typeof place.primaryType === 'string' ? place.primaryType : null;
+  const primaryTypeLabel = cleanLabel(place.primaryTypeDisplayName?.text);
   const types = Array.isArray(place.types)
     ? place.types.filter((t): t is string => typeof t === 'string')
     : [];
@@ -90,6 +95,7 @@ async function load(placeId: string, signal: AbortSignal): Promise<OnboardingGoo
         reviewCount:
           typeof place.userRatingCount === 'number' ? Math.round(place.userRatingCount) : null,
         primaryType,
+        primaryTypeLabel,
         types,
       },
       { signal },
@@ -98,6 +104,7 @@ async function load(placeId: string, signal: AbortSignal): Promise<OnboardingGoo
 
   const profile: GoogleProfile = {
     primaryType,
+    primaryTypeLabel,
     types,
     takeout: bool(place.takeout),
     delivery: bool(place.delivery),

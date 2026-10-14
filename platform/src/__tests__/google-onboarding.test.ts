@@ -89,9 +89,9 @@ describe('fetchOnboardingGoogleData', () => {
 
     // Details call: Places v1 GET with the exact field mask and the key in a header, not the URL.
     const [detailsUrl, detailsInit] = fetchMock.mock.calls[0];
-    expect(detailsUrl).toBe('https://places.googleapis.com/v1/places/self');
+    expect(detailsUrl).toBe('https://places.googleapis.com/v1/places/self?languageCode=es');
     expect(detailsInit.headers['X-Goog-FieldMask']).toBe(
-      'rating,userRatingCount,primaryType,types,takeout,delivery,dineIn,location,formattedAddress',
+      'rating,userRatingCount,primaryType,primaryTypeDisplayName,types,takeout,delivery,dineIn,location,formattedAddress',
     );
     expect(detailsInit.headers['X-Goog-Api-Key']).toBe('secret-key-123');
     expect(warn).not.toHaveBeenCalled();
@@ -150,6 +150,48 @@ describe('fetchOnboardingGoogleData', () => {
     expect(out.rating).toBeNull();
     expect(out.reviewCount).toBeNull();
     expect(out.profile?.competitors).toEqual([]);
+  });
+
+  it('stores primaryTypeDisplayName.text as primaryTypeLabel (null when absent)', async () => {
+    fetchMock.mockImplementation(async (url: string) =>
+      String(url).startsWith('https://places.googleapis.com')
+        ? jsonResponse({
+            ...detailsBody,
+            primaryType: 'dentist',
+            types: ['dentist', 'health'],
+            primaryTypeDisplayName: { text: 'Dentista', languageCode: 'es' },
+          })
+        : jsonResponse(nearby([])),
+    );
+    expect((await fetchOnboardingGoogleData('self')).profile?.primaryTypeLabel).toBe('Dentista');
+
+    fetchMock.mockImplementation(async (url: string) =>
+      String(url).startsWith('https://places.googleapis.com')
+        ? jsonResponse(detailsBody)
+        : jsonResponse(nearby([])),
+    );
+    expect((await fetchOnboardingGoogleData('self')).profile?.primaryTypeLabel).toBeNull();
+  });
+
+  it('searches a non-food place by its own category, never as a restaurant', async () => {
+    fetchMock.mockImplementation(async (url: string) =>
+      String(url).startsWith('https://places.googleapis.com')
+        ? jsonResponse({
+            ...detailsBody,
+            primaryType: 'dentist',
+            types: ['dentist', 'health'],
+            primaryTypeDisplayName: { text: 'Dentista', languageCode: 'es' },
+          })
+        : jsonResponse(nearby([place('d1', 'Dental Sur', 4.7, 60)])),
+    );
+    const out = await fetchOnboardingGoogleData('self');
+    const nearbyUrls = fetchMock.mock.calls
+      .map((c) => String(c[0]))
+      .filter((u) => u.includes('nearbysearch'));
+    expect(nearbyUrls).toHaveLength(1);
+    expect(nearbyUrls[0]).not.toContain('type=restaurant');
+    expect(nearbyUrls[0]).toContain('keyword=dentista');
+    expect(out.profile?.competitors.map((c) => c.name)).toEqual(['Dental Sur']);
   });
 });
 

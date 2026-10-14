@@ -12,7 +12,7 @@
  * candidates by category, review-count range, chain denylist and distance.
  * The audit page does not use it and is unchanged.
  */
-import { categoryLabel, type Competitor } from '@/lib/onboarding-profile';
+import { categoryLabel, isFoodOrDrink, type Competitor } from '@/lib/onboarding-profile';
 
 export const NEARBY_RADIUS_M = 3000;
 
@@ -34,6 +34,11 @@ export interface CompetitorFetchOptions {
   revalidate?: number;
   /** Optional nearbysearch `keyword` (onboarding category search). Omitted = unchanged URL. */
   keyword?: string;
+  /**
+   * Legacy nearbysearch `type`. Omitted = 'restaurant' (the audit page and food
+   * onboarding, unchanged URL). A string overrides it; null sends no `type`.
+   */
+  placeType?: string | null;
 }
 
 /**
@@ -82,7 +87,13 @@ export async function getNearbyCompetitors(
   const key = placesApiKey();
   if (!key) return [];
   const keywordParam = options.keyword ? `&keyword=${encodeURIComponent(options.keyword)}` : '';
-  const url = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${lat},${lng}&radius=${NEARBY_RADIUS_M}&type=restaurant${keywordParam}&key=${key}`;
+  const typeParam =
+    options.placeType === undefined
+      ? '&type=restaurant'
+      : options.placeType
+        ? `&type=${encodeURIComponent(options.placeType)}`
+        : '';
+  const url = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${lat},${lng}&radius=${NEARBY_RADIUS_M}${typeParam}${keywordParam}&key=${key}`;
   const init: RequestInit & { next?: { revalidate: number } } = options.signal
     ? { signal: options.signal }
     : {};
@@ -175,6 +186,8 @@ export interface ComparableOwn {
   /** The restaurant's own Google review count (null when unknown). */
   reviewCount: number | null;
   primaryType: string | null;
+  /** Places display name of the primary type, es (e.g. "dentista"); null on legacy rows. */
+  primaryTypeLabel?: string | null;
   types: string[];
 }
 
@@ -227,9 +240,11 @@ export function selectComparableCompetitors(
 }
 
 /**
- * Onboarding competitor lookup: the usual nearbysearch plus, for a specific
- * category, one extra search with the category label as keyword (run in
- * parallel; its failure is ignored). Both share the caller's abort signal.
+ * Onboarding competitor lookup. Food/drink (and unknown) places: the usual
+ * nearbysearch plus, for a specific category, one extra search with the
+ * category label as keyword (run in parallel; its failure is ignored).
+ * Both share the caller's abort signal. Non-food places (a dentist, a
+ * laundry) take `findNonFoodCompetitors` and are never searched as restaurants.
  */
 export async function findComparableCompetitors(
   lat: number,
@@ -238,6 +253,7 @@ export async function findComparableCompetitors(
   own: ComparableOwn,
   options: CompetitorFetchOptions = {},
 ): Promise<Competitor[]> {
+  if (!isFoodOrDrink(own)) return findNonFoodCompetitors(lat, lng, excludePlaceId, own, options);
   const keyword = categoryLabel(own.primaryType);
   const [general, byCategory] = await Promise.all([
     getNearbyCompetitors(lat, lng, excludePlaceId, options),
@@ -254,10 +270,46 @@ export async function findComparableCompetitors(
       merged.set(c.placeId, { ...c, keywordMatch: matched.has(c.placeId) });
     }
   }
-  return selectComparableCompetitors(own, [...merged.values()]).map((c) => ({
+  return selectComparableCompetitors(own, [...merged.values()]).map(toCompetitor);
+}
+
+function toCompetitor(c: NearbyCompetitor): Competitor {
+  return {
     name: c.name,
     reviewCount: c.userRatingsTotal,
     rating: c.rating,
     distanceM: c.distanceM,
-  }));
+  };
+}
+
+/**
+ * Same-category search for a non-food place: ONE legacy nearbysearch with no
+ * `type=restaurant`. With a category label it is a keyword search ("dentista");
+ * without one, the place's own primaryType is the `type`. Nothing usable ->
+ * no search. SKU: the same legacy Nearby Search as the food path (about
+ * US$0.032 + US$0.005 Atmosphere data = about US$0.037 per signup, one call).
+ * Places (New) searchNearby/searchText with rating and review count is the
+ * Enterprise tier (about US$0.035), no cheaper, and needs a second parser.
+ */
+async function findNonFoodCompetitors(
+  lat: number,
+  lng: number,
+  excludePlaceId: string,
+  own: ComparableOwn,
+  options: CompetitorFetchOptions,
+): Promise<Competitor[]> {
+  // categoryLabel sees only primaryType (null reads as unknown/food), so skip it with neither.
+  const label =
+    own.primaryType || own.primaryTypeLabel
+      ? categoryLabel(own.primaryType, own.primaryTypeLabel)
+      : 'negocio';
+  let search: CompetitorFetchOptions;
+  if (label !== 'negocio') search = { ...options, placeType: null, keyword: label };
+  else if (own.primaryType) search = { ...options, placeType: own.primaryType };
+  else return [];
+  const found = await getNearbyCompetitors(lat, lng, excludePlaceId, search);
+  return selectComparableCompetitors(
+    own,
+    found.map((c) => ({ ...c, keywordMatch: true })),
+  ).map(toCompetitor);
 }
