@@ -518,11 +518,22 @@ export const t = {
     showQrShort: 'Mostrar QR en pantalla',
     fullscreenAsk: '¿Cómo te fue? Escanea y déjanos tu reseña',
     close: 'Cerrar',
-    whatsapp: 'Mándalo por WhatsApp a tus clientes',
-    whatsappHelper: 'Envíalo a tus últimos 10 clientes',
     whatsappMessage: (name: string, url: string) =>
       `¡Gracias por visitarnos en ${name}! ¿Nos dejas tu opinión? ${url}`,
     printSign: 'Imprimir letrero',
+  },
+
+  // ── "Pide 5 reseñas hoy" card (/bienvenida + dashboard). Same plain link for
+  // every guest: no incentive, no routing by rating (Google policy). ──
+  askToday: {
+    title: 'Pide 5 reseñas hoy',
+    helper: 'Mándale tu enlace a 5 clientes de hoy por WhatsApp.',
+    button: 'Enviar por WhatsApp',
+    progress: (n: number) => `${n} de 5 hoy`,
+    done: '¡Listo por hoy! Mañana, 5 más.',
+    googleReviews: (baseline: number, latest: number) =>
+      `Reseñas en Google: ${baseline.toLocaleString('es-MX')} → ${latest.toLocaleString('es-MX')}`,
+    sinceJoined: (diff: number) => `+${diff.toLocaleString('es-MX')} desde que entraste`,
   },
 
   // ── Restaurant Card ──

@@ -12,7 +12,13 @@ import {
   getROIStats,
   getMonthlyStats,
 } from '@/lib/queries';
-import { getGoogleRatingTrend, getGoogleRatingHistory, getGoogleReviewsAddedToday } from '@/lib/google-places';
+import {
+  getGoogleRatingTrend,
+  getGoogleRatingHistory,
+  getGoogleReviewsAddedToday,
+  getGoogleReviewCountsSinceJoin,
+} from '@/lib/google-places';
+import { whatsappSharesToday } from '@/lib/ask-today';
 import { reviewUrlFor } from '@/lib/google-review';
 import { sameGroup } from '@/lib/group-scope';
 import { isSolo, parseGoogleProfile, staffNoun } from '@/lib/onboarding-profile';
@@ -106,7 +112,7 @@ export default async function DashboardPage({
 
   // Self-serve (solo / team) leads the empty state with the full-screen QR.
   // NULL team_mode (every legacy / Grupo restaurant) gets nothing extra.
-  let qrShare: { restaurantName: string; qrDataUrl: string | null } | undefined;
+  let qrShare: React.ComponentProps<typeof DashboardView>['selfServe'];
   if (restaurant.teamMode === 'solo' || restaurant.teamMode === 'team') {
     let qrDataUrl: string | null = null;
     try {
@@ -114,7 +120,17 @@ export default async function DashboardPage({
     } catch {
       qrDataUrl = null;
     }
-    qrShare = { restaurantName: restaurant.name, qrDataUrl };
+    const [askTodayCount, reviewCounts] = await Promise.all([
+      whatsappSharesToday(restaurant.id),
+      getGoogleReviewCountsSinceJoin(restaurant.id, restaurant.createdAt).catch(() => null),
+    ]);
+    qrShare = {
+      restaurantName: restaurant.name,
+      qrDataUrl,
+      reviewUrl: qrReviewUrlFor(restaurant.slug),
+      askTodayCount,
+      reviewCounts,
+    };
   }
 
   return (
@@ -145,7 +161,6 @@ export default async function DashboardPage({
         googleReviewsToday={googleReviewsToday}
         showGoogleConnect={session.role === 'gm' && reviewUrlFor(restaurant) === null}
         isSolo={isSolo(restaurant)}
-        soloShareUrl={isSolo(restaurant) ? qrReviewUrlFor(restaurant.slug) : undefined}
         selfServe={qrShare}
         staffNoun={selfServe ? staffNoun(parseGoogleProfile(restaurant.googleProfile)) : 'meseros'}
         hasStaff={hasStaff}

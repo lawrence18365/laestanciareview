@@ -5,9 +5,9 @@ import { renderToStaticMarkup } from 'react-dom/server';
 vi.mock('@/db', () => ({ db: {}, transactionDb: {} }));
 
 /**
- * SQ-215: no-printer first step for self-serve restaurants. Full-screen QR
- * first, WhatsApp to the last customers second, printing third. Grupo Estancia
- * (NULL team_mode) and 6+ groups render exactly as before.
+ * SQ-215: no-printer first step for self-serve restaurants. The "Pide 5 reseñas
+ * hoy" WhatsApp card (SQ-225) leads, then the full-screen QR, then printing.
+ * Grupo Estancia (NULL team_mode) and 6+ groups render exactly as before.
  */
 
 import { ReadyView, type StatusResponse } from '../app/bienvenida/BienvenidaClient';
@@ -52,23 +52,25 @@ const group = { teamMode: 'team' as const, locationsBand: '6+' as const };
 
 const words = (s: string) => s.split(/\s+/).filter(Boolean).length;
 
-describe('/bienvenida self-serve order: fullscreen, WhatsApp, print', () => {
+describe('/bienvenida self-serve order: ask-today card, fullscreen, print', () => {
   it.each([
     ['solo', solo],
     ['team', team],
-  ])('%s: full-screen QR is first, WhatsApp second, print link third', (_n, mode) => {
+  ])('%s: ask-today card is first, full-screen QR second, print link third', (_n, mode) => {
     const out = html(ready(mode));
+    const title = out.indexOf(t.askToday.title);
+    const wa = out.indexOf(t.askToday.button);
+    const helper = out.indexOf(t.askToday.helper);
     const show = out.indexOf(t.qrShare.showQr);
-    const wa = out.indexOf(t.qrShare.whatsapp);
-    const helper = out.indexOf(t.qrShare.whatsappHelper);
     const print = out.indexOf(t.qrShare.printSign);
-    expect(show).toBeGreaterThan(-1);
-    expect(wa).toBeGreaterThan(show);
-    expect(helper).toBeGreaterThan(wa);
-    expect(print).toBeGreaterThan(helper);
-    // the full-screen action is the one primary (dark, filled) control
+    expect(title).toBeGreaterThan(-1);
+    expect(helper).toBeGreaterThan(title);
+    expect(wa).toBeGreaterThan(helper);
+    expect(show).toBeGreaterThan(wa);
+    expect(print).toBeGreaterThan(show);
+    // the WhatsApp send is the one primary (dark, filled) control
     expect(out.match(/background:#1c1917/g)).toHaveLength(1);
-    expect(out.slice(0, wa).match(/background:#1c1917/g)).toHaveLength(1);
+    expect(out.slice(0, show).match(/background:#1c1917/g)).toHaveLength(1);
     // print is a plain link to the existing sign
     expect(out).toContain(`<a href="/qr-codes/letrero"`);
   });
@@ -81,12 +83,12 @@ describe('/bienvenida self-serve order: fullscreen, WhatsApp, print', () => {
   });
 
   it('keeps helper text within 15 words', () => {
-    expect(words(t.qrShare.whatsappHelper)).toBeLessThanOrEqual(15);
-    expect(t.qrShare.whatsappHelper).toBe('Envíalo a tus últimos 10 clientes');
+    expect(words(t.askToday.helper)).toBeLessThanOrEqual(15);
+    expect(t.askToday.helper).toBe('Mándale tu enlace a 5 clientes de hoy por WhatsApp.');
   });
 
   it('the group fixture and legacy (NULL team_mode) are unchanged', () => {
-    for (const s of [t.qrShare.showQr, t.qrShare.whatsapp, t.qrShare.whatsappHelper, t.qrShare.printSign]) {
+    for (const s of [t.qrShare.showQr, t.askToday.title, t.askToday.button, t.qrShare.printSign]) {
       expect(html(ready(group))).not.toContain(s);
       expect(html(ready())).not.toContain(s);
     }
@@ -213,11 +215,18 @@ describe('dashboard empty state', () => {
     googleReviewCount: null,
     googleReviewsToday: null,
   } satisfies React.ComponentProps<typeof DashboardView>;
-  const selfServe = { restaurantName: 'Tacos Ana', qrDataUrl: 'data:image/png;base64,QR' };
+  const selfServe = {
+    restaurantName: 'Tacos Ana',
+    qrDataUrl: 'data:image/png;base64,QR',
+    reviewUrl: 'https://app.ratetapmx.com/r/tacos-ana',
+    askTodayCount: 0,
+    reviewCounts: null,
+  };
 
-  it('team self-serve leads with the full-screen QR and keeps the staff CTA', () => {
+  it('team self-serve leads with the ask-today card, then the full-screen QR, and keeps the staff CTA', () => {
     const out = renderToStaticMarkup(<DashboardView {...props} selfServe={selfServe} />);
-    expect(out.indexOf(t.qrShare.showQr)).toBeGreaterThan(-1);
+    expect(out.indexOf(t.askToday.title)).toBeGreaterThan(-1);
+    expect(out.indexOf(t.qrShare.showQr)).toBeGreaterThan(out.indexOf(t.askToday.title));
     expect(out.indexOf('1. Agrega a tus meseros')).toBeGreaterThan(out.indexOf(t.qrShare.showQr));
     expect(out).toContain('href="/staff"');
   });

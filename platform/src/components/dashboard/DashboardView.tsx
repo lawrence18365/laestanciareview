@@ -6,7 +6,8 @@ import { t } from '@/lib/i18n';
 import { track } from '@/lib/analytics-client';
 import { RATING_BASELINE_NOTE } from '@/lib/rating-baseline';
 import { reviewGoal } from '@/lib/onboarding-profile';
-import { QrFullscreenButton, whatsappCustomersHref } from './QrShare';
+import { QrFullscreenButton } from './QrShare';
+import { AskTodayCard, ReviewsSinceJoin, sinceJoinCounter } from './AskTodayCard';
 
 const emptyCtaPrimary: React.CSSProperties = {
   padding: '0.75rem 1.5rem', background: 'var(--text-main)', color: '#fff',
@@ -111,14 +112,21 @@ interface Props {
    * empty-state CTAs change; NULL / team keep "Agrega a tus meseros".
    */
   isSolo?: boolean;
-  /** Public /r/{slug} link, shared by the solo "Compártelo por WhatsApp" CTA. */
-  soloShareUrl?: string;
   /**
    * Set only for a self-serve restaurant (team_mode solo / team): the empty
-   * state then leads with the full-screen QR. NULL (legacy / Grupo) keeps today's
-   * CTAs. qrDataUrl is null if the QR could not be generated.
+   * state then leads with the "Pide 5 reseñas hoy" card and the full-screen QR.
+   * NULL (legacy / Grupo) keeps today's CTAs. qrDataUrl is null if the QR could
+   * not be generated. reviewUrl is the public /r/{slug} link the card sends;
+   * askTodayCount is today's WhatsApp taps; reviewCounts is the Google review
+   * count at signup and now (null with fewer than 2 snapshots).
    */
-  selfServe?: { restaurantName: string; qrDataUrl: string | null };
+  selfServe?: {
+    restaurantName: string;
+    qrDataUrl: string | null;
+    reviewUrl: string;
+    askTodayCount: number;
+    reviewCounts: { baseline: number; latest: number } | null;
+  };
   /** 'tu equipo' for a non-food self-serve business; default 'meseros'. */
   staffNoun?: 'meseros' | 'tu equipo';
   /**
@@ -146,15 +154,10 @@ export default function DashboardView({
   googleReviewsToday,
   showGoogleConnect = false,
   isSolo = false,
-  soloShareUrl,
   selfServe,
   staffNoun = 'meseros',
   hasStaff = true,
 }: Props) {
-  // Plain ask, no offer and no rating routing (Google policy).
-  const soloWhatsappHref = soloShareUrl
-    ? whatsappCustomersHref(selfServe?.restaurantName ?? '', soloShareUrl)
-    : '/qr-codes';
   // No-card ratings (restaurant QR, staff_code IS NULL) never take a ranking
   // slot; they show as one plain line. Ratings from a removed staff code keep
   // their code and stay in the ranking exactly as before.
@@ -176,6 +179,8 @@ export default function DashboardView({
   // Shown whenever a Google trend exists, regardless of the delta's sign: hiding
   // non-positive movement was an upward bias. The two numbers are independent
   // observations and the copy says so.
+  // "Reseñas en Google: a → b": only with 2+ snapshots and real growth.
+  const sinceJoin = sinceJoinCounter(selfServe?.reviewCounts);
   const googleConversionText = googleTrend
     ? t.dashboard.googleTwoFact(roiStats.googleSends, googleTrend.reviewsGained)
     : null;
@@ -245,10 +250,24 @@ export default function DashboardView({
           }}>
             Aún no hay reseñas
           </h2>
-          {isSolo && googleReviewCount !== null && (
-            <p style={{ margin: 0, fontSize: '0.9375rem', color: 'var(--text-muted)' }}>
-              {t.dashboard.soloGoogleLine(googleReviewCount, reviewGoal(googleReviewCount))}
-            </p>
+          {sinceJoin ? (
+            <ReviewsSinceJoin counts={selfServe?.reviewCounts} style={{ color: 'var(--text-muted)' }} />
+          ) : (
+            isSolo && googleReviewCount !== null && (
+              <p style={{ margin: 0, fontSize: '0.9375rem', color: 'var(--text-muted)' }}>
+                {t.dashboard.soloGoogleLine(googleReviewCount, reviewGoal(googleReviewCount))}
+              </p>
+            )
+          )}
+          {selfServe && (
+            <div style={{ width: '100%', maxWidth: 420, marginTop: '0.5rem' }}>
+              <AskTodayCard
+                placement="dashboard"
+                restaurantName={selfServe.restaurantName}
+                reviewUrl={selfServe.reviewUrl}
+                initialCount={selfServe.askTodayCount}
+              />
+            </div>
           )}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', alignItems: 'center', marginTop: '0.5rem' }}>
             {selfServe?.qrDataUrl && (
@@ -256,23 +275,13 @@ export default function DashboardView({
                 placement="dashboard"
                 restaurantName={selfServe.restaurantName}
                 qrSrc={selfServe.qrDataUrl}
-                style={{ ...emptyCtaPrimary, border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}
+                style={{ ...emptyCtaSecondary, background: 'transparent', cursor: 'pointer', fontFamily: 'inherit' }}
               >
                 {t.qrShare.showQr}
               </QrFullscreenButton>
             )}
             {isSolo ? (
               <>
-                <a
-                  href={soloWhatsappHref}
-                  onClick={() => track('whatsapp_share_clicked', { placement: 'dashboard' })}
-                  style={emptyCtaSecondary}
-                >
-                  {t.qrShare.whatsapp}
-                </a>
-                <p style={{ margin: '-0.4rem 0 0', fontSize: '0.8125rem', color: 'var(--text-muted)' }}>
-                  {t.qrShare.whatsappHelper}
-                </p>
                 <a href="/qr-codes/letrero" style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-main)' }}>
                   {t.qrShare.printSign}
                 </a>

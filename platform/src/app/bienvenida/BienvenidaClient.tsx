@@ -6,7 +6,8 @@ import { SUPPORT_WHATSAPP_URL } from '@/lib/support';
 import GooglePlaceSearch, { type PlaceSelection } from '@/components/GooglePlaceSearch';
 import { track } from '@/lib/analytics-client';
 import { t } from '@/lib/i18n';
-import { QrFullscreenButton, whatsappCustomersHref } from '@/components/dashboard/QrShare';
+import { QrFullscreenButton } from '@/components/dashboard/QrShare';
+import { AskTodayCard, ReviewsSinceJoin } from '@/components/dashboard/AskTodayCard';
 import { goalOptions, qrPlacementTip, staffNoun, type SignupGoal } from '@/lib/onboarding-profile';
 import {
   MAPS_ZONES,
@@ -34,6 +35,10 @@ export interface StatusResponse extends Partial<ReadyProfileFields> {
   signupId?: string;
   /** Present only for a self-serve restaurant that has not answered yet. */
   goalQuestion?: GoalQuestion;
+  /** whatsapp_share_clicked taps today (Mexico City day). Absent on a first visit: 0. */
+  askTodayCount?: number;
+  /** Google review counts since the restaurant joined; set only with 2+ snapshots. */
+  reviewCounts?: { baseline: number; latest: number } | null;
 }
 
 export default function BienvenidaClient({
@@ -320,7 +325,6 @@ export function ReadyView({
   // step. Legacy (NULL team_mode, Grupo Estancia) and 6+ groups are unchanged.
   const selfServe = mode === 'solo' || mode === 'team';
   const restaurantName = status.restaurantName ?? '';
-  const whatsappCustomersUrl = whatsappCustomersHref(restaurantName, status.reviewUrl ?? '');
 
   return (
     <>
@@ -341,6 +345,19 @@ export function ReadyView({
       </div>
 
       {selfServe && <MapsCardSlot />}
+
+      {selfServe && (
+        <>
+          <ReviewsSinceJoin counts={status.reviewCounts} style={{ margin: '0 0 1.25rem', color: '#57534e' }} />
+          <AskTodayCard
+            placement="bienvenida"
+            restaurantName={restaurantName}
+            reviewUrl={status.reviewUrl ?? ''}
+            initialCount={status.askTodayCount ?? 0}
+            onShare={() => clicked('whatsapp_share')}
+          />
+        </>
+      )}
 
       {status.goalQuestion && <GoalQuestionView teamMode={status.goalQuestion.teamMode} />}
 
@@ -413,26 +430,11 @@ export function ReadyView({
               placement="bienvenida"
               restaurantName={restaurantName}
               qrSrc={status.qrDataUrl}
-              style={primaryButtonOnButton}
+              style={secondaryButtonOnButton}
             >
               {t.qrShare.showQr}
             </QrFullscreenButton>
           )}
-          <a
-            href={whatsappCustomersUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            onClick={() => {
-              clicked('whatsapp_share');
-              track('whatsapp_share_clicked', { placement: 'bienvenida' });
-            }}
-            style={secondaryButtonStyle}
-          >
-            {t.qrShare.whatsapp}
-          </a>
-          <p style={{ fontSize: '0.8rem', color: '#57534e', textAlign: 'center', margin: '0.4rem 0 0' }}>
-            {t.qrShare.whatsappHelper}
-          </p>
           <p style={{ textAlign: 'center', margin: '0.9rem 0 0' }}>
             <a href="/qr-codes/letrero" style={textLinkStyle} onClick={() => clicked('letrero')}>
               {t.qrShare.printSign}
@@ -727,12 +729,19 @@ const primaryButtonStyle: React.CSSProperties = {
   textTransform: 'uppercase',
 };
 
-// The primary action when it is a <button> (the full-screen QR), not a link.
-const primaryButtonOnButton: React.CSSProperties = {
-  ...primaryButtonStyle,
+// The full-screen QR is a <button>, second to the "Pide 5 reseñas hoy" card.
+const secondaryButtonOnButton: React.CSSProperties = {
+  display: 'block',
   width: '100%',
   minHeight: 44,
-  border: 'none',
+  padding: '0.75rem',
+  background: '#fff',
+  border: '1px solid #1c1917',
+  color: '#1c1917',
+  fontWeight: 700,
+  fontSize: '0.75rem',
+  letterSpacing: '0.1em',
+  textTransform: 'uppercase',
   cursor: 'pointer',
   fontFamily: 'inherit',
   boxSizing: 'border-box',

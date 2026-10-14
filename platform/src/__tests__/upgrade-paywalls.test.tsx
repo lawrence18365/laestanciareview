@@ -57,7 +57,9 @@ vi.mock('@/lib/google-places', () => ({
   getGoogleRatingTrend: vi.fn(),
   getGoogleRatingHistory: vi.fn(),
   getGoogleReviewsAddedToday: vi.fn(),
+  getGoogleReviewCountsSinceJoin: vi.fn(async () => null),
 }));
+vi.mock('@/lib/ask-today', () => ({ whatsappSharesToday: vi.fn(async () => 0) }));
 vi.mock('@/lib/maps-rank', () => ({ getMapsRankSummary: mocks.getMapsRankSummary }));
 vi.mock('@/components/dashboard/FeedbackInbox', () => ({
   default: () => <div data-testid="feedback-inbox">COMMENT TEXT HERE</div>,
