@@ -1504,14 +1504,20 @@ export async function sendOwnerSignupNotification(p: OwnerSignupParams) {
         <tr><td style="${SECTION_LABEL_STYLE}">Teléfono</td><td>${escapeHtml(p.phone)}</td></tr>
         <tr><td style="${SECTION_LABEL_STYLE}">Ciudad</td><td>${escapeHtml(p.city)}</td></tr>
         <tr><td style="${SECTION_LABEL_STYLE}">Slug</td><td><code>${escapeHtml(p.slug)}</code></td></tr>
-        ${p.googlePlaceId ? `<tr><td style="${SECTION_LABEL_STYLE}">Place ID</td><td><code>${escapeHtml(p.googlePlaceId)}</code></td></tr>` : ''}
+        <tr><td style="${SECTION_LABEL_STYLE}">Place ID</td><td>${
+          p.googlePlaceId
+            ? `<code>${escapeHtml(p.googlePlaceId)}</code>`
+            : '<strong style="color: #b91c1c;">⚠️ SIN PLACE ID: sus clientes no llegan a Google. Conéctalo hoy.</strong>'
+        }</td></tr>
       </table>
     </div>`;
 
+  // A missing Place ID is the one thing in this alert that needs action, so it
+  // is said out loud (row and subject) instead of the row just not appearing.
   const result = await sendMail({
     from: FROM,
     to: OWNER_NOTIFICATION_EMAIL,
-    subject: `🎉 Nuevo signup: ${p.restaurantName}`,
+    subject: `${p.googlePlaceId ? '🎉' : '⚠️'} Nuevo signup: ${p.restaurantName}${p.googlePlaceId ? '' : ' (sin Place ID)'}`,
     html: emailLayout(content),
   });
 
