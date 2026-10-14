@@ -3,6 +3,7 @@ import { db } from '@/db';
 import { reviews } from '@/db/schema';
 import { sendFeedbackAlert, sendFeedbackTeaser, FREE_FEEDBACK_TEASER } from '@/lib/email';
 import { planFor, type PlanInput } from '@/lib/entitlements';
+import { isFoodOrDrink, parseGoogleProfile } from '@/lib/onboarding-profile';
 import { sendSMSAlert } from '@/lib/sms';
 import { sendWhatsAppAlert } from '@/lib/whatsapp';
 import { sendPushToRestaurant } from '@/lib/push';
@@ -64,6 +65,8 @@ export interface FeedbackAlertRestaurant extends PlanInput {
   whatsappAlerts: boolean;
   googleThreshold: number;
   region: string | null;
+  /** Onboarding profile (jsonb). Absent / null = food, today's wording. */
+  googleProfile?: unknown;
 }
 
 export type FeedbackAlertReview = typeof reviews.$inferSelect;
@@ -220,6 +223,7 @@ export async function dispatchFeedbackAlerts(
           staffName: review.staffName,
           feedback,
           severity: classification.severity,
+          foodOrDrink: isFoodOrDrink(parseGoogleProfile(restaurant.googleProfile)),
         }).then((result) => {
           if (result.success === false) {
             const responseCode = result.error?.responseCode != null

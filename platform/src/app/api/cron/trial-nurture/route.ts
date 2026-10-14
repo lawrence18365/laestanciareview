@@ -39,6 +39,7 @@ import { FROM, sendMail } from '@/lib/mailer';
 import { reviewGoal } from '@/lib/onboarding-profile';
 import { getPriceBreakdown } from '@/lib/mercadopago';
 import { planFor, selfServePrice, usesPlanRestaurantePrice } from '@/lib/entitlements';
+import { isFoodOrDrink, parseGoogleProfile } from '@/lib/onboarding-profile';
 import { recordProductEvent } from '@/lib/product-events';
 import { addEmailTracking } from '@/lib/email-tracking';
 import { mexicoHour } from '@/lib/mexico-tz';
@@ -107,7 +108,12 @@ type Ctx = {
   // Billed at the Plan Restaurante price (self-serve, 1 location); others keep
   // the global monthly price.
   restaurantePrice: boolean;
+  // false for a non-food place (dentist, shop...): no mesero/mesa wording. Unknown profile = true.
+  foodOrDrink: boolean;
 };
+
+/** Who gets added: "tus meseros" for food and drink, "tu equipo" for everyone else. */
+const staffWho = (c: Ctx) => (c.foodOrDrink ? 'tus meseros' : 'tu equipo');
 
 const BUTTON = 'background:#10B981;color:#fff;padding:12px 24px;text-decoration:none;font-weight:700;display:inline-block;border-radius:6px';
 
@@ -119,11 +125,11 @@ function monthlyPrice(): string {
 const needsActivation = (c: Ctx) => c.staffCount === 0 || c.ratingCount === 0;
 
 function activationWhatsApp(c: Ctx, lead: string): string {
-  return `*${c.name}*, ${lead} Aún no hay calificaciones de tus clientes.\n1. Agrega a tus meseros: ${BASE_URL}/staff\n2. Imprime sus QR: ${BASE_URL}/qr-codes`;
+  return `*${c.name}*, ${lead} Aún no hay calificaciones de tus clientes.\n1. Agrega a ${staffWho(c)}: ${BASE_URL}/staff\n2. Imprime sus QR: ${BASE_URL}/qr-codes`;
 }
 
 function activationHtml(c: Ctx, lead: string): string {
-  return `<p>Hola ${c.name},</p><p>${lead} Aún no hay calificaciones de tus clientes.</p><ol><li><a href="${BASE_URL}/staff">Agrega a tus meseros →</a></li><li><a href="${BASE_URL}/qr-codes">Imprime sus QR →</a></li></ol>`;
+  return `<p>Hola ${c.name},</p><p>${lead} Aún no hay calificaciones de tus clientes.</p><ol><li><a href="${BASE_URL}/staff">Agrega a ${staffWho(c)} →</a></li><li><a href="${BASE_URL}/qr-codes">Imprime sus QR →</a></li></ol>`;
 }
 
 // ── Tailored modes (team_mode solo | team): activation = first rating ──────
@@ -188,14 +194,14 @@ function soloActivationHtml(c: Ctx, lead: string): string {
 // Team: the waiter step is only listed while there are no waiters yet.
 function teamActivationWhatsApp(c: Ctx, lead: string): string {
   const steps: string[] = [];
-  if (c.staffCount === 0) steps.push(`Agrega a tus meseros: ${BASE_URL}/staff`);
+  if (c.staffCount === 0) steps.push(`Agrega a ${staffWho(c)}: ${BASE_URL}/staff`);
   steps.push(`Imprime sus QR: ${BASE_URL}/qr-codes`);
   return `*${c.name}*, ${lead} Aún no hay calificaciones de tus clientes.\n${steps.map((s, i) => `${i + 1}. ${s}`).join('\n')}`;
 }
 
 function teamActivationHtml(c: Ctx, lead: string): string {
   const items: string[] = [];
-  if (c.staffCount === 0) items.push(`<li><a href="${BASE_URL}/staff">Agrega a tus meseros →</a></li>`);
+  if (c.staffCount === 0) items.push(`<li><a href="${BASE_URL}/staff">Agrega a ${staffWho(c)} →</a></li>`);
   items.push(`<li><a href="${BASE_URL}/qr-codes">Imprime sus QR →</a></li>`);
   return `<p>Hola ${c.name},</p><p>${lead} Aún no hay calificaciones de tus clientes.</p><ol>${items.join('')}</ol>`;
 }
@@ -219,10 +225,10 @@ function soloDay1Html(c: Ctx): string {
 // Counts only, never a guest's name, contact or comment. Each message is
 // 60 words or fewer and links to /plan.
 
-/** "Plan Restaurante desde MX$299/mes" for 1-location self-serve; the global price otherwise. */
+/** "Plan Completo desde MX$299/mes" for 1-location self-serve; the global price otherwise. */
 function planPriceLine(c: Ctx): string {
   return c.restaurantePrice
-    ? `Plan Restaurante desde MX$${selfServePrice('monthly')}/mes`
+    ? `Plan Completo desde MX$${selfServePrice('monthly')}/mes`
     : `Tu plan: ${monthlyPrice()}`;
 }
 
@@ -297,7 +303,7 @@ const NURTURE: Record<string, {
     whatsapp: (c) => {
       if (c.mode === 'solo') return soloDay1WhatsApp(c);
       const lines = [`Hola *${c.name}* 👋 Para empezar con RateTap te falta:`];
-      if (c.staffCount === 0) lines.push(`• Agregar a tus meseros: ${BASE_URL}/staff`);
+      if (c.staffCount === 0) lines.push(`• Agregar a ${staffWho(c)}: ${BASE_URL}/staff`);
       if (!c.hasGoogle) lines.push(`• Conectar tu Google: ${BASE_URL}/settings`);
       return lines.join('\n');
     },
@@ -307,7 +313,7 @@ const NURTURE: Record<string, {
     html: (c) => {
       if (c.mode === 'solo') return soloDay1Html(c);
       const items: string[] = [];
-      if (c.staffCount === 0) items.push(`<li><a href="${BASE_URL}/staff">Agrega a tus meseros →</a></li>`);
+      if (c.staffCount === 0) items.push(`<li><a href="${BASE_URL}/staff">Agrega a ${staffWho(c)} →</a></li>`);
       if (!c.hasGoogle) items.push(`<li><a href="${BASE_URL}/settings">Conecta tu Google →</a></li>`);
       return `<p>Hola ${c.name},</p><p>Para empezar con RateTap te falta:</p><ul>${items.join('')}</ul>`;
     },
@@ -336,7 +342,7 @@ const NURTURE: Record<string, {
           : teamActivationHtml(c, 'Llevas 3 días con RateTap.'))
       : needsActivation(c)
       ? activationHtml(c, 'Llevas 3 días con RateTap.')
-      : `<p>Hola ${c.name},</p><p>Llevas 3 días con RateTap. El truco que mejor funciona: tu mesero muestra el código QR y dice "Nos encantaría conocer su opinión, ¿nos ayuda con una reseña en Google? ⭐".</p><p><a href="${BASE_URL}/dashboard">Ver mi dashboard →</a></p>`,
+      : `<p>Hola ${c.name},</p><p>Llevas 3 días con RateTap. El truco que mejor funciona: ${c.foodOrDrink ? 'tu mesero muestra' : 'tú o tu equipo muestran'} el código QR y dice "Nos encantaría conocer su opinión, ¿nos ayuda con una reseña en Google? ⭐".</p><p><a href="${BASE_URL}/dashboard">Ver mi dashboard →</a></p>`,
   },
   day7: {
     days: 7,
@@ -350,9 +356,9 @@ const NURTURE: Record<string, {
           : teamActivationWhatsApp(c, 'llevas una semana con RateTap.'))
       : needsActivation(c)
       ? activationWhatsApp(c, 'llevas una semana con RateTap.')
-      : c.slug.startsWith('estancia')
+      : c.foodOrDrink && c.slug.startsWith('estancia')
         ? `*${c.name}*, llevas una semana 🎉 La Estancia (12 restaurantes en México) logró subir consistentemente sus calificaciones en todos sus locales con RateTap. Tus reseñas nuevas ya están trabajando para ti. Panel: ${BASE_URL}/dashboard`
-        : `*${c.name}*, llevas una semana 🎉 Los restaurantes que piden la reseña en cada mesa reciben más reseñas. Tus reseñas nuevas ya están trabajando para ti. Panel: ${BASE_URL}/dashboard`,
+        : `*${c.name}*, llevas una semana 🎉 ${c.foodOrDrink ? 'Los restaurantes que piden la reseña en cada mesa' : 'Los negocios que piden la reseña a cada cliente'} reciben más reseñas. Tus reseñas nuevas ya están trabajando para ti. Panel: ${BASE_URL}/dashboard`,
     subject: (c) => tailored(c)
       ? (c.ratingCount > 0 ? `Una semana con RateTap: ${c.name}` : `Aún no hay calificaciones: ${c.name}`)
       : needsActivation(c) ? `Aún no hay calificaciones: ${c.name}` : `Una semana con RateTap: ${c.name}`,
@@ -364,9 +370,9 @@ const NURTURE: Record<string, {
           : teamActivationHtml(c, 'Llevas una semana con RateTap.'))
       : needsActivation(c)
       ? activationHtml(c, 'Llevas una semana con RateTap.')
-      : c.slug.startsWith('estancia')
+      : c.foodOrDrink && c.slug.startsWith('estancia')
         ? `<p>Hola ${c.name},</p><p>Llevas 7 días con RateTap. Grupo La Estancia (12 restaurantes en México) ha visto cómo sus reseñas de Google crecen consistentemente desde que usan el sistema.</p><p>Tus reseñas nuevas ya están llegando.</p><p><a href="${BASE_URL}/dashboard">Ver mi progreso →</a></p>`
-        : `<p>Hola ${c.name},</p><p>Llevas 7 días con RateTap. Los restaurantes que piden la reseña en cada mesa reciben más reseñas.</p><p>Tus reseñas nuevas ya están llegando.</p><p><a href="${BASE_URL}/dashboard">Ver mi progreso →</a></p>`,
+        : `<p>Hola ${c.name},</p><p>Llevas 7 días con RateTap. ${c.foodOrDrink ? 'Los restaurantes que piden la reseña en cada mesa' : 'Los negocios que piden la reseña a cada cliente'} reciben más reseñas.</p><p>Tus reseñas nuevas ya están llegando.</p><p><a href="${BASE_URL}/dashboard">Ver mi progreso →</a></p>`,
   },
   // Self-serve, non-pilot trials only (eligibility is in GET). Progress numbers
   // and the Plan Restaurante price, linking to /plan.
@@ -586,6 +592,7 @@ export async function GET(req: NextRequest) {
         endsOn: r.trialEndsAt ? mxDate(r.trialEndsAt) : null,
         commentCount: 0,
         restaurantePrice: usesPlanRestaurantePrice(r),
+        foodOrDrink: isFoodOrDrink(parseGoogleProfile(r.googleProfile)),
       };
     };
 

@@ -428,7 +428,7 @@ export const t = {
     monthlyTotal: 'Total',
     perMonth: 'MXN/mes',
     perYear: 'MXN/año',
-    planRestauranteName: 'Plan Restaurante',
+    planRestauranteName: 'Plan Completo',
     cycleMonthly: 'Mensual',
     cycleAnnual: 'Anual',
     cancelAnytime: 'Cancela cuando quieras.',
@@ -463,7 +463,7 @@ export const t = {
     lockedFeedbackBody: 'Activa tu plan para leerlos.',
     lockedMapsBody: 'Mira cómo apareces en Google Maps.',
     plan: {
-      title: 'Plan Restaurante',
+      title: 'Plan Completo',
       monthlyName: 'Mensual',
       annualName: 'Anual',
       perMonth: '/mes',

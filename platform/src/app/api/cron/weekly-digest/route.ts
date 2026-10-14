@@ -17,6 +17,7 @@ import {
 import { getGoogleRatingTrend } from '@/lib/google-places';
 import { sendWeeklyDigest, sendWeeklyDigestTeaser, sendOwnerBriefing, sendRegionalBriefing, type BriefingLocation } from '@/lib/email';
 import { planFor } from '@/lib/entitlements';
+import { isFoodOrDrink, parseGoogleProfile } from '@/lib/onboarding-profile';
 import type { GroupShareSummary } from '@/lib/maps-rank-group';
 import {
   getWeeklySignals,
@@ -153,6 +154,7 @@ export async function GET(req: NextRequest) {
         dashboardUrl: `${baseUrl}/dashboard`,
         googleTrend,
         hasStaff,
+        foodOrDrink: isFoodOrDrink(parseGoogleProfile(r.googleProfile)),
       });
 
       if (result.success) {
