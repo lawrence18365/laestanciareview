@@ -80,6 +80,7 @@ Setup: Meta ads, Mexico, ages 25+, FB + IG. Offer: free 30 days, QR only, no car
 - **Groups = revenue now.** Founder outreach to the top 10 groups with waiters (6–20 locations, multi-brand).
 - **Maps for small businesses = test payment first.** WhatsApp all 17 trials with one new question: "If WE got you up on Google Maps vs your competitor, with a monthly rank report, would you pay? How much?" This is the done-for-you local SEO offer (like 7FigureLocal or menciones.ai), tested before anything is built.
 - **Build nothing more for solo owners until 2–3 of them say yes, with a price.**
+- **Update later the same day:** don't build a separate Maps product on this evidence; signups don't prove payment. Meta campaign PAUSED 2026-10-15. **Next milestone: a second paying group.** Help the 5 strongest trials reach a real result, then ask them to pay. Custom software stays the main new commercial offer, as already agreed.
 - **If ads restart:** target men aged 35–44, exclude 65+, send the ad straight to the signup form, never to /producto, and use FB + IG only (never Audience Network).
 
 ### Data gaps found
