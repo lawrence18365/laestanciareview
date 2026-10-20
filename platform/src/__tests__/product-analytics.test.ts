@@ -65,6 +65,37 @@ describe('getAlertCoverage', () => {
   });
 });
 
+describe('getAlertCoverage with several devices', () => {
+  it('counts a location once even when it has several push subscriptions', async () => {
+    const locations = [
+      { id: 7, name: 'Estancia Xalapa', slug: 'estancia-xalapa' },
+      { id: 8, name: 'Estancia Centro', slug: 'estancia-centro' },
+    ];
+
+    mockSelect.mockReset();
+    mockSelect.mockImplementation(() => ({
+      from: () => ({
+        where: () => ({
+          orderBy: async () => locations,
+          // push_subscriptions is unique per endpoint, so one location can hold
+          // many rows: three devices of the same iPad/phone fleet.
+          groupBy: async () => [
+            { restaurantId: 7 },
+            { restaurantId: 7 },
+            { restaurantId: 7 },
+          ],
+        }),
+      }),
+    }));
+
+    await expect(pa.getAlertCoverage('grupo-estancia')).resolves.toEqual({
+      covered: 1,
+      total: 2,
+      missing: ['Estancia Centro'],
+    });
+  });
+});
+
 describe('tag', () => {
   it('attaches the integrity tag to the value', () => {
     expect(pa.tag(42, 'verified')).toEqual({ value: 42, tag: 'verified' });
