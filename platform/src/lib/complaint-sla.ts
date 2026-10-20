@@ -22,6 +22,13 @@
  * crons — so it is the backstop, and the request path is what makes the short
  * windows real. Two sweeps can therefore overlap, which is why every candidate
  * is claimed with a conditional `escalated_at` update before anything is sent.
+ *
+ * That frequency is only safe because a candidate is claimed solely once the
+ * sweep knows someone can actually receive it — a device, or an owner/regional
+ * email — so an unreachable complaint is skipped without claim or write instead
+ * of leaving an alert row behind on every sweep. A complaint that stays
+ * unresolved until a recipient becomes reachable is escalated then, exactly
+ * once, however old it is.
  */
 import { after } from 'next/server';
 import {
@@ -42,7 +49,7 @@ import { restaurants, reviews } from '@/db/schema';
 import { sendFeedbackAlert } from '@/lib/email';
 import { planFor } from '@/lib/entitlements';
 import { sameGroup } from '@/lib/group-scope';
-import { sendPushToRestaurant } from '@/lib/push';
+import { sendPushToRestaurant, getRestaurantsWithActiveDevices } from '@/lib/push';
 import { inboxLinkFor } from '@/lib/review-recovery';
 import {
   classifyReview,
@@ -346,9 +353,19 @@ export async function getOverdueComplaintPreviews(
   }));
 }
 
+/** The owner/regional account shape this sweep routes escalations through. */
+interface EscalationAccount {
+  id: number;
+  isOwner: boolean;
+  isRegional: boolean;
+  region: string | null;
+  groupKey: string | null;
+  managerEmail: string | null;
+}
+
 export async function escalateOverdueComplaints(now: Date = new Date()) {
   const overdue = await getOverdueComplaints(now);
-  const accounts = await db
+  const accounts: EscalationAccount[] = await db
     .select({
       id: restaurants.id,
       isOwner: restaurants.isOwner,
@@ -365,6 +382,37 @@ export async function escalateOverdueComplaints(now: Date = new Date()) {
       ),
     );
 
+  // Recipients are resolved before anything is claimed or sent, because the
+  // single reachability query below has to know every account a complaint could
+  // be sent to — not just the locations.
+  const recipientsByComplaint = new Map<number, EscalationAccount[]>();
+  const candidateIds = new Set<number>();
+
+  for (const complaint of overdue) {
+    // Owner/regional fan-out stays inside the complaint's own group: this
+    // email carries the guest's name, email and feedback. A complaint at a
+    // location with no group_key (self-serve trial) reaches no owner or
+    // regional account, and a NULL group_key never matches another NULL. The
+    // location's own GM alerting is unaffected.
+    const recipients = accounts.filter((account) => (
+      sameGroup(account.groupKey, complaint.groupKey)
+      && (
+        account.isOwner
+        || (account.isRegional && complaint.region !== null && account.region === complaint.region)
+      )
+    ));
+
+    recipientsByComplaint.set(complaint.id, recipients);
+    candidateIds.add(complaint.restaurantId);
+    for (const account of recipients) candidateIds.add(account.id);
+  }
+
+  // ONE query for the whole sweep — the complaint locations plus their
+  // recipients — asking which of them can receive a push at all. An empty
+  // candidate list (nothing overdue) costs no query.
+  const idsWithDevices = await getRestaurantsWithActiveDevices([...candidateIds]);
+  const hasDevice = (id: number) => idsWithDevices.has(id);
+
   let escalated = 0;
   let noChannel = 0;
   const details: ComplaintEscalationDetail[] = [];
@@ -379,6 +427,29 @@ export async function escalateOverdueComplaints(now: Date = new Date()) {
     // hardcoded wording.
     const title = `${escalationPushTitle(classification.severity, complaint.rating, complaint.restaurantName)} sin atender desde hace ${openHours} h`;
     const pushKind = pushKindFor(classification.severity);
+    const recipients = recipientsByComplaint.get(complaint.id) ?? [];
+
+    // Reachability gate, before the claim: with no device anywhere and no
+    // recipient email, nothing can be delivered. Claiming and releasing the
+    // review here is what produced an alert row per sweep — one review, 1,075
+    // rows in six days — so an unreachable complaint is skipped outright and
+    // stays visible to a later sweep, however old it is, until a recipient
+    // becomes reachable.
+    const reachable = hasDevice(complaint.restaurantId)
+      || recipients.some((account) => hasDevice(account.id) || !!account.managerEmail);
+
+    if (!reachable) {
+      noChannel++;
+      details.push({
+        complaintId: complaint.id,
+        restaurantId: complaint.restaurantId,
+        locationName: complaint.restaurantName,
+        hoursOpen: openHours,
+        targeted: false,
+        channels: { location_push: { ok: false, skipped: 'no_devices' } },
+      });
+      continue;
+    }
 
     // Claim BEFORE sending. This sweep also runs from the guest request path,
     // so two sweeps can overlap; the conditional update makes exactly one of
@@ -397,46 +468,48 @@ export async function escalateOverdueComplaints(now: Date = new Date()) {
       continue;
     }
 
-    // Owner/regional fan-out stays inside the complaint's own group: this
-    // email carries the guest's name, email and feedback. A complaint at a
-    // location with no group_key (self-serve trial) reaches no owner or
-    // regional account, and a NULL group_key never matches another NULL. The
-    // location's own GM alerting above is unaffected.
-    const recipients = accounts.filter((account) => (
-      sameGroup(account.groupKey, complaint.groupKey)
-      && (
-        account.isOwner
-        || (account.isRegional && complaint.region !== null && account.region === complaint.region)
-      )
-    ));
+    // Owner/regional recipients were resolved above, before the reachability
+    // check: the same list decides who is reachable and who is sent to.
     const channels: AlertChannelMap = {};
     let wasTargeted = false;
 
-    try {
-      const result = await sendPushToRestaurant(complaint.restaurantId, {
-        title,
-        body,
-        url: inboxLinkFor(complaint.id),
-        rid: complaint.id,
-        tag: `overdue-${complaint.id}`,
-      }, {
-        kind: pushKind,
-        subjectType: 'review',
-        subjectId: complaint.id,
-      });
-      if (result.targeted > 0) {
-        wasTargeted = true;
-        record(channels, 'location_push', { ok: true });
-      } else {
-        record(channels, 'location_push', { ok: false, skipped: 'no_devices' });
+    // A push to an id with no active device still inserts its
+    // push_notifications row, so it is never attempted: device-gated, recorded
+    // as skipped instead. Email behaviour is unchanged.
+    if (!hasDevice(complaint.restaurantId)) {
+      record(channels, 'location_push', { ok: false, skipped: 'no_devices' });
+    } else {
+      try {
+        const result = await sendPushToRestaurant(complaint.restaurantId, {
+          title,
+          body,
+          url: inboxLinkFor(complaint.id),
+          rid: complaint.id,
+          tag: `overdue-${complaint.id}`,
+        }, {
+          kind: pushKind,
+          subjectType: 'review',
+          subjectId: complaint.id,
+        });
+        if (result.targeted > 0) {
+          wasTargeted = true;
+          record(channels, 'location_push', { ok: true });
+        } else {
+          record(channels, 'location_push', { ok: false, skipped: 'no_devices' });
+        }
+      } catch (error) {
+        record(channels, 'location_push', { ok: false, error: errorMessage(error) });
       }
-    } catch (error) {
-      record(channels, 'location_push', { ok: false, error: errorMessage(error) });
     }
 
     for (const account of recipients) {
       const role = account.isOwner ? 'owner' : 'regional';
       const key = `${role}_${account.id}_push`;
+      if (!hasDevice(account.id)) {
+        record(channels, key, { ok: false, skipped: 'no_devices' });
+        continue;
+      }
+
       try {
         const result = await sendPushToRestaurant(account.id, {
           title,
@@ -507,10 +580,11 @@ export async function escalateOverdueComplaints(now: Date = new Date()) {
         .where(eq(reviews.id, complaint.id));
       escalated++;
     } else {
-      // Nobody was reachable, so there is nothing to escalate yet. Release the
-      // claim (escalated_at back to NULL) so a later sweep retries once an
-      // account or a device exists — but keep the channel record, otherwise the
-      // row would look like nothing ever tried.
+      // Nothing was actually delivered. With the reachability gate in front of
+      // the claim this is a race now, not the normal path — devices revoked
+      // between the check and the send — so the claim is still released for a
+      // later sweep, but the channel record is kept, otherwise the row would
+      // look like nothing ever tried.
       await db
         .update(reviews)
         .set({ alertChannels: escalationChannels, escalatedAt: null })

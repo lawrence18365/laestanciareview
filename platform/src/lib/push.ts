@@ -1,7 +1,7 @@
 import webpush from 'web-push';
 import { db } from '@/db';
 import { pushNotifications, pushSubscriptions } from '@/db/schema';
-import { and, eq, isNull, sql } from 'drizzle-orm';
+import { and, eq, inArray, isNull, sql } from 'drizzle-orm';
 
 const VAPID_PUBLIC_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY?.trim() ?? '';
 const VAPID_PRIVATE_KEY = process.env.VAPID_PRIVATE_KEY?.trim() ?? '';
@@ -54,6 +54,43 @@ export interface PushMeta {
 export function withPushTracking(url: string, nid: number): string {
   const sep = url.includes('?') ? '&' : '?';
   return `${url}${sep}src=push&nid=${nid}`;
+}
+
+/**
+ * Which of `restaurantIds` have at least one active push subscription.
+ *
+ * Callers that fan a notification out across several accounts check this
+ * BEFORE calling sendPushToRestaurant: that function inserts its
+ * push_notifications attribution row before it looks for devices, so an
+ * audience with no device still leaves one row behind per attempt. One query
+ * answers the question for every id the caller is about to touch; an empty
+ * list costs no query at all.
+ *
+ * When push itself is not configured nobody is reachable, whatever the
+ * subscriptions table says: sendPushToRestaurant returns `{ targeted: 0 }`
+ * without a row, so reporting a device here would have callers claim work they
+ * can never deliver. The empty set is the honest answer, and costs no query.
+ */
+export async function getRestaurantsWithActiveDevices(
+  restaurantIds: number[],
+): Promise<Set<number>> {
+  if (!ensurePushConfigured()) return new Set();
+
+  const ids = [...new Set(restaurantIds)];
+  if (ids.length === 0) return new Set();
+
+  const rows = await db
+    .select({ restaurantId: pushSubscriptions.restaurantId })
+    .from(pushSubscriptions)
+    .where(
+      and(
+        inArray(pushSubscriptions.restaurantId, ids),
+        isNull(pushSubscriptions.revokedAt),
+      ),
+    )
+    .groupBy(pushSubscriptions.restaurantId);
+
+  return new Set(rows.map((row) => row.restaurantId));
 }
 
 /**
