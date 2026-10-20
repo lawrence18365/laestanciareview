@@ -7,62 +7,90 @@ import {
   isInstalledPWA,
   isIOS,
   subscribeToPush,
+  replaceDeviceSubscription,
   getPushSubscription,
   healPushSubscriptionIfOrphaned,
   getPushDeviceKind,
   consumePermissionRevokedEndpoint,
   reportPermissionRevoked,
+  type PushHealOutcome,
+  type PushSubscribeFailureReason,
+  type PushSubscribeResult,
 } from '@/lib/push-client';
+import { conflictCopy, deniedCopy, errorCopy, unsupportedCopy } from '@/lib/push-banner-copy';
 import { track } from '@/lib/analytics-client';
 
 type BannerState =
   | 'loading'
-  | 'subscribed'       // Already receiving notifications
+  | 'subscribed'       // Server confirmed this device's alert registration
   | 'ios-install'      // iOS but not installed — show Add to Home Screen guide
   | 'prompt'           // Can ask for permission
   | 'denied'           // User blocked notifications
-  | 'error'            // Retryable enrollment failure
-  | 'unsupported'      // Browser doesn't support push
+  | 'unsupported'      // Browser can't do push at all (dismissable)
+  | 'conflict'         // Device's endpoint is registered to another account
+  | 'error'            // Enrollment failure, carrying its reason
   | 'dismissed';       // User dismissed for this session
 
-type ShownBannerState = 'prompt' | 'ios-install' | 'denied';
+type ShownBannerState = 'prompt' | 'ios-install' | 'denied' | 'unsupported' | 'conflict';
 type VisibleBannerState = ShownBannerState | 'error';
-type SuppressedBannerState = 'unsupported' | 'subscribed' | 'dismissed';
 
 function isShownBannerState(state: BannerState): state is ShownBannerState {
-  return state === 'prompt' || state === 'ios-install' || state === 'denied';
+  return (
+    state === 'prompt' ||
+    state === 'ios-install' ||
+    state === 'denied' ||
+    state === 'unsupported' ||
+    state === 'conflict'
+  );
 }
 
 function isVisibleBannerState(state: BannerState): state is VisibleBannerState {
   return isShownBannerState(state) || state === 'error';
 }
 
-function isSuppressedBannerState(state: BannerState): state is SuppressedBannerState {
-  return state === 'unsupported' || state === 'subscribed' || state === 'dismissed';
-}
-
 const DISMISS_KEY = 'ratetap_push_dismissed';
 const HEAL_ATTEMPT_KEY = 'ratetap_push_heal_attempted';
 
+/** Only conclusive outcomes are stored; `failed` must retry on the next mount. */
+function isStoredOutcome(value: string | null): value is PushHealOutcome {
+  return value === 'healed' || value === 'not_needed' || value === 'device_conflict';
+}
+
 export default function PushNotificationBanner({ accountKey }: { accountKey: string }) {
   const [state, setState] = useState<BannerState>('loading');
+  const [failure, setFailure] = useState<PushSubscribeFailureReason>('post_failed');
   const [subscribing, setSubscribing] = useState(false);
   const [deviceKind] = useState(getPushDeviceKind);
   const resolutionTracked = useRef(false);
   const healAttempted = useRef(false);
 
-  const claimHealAttempt = useCallback(() => {
+  const healStorageKey = `${HEAL_ATTEMPT_KEY}:${accountKey}`;
+
+  const readHealOutcome = useCallback((): PushHealOutcome | null => {
+    try {
+      const stored = sessionStorage.getItem(healStorageKey);
+      return isStoredOutcome(stored) ? stored : null;
+    } catch {
+      return null;
+    }
+  }, [healStorageKey]);
+
+  const storeHealOutcome = useCallback(
+    (outcome: PushHealOutcome) => {
+      try {
+        sessionStorage.setItem(healStorageKey, outcome);
+      } catch {
+        // The mounted-instance ref remains the fallback when storage is unavailable.
+      }
+    },
+    [healStorageKey],
+  );
+
+  const claimHealRun = useCallback(() => {
     if (healAttempted.current) return false;
     healAttempted.current = true;
-    try {
-      const storageKey = `${HEAL_ATTEMPT_KEY}:${accountKey}`;
-      if (sessionStorage.getItem(storageKey)) return false;
-      sessionStorage.setItem(storageKey, '1');
-    } catch {
-      // The mounted-instance ref remains the fallback when storage is unavailable.
-    }
     return true;
-  }, [accountKey]);
+  }, []);
 
   useEffect(() => {
     let active = true;
@@ -84,8 +112,8 @@ export default function PushNotificationBanner({ accountKey }: { accountKey: str
         const pushState = getPushState();
 
         if (pushState === 'unsupported') {
-          // On iOS, unsupported likely means not installed
-          if (active) setState(isIOS() ? 'ios-install' : 'unsupported');
+          // On iOS, unsupported most likely means "not installed yet".
+          if (active) setState(isIOS() && !isInstalledPWA() ? 'ios-install' : 'unsupported');
           return;
         }
 
@@ -97,18 +125,47 @@ export default function PushNotificationBanner({ accountKey }: { accountKey: str
         if (pushState === 'granted') {
           const subscription = await getPushSubscription();
           if (!active) return;
-          setState(subscription ? 'subscribed' : 'prompt');
-          if (subscription && claimHealAttempt()) {
-            void healPushSubscriptionIfOrphaned(subscription)
-              .then((outcome) => {
-                if (outcome === 'healed') {
-                  track('push_subscription_healed', { device_kind: deviceKind });
-                } else if (outcome === 'device_conflict') {
-                  track('push_device_conflict', { device_kind: deviceKind });
-                }
-              })
-              .catch(() => {});
+          if (!subscription) {
+            setState('prompt');
+            return;
           }
+
+          // A browser subscription is not a registration: only the server row
+          // proves this account will receive alerts.
+          const stored = readHealOutcome();
+          if (stored === 'healed' || stored === 'not_needed') {
+            setState('subscribed');
+            return;
+          }
+          if (stored === 'device_conflict') {
+            setState('conflict');
+            return;
+          }
+          if (!claimHealRun()) {
+            // This instance already asked the server; stay quiet meanwhile.
+            setState('subscribed');
+            return;
+          }
+
+          const outcome = await healPushSubscriptionIfOrphaned(subscription);
+          if (!active) return;
+          if (outcome === 'healed' || outcome === 'not_needed') {
+            storeHealOutcome(outcome);
+            if (outcome === 'healed') {
+              track('push_subscription_healed', { device_kind: deviceKind });
+            }
+            setState('subscribed');
+            return;
+          }
+          if (outcome === 'device_conflict') {
+            storeHealOutcome(outcome);
+            track('push_device_conflict', { device_kind: deviceKind });
+            setState('conflict');
+            return;
+          }
+          // `failed` is deliberately not stored, so the next mount retries.
+          setFailure('post_failed');
+          setState('error');
           return;
         }
 
@@ -128,7 +185,7 @@ export default function PushNotificationBanner({ accountKey }: { accountKey: str
     return () => {
       active = false;
     };
-  }, [claimHealAttempt, deviceKind]);
+  }, [claimHealRun, deviceKind, readHealOutcome, storeHealOutcome]);
 
   useEffect(() => {
     if (resolutionTracked.current || state === 'loading') return;
@@ -136,11 +193,40 @@ export default function PushNotificationBanner({ accountKey }: { accountKey: str
     if (isShownBannerState(state)) {
       resolutionTracked.current = true;
       track('push_banner_shown', { state, device_kind: deviceKind });
-    } else if (isSuppressedBannerState(state)) {
+    } else if (state === 'subscribed' || state === 'dismissed') {
       resolutionTracked.current = true;
       track('push_banner_suppressed', { state, device_kind: deviceKind });
     }
   }, [deviceKind, state]);
+
+  const applyResult = useCallback(
+    (result: PushSubscribeResult) => {
+      if (result.ok) {
+        setState('subscribed');
+        return;
+      }
+      track('push_subscribe_failed', {
+        reason: result.reason,
+        device_kind: deviceKind,
+      });
+      if (result.reason === 'device_conflict') {
+        track('push_device_conflict', { device_kind: deviceKind });
+        setState('conflict');
+        return;
+      }
+      const permissionDenied =
+        result.reason === 'permission_denied' &&
+        typeof Notification !== 'undefined' &&
+        Notification.permission === 'denied';
+      if (permissionDenied) {
+        setState('denied');
+        return;
+      }
+      setFailure(result.reason);
+      setState('error');
+    },
+    [deviceKind],
+  );
 
   const handleSubscribe = useCallback(async () => {
     track('push_subscribe_click', { device_kind: deviceKind });
@@ -153,31 +239,49 @@ export default function PushNotificationBanner({ accountKey }: { accountKey: str
           device_kind: deviceKind,
         });
       }
-
-      if (result.ok) {
-        setState('subscribed');
-      } else {
-        track('push_subscribe_failed', {
-          reason: result.reason,
-          device_kind: deviceKind,
-        });
-        const permissionDenied =
-          result.reason === 'permission_denied' &&
-          typeof Notification !== 'undefined' &&
-          Notification.permission === 'denied';
-        setState(permissionDenied ? 'denied' : 'error');
-      }
+      applyResult(result);
     } catch (err) {
       console.error('[push] Unexpected subscription failure:', err);
       track('push_subscribe_failed', {
         reason: 'subscribe_threw',
         device_kind: deviceKind,
       });
+      setFailure('subscribe_threw');
       setState('error');
     } finally {
       setSubscribing(false);
     }
-  }, [deviceKind]);
+  }, [applyResult, deviceKind]);
+
+  /** "Usar en esta cuenta": drop the foreign endpoint and register this one. */
+  const handleUseOnThisAccount = useCallback(async () => {
+    track('push_subscribe_click', { device_kind: deviceKind, state: 'conflict' });
+    setSubscribing(true);
+    try {
+      const result = await replaceDeviceSubscription();
+      if (result.ok) {
+        storeHealOutcome('healed');
+        setState('subscribed');
+        return;
+      }
+      track('push_subscribe_failed', {
+        reason: result.reason,
+        device_kind: deviceKind,
+      });
+      setFailure(result.reason);
+      setState('error');
+    } catch (err) {
+      console.error('[push] Unexpected device replacement failure:', err);
+      track('push_subscribe_failed', {
+        reason: 'subscribe_threw',
+        device_kind: deviceKind,
+      });
+      setFailure('subscribe_threw');
+      setState('error');
+    } finally {
+      setSubscribing(false);
+    }
+  }, [deviceKind, storeHealOutcome]);
 
   const handleDismiss = useCallback(() => {
     if (isVisibleBannerState(state)) {
@@ -191,7 +295,7 @@ export default function PushNotificationBanner({ accountKey }: { accountKey: str
     setState('dismissed');
   }, [deviceKind, state]);
 
-  if (state === 'loading' || state === 'subscribed' || state === 'unsupported' || state === 'dismissed') {
+  if (state === 'loading' || state === 'subscribed' || state === 'dismissed') {
     return null;
   }
 
@@ -225,9 +329,22 @@ export default function PushNotificationBanner({ accountKey }: { accountKey: str
       {state === 'prompt' && (
         <PromptBanner onSubscribe={handleSubscribe} subscribing={subscribing} />
       )}
-      {state === 'denied' && <DeniedBanner />}
+      {state === 'denied' && <MessageBanner title="Notificaciones bloqueadas" body={deniedCopy(deviceKind)} />}
+      {state === 'unsupported' && (
+        <MessageBanner
+          title="Alertas no disponibles en este navegador"
+          body={unsupportedCopy(deviceKind, isInstalledPWA())}
+        />
+      )}
       {state === 'error' && (
-        <ErrorBanner onRetry={handleSubscribe} subscribing={subscribing} />
+        <ErrorBanner
+          reason={failure}
+          onRetry={handleSubscribe}
+          subscribing={subscribing}
+        />
+      )}
+      {state === 'conflict' && (
+        <ConflictBanner onUseHere={handleUseOnThisAccount} subscribing={subscribing} />
       )}
     </div>
   );
@@ -355,27 +472,68 @@ function Step({ number, children }: { number: number; children: React.ReactNode 
   );
 }
 
-function DeniedBanner() {
+function MessageBanner({ title, body }: { title: string; body: string }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
       <Bell size={24} style={{ color: '#92400e', flexShrink: 0 }} />
       <div>
-        <div style={{ fontWeight: 600, color: '#78350f', fontSize: '15px' }}>
-          Notificaciones bloqueadas
-        </div>
-        <div style={{ color: '#92400e', fontSize: '13px', marginTop: '2px' }}>
-          Abre Ajustes &rarr; Safari &rarr; Notificaciones y permite notificaciones para RateTap
-        </div>
+        <div style={{ fontWeight: 600, color: '#78350f', fontSize: '15px' }}>{title}</div>
+        <div style={{ color: '#92400e', fontSize: '13px', marginTop: '2px' }}>{body}</div>
       </div>
     </div>
   );
 }
 
 function ErrorBanner({
+  reason,
   onRetry,
   subscribing,
 }: {
+  reason: PushSubscribeFailureReason;
   onRetry: () => void;
+  subscribing: boolean;
+}) {
+  const copy = errorCopy(reason);
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+      <Bell size={24} style={{ color: '#92400e', flexShrink: 0 }} />
+      <div style={{ flex: 1, minWidth: '200px' }}>
+        <div style={{ fontWeight: 600, color: '#78350f', fontSize: '15px' }}>
+          {copy.title}
+        </div>
+        <div style={{ color: '#92400e', fontSize: '13px', marginTop: '2px' }}>
+          {copy.body}
+        </div>
+      </div>
+      {copy.retry && (
+        <button
+          onClick={onRetry}
+          disabled={subscribing}
+          style={{
+            padding: '8px 16px',
+            background: '#78350f',
+            color: 'white',
+            border: 'none',
+            borderRadius: '8px',
+            fontSize: '14px',
+            fontWeight: 600,
+            cursor: subscribing ? 'wait' : 'pointer',
+            opacity: subscribing ? 0.7 : 1,
+            whiteSpace: 'nowrap',
+          }}
+        >
+          {subscribing ? 'Activando...' : 'Reintentar'}
+        </button>
+      )}
+    </div>
+  );
+}
+
+function ConflictBanner({
+  onUseHere,
+  subscribing,
+}: {
+  onUseHere: () => void;
   subscribing: boolean;
 }) {
   return (
@@ -383,14 +541,14 @@ function ErrorBanner({
       <Bell size={24} style={{ color: '#92400e', flexShrink: 0 }} />
       <div style={{ flex: 1, minWidth: '200px' }}>
         <div style={{ fontWeight: 600, color: '#78350f', fontSize: '15px' }}>
-          No se pudieron activar las notificaciones
+          {conflictCopy.title}
         </div>
         <div style={{ color: '#92400e', fontSize: '13px', marginTop: '2px' }}>
-          Revisa tu conexión e inténtalo de nuevo
+          {conflictCopy.body}
         </div>
       </div>
       <button
-        onClick={onRetry}
+        onClick={onUseHere}
         disabled={subscribing}
         style={{
           padding: '8px 16px',
@@ -405,7 +563,7 @@ function ErrorBanner({
           whiteSpace: 'nowrap',
         }}
       >
-        {subscribing ? 'Activando...' : 'Reintentar'}
+        {subscribing ? 'Activando...' : conflictCopy.button}
       </button>
     </div>
   );

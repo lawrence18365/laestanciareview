@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { t } from '@/lib/i18n';
+import { revokeDeviceOnLogout } from '@/lib/push-client';
 
 const gmLinks = [
   { href: '/dashboard', label: t.nav.dashboard },
@@ -92,6 +93,10 @@ export default function DashboardNav({
   const [mobileOpen, setMobileOpen] = useState(false);
 
   async function handleLogout() {
+    // Revoke this device's alert registration first: the account is leaving, and
+    // the next account to sign in on this device would otherwise hit a 409
+    // device conflict against the endpoint left behind. Bounded, never throws.
+    await revokeDeviceOnLogout();
     try {
       await fetch('/api/auth/logout', { method: 'POST' });
     } catch { /* continue */ }

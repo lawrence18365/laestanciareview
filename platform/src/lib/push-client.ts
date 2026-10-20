@@ -12,8 +12,10 @@ const REMEMBERED_PUSH_ENDPOINT_KEY = 'ratetap_push_endpoint';
 export type PushSubscribeFailureReason =
   | 'no_vapid_key'
   | 'permission_denied'
+  | 'unsupported'
   | 'sw_register_failed'
   | 'subscribe_threw'
+  | 'device_conflict'
   | 'post_failed';
 
 export type PushSubscribeResult =
@@ -108,6 +110,7 @@ function urlBase64ToUint8Array(base64String: string): Uint8Array {
 /** Check if the device supports push and has granted permission. */
 export function getPushState(): 'unsupported' | 'prompt' | 'granted' | 'denied' {
   if (typeof window === 'undefined') return 'unsupported';
+  if (typeof Notification === 'undefined') return 'unsupported';
   if (!('serviceWorker' in navigator) || !('PushManager' in window)) return 'unsupported';
   if (Notification.permission === 'granted') return 'granted';
   if (Notification.permission === 'denied') return 'denied';
@@ -136,6 +139,7 @@ export function getPushDeviceKind(): PushDeviceKind {
   return classifyPushDevice(
     navigator.userAgent,
     isInstalledPWA() ? 'standalone' : 'browser',
+    navigator.maxTouchPoints,
   );
 }
 
@@ -198,6 +202,32 @@ export async function subscribeToPush(): Promise<PushSubscribeResult> {
     return { ok: false, reason: 'no_vapid_key' };
   }
 
+  if (
+    typeof window === 'undefined' ||
+    typeof Notification === 'undefined' ||
+    typeof navigator === 'undefined' ||
+    !('serviceWorker' in navigator) ||
+    !('PushManager' in window)
+  ) {
+    return { ok: false, reason: 'unsupported' };
+  }
+
+  // Ask for permission BEFORE any other await: Safari/iOS only grants it while
+  // the user's tap is still the active gesture, and awaiting anything first can
+  // spend that gesture and leave the prompt unable to open.
+  if (Notification.permission !== 'granted') {
+    let permission: NotificationPermission;
+    try {
+      permission = await Notification.requestPermission();
+    } catch (err) {
+      console.error('[push] Permission request failed:', err);
+      return { ok: false, reason: 'subscribe_threw' };
+    }
+    if (permission !== 'granted') {
+      return { ok: false, reason: 'permission_denied' };
+    }
+  }
+
   let registration: ServiceWorkerRegistration;
   try {
     const registered = await navigator.serviceWorker.register('/sw.js');
@@ -207,23 +237,18 @@ export async function subscribeToPush(): Promise<PushSubscribeResult> {
     return { ok: false, reason: 'sw_register_failed' };
   }
 
-  let permission: NotificationPermission;
+  let subscription: PushSubscription | null;
   try {
-    permission = await Notification.requestPermission();
-  } catch (err) {
-    console.error('[push] Permission request failed:', err);
-    return { ok: false, reason: 'subscribe_threw' };
-  }
-  if (permission !== 'granted') {
-    return { ok: false, reason: 'permission_denied' };
-  }
-
-  let subscription: PushSubscription;
-  try {
-    subscription = await registration.pushManager.subscribe({
-      userVisibleOnly: true,
-      applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY) as unknown as ArrayBuffer,
-    });
+    // A subscription can already exist (another account on this device, or an
+    // earlier enrollment whose server row is gone): reuse it instead of asking
+    // the push service for a second one.
+    subscription = await registration.pushManager.getSubscription();
+    if (!subscription) {
+      subscription = await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY) as unknown as ArrayBuffer,
+      });
+    }
   } catch (err) {
     console.error('[push] Browser subscription failed:', err);
     return { ok: false, reason: 'subscribe_threw' };
@@ -232,13 +257,36 @@ export async function subscribeToPush(): Promise<PushSubscribeResult> {
   try {
     const persisted = await postPushSubscription(subscription);
     if (!persisted.ok) {
-      return { ok: false, reason: 'post_failed' };
+      return {
+        ok: false,
+        reason: persisted.reason === 'device_conflict' ? 'device_conflict' : 'post_failed',
+      };
     }
     return { ok: true };
   } catch (err) {
     console.error('[push] Subscription persistence failed:', err);
     return { ok: false, reason: 'post_failed' };
   }
+}
+
+/**
+ * Move this device's push endpoint to the current account. Used by the banner's
+ * explicit "use on this account" button: the old subscription is dropped first
+ * so the server sees a new endpoint instead of an active row owned elsewhere.
+ * Permission is already granted, so nothing here prompts.
+ */
+export async function replaceDeviceSubscription(): Promise<PushSubscribeResult> {
+  const existing = await getPushSubscription();
+  if (existing) {
+    try {
+      await existing.unsubscribe();
+    } catch (err) {
+      console.error('[push] Dropping the previous subscription failed:', err);
+      return { ok: false, reason: 'subscribe_threw' };
+    }
+    clearRememberedPushEndpoint();
+  }
+  return subscribeToPush();
 }
 
 /** Unsubscribe from push notifications. */
@@ -297,6 +345,60 @@ export async function unsubscribeFromPush(): Promise<boolean> {
     console.error('[push] Unsubscribe failed:', err);
     return false;
   }
+}
+
+/**
+ * Revoke this device's registration while logging out. Never throws and never
+ * holds the logout for longer than `timeoutMs`: the next account on this device
+ * would otherwise hit a 409 device conflict against the account being left.
+ */
+export async function revokeDeviceOnLogout(timeoutMs = 3000): Promise<void> {
+  let timeoutId: ReturnType<typeof setTimeout> | undefined;
+  try {
+    await Promise.race([
+      revokeLoggingOutAccountDevice().catch(() => false),
+      new Promise<boolean>((resolve) => {
+        timeoutId = setTimeout(() => resolve(false), timeoutMs);
+      }),
+    ]);
+  } catch (err) {
+    console.error('[push] Logout revocation failed:', err);
+  } finally {
+    if (timeoutId !== undefined) clearTimeout(timeoutId);
+  }
+}
+
+/**
+ * The browser subscription may belong to a different account signed in
+ * earlier on this device. The server row is scoped to the logging-out session,
+ * so only unsubscribe when that account actually owns this endpoint; otherwise
+ * the other account would silently lose its alerts.
+ */
+async function revokeLoggingOutAccountDevice(): Promise<boolean> {
+  const subscription = await getPushSubscription();
+  if (!subscription) {
+    clearRememberedPushEndpoint();
+    return true;
+  }
+
+  const query = new URLSearchParams({ endpoint: subscription.endpoint });
+  const response = await fetch(`/api/push/subscribe?${query.toString()}`, {
+    method: 'GET',
+    cache: 'no-store',
+  });
+  if (!response.ok) return false;
+
+  const result: unknown = await response.json();
+  if (
+    !result ||
+    typeof result !== 'object' ||
+    (result as { active?: unknown }).active !== true
+  ) {
+    return false;
+  }
+
+  await unsubscribeFromPush();
+  return true;
 }
 
 /** Read the browser's current subscription without waiting on SW.ready. */
