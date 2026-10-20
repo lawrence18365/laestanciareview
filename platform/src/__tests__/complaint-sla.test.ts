@@ -7,6 +7,7 @@ const mocks = vi.hoisted(() => ({
   /** Queue of results for the `.returning()` of the claim statement. */
   claimResults: [] as unknown[][],
   sendPushToRestaurant: vi.fn(),
+  getRestaurantsWithActiveDevices: vi.fn(),
   sendFeedbackAlert: vi.fn(),
 }));
 
@@ -58,6 +59,7 @@ vi.mock('@/db', () => {
 
 vi.mock('@/lib/push', () => ({
   sendPushToRestaurant: mocks.sendPushToRestaurant,
+  getRestaurantsWithActiveDevices: mocks.getRestaurantsWithActiveDevices,
 }));
 
 vi.mock('@/lib/email', () => ({
@@ -126,6 +128,12 @@ describe('complaint SLA', () => {
     mocks.updatedValues.length = 0;
     mocks.claimResults.length = 0;
     mocks.sendPushToRestaurant.mockResolvedValue({ targeted: 0, sent: 0, failed: 0 });
+    // By default every id the sweep asks about has an active device, so the
+    // pre-existing scenarios keep exercising the send path. The reachability
+    // tests below override this with the exact device set they need.
+    mocks.getRestaurantsWithActiveDevices.mockImplementation(
+      async (ids: number[]) => new Set(ids),
+    );
     mocks.sendFeedbackAlert.mockResolvedValue(emailSuccess);
   });
 
@@ -451,6 +459,223 @@ describe('complaint SLA', () => {
     // attempt and nothing else: exactly one channel merge exists in total.
     const merges = mocks.updatedValues.filter((values) => 'alertChannels' in values);
     expect(merges).toHaveLength(1);
+  });
+
+  describe('reachability gate', () => {
+    // 80 h old, never escalated, nobody acted: well past every escalation
+    // window, but still just an overdue complaint. There is no age cap, so the
+    // sweep escalates it once, however late a recipient becomes reachable.
+    const ancient = () => ({
+      ...complaint({ restaurantId: 98, restaurantName: 'Cocteles Chelita', groupKey: null }),
+      createdAt: hoursAgo(80),
+    });
+
+    it('returns an 80 h-old complaint and escalates it exactly once across three sweeps', async () => {
+      mocks.selectRows.push([ancient()]);
+      const overdue = await getOverdueComplaints(now);
+
+      expect(overdue.map((row) => row.id)).toEqual([41]);
+      expect(overdue[0].classification).toMatchObject({ actionable: true, severity: 'urgent' });
+
+      mocks.sendPushToRestaurant.mockResolvedValue({ targeted: 1, sent: 1, failed: 0 });
+
+      // Sweep 1: the location has a device, so the old complaint goes out.
+      mocks.selectRows.push([ancient()], []);
+      const first = await escalateOverdueComplaints(now);
+
+      expect(first).toMatchObject({ escalated: 1, noChannel: 0 });
+      expect(first.details[0].hoursOpen).toBe(80);
+      expect(mocks.sendPushToRestaurant.mock.calls.map((call) => call[0])).toEqual([98]);
+      // Claimed, then the channel record is merged in.
+      expect(mocks.updatedValues).toHaveLength(2);
+      expect(mocks.updatedValues[0]).toEqual({ escalatedAt: now });
+      expect(mocks.updatedValues[1]).not.toHaveProperty('escalatedAt');
+
+      // Sweeps 2 and 3 see escalatedAt set: the claim is what makes this
+      // once-only, not the age of the complaint.
+      for (const laterNow of [now, new Date('2026-09-04T13:00:00.000Z')]) {
+        mocks.selectRows.push([{ ...ancient(), escalatedAt: now }], []);
+        const again = await escalateOverdueComplaints(laterNow);
+
+        expect(again).toMatchObject({ escalated: 0, noChannel: 0, details: [] });
+      }
+
+      expect(mocks.sendPushToRestaurant).toHaveBeenCalledTimes(1);
+      expect(mocks.sendFeedbackAlert).not.toHaveBeenCalled();
+    });
+
+    it('holds the old complaint while unreachable, then escalates it once a device appears', async () => {
+      mocks.getRestaurantsWithActiveDevices.mockResolvedValue(new Set());
+
+      // Nobody can receive it — no device, and a group-less location has no
+      // owner or regional account — so three sweeps leave the review untouched.
+      for (let run = 0; run < 3; run++) {
+        mocks.selectRows.push([ancient()], []);
+        const result = await escalateOverdueComplaints(now);
+
+        expect(result).toMatchObject({ escalated: 0, noChannel: 1 });
+      }
+
+      expect(mocks.sendPushToRestaurant).not.toHaveBeenCalled();
+      expect(mocks.sendFeedbackAlert).not.toHaveBeenCalled();
+      // No claim, no release: the complaint is still waiting, claimed or not.
+      expect(mocks.updatedValues).toEqual([]);
+
+      // A device registers. The next sweep escalates the still-unclaimed old
+      // complaint exactly once.
+      mocks.getRestaurantsWithActiveDevices.mockImplementation(
+        async (ids: number[]) => new Set(ids),
+      );
+      mocks.sendPushToRestaurant.mockResolvedValue({ targeted: 1, sent: 1, failed: 0 });
+      mocks.selectRows.push([ancient()], []);
+      const withDevice = await escalateOverdueComplaints(now);
+
+      expect(withDevice).toMatchObject({ escalated: 1, noChannel: 0 });
+      expect(mocks.sendPushToRestaurant.mock.calls.map((call) => call[0])).toEqual([98]);
+
+      // And a further sweep sends nothing: the claim is on the row now.
+      mocks.selectRows.push([{ ...ancient(), escalatedAt: now }], []);
+      const afterClaim = await escalateOverdueComplaints(now);
+
+      expect(afterClaim).toMatchObject({ escalated: 0, noChannel: 0, details: [] });
+      expect(mocks.sendPushToRestaurant).toHaveBeenCalledTimes(1);
+    });
+
+    it('treats unconfigured push as unreachable: no claim and no write, sweep after sweep', async () => {
+      // With VAPID keys missing, getRestaurantsWithActiveDevices reports no
+      // devices at all, so nothing looks deliverable and nothing is claimed.
+      mocks.getRestaurantsWithActiveDevices.mockResolvedValue(new Set());
+      const ownerWithoutEmail = { ...ownerAccount, managerEmail: null };
+
+      for (let run = 0; run < 3; run++) {
+        mocks.selectRows.push([complaint()], [ownerWithoutEmail]);
+        const result = await escalateOverdueComplaints(now);
+
+        expect(result).toMatchObject({ escalated: 0, noChannel: 1 });
+      }
+
+      expect(mocks.sendPushToRestaurant).not.toHaveBeenCalled();
+      expect(mocks.sendFeedbackAlert).not.toHaveBeenCalled();
+      expect(mocks.updatedValues).toEqual([]);
+    });
+
+    it('still emails the owner once when push is unconfigured, and keeps the claim', async () => {
+      mocks.getRestaurantsWithActiveDevices.mockResolvedValue(new Set());
+      mocks.selectRows.push([complaint()], [ownerAccount]);
+
+      const first = await escalateOverdueComplaints(now);
+
+      // Email does not depend on push, so the escalation is delivered.
+      expect(first).toMatchObject({ escalated: 1, noChannel: 0 });
+      expect(mocks.sendPushToRestaurant).not.toHaveBeenCalled();
+      expect(mocks.sendFeedbackAlert.mock.calls.map((call) => call[0].to)).toEqual([
+        'owner@example.com',
+      ]);
+      expect(first.details[0].channels).toMatchObject({
+        location_push: { ok: false, skipped: 'no_devices' },
+        owner_90_push: { ok: false, skipped: 'no_devices' },
+        owner_90_email: { ok: true },
+      });
+
+      // Claim kept: the email is the delivery, so no release is written.
+      expect(mocks.updatedValues).toHaveLength(2);
+      expect(mocks.updatedValues[0]).toEqual({ escalatedAt: now });
+      expect(mocks.updatedValues[1]).toHaveProperty('alertChannels');
+      expect(mocks.updatedValues[1]).not.toHaveProperty('escalatedAt');
+
+      // The next sweep sees the claim and does not email a second time.
+      mocks.selectRows.push([complaint({ escalatedAt: now })], [ownerAccount]);
+      const second = await escalateOverdueComplaints(now);
+
+      expect(second).toMatchObject({ escalated: 0, noChannel: 0, details: [] });
+      expect(mocks.sendFeedbackAlert).toHaveBeenCalledTimes(1);
+    });
+
+    it('never touches an unreachable complaint, however many times the sweep runs', async () => {
+      mocks.getRestaurantsWithActiveDevices.mockResolvedValue(new Set());
+      // No group, no owner/regional account, no email: nobody can be reached.
+      const unreachable = complaint({ restaurantId: 98, restaurantName: 'Cocteles Chelita', groupKey: null });
+
+      for (let run = 0; run < 3; run++) {
+        mocks.selectRows.push([unreachable], []);
+        const result = await escalateOverdueComplaints(now);
+
+        expect(result.escalated).toBe(0);
+        expect(result.noChannel).toBe(1);
+        expect(result.details[0]).toMatchObject({
+          complaintId: 41,
+          targeted: false,
+          channels: { location_push: { ok: false, skipped: 'no_devices' } },
+        });
+        // Only the location is reported: nobody else was even considered.
+        expect(Object.keys(result.details[0].channels)).toEqual(['location_push']);
+      }
+
+      expect(mocks.getRestaurantsWithActiveDevices).toHaveBeenCalledWith([98]);
+      expect(mocks.sendPushToRestaurant).not.toHaveBeenCalled();
+      expect(mocks.sendFeedbackAlert).not.toHaveBeenCalled();
+      // No claim, no release, no channel merge: the reviews table is untouched.
+      expect(mocks.updatedValues).toEqual([]);
+    });
+
+    it('pushes once to a location with a device and nothing on the next sweep', async () => {
+      mocks.sendPushToRestaurant.mockResolvedValue({ targeted: 1, sent: 1, failed: 0 });
+      const reachable = complaint({ restaurantId: 98, groupKey: null });
+
+      mocks.selectRows.push([reachable], []);
+      const first = await escalateOverdueComplaints(now);
+
+      expect(first.escalated).toBe(1);
+      expect(mocks.sendPushToRestaurant.mock.calls.map((call) => call[0])).toEqual([98]);
+      expect(mocks.updatedValues[0]).toEqual({ escalatedAt: now });
+
+      // The claim is on the row now, so the next sweep never sees it.
+      mocks.selectRows.push([{ ...reachable, escalatedAt: now }], []);
+      const second = await escalateOverdueComplaints(new Date('2026-09-04T13:00:00.000Z'));
+
+      expect(second).toMatchObject({ escalated: 0, noChannel: 0, details: [] });
+      expect(mocks.sendPushToRestaurant).toHaveBeenCalledTimes(1);
+    });
+
+    it('sends nothing when another sweep won the claim', async () => {
+      mocks.sendPushToRestaurant.mockResolvedValue({ targeted: 1, sent: 1, failed: 0 });
+      mocks.claimResults.push([]);
+      mocks.selectRows.push([complaint({ restaurantId: 98, groupKey: null })], []);
+
+      const result = await escalateOverdueComplaints(now);
+
+      expect(result).toMatchObject({ escalated: 0, noChannel: 0, details: [] });
+      expect(mocks.sendPushToRestaurant).not.toHaveBeenCalled();
+      expect(mocks.sendFeedbackAlert).not.toHaveBeenCalled();
+      // Only the claim attempt was written, and it matched nothing.
+      expect(mocks.updatedValues).toEqual([{ escalatedAt: now }]);
+    });
+
+    it('emails an owner with no device, without pushing to it and without releasing the claim', async () => {
+      mocks.getRestaurantsWithActiveDevices.mockResolvedValue(new Set([7]));
+      mocks.sendPushToRestaurant.mockResolvedValue({ targeted: 1, sent: 1, failed: 0 });
+      mocks.selectRows.push([complaint()], [ownerAccount]);
+
+      const result = await escalateOverdueComplaints(now);
+
+      expect(mocks.getRestaurantsWithActiveDevices).toHaveBeenCalledWith(
+        expect.arrayContaining([7, 90]),
+      );
+      // The location's own device is pushed; the owner is only emailed.
+      expect(mocks.sendPushToRestaurant.mock.calls.map((call) => call[0])).toEqual([7]);
+      expect(mocks.sendFeedbackAlert.mock.calls.map((call) => call[0].to)).toEqual([
+        'owner@example.com',
+      ]);
+      expect(result).toMatchObject({ escalated: 1, noChannel: 0 });
+      expect(result.details[0].channels.owner_90_push).toEqual({ ok: false, skipped: 'no_devices' });
+      expect(result.details[0].channels.owner_90_email).toEqual({ ok: true });
+
+      // Claim kept: the claim plus the channel merge, and no release.
+      expect(mocks.updatedValues).toHaveLength(2);
+      expect(mocks.updatedValues[0]).toEqual({ escalatedAt: now });
+      expect(mocks.updatedValues[1]).toHaveProperty('alertChannels');
+      expect(mocks.updatedValues[1]).not.toHaveProperty('escalatedAt');
+    });
   });
 
   describe('free plan (US-15): no escalation', () => {
