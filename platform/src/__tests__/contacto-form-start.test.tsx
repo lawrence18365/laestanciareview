@@ -134,6 +134,7 @@ describe('place pick', () => {
       placeId: 'ChIJ123',
       name: 'La Estancia',
       address: { city: 'León', state: 'Guanajuato' },
+      fullAddress: 'Blvd. Campestre 1, León, Gto.',
     });
     expect(next.businessName).toBe('La Estancia');
     expect(next.city).toBe('León');
@@ -144,7 +145,7 @@ describe('place pick', () => {
   it('keeps what the form already has when Google returns no city', () => {
     const next = applyPlaceSelection(
       { ...empty, city: 'Puebla', contactName: 'Ana' },
-      { placeId: 'ChIJ9', name: 'Tacos', address: { city: '', state: '' } },
+      { placeId: 'ChIJ9', name: 'Tacos', address: { city: '', state: '' }, fullAddress: '' },
     );
     expect(next.city).toBe('Puebla');
     expect(next.contactName).toBe('Ana');

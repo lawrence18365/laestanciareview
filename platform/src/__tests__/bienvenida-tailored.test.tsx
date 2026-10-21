@@ -102,8 +102,10 @@ function ready(over: Partial<StatusResponse> = {}): StatusResponse {
 }
 
 /** Rendered text, React's `<!-- -->` text separators removed. */
-function html(status: StatusResponse, panelHref: string | null = null) {
-  return renderToStaticMarkup(<ReadyView status={status} trialDays={30} panelHref={panelHref} />)
+function html(status: StatusResponse, panelHref: string | null = null, isReload = false) {
+  return renderToStaticMarkup(
+    <ReadyView status={status} trialDays={30} panelHref={panelHref} isReload={isReload} />,
+  )
     .replace(/<!-- -->/g, '');
 }
 
@@ -302,7 +304,7 @@ describe('ReadyView per mode', () => {
   });
 
   it('reload: panel link replaces the /login footer', () => {
-    const out = html(ready({ ...solo }), '/dashboard');
+    const out = html(ready({ ...solo }), '/dashboard', true);
     expect(out).toContain('href="/dashboard"');
     expect(out).toContain('Ir a mi panel →');
     expect(out).not.toContain('/login');
@@ -397,6 +399,7 @@ describe('GET /api/signup/status', () => {
     pilot: false,
     googleReviewUrl: null,
     googlePlaceId: 'ChIJ123',
+    city: 'Morelia',
   };
 
   async function call() {
@@ -424,6 +427,27 @@ describe('GET /api/signup/status', () => {
     expect('goalQuestion' in (await call())).toBe(false);
     mocks.selectQueue = [[pending], [{ ...restaurant, teamMode: null, locationsBand: null, googleProfile: null }]];
     expect('goalQuestion' in (await call())).toBe(false);
+  });
+
+  it('carries the restaurant city for the welcome Google search', async () => {
+    mocks.selectQueue = [[pending], [{ ...restaurant, teamMode: 'solo', locationsBand: '1' }]];
+    expect((await call()).city).toBe('Morelia');
+    mocks.selectQueue = [[pending], [{ ...restaurant, city: null, teamMode: 'solo', locationsBand: '1' }]];
+    expect((await call()).city).toBeNull();
+  });
+
+  it('carries the panel href of the session it just created', async () => {
+    // A genuine first view has no session cookie yet (this response sets it), so
+    // the welcome screen can only learn its panel link from here. Same mapping
+    // as the role createSession is called with: owner → /overview, gm → /dashboard.
+    mocks.selectQueue = [[pending], [{ ...restaurant, isOwner: false, teamMode: 'solo', locationsBand: '1' }]];
+    mocks.createSession.mockClear();
+    expect((await call()).panelHref).toBe('/dashboard');
+    expect(mocks.createSession).toHaveBeenCalledWith('pizzeria-lupita', 'gm');
+
+    mocks.selectQueue = [[pending], [{ ...restaurant, isOwner: true, teamMode: null, locationsBand: null }]];
+    expect((await call()).panelHref).toBe('/overview');
+    expect(mocks.createSession).toHaveBeenCalledWith('pizzeria-lupita', 'owner');
   });
 
   it('is all null for a legacy restaurant', async () => {

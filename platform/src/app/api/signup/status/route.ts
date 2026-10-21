@@ -63,6 +63,12 @@ export async function GET(req: NextRequest) {
     pilot: r.pilot,
     // True when guests who tap "Google" have somewhere to land.
     googleConnected: googleReviewUrlFor(r) !== null,
+    // Biases the welcome Google search: a bare name matches in every state.
+    city: r.city,
+    // The panel for the session this response just created, same mapping as
+    // that session's role. /bienvenida is served (and its panel link decided)
+    // before this cookie exists, so the href has to travel in the payload.
+    panelHref: r.isOwner ? '/overview' : '/dashboard',
     signupId,
     // Onboarding profile (US-14). All null for legacy restaurants.
     ...readyProfileFields(r),
