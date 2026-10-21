@@ -167,7 +167,7 @@ describe('placement', () => {
       askTodayCount: 3,
     };
     const view = (s: StatusResponse) =>
-      clean(renderToStaticMarkup(<ReadyView status={s} trialDays={30} panelHref={null} />));
+      clean(renderToStaticMarkup(<ReadyView status={s} trialDays={30} panelHref={null} isReload={false} />));
     expect(view({ ...base, teamMode: 'solo' })).toContain('3 de 5 hoy');
     expect(view({ ...base, teamMode: 'team', locationsBand: '2-5' })).toContain('3 de 5 hoy');
     expect(view({ ...base, teamMode: null, locationsBand: null })).not.toContain('Pide 5 reseñas hoy');

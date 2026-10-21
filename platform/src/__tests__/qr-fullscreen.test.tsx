@@ -40,7 +40,7 @@ function ready(over: Partial<StatusResponse> = {}): StatusResponse {
 }
 
 function html(status: StatusResponse) {
-  return renderToStaticMarkup(<ReadyView status={status} trialDays={30} panelHref={null} />).replace(
+  return renderToStaticMarkup(<ReadyView status={status} trialDays={30} panelHref={null} isReload={false} />).replace(
     /<!-- -->/g,
     '',
   );

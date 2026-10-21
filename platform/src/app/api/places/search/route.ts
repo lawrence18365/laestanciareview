@@ -102,6 +102,16 @@ function stripAccents(s: string): string {
 }
 
 /**
+ * Whether the city still has to be added. "Los asaditos" alone returns a listing
+ * in another state; "Los asaditos Morelia" returns the right one. A query that
+ * already names the city (accents and case aside) is left alone.
+ */
+export function shouldAppendCity(q: string, city: string): boolean {
+  if (!city) return false;
+  return !stripAccents(q.toLowerCase()).includes(stripAccents(city.toLowerCase()));
+}
+
+/**
  * "LA PRIVADA, calle privada de san Andres mz 1 lt 3" -> "LA PRIVADA":
  * keep the text before the first comma, dash or #, drop street words and
  * digit-only tokens, then add the city when the caller has one.
@@ -145,25 +155,30 @@ export async function GET(req: NextRequest) {
   const city = rawCity.length <= MAX_CITY ? rawCity : '';
 
   const near = ipLocation(req);
-  let results: ReturnType<typeof toResult>[];
-  try {
-    results = await searchText(q, key, near);
-  } catch (err) {
-    console.error('places-search: upstream error', err instanceof Error ? err.message : err);
-    return reply({ error: 'Search failed' }, 502);
+  // At most two upstream calls, whatever the path:
+  // - a known city the caller did not type: "<q> <city>" first, then plain q;
+  // - otherwise the query as typed, then its name part ("NAME" of a pasted
+  //   "NAME, street, mz 1 lt 3", which Google matches nothing for).
+  const attempts: string[] = [];
+  if (shouldAppendCity(q, city)) {
+    attempts.push(`${q} ${city}`);
+    attempts.push(q);
+  } else {
+    attempts.push(q);
+    const simplified = simplifyQuery(q, city);
+    if (simplified && simplified !== q) attempts.push(simplified);
   }
-  if (results.length > 0) return reply(results);
 
-  // Nothing found. People paste "NAME, street, mz 1 lt 3" into the name box and
-  // Google matches nothing, so retry once with just the name (plus the city).
-  // Still one request for the rate limit; at most two upstream calls.
-  const simplified = simplifyQuery(q, city);
-  if (!simplified || simplified === q) return reply([], 200, { 'X-Places-Retried': '0' });
-  try {
-    results = await searchText(simplified, key, near);
-  } catch (err) {
-    console.error('places-search: retry error', err instanceof Error ? err.message : err);
-    results = [];
+  let results: ReturnType<typeof toResult>[] = [];
+  for (let i = 0; i < attempts.length; i++) {
+    try {
+      results = await searchText(attempts[i], key, near);
+    } catch (err) {
+      console.error('places-search: upstream error', err instanceof Error ? err.message : err);
+      if (i === 0) return reply({ error: 'Search failed' }, 502);
+      results = [];
+    }
+    if (results.length > 0) return reply(results, 200, i === 0 ? {} : { 'X-Places-Retried': '1' });
   }
-  return reply(results, 200, { 'X-Places-Retried': '1' });
+  return reply([], 200, { 'X-Places-Retried': attempts.length > 1 ? '1' : '0' });
 }

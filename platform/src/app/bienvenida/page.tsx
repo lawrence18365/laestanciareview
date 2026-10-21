@@ -43,6 +43,7 @@ async function loadReadyForSession(slug: string): Promise<StatusResponse | null>
       reviewUrl: reviewUrlFor(r.slug),
       qrDataUrl: await generateQrDataUrl(r.slug),
       googleConnected: googleReviewUrlFor(r) !== null,
+      city: r.city,
       ...fields,
       askTodayCount,
       reviewCounts,

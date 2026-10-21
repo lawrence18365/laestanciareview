@@ -32,7 +32,15 @@ export interface StatusResponse extends Partial<ReadyProfileFields> {
   trialEndsAt?: string;
   pilot?: boolean;
   googleConnected?: boolean;
+  /** restaurants.city, used to bias the Google search on the screen. */
+  city?: string | null;
   signupId?: string;
+  /**
+   * Panel URL for the session the ready response created (`/overview` for an
+   * owner, else `/dashboard`). The only href a first view can use: the page was
+   * server-rendered before that session cookie existed.
+   */
+  panelHref?: string;
   /** Present only for a self-serve restaurant that has not answered yet. */
   goalQuestion?: GoalQuestion;
   /** whatsapp_share_clicked taps today (Mexico City day). Absent on a first visit: 0. */
@@ -178,7 +186,7 @@ function BienvenidaInner({
     // server-side. Legacy restaurants get no initialReady and keep this card.
     if (initialReady?.ready) {
       return <Shell>
-        <ReadyView status={initialReady} trialDays={trialDays} panelHref={sessionPanelHref} />
+        <ReadyView status={initialReady} trialDays={trialDays} panelHref={sessionPanelHref} isReload />
       </Shell>;
     }
     return <Shell>
@@ -241,7 +249,11 @@ function BienvenidaInner({
     </Shell>;
   }
 
-  return <Shell><ReadyView status={status} trialDays={trialDays} panelHref={null} /></Shell>;
+  // First view: the ready payload above was just minted with a session, so it
+  // carries the panel href this page could not know when it was rendered.
+  return <Shell>
+    <ReadyView status={status} trialDays={trialDays} panelHref={sessionPanelHref} isReload={false} />
+  </Shell>;
 }
 
 /**
@@ -254,14 +266,23 @@ export function ReadyView({
   status,
   trialDays,
   panelHref,
+  isReload,
 }: {
   status: StatusResponse;
   trialDays: number;
-  /** Set on a reload: replaces the "use /login" footer with a panel link. */
+  /** Where the panel link goes, when the page was served with a session. */
   panelHref: string | null;
+  /**
+   * True only on a reload/revisit (the one-time signup cookie is gone). Keeps
+   * the funnel events counting the first time the screen is seen.
+   */
+  isReload: boolean;
 }) {
   const [googleConnected, setGoogleConnected] = useState(Boolean(status.googleConnected));
   const [placeQuery, setPlaceQuery] = useState('');
+  // A picked place is a candidate until the owner confirms it: the first Google
+  // match for a name is not always their restaurant (same name, other state).
+  const [pickedPlace, setPickedPlace] = useState<PlaceSelection | null>(null);
   const [placeSaving, setPlaceSaving] = useState(false);
   const [placeError, setPlaceError] = useState('');
   const googleSearchRef = useRef(false);
@@ -276,15 +297,14 @@ export function ReadyView({
   const mode = readyMode(fields);
   const staffNeedsNoun = staffNoun(fields.googleProfile) === 'tu equipo';
   const line = mode === 'legacy' ? null : personalLine(fields);
-  const reload = panelHref !== null;
 
   // Which pieces of the personal line showed. Once per mount, and not on a
   // reload (the funnel counts the first time the screen is seen).
   useEffect(() => {
-    if (reload || personalTrackedRef.current || !line || line.pieces.length === 0) return;
+    if (isReload || personalTrackedRef.current || !line || line.pieces.length === 0) return;
     personalTrackedRef.current = true;
     track('onboarding_personal_line_shown', { mode, pieces: line.pieces });
-  }, [reload, line, mode]);
+  }, [isReload, line, mode]);
 
   function handlePlaceQueryChange(value: string) {
     setPlaceQuery(value);
@@ -294,8 +314,17 @@ export function ReadyView({
     }
   }
 
-  async function handlePlaceSelected(place: PlaceSelection) {
+  // Picking a suggestion only stages it: nothing is saved until the owner
+  // confirms the name and address below.
+  function handlePlaceSelected(place: PlaceSelection) {
     if (!place.placeId || placeSaving) return;
+    setPlaceError('');
+    setPickedPlace(place);
+  }
+
+  async function confirmPlace() {
+    const place = pickedPlace;
+    if (!place?.placeId || placeSaving) return;
     setPlaceSaving(true);
     setPlaceError('');
     try {
@@ -307,6 +336,7 @@ export function ReadyView({
       });
       if (!res.ok) throw new Error('save-failed');
       setGoogleConnected(true);
+      setPickedPlace(null);
       track('onboarding_google_saved');
     } catch {
       track('onboarding_google_save_failed');
@@ -314,6 +344,12 @@ export function ReadyView({
     } finally {
       setPlaceSaving(false);
     }
+  }
+
+  function cancelPlace() {
+    if (placeSaving) return;
+    setPickedPlace(null);
+    setPlaceError('');
   }
 
   // Click tracking: legacy keeps today's `{ target }`; tailored adds the mode.
@@ -392,6 +428,14 @@ export function ReadyView({
         <p style={{ fontSize: '0.85rem', fontWeight: 600, color: '#15803d', textAlign: 'center', margin: '0 0 1.25rem' }}>
           ✓ Google conectado
         </p>
+      ) : pickedPlace ? (
+        <PlaceConfirmView
+          place={pickedPlace}
+          saving={placeSaving}
+          error={placeError}
+          onConfirm={confirmPlace}
+          onCancel={cancelPlace}
+        />
       ) : (
         <div style={{ border: '1px solid #1c1917', padding: '1rem', marginBottom: '1.25rem' }}>
           <label
@@ -405,6 +449,7 @@ export function ReadyView({
             value={placeQuery}
             onChange={handlePlaceQueryChange}
             onSelect={handlePlaceSelected}
+            city={status.city ?? undefined}
             placeholder="Escribe el nombre y elígelo"
             style={{
               width: '100%',
@@ -414,12 +459,6 @@ export function ReadyView({
               boxSizing: 'border-box',
             }}
           />
-          {placeSaving && (
-            <p style={{ fontSize: '0.8rem', color: '#78716c', margin: '0.4rem 0 0' }}>Guardando…</p>
-          )}
-          {placeError && (
-            <p style={{ fontSize: '0.8rem', color: '#b91c1c', margin: '0.4rem 0 0' }}>{placeError}</p>
-          )}
         </div>
       )}
 
@@ -484,18 +523,126 @@ export function ReadyView({
         </>
       )}
 
-      <p style={{ fontSize: '0.75rem', color: '#a8a29e', textAlign: 'center', marginTop: '1rem' }}>
-        {reload ? (
-          <a href={panelHref} style={{ color: '#1c1917', fontWeight: 600 }}>Ir a mi panel →</a>
-        ) : (
-          <>
-            Para volver a entrar, usa tu contraseña en{' '}
-            <a href="/login" style={{ color: '#1c1917', fontWeight: 600 }}>/login</a>.
-          </>
-        )}
-      </p>
+      <PanelFooter
+        isReload={isReload}
+        // A first view is server-rendered before the session exists: the ready
+        // payload carries the href the session it created was minted with.
+        panelHref={panelHref ?? status.panelHref ?? null}
+        onPanelClick={() => clicked('panel')}
+      />
     </>
   );
+}
+
+/**
+ * The bottom of the ready view. A reload keeps the small panel link; a first
+ * visit with a live session gets a real button to the panel (the visitor just
+ * finished signing up and has a session), with the /login password sentence as
+ * the hint under it. With no session, today's footer is all there is.
+ * Exported for the footer-mode tests.
+ */
+export function PanelFooter({
+  isReload,
+  panelHref,
+  onPanelClick,
+}: {
+  isReload: boolean;
+  panelHref: string | null;
+  onPanelClick: () => void;
+}) {
+  const footerStyle: React.CSSProperties = {
+    fontSize: '0.75rem',
+    color: '#a8a29e',
+    textAlign: 'center',
+    marginTop: '1rem',
+  };
+  if (isReload && panelHref) {
+    return (
+      <p style={footerStyle}>
+        <a href={panelHref} style={{ color: '#1c1917', fontWeight: 600 }}>Ir a mi panel →</a>
+      </p>
+    );
+  }
+  if (panelHref) {
+    return (
+      <>
+        <a
+          href={panelHref}
+          onClick={onPanelClick}
+          style={{ ...secondaryButtonStyle, marginTop: '1.25rem' }}
+        >
+          Ir a mi panel →
+        </a>
+        <p style={footerStyle}>
+          Para volver después, entra en{' '}
+          <a href="/login" style={{ color: '#1c1917', fontWeight: 600 }}>app.ratetapmx.com/login</a>{' '}
+          con tu contraseña.
+        </p>
+      </>
+    );
+  }
+  return (
+    <p style={footerStyle}>
+      Para volver a entrar, usa tu contraseña en{' '}
+      <a href="/login" style={{ color: '#1c1917', fontWeight: 600 }}>/login</a>.
+    </p>
+  );
+}
+
+/**
+ * The step between picking a Google match and saving it: the first match for a
+ * name is not always the owner's restaurant, so the name and the full address
+ * are shown and nothing is saved until "Sí, es mi restaurante".
+ * Exported for the confirm-step tests.
+ */
+export function PlaceConfirmView({
+  place,
+  saving,
+  error,
+  onConfirm,
+  onCancel,
+}: {
+  place: PlaceSelection;
+  saving: boolean;
+  error: string;
+  onConfirm: () => void;
+  onCancel: () => void;
+}) {
+  return (
+    <div style={{ border: '1px solid #1c1917', padding: '1rem', marginBottom: '1.25rem' }}>
+      <p style={{ fontSize: '0.9rem', fontWeight: 700, color: '#1c1917', margin: '0 0 0.5rem' }}>
+        ¿Es este tu restaurante?
+      </p>
+      <p style={{ fontSize: '0.9rem', fontWeight: 600, color: '#1c1917', margin: 0 }}>{place.name}</p>
+      <p style={{ fontSize: '0.8rem', color: '#57534e', margin: '0.2rem 0 0.9rem' }}>
+        {placeAddressLine(place)}
+      </p>
+      <button
+        type="button"
+        onClick={onConfirm}
+        disabled={saving}
+        style={{ ...primaryButtonOnButton, opacity: saving ? 0.6 : 1 }}
+      >
+        Sí, es mi restaurante
+      </button>
+      <button
+        type="button"
+        onClick={onCancel}
+        disabled={saving}
+        style={{ ...secondaryButtonOnButton, marginTop: '0.5rem', opacity: saving ? 0.6 : 1 }}
+      >
+        No, buscar otro
+      </button>
+      {saving && <p style={{ fontSize: '0.8rem', color: '#78716c', margin: '0.5rem 0 0' }}>Guardando…</p>}
+      {error && <p style={{ fontSize: '0.8rem', color: '#b91c1c', margin: '0.5rem 0 0' }}>{error}</p>}
+    </div>
+  );
+}
+
+/** The address line under the picked place's name. */
+export function placeAddressLine(place: PlaceSelection): string {
+  if (place.fullAddress) return place.fullAddress;
+  return [place.address.city, place.address.state].filter(Boolean).join(', ');
 }
 
 /** The Maps card body, or the muted waiting line. Exported for tests. */
@@ -745,6 +892,13 @@ const secondaryButtonOnButton: React.CSSProperties = {
   cursor: 'pointer',
   fontFamily: 'inherit',
   boxSizing: 'border-box',
+};
+
+// "Sí, es mi restaurante": the confirm step of the Google connect block.
+const primaryButtonOnButton: React.CSSProperties = {
+  ...secondaryButtonOnButton,
+  background: '#1c1917',
+  color: '#fff',
 };
 
 const textLinkStyle: React.CSSProperties = {

@@ -91,7 +91,7 @@ describe('ReadyView placement', () => {
   it('self-serve (solo / team) shows the waiting line after the header', () => {
     for (const teamMode of ['solo', 'team'] as const) {
       const html = renderToStaticMarkup(
-        <ReadyView status={{ ...base, teamMode }} trialDays={30} panelHref={null} />,
+        <ReadyView status={{ ...base, teamMode }} trialDays={30} panelHref={null} isReload={false} />,
       );
       expect(html).toContain('Buscando tu lugar en Google Maps…');
       expect(html.indexOf('Buscando tu lugar')).toBeGreaterThan(html.indexOf('¡Listo, Dental Sonrisa!'));
@@ -105,6 +105,7 @@ describe('ReadyView placement', () => {
         status={{ ...base, teamMode: null, locationsBand: null }}
         trialDays={30}
         panelHref={null}
+        isReload={false}
       />,
     );
     expect(html).not.toContain('Google Maps');

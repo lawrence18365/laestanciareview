@@ -32,6 +32,8 @@ export interface PlaceSelection {
   name: string;
   /** Locality / state parsed from the place, when Google returns them. */
   address: { city: string; state: string };
+  /** Street-level address as Google formats it. Empty when Google omits it. */
+  fullAddress: string;
 }
 
 interface Props {
@@ -51,6 +53,7 @@ type AddressComponent = { types: string[]; long_name: string };
 type PlaceResult = {
   place_id?: string;
   name?: string;
+  formatted_address?: string;
   address_components?: AddressComponent[];
 };
 type AutocompleteInstance = {
@@ -100,7 +103,7 @@ function BrowserPlaceSearch({
     const ac = new g.maps.places.Autocomplete(inputRef.current, {
       types: ['establishment'],
       componentRestrictions: { country: 'mx' },
-      fields: ['place_id', 'name', 'address_components'],
+      fields: ['place_id', 'name', 'formatted_address', 'address_components'],
     });
     ac.addListener('place_changed', () => {
       const place = ac.getPlace();
@@ -114,6 +117,7 @@ function BrowserPlaceSearch({
         placeId: place.place_id ?? '',
         name: place.name ?? '',
         address: { city, state },
+        fullAddress: place.formatted_address ?? '',
       });
     });
     ready.current = true;
@@ -274,7 +278,12 @@ function ServerPlaceSearch({
     setResults([]);
     setStatus('idle');
     onChange(r.name);
-    onSelect({ placeId: r.placeId, name: r.name, address: { city: r.city, state: r.state } });
+    onSelect({
+      placeId: r.placeId,
+      name: r.name,
+      address: { city: r.city, state: r.state },
+      fullAddress: r.address,
+    });
   }
 
   return (
