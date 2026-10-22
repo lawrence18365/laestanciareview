@@ -252,6 +252,12 @@ input, textarea, select {
 ::-webkit-scrollbar-thumb { background: var(--panel-border); }
 ::-webkit-scrollbar-thumb:hover { background: var(--text-dim); }
 
+/* -- Nova North Studio credit -------------------------
+   The footers carry the agency credit with its UTM parameters. Keep the link
+   on the footer's own colour instead of the browser default blue. */
+
+.footer-credit a { color: inherit; }
+
 /* -- Animations --------------------------------------- */
 
 @keyframes fadeInUp {

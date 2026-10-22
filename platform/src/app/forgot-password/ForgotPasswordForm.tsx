@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { t } from '@/lib/i18n';
+import FooterCredit from '@/components/FooterCredit';
 
 const labelStyle: React.CSSProperties = {
   display: 'block',
@@ -267,6 +268,8 @@ export default function ForgotPasswordForm({
           color: 'var(--text-dim)',
         }}>
           SISTEMA PROVISTO POR <span style={{ fontWeight: 700, color: 'var(--text-main)' }}>RATETAP</span>
+          <br />
+          <FooterCredit />
         </div>
       </div>
     </div>

@@ -2,6 +2,7 @@
 
 import { useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import FooterCredit from '@/components/FooterCredit';
 
 const labelStyle: React.CSSProperties = {
   display: 'block',
@@ -274,6 +275,8 @@ export default function ResetPasswordPage() {
           color: 'var(--text-dim)',
         }}>
           SISTEMA PROVISTO POR <span style={{ fontWeight: 700, color: 'var(--text-main)' }}>RATETAP</span>
+          <br />
+          <FooterCredit />
         </div>
       </div>
     </div>

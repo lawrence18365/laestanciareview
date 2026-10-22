@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import FooterCredit from '@/components/FooterCredit';
 
 type PolicySection = {
   title: string;
@@ -76,6 +77,9 @@ export default function PolicyPage({ title, updated, intro, sections }: PolicyPa
             <Link href="/privacy" style={{ color: '#1c1917' }}>Privacidad</Link>
             <Link href="/terms" style={{ color: '#1c1917' }}>Términos</Link>
             <Link href="/cookies" style={{ color: '#1c1917' }}>Cookies</Link>
+          </div>
+          <div style={{ marginTop: 14 }}>
+            <FooterCredit />
           </div>
         </footer>
       </article>

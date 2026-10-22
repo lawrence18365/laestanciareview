@@ -2,6 +2,7 @@ import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { AuditTracker } from '@/components/audit/AuditTracker';
 import { PilotCta } from '@/components/audit/PilotCta';
+import FooterCredit from '@/components/FooterCredit';
 import { getNearbyCompetitors as getNearbyCompetitorsShared } from '@/lib/competitors';
 
 // ─── CONFIG ───
@@ -460,6 +461,8 @@ export default async function AuditPage({
             <a href={BASE_URL} style={{ color: '#64748B', fontWeight: 600, textDecoration: 'none' }}>
               RateTap
             </a>
+            <br />
+            <FooterCredit />
           </span>
         </div>
       </div>

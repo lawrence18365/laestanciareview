@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { t } from '@/lib/i18n';
+import FooterCredit from '@/components/FooterCredit';
 
 const IDENTIFIER_KEY = 'ratetap:login-identifier';
 
@@ -298,6 +299,8 @@ export default function LoginForm({ groupAccounts }: { groupAccounts: GroupAccou
           color: 'var(--text-dim)',
         }}>
           SISTEMA PROVISTO POR <span style={{ fontWeight: 700, color: 'var(--text-main)' }}>RATETAP</span>
+          <br />
+          <FooterCredit />
         </div>
       </div>
     </div>
