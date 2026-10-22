@@ -1551,6 +1551,15 @@ body .rt-stat .n {
     opacity: 1;
 }
 
+.footer-credit a {
+    color: inherit;
+    text-decoration: none;
+}
+
+.footer-credit a:hover {
+    text-decoration: underline;
+}
+
 /* Mobile Sticky CTA */
 .mobile-sticky-cta {
     display: none;
