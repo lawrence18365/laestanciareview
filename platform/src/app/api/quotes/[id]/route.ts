@@ -88,6 +88,13 @@ export async function PUT(
   }
   const data = parsed.data;
 
+  // Older clients never send campaignTag. Only touch the column when the key is
+  // actually present so a save from them cannot wipe a tag set in the builder.
+  const bodyHasCampaignTag =
+    typeof body === 'object' &&
+    body !== null &&
+    Object.prototype.hasOwnProperty.call(body, 'campaignTag');
+
   await db
     .update(quotes)
     .set({
@@ -103,6 +110,7 @@ export async function PUT(
       guestCount: data.guestCount,
       eventNotes: data.eventNotes ?? null,
       packageName: data.packageName ?? null,
+      campaignTag: bodyHasCampaignTag ? (data.campaignTag?.trim() || null) : undefined,
       terms: data.terms ?? null,
       configJson:
         data.configJson !== undefined ? (data.configJson as object | null) : undefined,

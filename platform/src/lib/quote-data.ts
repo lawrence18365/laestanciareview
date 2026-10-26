@@ -362,6 +362,10 @@ export type QuoteTemplate = {
   // recommended sides-to-headcount ratio (0.5 = 1 side per 2 personas)
   // — reserved for a future "Recomendado: X guarniciones" hint.
   sharedSides?: { sideRatioPerPerson: number };
+  // Internal campaign grouping (e.g. "Posadas 2026"). When the hostess applies
+  // this template to a quote with no campaign tag yet, the builder adopts it.
+  // Never rendered on the public /q/[token] page — it lives outside configJson.
+  campaignTag?: string;
   config: {
     sopas?: string[];
     platos?: string[];
@@ -377,7 +381,98 @@ export type QuoteTemplate = {
   };
 };
 
+// Campaign tag shared by this year's holiday menu templates. The quotes list
+// filters the pipeline by it and the builder suggests it as a `Campaña` value.
+export const HOLIDAY_CAMPAIGN_TAG = 'Posadas 2026';
+
 export const TEMPLATES: QuoteTemplate[] = [
+  // ── Campaña de fin de año (Posadas 2026) ────────────────────────────────
+  // costoPP below is an estimate using the same 0.42 heuristic as opciones
+  // mode until Leslie supplies real costs for these four menus.
+  {
+    id: 'fiestas-menu-1',
+    nombre: 'Menú 1',
+    subtitulo: 'Fiestas de fin de año',
+    precioPP: 950,
+    precioLabel: '$950/pp con IVA',
+    descripcion: 'Plato fuerte a elegir: Filete 300g, Atún o Camarones.',
+    idealPara: 'Posadas y cenas de fin de año de empresas.',
+    modo: 'individual',
+    campaignTag: HOLIDAY_CAMPAIGN_TAG,
+    config: {
+      sopas: [],
+      platos: ['pa17', 'm2', 'm4'],
+      postres: [],
+      bebidas: 'a-la-carta',
+      precioPP: 950,
+      costoPP: 399,
+      incluyeIVA: true,
+      incluyeServicio: false,
+    },
+  },
+  {
+    id: 'fiestas-menu-2',
+    nombre: 'Menú 2',
+    subtitulo: 'Fiestas de fin de año',
+    precioPP: 995,
+    precioLabel: '$995/pp con IVA',
+    descripcion: 'Plato fuerte a elegir: Arrachera 400g, Churrasco 400g o Salmón.',
+    idealPara: 'Posadas y cenas de fin de año de empresas.',
+    modo: 'individual',
+    campaignTag: HOLIDAY_CAMPAIGN_TAG,
+    config: {
+      sopas: [],
+      platos: ['pa20', 'pa22', 'm1'],
+      postres: [],
+      bebidas: 'a-la-carta',
+      precioPP: 995,
+      costoPP: 418,
+      incluyeIVA: true,
+      incluyeServicio: false,
+    },
+  },
+  {
+    id: 'fiestas-menu-3',
+    nombre: 'Menú 3',
+    subtitulo: 'Fiestas de fin de año',
+    precioPP: 1200,
+    precioLabel: '$1,200/pp con IVA',
+    descripcion: 'Plato fuerte a elegir: NY Ribeteado 500g o Bife de Chorizo 300g.',
+    idealPara: 'Posadas y cenas de fin de año de empresas.',
+    modo: 'individual',
+    campaignTag: HOLIDAY_CAMPAIGN_TAG,
+    config: {
+      sopas: [],
+      platos: ['pa13', 'pa1'],
+      postres: [],
+      bebidas: 'a-la-carta',
+      precioPP: 1200,
+      costoPP: 504,
+      incluyeIVA: true,
+      incluyeServicio: false,
+    },
+  },
+  {
+    id: 'fiestas-menu-4',
+    nombre: 'Menú 4',
+    subtitulo: 'Fiestas de fin de año',
+    precioPP: 1450,
+    precioLabel: '$1,450/pp con IVA',
+    descripcion: 'Plato fuerte a elegir: Rib-Eye Añejo 300g o New York Añejo 300g.',
+    idealPara: 'Posadas y cenas de fin de año de empresas.',
+    modo: 'individual',
+    campaignTag: HOLIDAY_CAMPAIGN_TAG,
+    config: {
+      sopas: [],
+      platos: ['pa29', 'pa27'],
+      postres: [],
+      bebidas: 'a-la-carta',
+      precioPP: 1450,
+      costoPP: 609,
+      incluyeIVA: true,
+      incluyeServicio: false,
+    },
+  },
   {
     id: 'tres-tiempos-opciones',
     nombre: 'Menú 3 Tiempos · 3 Opciones',
@@ -467,6 +562,15 @@ export const TEMPLATES: QuoteTemplate[] = [
     },
   },
 ];
+
+// One-click add-ons offered next to "Agregar sección" in every mode. Optional
+// per quote — templates never apply them automatically.
+export const ADDON_PRESETS: { key: string; nombre: string; descripcion: string; precioPP: number }[] = [
+  { key: 'barra-vino', nombre: 'Barra libre de vino', descripcion: 'Vino de la casa ilimitado durante el evento.', precioPP: 350 },
+  { key: 'coctel-bienvenida', nombre: 'Cóctel de bienvenida', descripcion: 'Un cóctel por persona a la llegada.', precioPP: 150 },
+];
+
+export type AddonPreset = (typeof ADDON_PRESETS)[number];
 
 export const DEFAULT_TERMS = `1. Esta cotización tiene una vigencia de 15 días naturales a partir de su fecha de emisión.
 2. Se requiere un anticipo del 50% para confirmar la reservación del evento.

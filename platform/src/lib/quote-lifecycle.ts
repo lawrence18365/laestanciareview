@@ -16,8 +16,9 @@
  */
 import { db } from '@/db';
 import { quotes } from '@/db/schema';
-import { and, eq, gte, lt, inArray, sql, desc } from 'drizzle-orm';
+import { and, eq, gte, lt, inArray, isNotNull, sql, desc } from 'drizzle-orm';
 import { ACTIVE_STATUSES, type QuoteConversion, type QuoteStatus } from './quote-status';
+import { HOLIDAY_CAMPAIGN_TAG } from './quote-data';
 
 export {
   QUOTE_STATUSES,
@@ -83,6 +84,25 @@ export async function listQuotes(
     .from(quotes)
     .where(and(eq(quotes.restaurantId, restaurantId), inArray(quotes.status, statuses)))
     .orderBy(desc(quotes.updatedAt));
+}
+
+/**
+ * Campaign tags already used by this restaurant, plus the live holiday
+ * campaign, for the builder's Campaña datalist. Distinct and trimmed; empty
+ * strings never come back from the DB because the API stores NULL instead.
+ */
+export async function listCampaignTags(restaurantId: number): Promise<string[]> {
+  const rows = await db
+    .selectDistinct({ campaignTag: quotes.campaignTag })
+    .from(quotes)
+    .where(and(eq(quotes.restaurantId, restaurantId), isNotNull(quotes.campaignTag)));
+
+  const tags = new Set<string>([HOLIDAY_CAMPAIGN_TAG]);
+  for (const { campaignTag } of rows) {
+    const tag = campaignTag?.trim();
+    if (tag) tags.add(tag);
+  }
+  return [...tags].sort((a, b) => a.localeCompare(b, 'es'));
 }
 
 /** Quotes past their validity with no answer — candidates to mark Vencida. */

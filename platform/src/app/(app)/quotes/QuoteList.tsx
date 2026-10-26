@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { t } from '@/lib/i18n';
 import {
   ACTIVE_STATUSES,
+  QUOTE_STATUSES,
   STATUS_LABELS as LIFECYCLE_LABELS,
   STATUS_COLORS as LIFECYCLE_COLORS,
   formatPesos,
@@ -25,6 +26,9 @@ type Quote = {
   createdAt: string;
   outcomeAt?: string | null;
   outcomeAmountMxn?: number | null;
+  // Internal campaign tag ("Posadas 2026"), null when the quote isn't part of
+  // a campaign. Filtered client-side over the rows already loaded.
+  campaignTag?: string | null;
 };
 
 // Labels/colours come from lib/quote-status (re-exported by lib/quote-lifecycle)
@@ -64,7 +68,26 @@ export default function QuoteList({
     (ACTIVE_STATUSES as string[]).includes(q.status);
   const activeCount = quotes.filter(isActive).length;
   const closedCount = quotes.length - activeCount;
-  const visibleQuotes = quotes.filter((q) => (showClosed ? !isActive(q) : isActive(q)));
+
+  // Campaign filter. Distributed client-side over the rows already loaded —
+  // no extra query, and the counts stay honest if the list is stale.
+  const [campaign, setCampaign] = useState('');
+  const campaignTags = Array.from(
+    new Set(quotes.map((q) => q.campaignTag).filter((t): t is string => !!t)),
+  ).sort((a, b) => a.localeCompare(b, 'es'));
+  const inCampaign = (q: Quote) => !campaign || q.campaignTag === campaign;
+  const campaignQuotes = campaign ? quotes.filter((q) => q.campaignTag === campaign) : [];
+  const campaignCounts = QUOTE_STATUSES.map((status) => ({
+    status,
+    count: campaignQuotes.filter((q) => q.status === status).length,
+  })).filter((c) => c.count > 0);
+  const campaignWonTotal = campaignQuotes
+    .filter((q) => q.status === 'won')
+    .reduce((sum, q) => sum + (q.outcomeAmountMxn ?? 0), 0);
+
+  const visibleQuotes = quotes.filter(
+    (q) => inCampaign(q) && (showClosed ? !isActive(q) : isActive(q)),
+  );
   const [deleting, setDeleting] = useState<number | null>(null);
   const [sending, setSending] = useState<number | null>(null);
 
@@ -171,7 +194,39 @@ export default function QuoteList({
         >
           Historial ({closedCount})
         </button>
+        {campaignTags.length > 0 && (
+          <select
+            className="ql-campaign-select"
+            aria-label="Filtrar por campaña"
+            value={campaign}
+            onChange={(e) => setCampaign(e.target.value)}
+          >
+            <option value="">Todas las campañas</option>
+            {campaignTags.map((tag) => (
+              <option key={tag} value={tag}>
+                {tag}
+              </option>
+            ))}
+          </select>
+        )}
       </div>
+
+      {/* One line per campaign: how the pipeline is split and what it has
+          actually collected. Counts cover every status, not just the tab. */}
+      {campaign && (
+        <p className="ql-campaign-summary">
+          <strong>{campaign}</strong>
+          {campaignCounts.map(({ status, count }) => (
+            <span key={status}>
+              {' · '}
+              {STATUS_LABELS[status] ?? status}: {count}
+            </span>
+          ))}
+          <span>
+            {' · '}Ganado: <strong>{formatMXN(campaignWonTotal)}</strong>
+          </span>
+        </p>
+      )}
 
       {visibleQuotes.length === 0 ? (
         <div className="ql-empty">
@@ -200,6 +255,9 @@ export default function QuoteList({
                   >
                     {STATUS_LABELS[q.status] ?? q.status}
                   </span>
+                  {q.campaignTag && (
+                    <span className="ql-campaign-chip">{q.campaignTag}</span>
+                  )}
                 </div>
                 <p className="ql-client">
                   {q.clientName}
@@ -359,6 +417,33 @@ const QL_CSS = `
   color: #fff;
   background: #1c1917;
   border-color: #1c1917;
+}
+.ql-campaign-select {
+  margin-left: auto;
+  padding: 0.45rem 0.9rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #57534e;
+  background: #fff;
+  border: 1px solid #e7e5e4;
+  border-radius: 999px;
+  cursor: pointer;
+}
+.ql-campaign-summary {
+  margin: 0 0 0.9rem;
+  font-size: 0.76rem;
+  color: #57534e;
+}
+.ql-campaign-chip {
+  padding: 1px 7px;
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #6d28d9;
+  background: #f5f3ff;
+  border: 1px solid #ddd6fe;
+  border-radius: 999px;
 }
 @media (max-width: 560px) {
   .ql-conversion { grid-template-columns: repeat(2, 1fr); row-gap: 0.9rem; }

@@ -98,6 +98,8 @@ export async function POST(req: NextRequest) {
       guestCount: data.guestCount,
       eventNotes: data.eventNotes ?? null,
       packageName: data.packageName ?? null,
+      // Internal campaign tag; empty string from the builder means "no campaign".
+      campaignTag: data.campaignTag?.trim() || null,
       terms: data.terms ?? DEFAULT_TERMS,
       configJson: (data.configJson ?? null) as object | null,
       quoteNumber: null,
