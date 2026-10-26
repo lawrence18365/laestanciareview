@@ -26,7 +26,7 @@ type Quote = {
   createdAt: string;
   outcomeAt?: string | null;
   outcomeAmountMxn?: number | null;
-  // Internal campaign tag ("Posadas 2026"), null when the quote isn't part of
+  // Internal campaign tag ("campaign:posadas-2026"), null when the quote isn't part of
   // a campaign. Filtered client-side over the rows already loaded.
   campaignTag?: string | null;
 };

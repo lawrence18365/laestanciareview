@@ -134,6 +134,11 @@ export const MENU: QuoteDish[] = [
   { id: 'pa30', categoria: 'Parrilla', nombre: 'Rib-Eye Añejo Dry Age', peso: '600g', precio: 1780, tag: 'Dry Age' },
   { id: 'pa31', categoria: 'Parrilla', nombre: 'Rib Eye Akaushi', peso: '300g', precio: 1430, tag: 'Akaushi' },
   { id: 'pa32', categoria: 'Parrilla', nombre: 'Rib Eye Akaushi', peso: '500g', precio: 2390, tag: 'Akaushi' },
+  // Event-only, not on the carta: the exact name clients saw on the Posadas
+  // 2026 promo art. The kitchen serves NY Ribeteado 500g (pa13) portioned to
+  // 300g, so precio is pa13 pro rata (990 × 300/500). Weight lives in the
+  // name because Vista Cliente prints names only.
+  { id: 'ev-bife-ribeteado-300', categoria: 'Parrilla', nombre: 'Bife de Chorizo Ribeteado 300g', precio: 594 },
 
   // Del Mar
   { id: 'm1', categoria: 'Del Mar', nombre: 'Salmón a la Parrilla', peso: '200g', precio: 370, desc: 'Guarnición de ensalada Evita' },
@@ -362,7 +367,7 @@ export type QuoteTemplate = {
   // recommended sides-to-headcount ratio (0.5 = 1 side per 2 personas)
   // — reserved for a future "Recomendado: X guarniciones" hint.
   sharedSides?: { sideRatioPerPerson: number };
-  // Internal campaign grouping (e.g. "Posadas 2026"). When the hostess applies
+  // Internal campaign grouping (e.g. "campaign:posadas-2026"). When the hostess applies
   // this template to a quote with no campaign tag yet, the builder adopts it.
   // Never rendered on the public /q/[token] page — it lives outside configJson.
   campaignTag?: string;
@@ -386,7 +391,7 @@ export type QuoteTemplate = {
 
 // Campaign tag shared by this year's holiday menu templates. The quotes list
 // filters the pipeline by it and the builder suggests it as a `Campaña` value.
-export const HOLIDAY_CAMPAIGN_TAG = 'Posadas 2026';
+export const HOLIDAY_CAMPAIGN_TAG = 'campaign:posadas-2026';
 
 export const TEMPLATES: QuoteTemplate[] = [
   // ── Campaña de fin de año (Posadas 2026) ────────────────────────────────
@@ -442,14 +447,14 @@ export const TEMPLATES: QuoteTemplate[] = [
     subtitulo: 'Fiestas de fin de año',
     precioPP: 1200,
     precioLabel: '$1,200/pp con IVA',
-    descripcion: 'Plato fuerte a elegir: NY Ribeteado 500g o Bife de Chorizo 300g.',
+    descripcion: 'Plato fuerte a elegir: Bife de Chorizo Ribeteado 300g o Bife de Chorizo Pibe 300g.',
     idealPara: 'Posadas y cenas de fin de año de empresas.',
     modo: 'individual',
     campaignTag: HOLIDAY_CAMPAIGN_TAG,
     tipoEvento: 'Empresarial',
     config: {
       sopas: [],
-      platos: ['pa13', 'pa1'],
+      platos: ['ev-bife-ribeteado-300', 'pa1'],
       postres: [],
       bebidas: 'a-la-carta',
       precioPP: 1200,

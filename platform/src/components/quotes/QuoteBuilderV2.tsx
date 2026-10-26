@@ -57,7 +57,7 @@ type Props = {
   // — server pages must explicitly opt-in via isAdminEmail(managerEmail).
   // Becomes a real role check when the multi-user CRM ships.
   isAdmin?: boolean;
-  // Internal campaign tag ("Posadas 2026"). Starts from the saved quote and is
+  // Internal campaign tag ("campaign:posadas-2026"). Starts from the saved quote and is
   // adopted from a template only while still empty. Never enters configJson.
   initialCampaignTag?: string | null;
   // Distinct tags already used by this restaurant + the holiday campaign, used
@@ -642,7 +642,7 @@ export default function QuoteBuilderV2({
                       setCampaignTag(e.target.value);
                       setSaved(false);
                     }}
-                    placeholder="Ej. Posadas 2026"
+                    placeholder="Ej. campaign:posadas-2026"
                     autoComplete="off"
                   />
                   <datalist id="campaign-tag-options">

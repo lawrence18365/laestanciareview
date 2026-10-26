@@ -203,7 +203,7 @@ export const quoteCreateSchema = z.object({
   guestCount: z.coerce.number().int().min(1).max(10000).default(1),
   eventNotes: z.string().max(5000).optional().nullable(),
   packageName: z.string().max(200).optional().nullable(),
-  // Internal campaign grouping (e.g. "Posadas 2026"). Not part of configJson:
+  // Internal campaign grouping (e.g. "campaign:posadas-2026"). Not part of configJson:
   // the tag never reaches the public quote page. Empty string is normalized to
   // null by the API routes before it is written.
   campaignTag: z.string().trim().max(60).optional().nullable(),

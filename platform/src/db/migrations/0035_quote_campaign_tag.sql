@@ -5,7 +5,7 @@ CREATE INDEX IF NOT EXISTS "quotes_restaurant_campaign_tag_idx" ON "quotes" ("re
 -- Internal campaign tag (Posadas 2026 holiday campaign). Additive and nullable, no backfill.
 --
 --   campaign_tag  free-text label grouping quotes into a campaign, e.g.
---                 'Posadas 2026'. Typed by the hostess in the quote builder
+--                 'campaign:posadas-2026'. Typed by the hostess in the quote builder
 --                 (Campaña) and used by /quotes to filter the pipeline and
 --                 show per-campaign counts. Max 60 chars, validated in
 --                 lib/validations.ts.

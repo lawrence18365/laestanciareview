@@ -792,7 +792,7 @@ export const quotes = pgTable(
     // See migrations/0012_quote_public_token.sql.
     publicToken: text('public_token'),
     sentAt: timestamp('sent_at', { withTimezone: true }),
-    // Internal campaign grouping typed in the builder ("Posadas 2026"). Kept
+    // Internal campaign grouping typed in the builder ("campaign:posadas-2026"). Kept
     // out of configJson because that blob is rendered on the public quote page.
     // See migrations/0035_quote_campaign_tag.sql.
     campaignTag: text('campaign_tag'),

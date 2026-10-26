@@ -14,7 +14,7 @@ import { quoteCreateSchema, quoteUpdateSchema } from '@/lib/validations';
 const HOLIDAY_MENUS = [
   { id: 'fiestas-menu-1', precioPP: 950, platos: ['pa17', 'm2', 'm4'] },
   { id: 'fiestas-menu-2', precioPP: 995, platos: ['pa19', 'pa22', 'm1'] },
-  { id: 'fiestas-menu-3', precioPP: 1200, platos: ['pa13', 'pa1'] },
+  { id: 'fiestas-menu-3', precioPP: 1200, platos: ['ev-bife-ribeteado-300', 'pa1'] },
   { id: 'fiestas-menu-4', precioPP: 1450, platos: ['pa29', 'pa27'] },
 ];
 
@@ -43,7 +43,7 @@ describe('holiday party quote templates', () => {
       expect(template.campaignTag).toBe(HOLIDAY_CAMPAIGN_TAG);
       // Corporate campaign: the client must never see the default "Boda".
       expect(template.tipoEvento).toBe('Empresarial');
-      expect(HOLIDAY_CAMPAIGN_TAG).toBe('Posadas 2026');
+      expect(HOLIDAY_CAMPAIGN_TAG).toBe('campaign:posadas-2026');
 
       // One price per person, IVA included, no service charge, drinks à la carte.
       expect(template.config.precioPP).toBe(precioPP);
@@ -101,8 +101,8 @@ describe('quote campaignTag validation', () => {
   const base = { clientName: 'Corporativo León', configJson: {} };
 
   it('accepts and trims a campaign tag', () => {
-    const parsed = quoteCreateSchema.parse({ ...base, campaignTag: '  Posadas 2026  ' });
-    expect(parsed.campaignTag).toBe('Posadas 2026');
+    const parsed = quoteCreateSchema.parse({ ...base, campaignTag: '  campaign:posadas-2026  ' });
+    expect(parsed.campaignTag).toBe('campaign:posadas-2026');
   });
 
   it('accepts an omitted or null campaign tag', () => {
@@ -116,7 +116,16 @@ describe('quote campaignTag validation', () => {
   });
 
   it('carries the campaign tag into the update schema', () => {
-    const parsed = quoteUpdateSchema.parse({ ...base, campaignTag: 'Posadas 2026' });
-    expect(parsed.campaignTag).toBe('Posadas 2026');
+    const parsed = quoteUpdateSchema.parse({ ...base, campaignTag: 'campaign:posadas-2026' });
+    expect(parsed.campaignTag).toBe('campaign:posadas-2026');
+  });
+});
+
+describe('Menú 3 client-facing ribeteado name', () => {
+  it('shows exactly the promo-art name and stays priced as pa13 portioned to 300g', () => {
+    const dish = dishById('ev-bife-ribeteado-300');
+    expect(dish?.nombre).toBe('Bife de Chorizo Ribeteado 300g');
+    expect(dish?.categoria).toBe('Parrilla');
+    expect(dish?.precio).toBe(Math.round((dishById('pa13')!.precio * 300) / 500));
   });
 });
