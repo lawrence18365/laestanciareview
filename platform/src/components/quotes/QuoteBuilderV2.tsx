@@ -4,6 +4,7 @@ import { useState, useMemo, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   ADDON_PRESETS,
+  EMPTY_EVENTO,
   MENU,
   CATEGORIAS,
   PAQUETES_BEBIDAS,
@@ -207,6 +208,9 @@ export default function QuoteBuilderV2({
     if (t.campaignTag && !campaignTag.trim()) setCampaignTag(t.campaignTag);
     setConfig((c) => {
       const next: QuoteConfig = { ...c, modo: t.modo, templateId: t.id };
+      if (t.tipoEvento && c.evento.tipo === EMPTY_EVENTO.tipo) {
+        next.evento = { ...c.evento, tipo: t.tipoEvento };
+      }
       if (t.modo === 'individual') {
         next.indiv = {
           ...c.indiv,

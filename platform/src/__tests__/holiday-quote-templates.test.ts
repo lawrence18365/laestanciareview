@@ -41,6 +41,8 @@ describe('holiday party quote templates', () => {
       expect(template.precioLabel).toBe(precioLabel(precioPP));
       expect(template.subtitulo).toBe('Fiestas de fin de año');
       expect(template.campaignTag).toBe(HOLIDAY_CAMPAIGN_TAG);
+      // Corporate campaign: the client must never see the default "Boda".
+      expect(template.tipoEvento).toBe('Empresarial');
       expect(HOLIDAY_CAMPAIGN_TAG).toBe('Posadas 2026');
 
       // One price per person, IVA included, no service charge, drinks à la carte.

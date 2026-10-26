@@ -366,6 +366,9 @@ export type QuoteTemplate = {
   // this template to a quote with no campaign tag yet, the builder adopts it.
   // Never rendered on the public /q/[token] page — it lives outside configJson.
   campaignTag?: string;
+  // Event type to preselect (e.g. 'Empresarial'). Applied only while the quote
+  // still has the default type, so a type the hostess chose is never replaced.
+  tipoEvento?: string;
   config: {
     sopas?: string[];
     platos?: string[];
@@ -399,6 +402,7 @@ export const TEMPLATES: QuoteTemplate[] = [
     idealPara: 'Posadas y cenas de fin de año de empresas.',
     modo: 'individual',
     campaignTag: HOLIDAY_CAMPAIGN_TAG,
+    tipoEvento: 'Empresarial',
     config: {
       sopas: [],
       platos: ['pa17', 'm2', 'm4'],
@@ -420,6 +424,7 @@ export const TEMPLATES: QuoteTemplate[] = [
     idealPara: 'Posadas y cenas de fin de año de empresas.',
     modo: 'individual',
     campaignTag: HOLIDAY_CAMPAIGN_TAG,
+    tipoEvento: 'Empresarial',
     config: {
       sopas: [],
       platos: ['pa20', 'pa22', 'm1'],
@@ -441,6 +446,7 @@ export const TEMPLATES: QuoteTemplate[] = [
     idealPara: 'Posadas y cenas de fin de año de empresas.',
     modo: 'individual',
     campaignTag: HOLIDAY_CAMPAIGN_TAG,
+    tipoEvento: 'Empresarial',
     config: {
       sopas: [],
       platos: ['pa13', 'pa1'],
@@ -462,6 +468,7 @@ export const TEMPLATES: QuoteTemplate[] = [
     idealPara: 'Posadas y cenas de fin de año de empresas.',
     modo: 'individual',
     campaignTag: HOLIDAY_CAMPAIGN_TAG,
+    tipoEvento: 'Empresarial',
     config: {
       sopas: [],
       platos: ['pa29', 'pa27'],
