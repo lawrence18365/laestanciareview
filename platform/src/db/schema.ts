@@ -792,6 +792,10 @@ export const quotes = pgTable(
     // See migrations/0012_quote_public_token.sql.
     publicToken: text('public_token'),
     sentAt: timestamp('sent_at', { withTimezone: true }),
+    // Internal campaign grouping typed in the builder ("campaign:posadas-2026"). Kept
+    // out of configJson because that blob is rendered on the public quote page.
+    // See migrations/0035_quote_campaign_tag.sql.
+    campaignTag: text('campaign_tag'),
     // Outcome, recorded by hand when a quote closes. The amount is what was
     // actually collected, not the builder's estimate from configJson — this
     // number goes in front of the owner and outside prospects.
@@ -806,6 +810,7 @@ export const quotes = pgTable(
     index('quotes_created_at_idx').on(t.createdAt),
     index('quotes_status_idx').on(t.status),
     index('quotes_lead_idx').on(t.leadId),
+    index('quotes_restaurant_campaign_tag_idx').on(t.restaurantId, t.campaignTag),
     uniqueIndex('quotes_public_token_uniq').on(t.publicToken),
   ],
 );

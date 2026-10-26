@@ -3,6 +3,8 @@
 import { useState, useMemo, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import {
+  ADDON_PRESETS,
+  EMPTY_EVENTO,
   MENU,
   CATEGORIAS,
   PAQUETES_BEBIDAS,
@@ -16,6 +18,7 @@ import {
   fmtMXN,
   isParrilla,
   newExtraSectionId,
+  type AddonPreset,
   type ExtraSection,
   type QuoteCategoria,
   type QuoteConfig,
@@ -54,6 +57,12 @@ type Props = {
   // — server pages must explicitly opt-in via isAdminEmail(managerEmail).
   // Becomes a real role check when the multi-user CRM ships.
   isAdmin?: boolean;
+  // Internal campaign tag ("campaign:posadas-2026"). Starts from the saved quote and is
+  // adopted from a template only while still empty. Never enters configJson.
+  initialCampaignTag?: string | null;
+  // Distinct tags already used by this restaurant + the holiday campaign, used
+  // as <datalist> suggestions for the Campaña field.
+  campaignTagOptions?: string[];
 };
 
 export default function QuoteBuilderV2({
@@ -64,9 +73,12 @@ export default function QuoteBuilderV2({
   restaurantName = 'La Estancia',
   logoSrc,
   isAdmin = false,
+  initialCampaignTag = null,
+  campaignTagOptions = [],
 }: Props) {
   const router = useRouter();
   const [config, setConfig] = useState<QuoteConfig>(() => initialConfig ?? emptyConfig());
+  const [campaignTag, setCampaignTag] = useState(initialCampaignTag ?? '');
   const [tab, setTab] = useState<Tab>(quoteId ? 'constructor' : 'plantillas');
   const [categoriaActiva, setCategoriaActiva] = useState<QuoteCategoria>('Parrilla');
   const [saving, setSaving] = useState(false);
@@ -133,6 +145,27 @@ export default function QuoteBuilderV2({
     setSaved(false);
   }, []);
 
+  // One-click add-on (barra libre de vino, cóctel de bienvenida). Same shape as
+  // a manual extra section, pre-filled from ADDON_PRESETS. Duplicates are
+  // prevented at the button (see ExtraSeccionesEditor), so a plain append is
+  // enough here.
+  const addExtraSectionPreset = useCallback((preset: AddonPreset) => {
+    setConfig((c) => ({
+      ...c,
+      extraSections: [
+        ...(c.extraSections ?? []),
+        {
+          id: newExtraSectionId(),
+          nombre: preset.nombre,
+          descripcion: preset.descripcion,
+          precioPP: preset.precioPP,
+          costoPP: 0,
+        },
+      ],
+    }));
+    setSaved(false);
+  }, []);
+
   const updateExtraSection = useCallback((id: string, patch: Partial<ExtraSection>) => {
     setConfig((c) => ({
       ...c,
@@ -170,8 +203,14 @@ export default function QuoteBuilderV2({
   }
 
   function applyTemplate(t: QuoteTemplate) {
+    // Adopt the template's campaign tag only when the hostess hasn't typed one,
+    // so applying a template never overwrites a campaign she already chose.
+    if (t.campaignTag && !campaignTag.trim()) setCampaignTag(t.campaignTag);
     setConfig((c) => {
       const next: QuoteConfig = { ...c, modo: t.modo, templateId: t.id };
+      if (t.tipoEvento && c.evento.tipo === EMPTY_EVENTO.tipo) {
+        next.evento = { ...c.evento, tipo: t.tipoEvento };
+      }
       if (t.modo === 'individual') {
         next.indiv = {
           ...c.indiv,
@@ -335,6 +374,9 @@ export default function QuoteBuilderV2({
         guestCount: config.evento.personas,
         eventNotes: '',
         packageName: config.templateId ?? modoLabel,
+        // Empty means "no campaign" — the server normalizes it to NULL. Kept
+        // out of configJson on purpose: that blob is rendered client-side.
+        campaignTag: campaignTag.trim() || null,
         terms: config.terms ?? '',
         configJson: config,
         // Only meaningful on create; the server links it and advances the lead.
@@ -589,6 +631,26 @@ export default function QuoteBuilderV2({
                     <option>Precio</option>
                   </select>
                 </Field>
+                {/* Internal only — never rendered on the public quote page.
+                    Suggests tags already used plus the live holiday campaign. */}
+                <Field label="Campaña">
+                  <input
+                    type="text"
+                    list="campaign-tag-options"
+                    value={campaignTag}
+                    onChange={(e) => {
+                      setCampaignTag(e.target.value);
+                      setSaved(false);
+                    }}
+                    placeholder="Ej. campaign:posadas-2026"
+                    autoComplete="off"
+                  />
+                  <datalist id="campaign-tag-options">
+                    {campaignTagOptions.map((tag) => (
+                      <option key={tag} value={tag} />
+                    ))}
+                  </datalist>
+                </Field>
               </div>
             </div>
           </div>
@@ -660,6 +722,7 @@ export default function QuoteBuilderV2({
                   toggleArrayItem={toggleArrayItem}
                   extraSections={config.extraSections ?? []}
                   onAddSection={addExtraSection}
+                  onAddPreset={addExtraSectionPreset}
                   onUpdateSection={updateExtraSection}
                   onRemoveSection={removeExtraSection}
                   isAdmin={isAdmin}
@@ -673,6 +736,7 @@ export default function QuoteBuilderV2({
                   toggleArrayItem={toggleArrayItem}
                   extraSections={config.extraSections ?? []}
                   onAddSection={addExtraSection}
+                  onAddPreset={addExtraSectionPreset}
                   onUpdateSection={updateExtraSection}
                   onRemoveSection={removeExtraSection}
                   isAdmin={isAdmin}
@@ -687,6 +751,7 @@ export default function QuoteBuilderV2({
                   toggleVariant={(dishId, variant) => toggleDishVariant('asado', dishId, variant)}
                   extraSections={config.extraSections ?? []}
                   onAddSection={addExtraSection}
+                  onAddPreset={addExtraSectionPreset}
                   onUpdateSection={updateExtraSection}
                   onRemoveSection={removeExtraSection}
                   isAdmin={isAdmin}
@@ -704,6 +769,7 @@ export default function QuoteBuilderV2({
                   toggleVariant={(dishId, variant) => toggleDishVariant('carta', dishId, variant)}
                   extraSections={config.extraSections ?? []}
                   onAddSection={addExtraSection}
+                  onAddPreset={addExtraSectionPreset}
                   onUpdateSection={updateExtraSection}
                   onRemoveSection={removeExtraSection}
                   isAdmin={isAdmin}
@@ -938,7 +1004,7 @@ function IvaServicioToggles({
 
 function IndividualMode({
   config, patchIndiv, menuPorCategoria, toggleArrayItem,
-  extraSections, onAddSection, onUpdateSection, onRemoveSection, isAdmin,
+  extraSections, onAddSection, onAddPreset, onUpdateSection, onRemoveSection, isAdmin,
 }: {
   config: QuoteConfig;
   patchIndiv: (p: Partial<QuoteConfig['indiv']>) => void;
@@ -946,6 +1012,7 @@ function IndividualMode({
   toggleArrayItem: (arr: string[], id: string) => string[];
   extraSections: ExtraSection[];
   onAddSection: () => void;
+  onAddPreset: (preset: AddonPreset) => void;
   onUpdateSection: (id: string, patch: Partial<ExtraSection>) => void;
   onRemoveSection: (id: string) => void;
   isAdmin: boolean;
@@ -996,6 +1063,7 @@ function IndividualMode({
       <ExtraSeccionesEditor
         sections={extraSections}
         onAdd={onAddSection}
+        onAddPreset={onAddPreset}
         onUpdate={onUpdateSection}
         onRemove={onRemoveSection}
         isAdmin={isAdmin}
@@ -1032,7 +1100,7 @@ function IndividualMode({
 
 function OpcionesMode({
   config, patchOpciones, menuPorCategoria, toggleArrayItem,
-  extraSections, onAddSection, onUpdateSection, onRemoveSection, isAdmin,
+  extraSections, onAddSection, onAddPreset, onUpdateSection, onRemoveSection, isAdmin,
 }: {
   config: QuoteConfig;
   patchOpciones: (p: Partial<QuoteConfig['opciones']>) => void;
@@ -1040,6 +1108,7 @@ function OpcionesMode({
   toggleArrayItem: (arr: string[], id: string) => string[];
   extraSections: ExtraSection[];
   onAddSection: () => void;
+  onAddPreset: (preset: AddonPreset) => void;
   onUpdateSection: (id: string, patch: Partial<ExtraSection>) => void;
   onRemoveSection: (id: string) => void;
   isAdmin: boolean;
@@ -1146,6 +1215,7 @@ function OpcionesMode({
       <ExtraSeccionesEditor
         sections={extraSections}
         onAdd={onAddSection}
+        onAddPreset={onAddPreset}
         onUpdate={onUpdateSection}
         onRemove={onRemoveSection}
         isAdmin={isAdmin}
@@ -1170,7 +1240,7 @@ function OpcionesMode({
 
 function AsadoMode({
   config, patchAsado, menuPorCategoria, setAsadoCantidad, toggleVariant,
-  extraSections, onAddSection, onUpdateSection, onRemoveSection, isAdmin,
+  extraSections, onAddSection, onAddPreset, onUpdateSection, onRemoveSection, isAdmin,
 }: {
   config: QuoteConfig;
   patchAsado: (p: Partial<QuoteConfig['asado']>) => void;
@@ -1179,6 +1249,7 @@ function AsadoMode({
   toggleVariant: (dishId: string, variant: string) => void;
   extraSections: ExtraSection[];
   onAddSection: () => void;
+  onAddPreset: (preset: AddonPreset) => void;
   onUpdateSection: (id: string, patch: Partial<ExtraSection>) => void;
   onRemoveSection: (id: string) => void;
   isAdmin: boolean;
@@ -1232,6 +1303,7 @@ function AsadoMode({
       <ExtraSeccionesEditor
         sections={extraSections}
         onAdd={onAddSection}
+        onAddPreset={onAddPreset}
         onUpdate={onUpdateSection}
         onRemove={onRemoveSection}
         isAdmin={isAdmin}
@@ -1272,7 +1344,7 @@ function AsadoMode({
 
 function CartaMode({
   config, patchCarta, menuPorCategoria, categoriaActiva, setCategoriaActiva, setCartaCantidad, openSidePicker, toggleVariant,
-  extraSections, onAddSection, onUpdateSection, onRemoveSection, isAdmin,
+  extraSections, onAddSection, onAddPreset, onUpdateSection, onRemoveSection, isAdmin,
 }: {
   config: QuoteConfig;
   patchCarta: (p: Partial<QuoteConfig['carta']>) => void;
@@ -1284,6 +1356,7 @@ function CartaMode({
   toggleVariant: (dishId: string, variant: string) => void;
   extraSections: ExtraSection[];
   onAddSection: () => void;
+  onAddPreset: (preset: AddonPreset) => void;
   onUpdateSection: (id: string, patch: Partial<ExtraSection>) => void;
   onRemoveSection: (id: string) => void;
   isAdmin: boolean;
@@ -1374,6 +1447,7 @@ function CartaMode({
         <ExtraSeccionesEditor
           sections={extraSections}
           onAdd={onAddSection}
+          onAddPreset={onAddPreset}
           onUpdate={onUpdateSection}
           onRemove={onRemoveSection}
           isAdmin={isAdmin}
@@ -1520,10 +1594,11 @@ function SidePickerModal({
 // header + body block on Vista Cliente. Multiple allowed; precio rolls
 // into per-pp total via computePricing.
 function ExtraSeccionesEditor({
-  sections, onAdd, onUpdate, onRemove, isAdmin,
+  sections, onAdd, onAddPreset, onUpdate, onRemove, isAdmin,
 }: {
   sections: ExtraSection[];
   onAdd: () => void;
+  onAddPreset: (preset: AddonPreset) => void;
   onUpdate: (id: string, patch: Partial<ExtraSection>) => void;
   onRemove: (id: string) => void;
   isAdmin: boolean;
@@ -1595,14 +1670,39 @@ function ExtraSeccionesEditor({
           </div>
         </div>
       ))}
-      <button
-        type="button"
-        onClick={onAdd}
-        className="btn btn-secondary"
-        style={{ width: '100%', justifyContent: 'center', marginTop: sections.length > 0 ? 4 : 0 }}
-      >
-        + Agregar sección
-      </button>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: sections.length > 0 ? 4 : 0 }}>
+        <button
+          type="button"
+          onClick={onAdd}
+          className="btn btn-secondary"
+          style={{ flex: '1 1 180px', justifyContent: 'center' }}
+        >
+          + Agregar sección
+        </button>
+        {ADDON_PRESETS.map((preset) => {
+          // No duplicates: the section list IS the quote's add-on list, so a
+          // preset already present by name disables its own button.
+          const alreadyAdded = sections.some((s) => s.nombre.trim() === preset.nombre);
+          return (
+            <button
+              key={preset.key}
+              type="button"
+              onClick={() => onAddPreset(preset)}
+              disabled={alreadyAdded}
+              className="btn btn-secondary"
+              style={{
+                padding: '8px 12px',
+                fontSize: 12,
+                opacity: alreadyAdded ? 0.45 : 1,
+                cursor: alreadyAdded ? 'not-allowed' : 'pointer',
+              }}
+              title={alreadyAdded ? 'Ya agregado a esta cotización' : preset.descripcion}
+            >
+              + {preset.nombre} (${preset.precioPP}/pp)
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 }

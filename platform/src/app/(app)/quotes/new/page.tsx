@@ -6,7 +6,8 @@ import { verifySession } from '@/lib/session';
 import { getBrandForSlug, hasEventsQuotes } from '@/lib/brands';
 import { isAdminEmail } from '@/lib/admin';
 import QuoteBuilderV2 from '@/components/quotes/QuoteBuilderV2';
-import { emptyConfig, type QuoteConfig } from '@/lib/quote-data';
+import { emptyConfig, HOLIDAY_CAMPAIGN_TAG, type QuoteConfig } from '@/lib/quote-data';
+import { listCampaignTags } from '@/lib/quote-lifecycle';
 
 export default async function NewQuotePage({
   searchParams,
@@ -58,6 +59,9 @@ export default async function NewQuotePage({
     <QuoteBuilderV2
       initialConfig={initialConfig}
       leadId={leadId}
+      campaignTagOptions={
+        restaurant ? await listCampaignTags(restaurant.id) : [HOLIDAY_CAMPAIGN_TAG]
+      }
       restaurantName={restaurant?.name ?? 'La Estancia'}
       logoSrc={brand.logo}
       isAdmin={isAdminEmail(restaurant?.managerEmail)}

@@ -8,6 +8,7 @@ import { isAdminEmail } from '@/lib/admin';
 import QuoteBuilderV2 from '@/components/quotes/QuoteBuilderV2';
 import QuoteMissing from '@/components/quotes/QuoteMissing';
 import { emptyConfig, migrateConfig, type QuoteConfig } from '@/lib/quote-data';
+import { listCampaignTags } from '@/lib/quote-lifecycle';
 
 export default async function EditQuotePage({ params }: { params: Promise<{ id: string }> }) {
   const session = await verifySession();
@@ -60,6 +61,8 @@ export default async function EditQuotePage({ params }: { params: Promise<{ id: 
       initialConfig={initialConfig}
       quoteId={quoteId}
       quoteNumber={quoteNumber}
+      initialCampaignTag={quote.campaignTag}
+      campaignTagOptions={await listCampaignTags(restaurant.id)}
       restaurantName={restaurant.name}
       logoSrc={brand.logo}
       isAdmin={isAdminEmail(restaurant.managerEmail)}
