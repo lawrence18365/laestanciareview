@@ -13,7 +13,7 @@ import { quoteCreateSchema, quoteUpdateSchema } from '@/lib/validations';
 // menus. They must lead TEMPLATES so they are the first thing she sees.
 const HOLIDAY_MENUS = [
   { id: 'fiestas-menu-1', precioPP: 950, platos: ['pa17', 'm2', 'm4'] },
-  { id: 'fiestas-menu-2', precioPP: 995, platos: ['pa20', 'pa22', 'm1'] },
+  { id: 'fiestas-menu-2', precioPP: 995, platos: ['pa19', 'pa22', 'm1'] },
   { id: 'fiestas-menu-3', precioPP: 1200, platos: ['pa13', 'pa1'] },
   { id: 'fiestas-menu-4', precioPP: 1450, platos: ['pa29', 'pa27'] },
 ];
