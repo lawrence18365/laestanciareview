@@ -283,7 +283,7 @@ export default function QuoteList({
                 <button
                   onClick={() => handleSend(q.id)}
                   disabled={sending === q.id}
-                  className="ql-action ql-action-primary"
+                  className="ql-action"
                   style={{ opacity: sending === q.id ? 0.5 : 1 }}
                 >
                   {sending === q.id ? '...' : 'Enviar'}
@@ -494,7 +494,7 @@ const QL_CSS = `
   line-height: 1.45;
   color: var(--text-muted);
 }
-.ql-total { font-size: 1rem; font-weight: 700; color: var(--text-main); }
+.ql-total { font-size: 22px; line-height: 1.25; font-weight: 700; color: var(--text-main); }
 .ql-card-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; justify-content: flex-end; }
 .ql-action {
   min-height: 44px;
@@ -511,7 +511,6 @@ const QL_CSS = `
   cursor: pointer;
 }
 .ql-action-danger { color: var(--red); border-color: var(--red); }
-.ql-action-primary { background: var(--text-main); color: var(--panel-bg); border-color: var(--text-main); }
 
 /* iPad / tablet */
 @media (max-width: 1024px) {

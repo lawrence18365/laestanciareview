@@ -569,23 +569,7 @@ export default function QuoteBuilderV2({
                 <h1 className="h-display cb-header-title">
                   {config.evento.cliente || 'Cotización sin cliente'}
                 </h1>
-                <div className="cb-folio-group">
-                  <p className="text-2 num cb-folio">{folio}</p>
-                  <span key={stampRun} className={`ratetap-stamp${stampRun ? ' animate' : ''}`} aria-hidden="true">
-                    {Array.from({ length: 5 }, (_, i) => (
-                      <svg
-                        key={i}
-                        width={12}
-                        height={12}
-                        viewBox="0 0 24 24"
-                        className="ratetap-star"
-                        style={{ animationDelay: `${i * 40}ms` }}
-                      >
-                        <path d="m12 2 2.9 6 6.6.9-4.8 4.7 1.1 6.6-5.8-3.1-5.8 3.1 1.1-6.6-4.8-4.7 6.6-.9z" fill="currentColor" />
-                      </svg>
-                    ))}
-                  </span>
-                </div>
+                <p className="text-2 num cb-folio">{folio}</p>
               </div>
               <button
                 onClick={save}
@@ -713,7 +697,23 @@ export default function QuoteBuilderV2({
 
           {/* Plantillas */}
           <section className="template-group holiday-group">
-            <h3 className="template-group-title">Fiestas de fin de año</h3>
+            <h3 className="template-group-title template-group-with-stamp">
+              <span>Fiestas de fin de año</span>
+              <span key={stampRun} className={`ratetap-stamp${stampRun ? ' animate' : ''}`} aria-hidden="true">
+                {Array.from({ length: 5 }, (_, i) => (
+                  <svg
+                    key={i}
+                    width={12}
+                    height={12}
+                    viewBox="0 0 24 24"
+                    className="ratetap-star"
+                    style={{ animationDelay: `${i * 40}ms` }}
+                  >
+                    <path d="m12 2 2.9 6 6.6.9-4.8 4.7 1.1 6.6-5.8-3.1-5.8 3.1 1.1-6.6-4.8-4.7 6.6-.9z" fill="currentColor" />
+                  </svg>
+                ))}
+              </span>
+            </h3>
             <p className="body text-2 group-note">Precio por persona, IVA incluido.</p>
             <div className="holiday-grid">
               {TEMPLATES.filter((t) => t.campaignTag).map((t) => (
@@ -1914,6 +1914,14 @@ const CSS = `
 .cotizador-root .operator-chrome .mini { font-size: 12px; }
 .cotizador-root .operator-chrome .section-heading { margin: 0 0 12px; }
 .cotizador-root .operator-chrome .template-group-title { margin: 0 0 12px; font: 600 17px/1.25 'Inter', sans-serif; }
+.cotizador-root .operator-chrome .template-group-with-stamp {
+  display: flex;
+  width: fit-content;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  max-width: 100%;
+}
 
 .cotizador-root .operator-chrome input[type="text"],
 .cotizador-root .operator-chrome input[type="number"],
@@ -2012,19 +2020,17 @@ const CSS = `
 }
 .cotizador-root .cb-row { padding: 20px 0; }
 .cotizador-root .cb-header-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
   gap: 16px;
-  flex-wrap: wrap;
 }
 .cotizador-root .cb-title-group {
   display: flex;
-  align-items: baseline;
-  flex-wrap: wrap;
-  gap: 8px 16px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
   min-width: 0;
-  flex: 1 1 420px;
 }
 .cotizador-root .cb-header-title {
   margin: 0;
@@ -2040,7 +2046,7 @@ const CSS = `
   flex-shrink: 0;
 }
 .cotizador-root .cb-folio { margin: 0; font-size: 14px; white-space: nowrap; }
-.cotizador-root .cb-save-btn { flex-shrink: 0; }
+.cotizador-root .cb-save-btn { flex-shrink: 0; justify-self: end; align-self: start; }
 .cotizador-root .cb-header .cb-tabs {
   display: flex;
   min-height: 44px;
@@ -2074,14 +2080,6 @@ const CSS = `
     position: static;
     top: auto;
   }
-}
-@media (max-width: 900px) {
-  .cotizador-root .cb-header-row {
-    flex-direction: column;
-    align-items: stretch;
-  }
-  .cotizador-root .cb-title-group { flex-basis: auto; }
-  .cotizador-root .cb-save-btn { align-self: flex-start; }
 }
 
 .cotizador-root .cb-main {

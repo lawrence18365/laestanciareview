@@ -189,7 +189,7 @@ h1, h2, h3, h4, h5, h6, .font-serif {
 .nav-links { display: none; }
 .nav-links::-webkit-scrollbar { display: none; }
 
-@media (min-width: 1024px) {
+@media (min-width: 1280px) {
   .nav-links { display: flex; gap: 0; }
   .nav-mobile-toggle { display: none !important; }
   .nav-signout-mobile { display: none !important; }
@@ -205,7 +205,7 @@ h1, h2, h3, h4, h5, h6, .font-serif {
   animation: fadeIn 0.15s ease;
 }
 
-@media (min-width: 1024px) {
+@media (min-width: 1280px) {
   .nav-mobile-menu { display: none !important; }
 }
 

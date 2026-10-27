@@ -99,18 +99,30 @@ async function rect(page: Page, selector: string) {
 }
 
 describe('quote layout in WebKit', () => {
-  for (const [width, height] of [[1180, 820], [1080, 810], [810, 1080], [820, 1080]]) {
+  for (const [width, height] of [[1180, 820], [1080, 810], [810, 1080], [820, 1080], [1279, 820], [1280, 820], [1284, 820]]) {
     it(`wraps header, reserves navigation utilities and contains content at ${width}x${height}`, async () => {
-      const page = await fixture(width, height);
+      const page = await fixture(width, height, 'builder', true);
       try {
         const title = await rect(page, '.cb-header h1');
         const save = await rect(page, '.cb-header .btn-primary');
-        expect(save.y >= title.bottom + 16 || save.x >= title.right + 16).toBe(true);
-        expect(await page.locator('.cb-header').evaluate((el) => getComputedStyle(el).position)).toBe('static');
+        const row = await rect(page, '.cb-header-row');
+        expect(save.x - title.right).toBeGreaterThanOrEqual(16);
+        expect(Math.abs(save.y - title.y)).toBeLessThan(2);
+        expect(save.right).toBeCloseTo(row.right, 1);
+        expect(await page.locator('.cb-header .ratetap-stamp').count()).toBe(0);
+        expect(await page.locator('.cb-header h1').textContent()).toBe('Coordinación de Celebraciones y Eventos de Prueba del Bajío');
+        expect(await page.locator('.cb-header h1').evaluate((el) => el.scrollWidth <= el.clientWidth + 1 && el.scrollHeight <= el.clientHeight + 1)).toBe(true);
+        expect(await findVisibleTextClashes(page, '.cb-header')).toEqual([]);
+        expect(await page.locator('.cb-header').evaluate((el) => getComputedStyle(el).position)).toBe(width <= 1180 ? 'static' : 'sticky');
         expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(width + 1);
         const tabs = await page.locator('.cb-tabs .tab').evaluateAll((els) => els.map((el) => el.getBoundingClientRect().height));
         expect(tabs.every((n) => n >= 44)).toBe(true);
-        if (width >= 1024) {
+        // WebKit reserves the app's 4px scrollbar from media-query width.
+        // Cover 1280 CSS pixels with the 1284 outer viewport, without hiding it.
+        const desktop = await page.evaluate(() => matchMedia('(min-width: 1280px)').matches);
+        if (width === 1284) expect(desktop).toBe(true);
+        if (desktop) {
+          expect(await page.locator('.nav-mobile-toggle').isVisible()).toBe(false);
           const links = await rect(page, 'nav .nav-links');
           const utilities = await rect(page, 'nav .nav-links + .nav-links');
           expect(utilities.x - links.right).toBeGreaterThanOrEqual(12);
@@ -122,7 +134,21 @@ describe('quote layout in WebKit', () => {
           const menu = await rect(page, '.nav-mobile-toggle');
           expect(menu.width).toBeGreaterThanOrEqual(44);
           expect(menu.height).toBeGreaterThanOrEqual(44);
+          expect(await page.locator('nav .nav-links').first().isVisible()).toBe(false);
+          const expectedLinks = await page.locator('nav .nav-links').first().locator('a').evaluateAll((els) => els.map((el) => el.getAttribute('href')));
           await page.locator('.nav-mobile-toggle').click();
+          expect(await page.locator('.nav-mobile-menu').isVisible()).toBe(true);
+          expect(await page.locator('.nav-mobile-menu a').evaluateAll((els) => els.map((el) => el.getAttribute('href')))).toEqual(expectedLinks);
+          for (const link of await page.locator('.nav-mobile-menu a').all()) {
+            await link.scrollIntoViewIfNeeded();
+            await link.focus();
+            const box = await link.boundingBox();
+            expect(box!.x).toBeGreaterThanOrEqual(0);
+            expect(box!.x + box!.width).toBeLessThanOrEqual(width);
+            expect(box!.y).toBeGreaterThanOrEqual(0);
+            expect(box!.y + box!.height).toBeLessThanOrEqual(height);
+            expect(await link.evaluate((el) => document.activeElement === el)).toBe(true);
+          }
           const targets = await page.locator('.nav-mobile-menu a, .nav-mobile-menu button').evaluateAll((els) => els.map((el) => el.getBoundingClientRect().height));
           expect(targets.every((n) => n >= 44)).toBe(true);
         }
@@ -225,6 +251,17 @@ describe('quote layout in WebKit', () => {
     const page = await fixture(810, 1080, 'list');
     try {
       expect(await page.locator('.ql-campaign-select option[value="campaign:posadas-2026"]').count()).toBe(1);
+      const primary = await page.locator('.ql-new-btn').evaluate((el) => ({ bg: getComputedStyle(el).backgroundColor, color: getComputedStyle(el).color }));
+      const send = await page.locator('.ql-card-actions button').filter({ hasText: /^Enviar$/ }).evaluate((el) => ({
+        bg: getComputedStyle(el).backgroundColor, color: getComputedStyle(el).color,
+        border: getComputedStyle(el).borderTopStyle, borderColor: getComputedStyle(el).borderTopColor,
+      }));
+      expect(primary.bg).toBe('rgb(17, 17, 17)');
+      expect(send.bg).not.toBe(primary.bg);
+      expect(send.color).toBe(primary.bg);
+      expect(send.border).toBe('solid');
+      expect(send.borderColor).toBe(primary.bg);
+      expect(await page.locator('.ql-total').evaluate((el) => parseFloat(getComputedStyle(el).fontSize))).toBeGreaterThanOrEqual(22);
       const targets = await page.locator('.ql-root button, .ql-root select').evaluateAll((els) => els.map((el) => el.getBoundingClientRect().height));
       expect(targets.every((height) => height >= 44)).toBe(true);
       const meta = await page.locator('.ql-folio, .ql-status, .ql-campaign-chip, .ql-card-details').evaluateAll((els) => els.map((el) => parseFloat(getComputedStyle(el).fontSize)));
