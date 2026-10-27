@@ -69,6 +69,14 @@ describe('2026 dessert catalog', () => {
     expect(isDishOffered(pannaCotta!, new Date('2027-09-15T12:00:00-06:00'))).toBe(false);
   });
 
+  it('prices Tarta de calabaza at $190 and offers it in the same Oct-Nov window', () => {
+    const tarta = dishById('po18');
+    expect(tarta).toMatchObject({ nombre: 'Tarta de calabaza', categoria: 'Postres', precio: 190 });
+    expect(tarta?.season?.months).toEqual([10, 11]);
+    expect(isDishOffered(tarta!, new Date('2026-11-30T23:00:00-06:00'))).toBe(true);
+    expect(isDishOffered(tarta!, new Date('2026-12-01T12:00:00-06:00'))).toBe(false);
+  });
+
   it('offers Banoffee all year round', () => {
     const banoffee = dishById('po8');
     expect(isDishOffered(banoffee!, new Date('2026-12-01T12:00:00-06:00'))).toBe(true);

@@ -122,6 +122,7 @@ const OFFICIAL_2026_PRICES: Record<string, number> = {
   po15: 180,
   po16: 180,
   po17: 190,
+  po18: 190,
 };
 
 describe('official La Estancia Argentina 2026 menu', () => {

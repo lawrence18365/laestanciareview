@@ -191,6 +191,8 @@ export const MENU: QuoteDish[] = [
   { id: 'po3', categoria: 'Postres', nombre: 'Pastel Estancia (rebanada)', precio: 160 },
   { id: 'po7', categoria: 'Postres', nombre: 'Pastel Personalizado', precio: 20, desc: 'Mensaje a elegir, ideal para brindis · $20 por persona', perPerson: true },
   { id: 'po5', categoria: 'Postres', nombre: 'Trilogía de alfajores', precio: 135 },
+  // Halloween + Día de Muertos.
+  { id: 'po18', categoria: 'Postres', nombre: 'Tarta de calabaza', precio: 190, season: { months: [10, 11] } },
   { id: 'po16', categoria: 'Postres', nombre: 'Vesubio de chocolate', precio: 180 },
 ];
 
