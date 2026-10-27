@@ -139,9 +139,9 @@ export default function DashboardNav({
           />
           <p style={{
             margin: 0,
-            fontSize: '0.6rem',
+            fontSize: '12px',
             fontWeight: 600,
-            color: 'var(--text-dim)',
+            color: 'var(--text-muted)',
             letterSpacing: '0.08em',
             textTransform: 'uppercase',
             whiteSpace: 'nowrap',
@@ -167,7 +167,7 @@ export default function DashboardNav({
                 style={{
                   padding: '0.35rem 0.75rem',
                   minHeight: 44,
-                  fontSize: '0.7rem',
+                  fontSize: '12px',
                   fontWeight: active ? 700 : 500,
                   color: active ? 'var(--panel-bg)' : 'var(--text-muted)',
                   textDecoration: 'none',
@@ -212,15 +212,15 @@ export default function DashboardNav({
             <button
               onClick={onOpenGuide}
               style={{
-                fontSize: '0.65rem',
+                fontSize: '12px',
                 padding: '0.3rem 0.75rem',
                 minHeight: 44,
                 fontWeight: 600,
                 letterSpacing: '0.06em',
                 textTransform: 'uppercase',
                 background: 'var(--panel-bg)',
-                color: 'var(--gold)',
-                border: '1px solid var(--gold)',
+                color: 'var(--text-main)',
+                border: '1px solid var(--text-main)',
                 cursor: 'pointer',
                 transition: 'all 0.15s ease',
                 display: 'flex',
@@ -228,12 +228,12 @@ export default function DashboardNav({
                 gap: '0.35rem',
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.background = 'var(--gold)';
+                e.currentTarget.style.background = 'var(--text-main)';
                 e.currentTarget.style.color = '#fff';
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.background = 'var(--panel-bg)';
-                e.currentTarget.style.color = 'var(--gold)';
+                e.currentTarget.style.color = 'var(--text-main)';
               }}
             >
               ?&ensp;{t.onboarding.helpButton}
@@ -242,7 +242,7 @@ export default function DashboardNav({
           <button
             onClick={handleLogout}
             style={{
-              fontSize: '0.65rem',
+              fontSize: '12px',
               padding: '0.3rem 0.75rem',
               minHeight: 44,
               fontWeight: 600,
@@ -361,11 +361,11 @@ export default function DashboardNav({
                 minHeight: 44,
                 boxSizing: 'border-box',
                 padding: '0.5rem 0.75rem',
-                fontSize: '0.7rem',
+                fontSize: '12px',
                 fontWeight: 600,
-                color: 'var(--gold)',
+                color: 'var(--text-main)',
                 background: 'none',
-                border: '1px solid var(--gold)',
+                border: '1px solid var(--text-main)',
                 textAlign: 'left',
                 cursor: 'pointer',
                 letterSpacing: '0.06em',
@@ -385,7 +385,7 @@ export default function DashboardNav({
               minHeight: 44,
               boxSizing: 'border-box',
               padding: '0.5rem 0.75rem',
-              fontSize: '0.7rem',
+              fontSize: '12px',
               fontWeight: 600,
               color: 'var(--red)',
               background: 'none',
