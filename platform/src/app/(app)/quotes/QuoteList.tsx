@@ -329,21 +329,24 @@ const QL_CSS = `
 }
 .ql-title {
   margin: 0;
-  font-size: 1.1rem;
+  font-size: 1.3rem;
+  line-height: 1.2;
   font-weight: 700;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
 }
-.ql-subtitle { margin: 0.25rem 0 0; font-size: 0.75rem; color: var(--text-dim); }
+.ql-subtitle { margin: 0.5rem 0 0; font-size: 0.8rem; line-height: 1.45; color: var(--text-muted); }
 .ql-new-btn {
+  min-height: 44px;
   padding: 0.6rem 1.25rem;
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   background: var(--text-main);
   color: var(--panel-bg);
-  border: none;
+  border: 1px solid var(--text-main);
+  border-radius: 0;
   cursor: pointer;
   white-space: nowrap;
 }
@@ -365,118 +368,146 @@ const QL_CSS = `
 }
 .ql-card-info { min-width: 0; }
 .ql-card-meta { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
-.ql-folio { font-size: 0.65rem; font-family: var(--font-mono); color: var(--text-dim); }
+.ql-folio { font-size: 0.75rem; font-family: var(--font-mono); color: var(--text-muted); }
 .ql-conversion {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 0.5rem;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.75rem;
   padding: 1rem;
-  margin-bottom: 0.4rem;
-  background: #fafaf9;
-  border: 1px solid #ebe7e2;
-  border-radius: 12px;
+  margin-bottom: 0.5rem;
+  background: var(--panel-bg);
+  border: 1px solid var(--border-dark);
+  border-radius: 0;
+  box-shadow: var(--shadow-md);
 }
 .ql-conversion > div { text-align: center; }
 .ql-conv-value {
   display: block;
-  font-size: 1.35rem;
+  font-size: 1.5rem;
   font-weight: 700;
-  color: #1c1917;
+  color: var(--text-main);
   line-height: 1.15;
 }
 .ql-conv-label {
   display: block;
-  margin-top: 0.2rem;
-  font-size: 0.66rem;
+  margin-top: 0.35rem;
+  font-size: 0.75rem;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: #78716c;
+  line-height: 1.35;
+  color: var(--text-muted);
 }
 .ql-conv-note {
   margin: 0 0 1rem;
-  font-size: 0.7rem;
-  color: #a8a29e;
+  font-size: 0.75rem;
+  line-height: 1.45;
+  color: var(--text-muted);
 }
 .ql-filterbar {
   display: flex;
-  gap: 0.5rem;
-  margin-bottom: 0.9rem;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
 }
 .ql-filter-btn {
-  padding: 0.45rem 0.9rem;
+  min-height: 44px;
+  padding: 0.55rem 1rem;
   font-size: 0.8rem;
   font-weight: 600;
-  color: #57534e;
-  background: #fff;
-  border: 1px solid #e7e5e4;
-  border-radius: 999px;
+  color: var(--text-main);
+  background: var(--panel-bg);
+  border: 1px solid var(--border-dark);
+  border-radius: 0;
   cursor: pointer;
 }
 .ql-filter-btn.active {
-  color: #fff;
-  background: #1c1917;
-  border-color: #1c1917;
+  color: var(--panel-bg);
+  background: var(--text-main);
+  border-color: var(--text-main);
 }
 .ql-campaign-select {
+  min-height: 44px;
+  min-width: 0;
+  height: 44px;
   margin-left: auto;
-  padding: 0.45rem 0.9rem;
+  padding: 0.55rem 2.25rem 0.55rem 1rem;
   font-size: 0.8rem;
   font-weight: 600;
-  color: #57534e;
-  background: #fff;
-  border: 1px solid #e7e5e4;
-  border-radius: 999px;
+  color: var(--text-main);
+  background-color: var(--panel-bg);
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--text-muted) 50%),
+    linear-gradient(135deg, var(--text-muted) 50%, transparent 50%);
+  background-position:
+    calc(100% - 18px) calc(50% - 2px),
+    calc(100% - 12px) calc(50% - 2px);
+  background-size: 6px 6px, 6px 6px;
+  background-repeat: no-repeat;
+  border: 1px solid var(--border-dark);
+  border-radius: 0;
+  -webkit-appearance: none;
+  appearance: none;
   cursor: pointer;
 }
 .ql-campaign-summary {
-  margin: 0 0 0.9rem;
-  font-size: 0.76rem;
-  color: #57534e;
+  margin: 0 0 1rem;
+  font-size: 0.8rem;
+  line-height: 1.45;
+  color: var(--text-muted);
 }
 .ql-campaign-chip {
-  padding: 1px 7px;
-  font-size: 0.6rem;
+  padding: 2px 8px;
+  font-size: 0.75rem;
   font-weight: 700;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: #6d28d9;
-  background: #f5f3ff;
-  border: 1px solid #ddd6fe;
-  border-radius: 999px;
+  line-height: 1.35;
+  color: var(--text-main);
+  background: var(--gold-light);
+  border: 1px solid var(--gold);
+  border-radius: 0;
+  white-space: nowrap;
 }
 @media (max-width: 560px) {
   .ql-conversion { grid-template-columns: repeat(2, 1fr); row-gap: 0.9rem; }
 }
 .ql-status {
-  font-size: 0.6rem;
+  font-size: 0.75rem;
   font-weight: 700;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
+  line-height: 1.35;
   border: 1px solid;
-  padding: 1px 6px;
+  border-radius: 0;
+  padding: 2px 8px;
 }
-.ql-client { margin: 0.35rem 0 0; font-size: 0.9rem; font-weight: 600; }
-.ql-company { font-weight: 400; color: var(--text-dim); margin-left: 0.5rem; }
+.ql-client { margin: 0.5rem 0 0; font-size: 1rem; line-height: 1.35; font-weight: 600; }
+.ql-company { font-size: 0.8rem; font-weight: 400; color: var(--text-muted); margin-left: 0.5rem; }
 .ql-card-details {
   display: flex;
-  gap: 1rem;
-  margin-top: 0.35rem;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
   flex-wrap: wrap;
-  font-size: 0.74rem;
-  color: var(--text-dim);
+  font-size: 0.8rem;
+  line-height: 1.45;
+  color: var(--text-muted);
 }
-.ql-total { font-weight: 600; color: var(--text-main); }
+.ql-total { font-size: 1rem; font-weight: 700; color: var(--text-main); }
 .ql-card-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; justify-content: flex-end; }
 .ql-action {
-  padding: 0.4rem 0.85rem;
-  font-size: 0.66rem;
+  min-height: 44px;
+  min-width: 44px;
+  padding: 0.55rem 0.9rem;
+  font-size: 0.75rem;
   font-weight: 600;
   letter-spacing: 0.05em;
   text-transform: uppercase;
   background: transparent;
   color: var(--text-main);
   border: 1px solid var(--border-dark);
+  border-radius: 0;
   cursor: pointer;
 }
 .ql-action-danger { color: var(--red); border-color: var(--red); }
@@ -503,7 +534,7 @@ const QL_CSS = `
   .ql-action {
     flex: 1 1 0;
     padding: 0.65rem 0.5rem;
-    font-size: 0.7rem;
+    font-size: 0.75rem;
   }
 }
 `;

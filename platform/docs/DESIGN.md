@@ -48,3 +48,21 @@ One primary CTA per screen.
 7. **Motion is a garnish.** 3D/animated touches stay under 400ms, use
    transform/opacity only, never block input, and are disabled under
    `prefers-reduced-motion: reduce`. Never on client-facing pages.
+
+## Quote operator layout checks
+
+Keep layout repairs inside operator chrome. The builder root also contains
+`QuotePreview`, so inherited letter spacing and generic `.h-*` rules can affect
+the frozen client document even when `.quote-doc` CSS has not changed.
+
+- Tablet builder chrome is static through 1180px; global navigation stays sticky.
+- Keep 12px between headings and helpers, 8px between template titles and prices,
+  and 16px before dish lists. Use content height rather than a fold target.
+- Operator labels and metadata are at least 12px. Inputs, native selects, tabs
+  and interactive labels have a 44px minimum target. Check computed WebKit sizes.
+- Use `src/__tests__/quote-layout.test.tsx` for isolated WebKit regressions with
+  synthetic state and blocked network requests. No application server is needed.
+- The owning QA lead can run `node scripts/qa-quotes-layout.mjs --url <fixture>`
+  against their existing synthetic fixture. It measures clipped text ranges in
+  both orientations, requires both texts visible, and does not save or send.
+  Browser checks do not replace public, print and Vista document hash checks.

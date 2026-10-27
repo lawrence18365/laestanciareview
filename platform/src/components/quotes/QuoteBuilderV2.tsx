@@ -539,36 +539,38 @@ export default function QuoteBuilderV2({
       {/* Breadcrumb / title row */}
       <header className="cb-header operator-chrome">
         <div className="cb-header-inner">
-          <div className="cb-row" style={{ paddingTop: 20, paddingBottom: 20 }}>
-            <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
-              <h1 className="h-display">
-                {config.evento.cliente || 'Cotización sin cliente'}
-              </h1>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                <p className="text-2 num" style={{ fontSize: 14 }}>{folio}</p>
-                <span key={stampRun} className={`ratetap-stamp${stampRun ? ' animate' : ''}`} aria-hidden="true">
-                  {Array.from({ length: 5 }, (_, i) => (
-                    <svg
-                      key={i}
-                      width={12}
-                      height={12}
-                      viewBox="0 0 24 24"
-                      className="ratetap-star"
-                      style={{ animationDelay: `${i * 40}ms` }}
-                    >
-                      <path d="m12 2 2.9 6 6.6.9-4.8 4.7 1.1 6.6-5.8-3.1-5.8 3.1 1.1-6.6-4.8-4.7 6.6-.9z" fill="currentColor" />
-                    </svg>
-                  ))}
-                </span>
-                <button
-                  onClick={save}
-                  disabled={saving}
-                  className="btn btn-primary"
-                  style={{ padding: '8px 16px' }}
-                >
-                  {saving ? 'Guardando…' : saved ? '✓ Guardado' : quoteId ? 'Guardar cambios' : 'Guardar'}
-                </button>
+          <div className="cb-row">
+            <div className="cb-header-row">
+              <div className="cb-title-group">
+                <h1 className="h-display cb-header-title">
+                  {config.evento.cliente || 'Cotización sin cliente'}
+                </h1>
+                <div className="cb-folio-group">
+                  <p className="text-2 num cb-folio">{folio}</p>
+                  <span key={stampRun} className={`ratetap-stamp${stampRun ? ' animate' : ''}`} aria-hidden="true">
+                    {Array.from({ length: 5 }, (_, i) => (
+                      <svg
+                        key={i}
+                        width={12}
+                        height={12}
+                        viewBox="0 0 24 24"
+                        className="ratetap-star"
+                        style={{ animationDelay: `${i * 40}ms` }}
+                      >
+                        <path d="m12 2 2.9 6 6.6.9-4.8 4.7 1.1 6.6-5.8-3.1-5.8 3.1 1.1-6.6-4.8-4.7 6.6-.9z" fill="currentColor" />
+                      </svg>
+                    ))}
+                  </span>
+                </div>
               </div>
+              <button
+                onClick={save}
+                disabled={saving}
+                className="btn btn-primary cb-save-btn"
+                style={{ padding: '8px 16px' }}
+              >
+                {saving ? 'Guardando…' : saved ? '✓ Guardado' : quoteId ? 'Guardar cambios' : 'Guardar'}
+              </button>
             </div>
           </div>
           <div className="cb-tabs">
@@ -752,12 +754,12 @@ export default function QuoteBuilderV2({
       {/* TAB: Constructor */}
       {tab === 'constructor' && (
         <main className="cb-main operator-main operator-chrome" style={{ maxWidth: 1280 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24, paddingBottom: 20, borderBottom: '1px solid var(--cb-border)' }}>
-            <div>
-              <p className="h-3">
+          <div className="cb-constructor-bar">
+            <div className="cb-constructor-heading">
+              <p className="h-3 cb-constructor-title">
                 {config.evento.cliente || 'Sin cliente'} · <span className="num">{config.evento.personas}</span> pax
               </p>
-              <p className="body text-2" style={{ marginTop: 4 }}>{modoLabel}</p>
+              <p className="body text-2 cb-constructor-subtitle">{modoLabel}</p>
             </div>
             <button onClick={() => setTab('plantillas')} className="btn btn-secondary">← Cambiar plantilla</button>
           </div>
@@ -846,7 +848,7 @@ export default function QuoteBuilderV2({
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
                       <span className="mini">Total</span>
-                      <span className="h-1 num">{fmtMXN(pricing.precioTotalFinal)}</span>
+                      <span className="h-1 num cb-summary-total">{fmtMXN(pricing.precioTotalFinal)}</span>
                     </div>
                   </div>
                   {isAdmin && (
@@ -897,9 +899,9 @@ export default function QuoteBuilderV2({
       {/* TAB: Vista cliente */}
       {tab === 'preview' && (
         <main className="cb-main" style={{ maxWidth: 780 }}>
-          <div className="no-print operator-chrome" style={{ marginBottom: 20, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+          <div className="cb-vista-toolbar no-print operator-chrome" style={{ marginBottom: 20, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap' }}>
             <button onClick={() => setTab('constructor')} className="btn btn-secondary">← Editar</button>
-            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            <div className="cb-vista-actions">
               <button
                 onClick={() => {
                   if (quoteId) {
@@ -997,7 +999,7 @@ function CostoInternoLabel() {
 
 function SummaryRow({ label, value, strong = false }: { label: string; value: string; strong?: boolean }) {
   return (
-    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 0', fontSize: 13 }}>
+    <div className="cb-summary-row">
       <span className="text-2">{label}</span>
       <span className="num" style={{ fontWeight: strong ? 500 : 400 }}>{value}</span>
     </div>
@@ -1041,11 +1043,11 @@ function IvaServicioToggles({
 }) {
   return (
     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginTop: 16 }}>
-      <label className="small" style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
+      <label className="small toggle-row" style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
         <input type="checkbox" checked={incluyeIVA} onChange={(e) => onToggleIVA(e.target.checked)} />
         {ivaLabel}
       </label>
-      <label className="small" style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
+      <label className="small toggle-row" style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
         <input type="checkbox" checked={incluyeServicio} onChange={(e) => onToggleServicio(e.target.checked)} />
         Sumar 15% servicio
       </label>
@@ -1072,7 +1074,7 @@ function IndividualMode({
   return (
     <div className="card" style={{ padding: 24 }}>
       <h3 className="h-2" style={{ margin: 0 }}>Menú a precio único por persona</h3>
-      <p className="small text-2" style={{ margin: '4px 0 24px' }}>Define las opciones que el cliente podrá elegir el día del evento.</p>
+      <p className="small text-2" style={{ margin: '12px 0 24px' }}>Define las opciones que el cliente podrá elegir el día del evento.</p>
 
       <Section title="1° Tiempo · Sopa o Crema" hint="A elegir 1">
         <div className="grid-2-sm">
@@ -1168,7 +1170,7 @@ function OpcionesMode({
   return (
     <div className="card" style={{ padding: 24 }}>
       <h3 className="h-2" style={{ margin: 0 }}>Menú con 3 opciones de plato fuerte</h3>
-      <p className="small text-2" style={{ margin: '4px 0 24px' }}>El cliente elige A, B o C. Cada opción tiene su propio precio.</p>
+      <p className="small text-2" style={{ margin: '12px 0 24px' }}>El cliente elige A, B o C. Cada opción tiene su propio precio.</p>
 
       <Section title="1° Tiempo · Sopa o Crema" hint="A elegir 1">
         <div className="grid-2-sm">
@@ -1319,7 +1321,7 @@ function AsadoMode({
   return (
     <div className="card" style={{ padding: 24 }}>
       <h3 className="h-2" style={{ margin: 0 }}>Asado argentino al centro</h3>
-      <p className="small text-2" style={{ margin: '4px 0 24px' }}>Define cantidades específicas de cada platillo. Ideal para grupos donde todo se comparte.</p>
+      <p className="small text-2" style={{ margin: '12px 0 24px' }}>Define cantidades específicas de cada platillo. Ideal para grupos donde todo se comparte.</p>
 
       {(['Entradas', 'Parrilla', 'Guarniciones'] as QuoteCategoria[]).map((cat) => (
         <Section key={cat} title={cat}>
@@ -1424,7 +1426,7 @@ function CartaMode({
   return (
     <div className="card" style={{ padding: 24 }}>
       <h3 className="h-2" style={{ margin: 0 }}>Constructor a la carta</h3>
-      <p className="small text-2" style={{ margin: '4px 0 24px' }}>Selecciona platillos. Ajusta cantidad por separado de cada uno.</p>
+      <p className="small text-2" style={{ margin: '12px 0 24px' }}>Selecciona platillos. Ajusta cantidad por separado de cada uno.</p>
 
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 16, paddingBottom: 16, borderBottom: '1px solid var(--cb-border)' }}>
         {CATEGORIAS.map((cat) => (
@@ -1866,8 +1868,11 @@ const CSS = `
 .cotizador-root .operator-chrome .h-1,
 .cotizador-root .operator-chrome .h-2,
 .cotizador-root .operator-chrome .h-3 { line-height: 1.2; }
-.cotizador-root .operator-chrome .section-heading { margin: 0 0 10px; }
-.cotizador-root .operator-chrome .template-group-title { margin: 0; font: 600 17px/1.25 'Inter', sans-serif; }
+.cotizador-root .operator-chrome .body { line-height: 1.45; }
+.cotizador-root .operator-chrome .small { line-height: 1.45; }
+.cotizador-root .operator-chrome .mini { font-size: 12px; }
+.cotizador-root .operator-chrome .section-heading { margin: 0 0 12px; }
+.cotizador-root .operator-chrome .template-group-title { margin: 0 0 12px; font: 600 17px/1.25 'Inter', sans-serif; }
 
 .cotizador-root .operator-chrome input[type="text"],
 .cotizador-root .operator-chrome input[type="number"],
@@ -1887,6 +1892,22 @@ const CSS = `
   color: var(--cb-text);
   transition: border-color 0.15s ease;
   box-sizing: border-box;
+}
+.cotizador-root .operator-chrome select {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 44px;
+  padding: 10px 12px;
+  padding-right: 36px !important;
+  background-color: #fff;
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--cb-text-2) 50%),
+    linear-gradient(135deg, var(--cb-text-2) 50%, transparent 50%);
+  background-position:
+    calc(100% - 18px) calc(50% - 2px),
+    calc(100% - 12px) calc(50% - 2px);
+  background-size: 6px 6px, 6px 6px;
+  background-repeat: no-repeat;
 }
 .cotizador-root .operator-chrome input:focus,
 .cotizador-root .operator-chrome select:focus,
@@ -1931,6 +1952,8 @@ const CSS = `
 .cotizador-root .operator-chrome .btn-secondary:hover { border-color: var(--cb-text); }
 .cotizador-root .operator-chrome .btn-wa { background: #25D366; color: #fff; border-color: #1ebe5a; text-transform: none; }
 .cotizador-root .operator-chrome .btn-wa:hover { background: #20bf5b; }
+.cotizador-root .operator-chrome.cb-vista-toolbar { gap: 12px; }
+.cotizador-root .operator-chrome .cb-vista-actions { display: flex; flex-wrap: wrap; gap: 12px; }
 
 .cotizador-root .operator-chrome .card { background: #fff; border: 1px solid var(--cb-border); border-radius: 0; box-shadow: 4px 4px 0 rgba(0,0,0,.06); }
 
@@ -1947,8 +1970,40 @@ const CSS = `
   padding: 0 20px;
 }
 .cotizador-root .cb-row { padding: 20px 0; }
+.cotizador-root .cb-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.cotizador-root .cb-title-group {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  min-width: 0;
+  flex: 1 1 420px;
+}
+.cotizador-root .cb-header-title {
+  margin: 0;
+  min-width: 0;
+  max-width: 100%;
+  line-height: 1.2;
+  overflow-wrap: break-word;
+}
+.cotizador-root .cb-folio-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+.cotizador-root .cb-folio { margin: 0; font-size: 14px; white-space: nowrap; }
+.cotizador-root .cb-save-btn { flex-shrink: 0; }
 .cotizador-root .cb-header .cb-tabs {
   display: flex;
+  min-height: 44px;
+  background: #fff;
   overflow-x: auto;
   scrollbar-width: none;
   border-top: 1px solid var(--cb-border);
@@ -1973,6 +2028,20 @@ const CSS = `
 }
 .cotizador-root .cb-header .tab.active { color: var(--cb-text); border-bottom-color: var(--cb-text); }
 .cotizador-root .cb-header .tab:hover { color: var(--cb-text-2); }
+@media (max-width: 1180px) {
+  .cotizador-root .cb-header {
+    position: static;
+    top: auto;
+  }
+}
+@media (max-width: 900px) {
+  .cotizador-root .cb-header-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .cotizador-root .cb-title-group { flex-basis: auto; }
+  .cotizador-root .cb-save-btn { align-self: flex-start; }
+}
 
 .cotizador-root .cb-main {
   margin: 0 auto;
@@ -1981,10 +2050,9 @@ const CSS = `
 .cotizador-root .operator-main { padding: 18px 20px; }
 .cotizador-root .client-section { margin-bottom: 18px; }
 .cotizador-root .operator-chrome .client-fields { padding: 12px !important; }
-.cotizador-root .operator-main .client-primary-row { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
-.cotizador-root .operator-main .client-secondary-row { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; margin-top: 10px; }
-.cotizador-root .operator-chrome .field-label { margin-bottom: 4px !important; }
-.cotizador-root .operator-chrome .field-label { font-size: 10px !important; letter-spacing: .06em; }
+.cotizador-root .operator-main .client-primary-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
+.cotizador-root .operator-main .client-secondary-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-top: 12px; }
+.cotizador-root .operator-chrome .field-label { margin-bottom: 8px !important; font-size: 12px !important; letter-spacing: .04em; line-height: 1.3; }
 
 .cotizador-root .grid-4 {
   display: grid;
@@ -2030,15 +2098,44 @@ const CSS = `
   grid-template-columns: 1fr;
   gap: 24px;
 }
-@media (min-width: 1024px) {
+@media (min-width: 1181px) {
   .cotizador-root .operator-main .grid-12 { grid-template-columns: 2fr 1fr; }
 }
 
 .cotizador-root .operator-main .col-summary { min-width: 0; }
 .cotizador-root .operator-main .col-builder { min-width: 0; }
 .cotizador-root .operator-chrome .cb-summary-sticky { position: static; top: auto; display: flex; flex-direction: column; gap: 12px; }
+.cotizador-root .operator-chrome .cb-summary-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 0;
+  font-size: 14px;
+  line-height: 1.45;
+}
+.cotizador-root .operator-chrome .cb-summary-total { font-size: 26px; line-height: 1.15; }
+.cotizador-root .operator-chrome .cb-constructor-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 24px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--cb-border);
+}
+.cotizador-root .operator-chrome .cb-constructor-heading { flex: 1 1 360px; min-width: 0; }
+.cotizador-root .operator-chrome .cb-constructor-title { line-height: 1.25; overflow-wrap: break-word; }
+.cotizador-root .operator-chrome .cb-constructor-subtitle { margin: 12px 0 0; line-height: 1.45; }
+@media (max-width: 820px) {
+  .cotizador-root .operator-chrome .cb-constructor-bar { flex-direction: column; align-items: flex-start; }
+  /* Stacked parent: the 360px horizontal basis would reserve 360px of height here. */
+  .cotizador-root .operator-chrome .cb-constructor-heading { flex: 0 1 auto; width: 100%; }
+}
 
 .cotizador-root .operator-chrome .item-row {
+  min-height: 44px;
   padding: 12px 14px;
   border-radius: 0;
   border: 1px solid transparent;
@@ -2046,9 +2143,11 @@ const CSS = `
   cursor: pointer;
   display: flex;
   margin: 0;
+  box-sizing: border-box;
 }
 .cotizador-root .operator-chrome .item-row:hover { background: var(--cb-surface-2); }
 .cotizador-root .operator-chrome .item-row.selected { background: var(--cb-surface-2); border-color: var(--cb-border); }
+.cotizador-root .operator-chrome .toggle-row { min-height: 44px; padding: 4px 0; line-height: 1.45; box-sizing: border-box; }
 
 .cotizador-root .operator-chrome .tier-card {
   background: var(--cb-surface-2);
@@ -2115,19 +2214,23 @@ const CSS = `
 .cotizador-root .operator-chrome .template-card.selected { border: 2px solid #111; }
 .cotizador-root .operator-chrome .template-card.selected::before { content: ''; height: 5px; background: #D97706; position: absolute; inset: 0 0 auto; }
 .cotizador-root .operator-chrome .template-group { margin-bottom: 18px; }
-.cotizador-root .operator-chrome .group-note { margin: 2px 0 9px; font-size: 12px; }
+.cotizador-root .operator-chrome .group-note { margin: 0 0 16px; font-size: 12px; line-height: 1.45; }
 .cotizador-root .operator-main .holiday-grid,
 .cotizador-root .operator-main .other-grid { perspective: 900px; }
-.cotizador-root .operator-main .holiday-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+.cotizador-root .operator-main .holiday-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
 .cotizador-root .operator-chrome .holiday-card { min-height: 143px; }
 .cotizador-root .operator-chrome .template-card:active { transform: translate(2px, 2px); box-shadow: 2px 2px 0 rgba(0,0,0,.06); }
-.cotizador-root .operator-chrome .template-name { display: block; font-size: 16px; line-height: 1.25; margin: 0 0 3px; }
-.cotizador-root .operator-chrome .template-price { display: block; font-size: 26px; font-weight: 700; line-height: 1.1; color: #111; font-variant-numeric: tabular-nums; margin: 0 0 8px; }
-.cotizador-root .operator-chrome .dish-list { display: flex; flex-direction: column; gap: 2px; color: #333; font-size: 11px; line-height: 1.25; }
-.cotizador-root .operator-main .other-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.cotizador-root .operator-chrome .template-name { display: block; font-size: 16px; line-height: 1.25; margin: 0 0 8px; }
+.cotizador-root .operator-chrome .template-price { display: block; font-size: 26px; font-weight: 700; line-height: 1.1; color: #111; font-variant-numeric: tabular-nums; margin: 0 0 16px; }
+.cotizador-root .operator-chrome .dish-list { display: flex; flex-direction: column; gap: 4px; color: #333; font-size: 12px; line-height: 1.45; }
+.cotizador-root .operator-main .other-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
 .cotizador-root .operator-chrome .other-card { min-height: 120px; padding: 14px; }
 .cotizador-root .operator-chrome .other-price { color: #111; font-size: 22px; font-weight: 700; margin: 2px 0 5px; }
-.cotizador-root .operator-chrome .other-description { color: #555; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; margin: 0; }
+.cotizador-root .operator-chrome .other-description { color: #555; line-height: 1.45; margin: 0; }
+@media (max-width: 1180px) {
+  .cotizador-root .operator-main .holiday-grid,
+  .cotizador-root .operator-main .other-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
 .cotizador-root .operator-chrome .ratetap-stamp { display: inline-flex; align-items: center; gap: 1px; color: #D97706; perspective: 400px; pointer-events: none; }
 .cotizador-root .operator-chrome .ratetap-star { width: 12px; height: 12px; }
 .cotizador-root .operator-chrome .ratetap-stamp.animate .ratetap-star { transform: rotateY(-90deg); animation: ratetap-star-flip .22s ease-out forwards; }
