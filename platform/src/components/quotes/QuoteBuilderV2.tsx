@@ -698,7 +698,7 @@ export default function QuoteBuilderV2({
                       setCampaignTag(e.target.value);
                       setSaved(false);
                     }}
-                    placeholder="Ej. campaign:posadas-2026"
+                    placeholder="Posadas 2026"
                     autoComplete="off"
                   />
                   <datalist id="campaign-tag-options">
@@ -2090,9 +2090,40 @@ const CSS = `
 }
 .cotizador-root .operator-main { padding: 18px 20px; }
 .cotizador-root .client-section { margin-bottom: 18px; }
-.cotizador-root .operator-chrome .client-fields { padding: 12px !important; }
-.cotizador-root .operator-main .client-primary-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
-.cotizador-root .operator-main .client-secondary-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-top: 12px; }
+.cotizador-root .operator-chrome .client-fields {
+  padding: 12px !important;
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 12px;
+}
+/* The two native rows dissolve into the shared client grid: their children
+   become grid items of .client-fields, so DOM order, accessible order and
+   the Field component contract stay exactly as they were. */
+.cotizador-root .operator-main .client-primary-row,
+.cotizador-root .operator-main .client-secondary-row { display: contents; }
+.cotizador-root .operator-main .client-primary-row .field-wrap:nth-child(1) { grid-column: span 5; }
+.cotizador-root .operator-main .client-primary-row .field-wrap:nth-child(2),
+.cotizador-root .operator-main .client-primary-row .field-wrap:nth-child(4) { grid-column: span 3; }
+.cotizador-root .operator-main .client-primary-row .field-wrap:nth-child(3) { grid-column: span 1; }
+.cotizador-root .operator-main .client-secondary-row .field-wrap:nth-child(1),
+.cotizador-root .operator-main .client-secondary-row .field-wrap:nth-child(2),
+.cotizador-root .operator-main .client-secondary-row .field-wrap:nth-child(3),
+.cotizador-root .operator-main .client-secondary-row .field-wrap:nth-child(4) { grid-column: span 2; }
+.cotizador-root .operator-main .client-secondary-row .field-wrap:nth-child(5) { grid-column: span 4; }
+/* Tablet: six shared columns, so Fecha and Hora sit side by side even though
+   they live in different native wrappers. Every visual row fills exactly. */
+@media (max-width: 900px) {
+  .cotizador-root .operator-chrome .client-fields { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+  .cotizador-root .operator-main .client-primary-row .field-wrap:nth-child(1) { grid-column: span 6; }
+  .cotizador-root .operator-main .client-primary-row .field-wrap:nth-child(2),
+  .cotizador-root .operator-main .client-primary-row .field-wrap:nth-child(4),
+  .cotizador-root .operator-main .client-secondary-row .field-wrap:nth-child(5) { grid-column: span 4; }
+  .cotizador-root .operator-main .client-primary-row .field-wrap:nth-child(3),
+  .cotizador-root .operator-main .client-secondary-row .field-wrap:nth-child(1),
+  .cotizador-root .operator-main .client-secondary-row .field-wrap:nth-child(4) { grid-column: span 2; }
+  .cotizador-root .operator-main .client-secondary-row .field-wrap:nth-child(2),
+  .cotizador-root .operator-main .client-secondary-row .field-wrap:nth-child(3) { grid-column: span 3; }
+}
 .cotizador-root .operator-chrome .field-label { margin-bottom: 8px !important; font-size: 12px !important; letter-spacing: .04em; line-height: 1.3; }
 
 .cotizador-root .grid-4 {
@@ -2534,8 +2565,16 @@ const CSS = `
   .cotizador-root .operator-chrome .btn-primary,
   .cotizador-root .operator-chrome .btn-secondary { width: auto; }
 
-  .cotizador-root .operator-main .client-primary-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .cotizador-root .operator-main .client-secondary-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .cotizador-root .operator-chrome .client-fields { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .cotizador-root .operator-main .client-primary-row .field-wrap:nth-child(1),
+  .cotizador-root .operator-main .client-secondary-row .field-wrap:nth-child(4),
+  .cotizador-root .operator-main .client-secondary-row .field-wrap:nth-child(5) { grid-column: span 2; }
+  .cotizador-root .operator-main .client-primary-row .field-wrap:nth-child(2),
+  .cotizador-root .operator-main .client-primary-row .field-wrap:nth-child(3),
+  .cotizador-root .operator-main .client-primary-row .field-wrap:nth-child(4),
+  .cotizador-root .operator-main .client-secondary-row .field-wrap:nth-child(1),
+  .cotizador-root .operator-main .client-secondary-row .field-wrap:nth-child(2),
+  .cotizador-root .operator-main .client-secondary-row .field-wrap:nth-child(3) { grid-column: span 1; }
   .cotizador-root .operator-chrome .template-card { padding: 10px; }
   .cotizador-root .operator-chrome .item-row { padding: 12px 12px; }
   .cotizador-root .operator-chrome .qty-btn { width: 44px; height: 44px; font-size: 15px; }

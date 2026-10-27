@@ -204,7 +204,7 @@ describe('quote layout in WebKit', () => {
     const page = await fixture(810, 1080);
     try {
       const dataList = await page.locator('input[list="campaign-tag-options"]').getAttribute('placeholder');
-      expect(dataList).toBe('Ej. campaign:posadas-2026');
+      expect(dataList).toBe('Posadas 2026');
       await page.locator('.cb-tabs .tab').filter({ hasText: /^Carta$/ }).click();
       expect(await page.locator('.operator-main input, .operator-main button').count()).toBe(0);
       await page.locator('.cb-tabs .tab').filter({ hasText: /^Vista cliente$/ }).click();
@@ -289,6 +289,56 @@ describe('quote layout in WebKit', () => {
         }));
         expect(title.font).toBe(16);
         expect(title.line).toBe(20);
+      } finally { await page.close(); }
+    }
+  });
+
+  it('aligns client fields on shared responsive tracks without truncating the campaign', async () => {
+    for (const [width, height] of [[1180, 820], [1080, 810], [810, 1080], [390, 844]]) {
+      const page = await fixture(width, height);
+      try {
+        const form = await page.locator('.client-fields').evaluate((el) => {
+          const box = el.getBoundingClientRect(), css = getComputedStyle(el);
+          const columns = css.gridTemplateColumns.split(' ').map(parseFloat);
+          const gap = parseFloat(css.columnGap);
+          let x = box.left + parseFloat(css.borderLeftWidth) + parseFloat(css.paddingLeft);
+          const starts = columns.map((column) => { const start = x; x += column + gap; return start; });
+          return { display: css.display, columns: columns.length, gap, rowGap: parseFloat(css.rowGap), starts };
+        });
+        expect(form.display).toBe('grid');
+        expect(form.columns).toBe(width > 900 ? 12 : width > 640 ? 6 : 2);
+        expect(form.gap).toBeGreaterThanOrEqual(12);
+        expect(form.gap).toBeLessThanOrEqual(16);
+        expect(form.rowGap).toBeGreaterThanOrEqual(12);
+        const fields = await page.locator('.client-fields .field-wrap').evaluateAll((els) => els.map((el) => {
+          const box = el.getBoundingClientRect();
+          const label = el.querySelector('label')!, input = el.querySelector('input,select')!;
+          return { label: label.textContent, x: box.x, y: box.y, width: box.width,
+            labelGap: input.getBoundingClientRect().top - label.getBoundingClientRect().bottom };
+        }));
+        expect(fields.map((f) => f.label)).toEqual(['Cliente', 'Teléfono', 'Personas', 'Fecha', 'Hora', 'Tipo', 'Presupuesto/pp', 'Prioridad', 'Campaña']);
+        expect(fields.every((f) => form.starts.some((start) => Math.abs(start - f.x) < 0.1))).toBe(true);
+        expect(fields.every((f) => Math.abs(f.labelGap - 8) < 0.1)).toBe(true);
+        expect(fields[0].width).toBeGreaterThan(fields[2].width);
+        expect(fields[0].width).toBeGreaterThan(fields[4].width);
+        expect(fields[8].width).toBeGreaterThan(fields[2].width);
+        for (let i = 1; i < fields.length; i++) {
+          expect(fields[i].y > fields[i - 1].y || (fields[i].y === fields[i - 1].y && fields[i].x > fields[i - 1].x)).toBe(true);
+        }
+        if (width === 810) expect(fields[3].y).toBe(fields[4].y);
+        const campaign = page.locator('input[list="campaign-tag-options"]');
+        expect(await campaign.getAttribute('placeholder')).toBe('Posadas 2026');
+        await campaign.fill('campaign:posadas-2026');
+        expect(await campaign.inputValue()).toBe('campaign:posadas-2026');
+        expect(await page.locator('#campaign-tag-options option').evaluateAll((els) => els.map((el) => el.getAttribute('value')))).toEqual(['campaign:posadas-2026']);
+        expect(await campaign.evaluate((el) => {
+          const input = el as HTMLInputElement, css = getComputedStyle(input);
+          const context = document.createElement('canvas').getContext('2d')!;
+          context.font = css.font;
+          const width = input.clientWidth - parseFloat(css.paddingLeft) - parseFloat(css.paddingRight);
+          return width >= Math.max(context.measureText(input.value).width, context.measureText(input.placeholder).width);
+        })).toBe(true);
+        expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(width + 1);
       } finally { await page.close(); }
     }
   });
