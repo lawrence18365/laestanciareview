@@ -37,6 +37,13 @@ export type QuoteDish = {
   // row and Vista Cliente renders the picked subset as a sub-line. Leave
   // unset for dishes without meaningful variant choices.
   variants?: string[];
+  // Not offered any more. Hidden from every picker, but still resolves
+  // through `dishById` so saved quotes that already contain it keep
+  // rendering exactly as before.
+  retired?: boolean;
+  // Calendar months (1–12, Mexico City time) when the dish is offered.
+  // Outside them it is hidden from pickers; saved quotes still resolve it.
+  season?: { months: number[] };
 };
 
 export const CATEGORIAS: QuoteCategoria[] = [
@@ -165,14 +172,26 @@ export const MENU: QuoteDish[] = [
   { id: 'g13', categoria: 'Guarniciones', nombre: 'Betabel Rostizado', precio: 60 },
   { id: 'g14', categoria: 'Guarniciones', nombre: 'Tuétano a la Parrilla', precio: 90, includedEligible: false },
 
-  // Postres
-  { id: 'po1', categoria: 'Postres', nombre: 'Cookie Skillet con Helado', precio: 140 },
-  { id: 'po2', categoria: 'Postres', nombre: 'Flan Napolitano', precio: 120 },
-  { id: 'po3', categoria: 'Postres', nombre: 'Pastel Estancia', precio: 160 },
-  { id: 'po4', categoria: 'Postres', nombre: 'Pastel de Kiwi y Plátano', precio: 160 },
-  { id: 'po5', categoria: 'Postres', nombre: 'Alfajores Argentinos', precio: 120, desc: '3 piezas' },
-  { id: 'po6', categoria: 'Postres', nombre: 'Crème Brulée', precio: 140 },
+  // Postres — official year-round dessert list from La Estancia (Oct 2026).
+  // po1 is not on the carta; kept only so saved quotes still render it.
+  { id: 'po1', categoria: 'Postres', nombre: 'Cookie Skillet con Helado', precio: 140, retired: true },
+  { id: 'po8', categoria: 'Postres', nombre: 'Banoffee', precio: 190 },
+  { id: 'po9', categoria: 'Postres', nombre: 'Cannolis de mascarpone con pistache', precio: 190 },
+  { id: 'po10', categoria: 'Postres', nombre: 'Cheesecake de Lotus', precio: 190 },
+  { id: 'po11', categoria: 'Postres', nombre: 'Crepas de Nutella', precio: 160 },
+  { id: 'po6', categoria: 'Postres', nombre: 'Crème brûlée', precio: 160 },
+  { id: 'po2', categoria: 'Postres', nombre: 'Flan Napolitano', precio: 145 },
+  { id: 'po12', categoria: 'Postres', nombre: 'Gelatina de guanábana', precio: 135 },
+  { id: 'po13', categoria: 'Postres', nombre: 'Mousse de chocolate amargo', precio: 170 },
+  // Halloween + Día de Muertos.
+  { id: 'po17', categoria: 'Postres', nombre: 'Panna cotta de naranja', precio: 190, season: { months: [10, 11] } },
+  { id: 'po14', categoria: 'Postres', nombre: 'Pasta filo con ate, queso y salsa de dulce de leche', precio: 190 },
+  { id: 'po15', categoria: 'Postres', nombre: 'Pastel de chocolate alemán', precio: 180 },
+  { id: 'po4', categoria: 'Postres', nombre: 'Pastel de plátano kiwi', precio: 170 },
+  { id: 'po3', categoria: 'Postres', nombre: 'Pastel Estancia (rebanada)', precio: 160 },
   { id: 'po7', categoria: 'Postres', nombre: 'Pastel Personalizado', precio: 20, desc: 'Mensaje a elegir, ideal para brindis · $20 por persona', perPerson: true },
+  { id: 'po5', categoria: 'Postres', nombre: 'Trilogía de alfajores', precio: 135 },
+  { id: 'po16', categoria: 'Postres', nombre: 'Vesubio de chocolate', precio: 180 },
 ];
 
 export type BeveragePackage = {
@@ -374,6 +393,8 @@ export type QuoteTemplate = {
   // Event type to preselect (e.g. 'Empresarial'). Applied only while the quote
   // still has the default type, so a type the hostess chose is never replaced.
   tipoEvento?: string;
+  // Dessert choices are fixed by the promo; the builder only offers these.
+  postresFijos?: boolean;
   config: {
     sopas?: string[];
     platos?: string[];
@@ -408,10 +429,11 @@ export const TEMPLATES: QuoteTemplate[] = [
     modo: 'individual',
     campaignTag: HOLIDAY_CAMPAIGN_TAG,
     tipoEvento: 'Empresarial',
+    postresFijos: true,
     config: {
       sopas: [],
       platos: ['pa17', 'm2', 'm4'],
-      postres: [],
+      postres: ['po8', 'po14', 'po3'],
       bebidas: 'a-la-carta',
       precioPP: 950,
       costoPP: 399,
@@ -430,10 +452,11 @@ export const TEMPLATES: QuoteTemplate[] = [
     modo: 'individual',
     campaignTag: HOLIDAY_CAMPAIGN_TAG,
     tipoEvento: 'Empresarial',
+    postresFijos: true,
     config: {
       sopas: [],
       platos: ['pa19', 'pa22', 'm1'],
-      postres: [],
+      postres: ['po8', 'po14', 'po3'],
       bebidas: 'a-la-carta',
       precioPP: 995,
       costoPP: 418,
@@ -452,10 +475,11 @@ export const TEMPLATES: QuoteTemplate[] = [
     modo: 'individual',
     campaignTag: HOLIDAY_CAMPAIGN_TAG,
     tipoEvento: 'Empresarial',
+    postresFijos: true,
     config: {
       sopas: [],
       platos: ['ev-bife-ribeteado-300', 'pa1'],
-      postres: [],
+      postres: ['po8', 'po14', 'po3'],
       bebidas: 'a-la-carta',
       precioPP: 1200,
       costoPP: 504,
@@ -474,10 +498,11 @@ export const TEMPLATES: QuoteTemplate[] = [
     modo: 'individual',
     campaignTag: HOLIDAY_CAMPAIGN_TAG,
     tipoEvento: 'Empresarial',
+    postresFijos: true,
     config: {
       sopas: [],
       platos: ['pa29', 'pa27'],
-      postres: [],
+      postres: ['po8', 'po14', 'po3'],
       bebidas: 'a-la-carta',
       precioPP: 1450,
       costoPP: 609,
@@ -501,7 +526,7 @@ export const TEMPLATES: QuoteTemplate[] = [
         { letra: 'B', precio: 1250, platos: 'New York 300g / Verduras a la Parrilla\nMedallones de Filete\nSalmón a la Parrilla / Ensalada de la Casa' },
         { letra: 'C', precio: 1400, platos: 'Rib-Eye Añejo 300g / Papa al Horno\nTapa de Rib-Eye 300g / Espárragos al Grill\nChilean Sea Bass Estilo Porteño' },
       ],
-      postres: ['po1', 'po2', 'po3', 'po4'],
+      postres: ['po2', 'po3', 'po4'],
       bebidas: 'basico',
       incluyeIVA: true,
       incluyeServicio: false,
@@ -713,6 +738,21 @@ export function emptyConfig(modo: QuoteModo = 'opciones'): QuoteConfig {
 
 export function dishById(id: string): QuoteDish | undefined {
   return MENU.find((d) => d.id === id);
+}
+
+// Whether a dish may be picked today. Retired dishes and dishes out of
+// season stay resolvable via `dishById` for saved quotes, but pickers hide
+// them (unless the quote already selected them — see the builder).
+export function isDishOffered(dish: QuoteDish, now: Date = new Date()): boolean {
+  if (dish.retired) return false;
+  if (!dish.season) return true;
+  const month = Number(
+    new Intl.DateTimeFormat('en-US', {
+      timeZone: 'America/Mexico_City',
+      month: 'numeric',
+    }).format(now),
+  );
+  return dish.season.months.includes(month);
 }
 
 export function dishName(id: string): string {

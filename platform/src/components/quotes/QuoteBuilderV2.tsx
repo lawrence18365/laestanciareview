@@ -15,6 +15,7 @@ import {
   eligibleIncludedSides,
   emptyConfig,
   fmtMXN,
+  isDishOffered,
   isParrilla,
   newExtraSectionId,
   type AddonPreset,
@@ -182,8 +183,31 @@ export default function QuoteBuilderV2({
     setSaved(false);
   }, []);
 
+  // Dishes already picked in this quote stay listed in their picker even if
+  // they stop being offered (retired, out of season), so the hostess can see
+  // and remove them.
+  const selectedDishIds = useMemo(() => {
+    const ids = new Set<string>([
+      ...config.indiv.sopas,
+      ...config.indiv.platos,
+      ...config.indiv.postres,
+      ...config.opciones.sopas,
+      ...config.opciones.postres,
+      ...Object.entries(config.asado.cantidades)
+        .filter(([, qty]) => qty > 0)
+        .map(([id]) => id),
+      ...Object.entries(config.carta.cantidades)
+        .filter(([, qty]) => qty > 0)
+        .map(([id]) => id),
+      ...Object.values(config.carta.parrillaSides),
+    ]);
+    return ids;
+  }, [config]);
+
   function menuPorCategoria(cat: QuoteCategoria) {
-    return MENU.filter((d) => d.categoria === cat);
+    return MENU.filter(
+      (d) => d.categoria === cat && (isDishOffered(d) || selectedDishIds.has(d.id)),
+    );
   }
 
   function toggleArrayItem(arr: string[], id: string): string[] {
@@ -1070,6 +1094,14 @@ function IndividualMode({
   isAdmin: boolean;
 }) {
   const { indiv } = config;
+  // Promo menus (e.g. Posadas) ship a fixed dessert trio; offer only those.
+  const plantilla = TEMPLATES.find((t) => t.id === config.templateId);
+  const postresFijos = plantilla?.postresFijos
+    ? (plantilla.config.postres ?? []).flatMap((id) => {
+        const dish = dishById(id);
+        return dish ? [dish] : [];
+      })
+    : null;
   return (
     <div className="card" style={{ padding: 24 }}>
       <h3 className="cb-heading-md" style={{ margin: 0 }}>Menú a precio único por persona</h3>
@@ -1103,7 +1135,7 @@ function IndividualMode({
 
       <Section title="3° Tiempo · Postre" hint="A elegir 1+">
         <div className="grid-2-sm">
-          {menuPorCategoria('Postres').map((dish) => (
+          {(postresFijos ?? menuPorCategoria('Postres')).map((dish) => (
             <label key={dish.id} className="item-row" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               <input type="checkbox" checked={indiv.postres.includes(dish.id)} onChange={() => patchIndiv({ postres: toggleArrayItem(indiv.postres, dish.id) })} />
               <span className="small">{dish.nombre}</span>

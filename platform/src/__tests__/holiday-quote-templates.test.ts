@@ -52,7 +52,7 @@ describe('holiday party quote templates', () => {
       expect(template.config.incluyeServicio).toBe(false);
       expect(template.config.bebidas).toBe('a-la-carta');
       expect(template.config.sopas).toEqual([]);
-      expect(template.config.postres).toEqual([]);
+      expect(template.config.postres).toEqual(['po8', 'po14', 'po3']);
 
       expect(template.config.platos).toEqual(platos);
       for (const dishId of platos) {
