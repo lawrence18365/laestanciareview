@@ -60,8 +60,11 @@ the frozen client document even when `.quote-doc` CSS has not changed.
   and 16px before dish lists. Use content height rather than a fold target.
 - Operator labels and metadata are at least 12px. Inputs, native selects, tabs
   and interactive labels have a 44px minimum target. Check computed WebKit sizes.
+- Operator headings use `cb-heading-lg/md/sm`. Never use Tailwind height utility
+  names `h-1/h-2/h-3` for operator typography; legacy document classes stay frozen.
 - Use `src/__tests__/quote-layout.test.tsx` for isolated WebKit regressions with
-  synthetic state and blocked network requests. No application server is needed.
+  compiled Tailwind CSS, local Playfair 600, synthetic state and blocked network
+  requests. Inter and Manrope use system fallbacks. No application server is needed.
 - The owning QA lead can run `node scripts/qa-quotes-layout.mjs --url <fixture>`
   against their existing synthetic fixture. It measures clipped text ranges in
   both orientations, requires both texts visible, and does not save or send.

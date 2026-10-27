@@ -600,7 +600,7 @@ export default function QuoteBuilderV2({
         <main className="cb-main operator-main operator-chrome" style={{ maxWidth: 1120 }}>
           {/* Datos del evento */}
           <div className="client-section">
-            <h2 className="h-1 section-heading">Cliente</h2>
+            <h2 className="cb-heading-lg section-heading">Cliente</h2>
             <div className="card client-fields" style={{ padding: 16 }}>
               <div className="client-primary-row">
                 <Field label="Cliente">
@@ -689,7 +689,6 @@ export default function QuoteBuilderV2({
 
           {/* Plantillas */}
           <section className="template-group holiday-group">
-            <h2 className="h-1 section-heading">Menú</h2>
             <h3 className="template-group-title">Fiestas de fin de año</h3>
             <p className="body text-2 group-note">Precio por persona, IVA incluido.</p>
             <div className="holiday-grid">
@@ -702,7 +701,7 @@ export default function QuoteBuilderV2({
                   onPointerMove={tiltTemplateCard}
                   onPointerLeave={resetTemplateCard}
                 >
-                  <h3 className="h-2 template-name">{t.nombre}</h3>
+                  <h3 className="cb-heading-md template-name">{t.nombre}</h3>
                   <span className="template-price">{fmtMXN(t.precioPP ?? 0)}</span>
                   <span className="dish-list">
                     {(t.config.platos ?? []).map((id) => {
@@ -730,7 +729,7 @@ export default function QuoteBuilderV2({
                   onPointerMove={tiltTemplateCard}
                   onPointerLeave={resetTemplateCard}
                 >
-                  <h3 className="h-2 template-name">{t.nombre}</h3>
+                  <h3 className="cb-heading-md template-name">{t.nombre}</h3>
                   <p className="other-price">{t.precioLabel}</p>
                   <p className="small other-description">{t.descripcion}</p>
                 </button>
@@ -742,7 +741,7 @@ export default function QuoteBuilderV2({
                 onPointerMove={tiltTemplateCard}
                 onPointerLeave={resetTemplateCard}
               >
-                <h3 className="h-2 template-name">Construir desde cero</h3>
+                <h3 className="cb-heading-md template-name">Construir desde cero</h3>
                 <p className="other-price">A calcular</p>
                 <p className="small other-description">Arma el menú platillo por platillo desde toda la carta.</p>
               </button>
@@ -756,7 +755,7 @@ export default function QuoteBuilderV2({
         <main className="cb-main operator-main operator-chrome" style={{ maxWidth: 1280 }}>
           <div className="cb-constructor-bar">
             <div className="cb-constructor-heading">
-              <p className="h-3 cb-constructor-title">
+              <p className="cb-heading-sm cb-constructor-title">
                 {config.evento.cliente || 'Sin cliente'} · <span className="num">{config.evento.personas}</span> pax
               </p>
               <p className="body text-2 cb-constructor-subtitle">{modoLabel}</p>
@@ -844,11 +843,11 @@ export default function QuoteBuilderV2({
                   <div style={{ paddingTop: 16, marginTop: 12, borderTop: '1px solid var(--cb-border)', display: 'flex', flexDirection: 'column', gap: 12 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
                       <span className="mini">Precio/pp</span>
-                      <span className="h-1 num">{fmtMXN(pricing.precioFinalPP)}</span>
+                      <span className="cb-heading-lg num">{fmtMXN(pricing.precioFinalPP)}</span>
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
                       <span className="mini">Total</span>
-                      <span className="h-1 num cb-summary-total">{fmtMXN(pricing.precioTotalFinal)}</span>
+                      <span className="cb-heading-lg num cb-summary-total">{fmtMXN(pricing.precioTotalFinal)}</span>
                     </div>
                   </div>
                   {isAdmin && (
@@ -876,7 +875,7 @@ export default function QuoteBuilderV2({
           </div>
           {CATEGORIAS.map((cat) => (
             <div key={cat} style={{ marginBottom: 40 }}>
-              <h2 className="h-2" style={{ marginBottom: 12, paddingBottom: 8, borderBottom: '1px solid var(--cb-border)' }}>{cat}</h2>
+              <h2 className="cb-heading-md" style={{ marginBottom: 12, paddingBottom: 8, borderBottom: '1px solid var(--cb-border)' }}>{cat}</h2>
               <div className="grid-2-menu">
                 {menuPorCategoria(cat).map((dish) => (
                   <div key={dish.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 16, padding: '10px 0', borderBottom: '1px solid var(--cb-border)' }}>
@@ -1073,7 +1072,7 @@ function IndividualMode({
   const { indiv } = config;
   return (
     <div className="card" style={{ padding: 24 }}>
-      <h3 className="h-2" style={{ margin: 0 }}>Menú a precio único por persona</h3>
+      <h3 className="cb-heading-md" style={{ margin: 0 }}>Menú a precio único por persona</h3>
       <p className="small text-2" style={{ margin: '12px 0 24px' }}>Define las opciones que el cliente podrá elegir el día del evento.</p>
 
       <Section title="1° Tiempo · Sopa o Crema" hint="A elegir 1">
@@ -1127,7 +1126,7 @@ function IndividualMode({
       </Section>
 
       <div style={{ paddingTop: 24, borderTop: '1px solid var(--cb-border)' }}>
-        <h3 className="h-3" style={{ marginBottom: 16 }}>{isAdmin ? 'Precio y costos' : 'Precio'}</h3>
+        <h3 className="cb-heading-sm" style={{ marginBottom: 16 }}>{isAdmin ? 'Precio y costos' : 'Precio'}</h3>
         <div style={{ display: 'grid', gridTemplateColumns: isAdmin ? '1fr 1fr' : '1fr', gap: 16 }}>
           <Field label="Precio por persona">
             <input type="number" value={indiv.precioPP || ''} onChange={(e) => patchIndiv({ precioPP: parseFloat(e.target.value) || 0 })} placeholder="1000" />
@@ -1169,7 +1168,7 @@ function OpcionesMode({
   const { opciones } = config;
   return (
     <div className="card" style={{ padding: 24 }}>
-      <h3 className="h-2" style={{ margin: 0 }}>Menú con 3 opciones de plato fuerte</h3>
+      <h3 className="cb-heading-md" style={{ margin: 0 }}>Menú con 3 opciones de plato fuerte</h3>
       <p className="small text-2" style={{ margin: '12px 0 24px' }}>El cliente elige A, B o C. Cada opción tiene su propio precio.</p>
 
       <Section title="1° Tiempo · Sopa o Crema" hint="A elegir 1">
@@ -1198,7 +1197,7 @@ function OpcionesMode({
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, flexWrap: 'wrap', gap: 8 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                   <span className="tier-letter">{tier.letra}</span>
-                  <span className="h-3">Opción {tier.letra}</span>
+                  <span className="cb-heading-sm">Opción {tier.letra}</span>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -1320,7 +1319,7 @@ function AsadoMode({
   const autoVentaPP = autoCostoPP * (1 + (asado.markup || 0) / 100);
   return (
     <div className="card" style={{ padding: 24 }}>
-      <h3 className="h-2" style={{ margin: 0 }}>Asado argentino al centro</h3>
+      <h3 className="cb-heading-md" style={{ margin: 0 }}>Asado argentino al centro</h3>
       <p className="small text-2" style={{ margin: '12px 0 24px' }}>Define cantidades específicas de cada platillo. Ideal para grupos donde todo se comparte.</p>
 
       {(['Entradas', 'Parrilla', 'Guarniciones'] as QuoteCategoria[]).map((cat) => (
@@ -1371,7 +1370,7 @@ function AsadoMode({
           <>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
               <label className="mini">Markup (% ganancia)</label>
-              <span className="h-3 num">{asado.markup}%</span>
+              <span className="cb-heading-sm num">{asado.markup}%</span>
             </div>
             <input type="range" min={0} max={200} step={5} value={asado.markup} onChange={(e) => patchAsado({ markup: parseInt(e.target.value) })} style={{ width: '100%' }} />
           </>
@@ -1425,7 +1424,7 @@ function CartaMode({
   const autoVentaPP = autoCostoPP * (1 + (carta.markup || 0) / 100);
   return (
     <div className="card" style={{ padding: 24 }}>
-      <h3 className="h-2" style={{ margin: 0 }}>Constructor a la carta</h3>
+      <h3 className="cb-heading-md" style={{ margin: 0 }}>Constructor a la carta</h3>
       <p className="small text-2" style={{ margin: '12px 0 24px' }}>Selecciona platillos. Ajusta cantidad por separado de cada uno.</p>
 
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 16, paddingBottom: 16, borderBottom: '1px solid var(--cb-border)' }}>
@@ -1513,7 +1512,7 @@ function CartaMode({
           <>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
               <label className="mini">Markup (% ganancia)</label>
-              <span className="h-3 num">{carta.markup}%</span>
+              <span className="cb-heading-sm num">{carta.markup}%</span>
             </div>
             <input type="range" min={0} max={200} step={5} value={carta.markup} onChange={(e) => patchCarta({ markup: parseInt(e.target.value) })} style={{ width: '100%' }} />
           </>
@@ -1541,7 +1540,7 @@ function Section({ title, hint, children }: { title: string; hint?: string; chil
   return (
     <div style={{ marginBottom: 24 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-        <label className="h-3">{title}</label>
+        <label className="cb-heading-sm">{title}</label>
         {hint && <span className="mini">{hint}</span>}
       </div>
       {children}
@@ -1613,7 +1612,7 @@ function SidePickerModal({
         <div className="side-picker-header">
           <div>
             <p className="mini" style={{ marginBottom: 4 }}>Incluida sin costo</p>
-            <h3 className="h-2" style={{ margin: 0 }}>Elige la guarnición</h3>
+            <h3 className="cb-heading-md" style={{ margin: 0 }}>Elige la guarnición</h3>
             {parrillaName && <p className="small text-2" style={{ margin: '4px 0 0' }}>Para {parrillaName}</p>}
           </div>
           <button type="button" onClick={onClose} className="side-picker-close" aria-label="Cerrar">×</button>
@@ -1660,7 +1659,7 @@ function ExtraSeccionesEditor({
   return (
     <div style={{ marginBottom: 24 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-        <label className="h-3">Secciones extra</label>
+        <label className="cb-heading-sm">Secciones extra</label>
         <span className="mini">Brindis, mesa de quesos…</span>
       </div>
       {sections.length === 0 && (
@@ -1834,6 +1833,16 @@ const CSS = `
 .cotizador-root .h-1 { font-family: 'Playfair Display', serif; font-size: 24px; font-weight: 600; letter-spacing: -0.015em; line-height: 1.2; margin: 0; }
 .cotizador-root .h-2 { font-family: 'Playfair Display', serif; font-size: 18px; font-weight: 600; line-height: 1.3; margin: 0; }
 .cotizador-root .h-3 { font-size: 14px; font-weight: 600; letter-spacing: -0.005em; margin: 0; }
+/* Operator heading classes. h-1/h-2/h-3 also match the compiled Tailwind
+   height utilities (4/8/12px) that collapsed these headings in the real
+   app. The :where() wrapper holds these declarations at specificity 0,2,0 -
+   the same as the legacy .h-* rules - so late operator exceptions
+   (.template-name, .cb-constructor-title, .cb-summary-total) keep exactly
+   the cascade priority they had before the rename. Legacy .h-1/.h-2/.h-3
+   above stay as-is for the frozen QuotePreview. */
+.cotizador-root :where(.operator-chrome) .cb-heading-lg { font-family: 'Playfair Display', serif; font-size: 24px; font-weight: 600; letter-spacing: -0.015em; line-height: 1.2; margin: 0; }
+.cotizador-root :where(.operator-chrome) .cb-heading-md { font-family: 'Playfair Display', serif; font-size: 18px; font-weight: 600; line-height: 1.3; margin: 0; }
+.cotizador-root :where(.operator-chrome) .cb-heading-sm { font-size: 14px; font-weight: 600; letter-spacing: -0.005em; margin: 0; }
 .cotizador-root .body { font-size: 14px; font-weight: 400; margin: 0; }
 .cotizador-root .small { font-size: 13px; font-weight: 400; }
 .cotizador-root .mini {
@@ -1865,9 +1874,9 @@ const CSS = `
 }
 .cotizador-root .operator-main .field-wrap { min-width: 0; }
 .cotizador-root .operator-chrome .h-display,
-.cotizador-root .operator-chrome .h-1,
-.cotizador-root .operator-chrome .h-2,
-.cotizador-root .operator-chrome .h-3 { line-height: 1.2; }
+.cotizador-root .operator-chrome .cb-heading-lg,
+.cotizador-root .operator-chrome .cb-heading-md,
+.cotizador-root .operator-chrome .cb-heading-sm { line-height: 1.2; }
 .cotizador-root .operator-chrome .body { line-height: 1.45; }
 .cotizador-root .operator-chrome .small { line-height: 1.45; }
 .cotizador-root .operator-chrome .mini { font-size: 12px; }
@@ -2457,6 +2466,7 @@ const CSS = `
   .cotizador-root .operator-main { padding: 12px 16px; }
   .cotizador-root .h-display { font-size: 26px; }
   .cotizador-root .h-1 { font-size: 22px; }
+  .cotizador-root :where(.operator-chrome) .cb-heading-lg { font-size: 22px; }
   .cotizador-root .operator-chrome .template-card { padding: 12px; }
   .cotizador-root .operator-main .holiday-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
@@ -2473,7 +2483,9 @@ const CSS = `
   .cotizador-root .cb-header .h-display,
   .cotizador-root .h-display { font-size: 22px; line-height: 1.25; padding-bottom: 2px; }
   .cotizador-root .h-1 { font-size: 19px; line-height: 1.3; padding-bottom: 2px; }
+  .cotizador-root :where(.operator-chrome) .cb-heading-lg { font-size: 19px; line-height: 1.3; padding-bottom: 2px; }
   .cotizador-root .h-2 { font-size: 16px; line-height: 1.4; padding-bottom: 2px; }
+  .cotizador-root :where(.operator-chrome) .cb-heading-md { font-size: 16px; line-height: 1.4; padding-bottom: 2px; }
   .cotizador-root .operator-main { padding: 12px 14px; }
 
   /* Prevent iOS auto-zoom on focus */

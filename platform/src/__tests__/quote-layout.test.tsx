@@ -2,11 +2,14 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import * as esbuild from 'esbuild';
+import postcss from 'postcss';
+import tailwindcss from '@tailwindcss/postcss';
 import { webkit, type Browser, type Page } from 'playwright';
 import { findVisibleTextClashes } from '../../scripts/qa-quotes-layout.mjs';
 
 // Real client components and styles, synthetic state, no HTTP server or APIs.
-// All network requests are aborted, including the brand image and remote fonts.
+// Real Tailwind is compiled by PostCSS. Playfair 600 uses a licensed local test
+// font; Inter and Manrope use explicit system fallbacks. Network is blocked.
 declare global {
   interface Window {
     __quoteLayout: { render: (surface: string, saved?: boolean, mode?: string) => void };
@@ -15,9 +18,17 @@ declare global {
 
 let browser: Browser;
 let bundle: string;
-const sharedCSS = readFileSync(path.resolve('src/app/globals.css'), 'utf8').replace(/@import[^;]+;/g, '');
+let sharedCSS: string;
+const playfair = readFileSync(path.resolve('src/__tests__/quote-playfair-display-latin.woff2')).toString('base64');
+const fixtureFonts = `@font-face { font-family: 'Playfair Display'; font-style: normal; font-weight: 600; font-display: block; src: url(data:font/woff2;base64,${playfair}) format('woff2'); }`;
 
 beforeAll(async () => {
+  const from = path.resolve('src/app/globals.css');
+  const compiled = await postcss([tailwindcss({ base: process.cwd(), optimize: false })])
+    .process(readFileSync(from, 'utf8'), { from });
+  sharedCSS = compiled.css;
+  // Preserve the real conflicting utilities, including after operator renaming.
+  for (const utility of ['h-1', 'h-2', 'h-3']) expect(sharedCSS).toContain(`.${utility} {`);
   const built = await esbuild.build({
     stdin: {
       contents: `
@@ -66,13 +77,17 @@ afterAll(async () => { await browser?.close(); });
 async function fixture(width: number, height: number, surface = 'builder', saved = false, mode = 'individual') {
   const page = await browser.newPage({ viewport: { width, height }, reducedMotion: 'reduce' });
   await page.route('**/*', (route) => route.abort());
-  await page.setContent(`<style>${sharedCSS}\nhtml,body{margin:0} nav img{width:96px}</style><div id="root"></div>`);
+  await page.setContent(`<style>${sharedCSS}\n${fixtureFonts}\nhtml,body{margin:0} nav img{width:96px}</style><div id="root"></div>`);
   const errors: string[] = [];
   page.on('pageerror', (error) => errors.push(error.message));
   await page.addScriptTag({ content: bundle });
   if (errors.length) throw new Error(errors.join('\n'));
   await page.evaluate(([view, existing, kind]) => window.__quoteLayout.render(String(view), Boolean(existing), String(kind)), [surface, saved, mode]);
   await page.locator(surface === 'list' ? '.ql-root' : '.cb-header').waitFor();
+  expect(await page.evaluate(async () => {
+    await document.fonts.ready;
+    return document.fonts.check('600 24px "Playfair Display"');
+  })).toBe(true);
   return page;
 }
 
@@ -170,6 +185,7 @@ describe('quote layout in WebKit', () => {
     for (const mode of ['individual', 'opciones', 'asado', 'carta']) {
       const page = await fixture(820, 1080, 'builder', true, mode);
       try {
+        expect(await page.locator('.operator-chrome :is(.h-1,.h-2,.h-3)').count()).toBe(0);
         const subtitle = await rect(page, '.cb-constructor-subtitle');
         const change = await rect(page, '.cb-constructor-bar button');
         expect(change.y - subtitle.bottom).toBeGreaterThanOrEqual(16);
@@ -216,6 +232,65 @@ describe('quote layout in WebKit', () => {
       expect(await page.locator('.ql-campaign-chip').evaluate((el) => getComputedStyle(el).borderRadius)).toBe('0px');
       expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(811);
     } finally { await page.close(); }
+  });
+
+  for (const [width, height] of [[1080, 810], [810, 1080]]) {
+    it(`reserves heading line boxes with compiled Tailwind and Playfair at ${width}x${height}`, async () => {
+      const page = await fixture(width, height);
+      try {
+        const cliente = page.locator('.client-section > .section-heading');
+        const metrics = await cliente.evaluate((el) => {
+          const box = el.getBoundingClientRect();
+          const css = getComputedStyle(el);
+          const range = document.createRange();
+          range.selectNodeContents(el);
+          return { height: box.height, line: parseFloat(css.lineHeight), glyph: range.getBoundingClientRect().height };
+        });
+        expect(metrics.height).toBeGreaterThanOrEqual(metrics.line - 0.1);
+        expect(metrics.glyph).toBeGreaterThan(24);
+        const clientBox = await rect(page, '.client-section > .section-heading');
+        const panel = await rect(page, '.client-fields');
+        expect(panel.y - clientBox.bottom).toBeGreaterThanOrEqual(12);
+        const titles = await page.locator('.holiday-card .template-name').evaluateAll((els) => els.map((el) => ({
+          height: el.getBoundingClientRect().height, line: parseFloat(getComputedStyle(el).lineHeight),
+          gap: el.nextElementSibling!.getBoundingClientRect().top - el.getBoundingClientRect().bottom,
+        })));
+        expect(titles).toHaveLength(4);
+        expect(titles.every((t) => t.height >= t.line - 0.1 && t.gap >= 8)).toBe(true);
+        expect(await page.locator('.holiday-group > .section-heading').count()).toBe(0);
+        for (const tab of ['Plantillas', 'Constructor', 'Carta']) {
+          await page.locator('.cb-tabs .tab').filter({ hasText: new RegExp(`^${tab}$`) }).click();
+          expect(await page.locator('.operator-chrome :is(.h-1,.h-2,.h-3)').count()).toBe(0);
+        }
+        await page.locator('.cb-tabs .tab').filter({ hasText: /^Plantillas$/ }).click();
+        for (const selector of ['.client-section', '.holiday-group']) {
+          await page.locator(selector).scrollIntoViewIfNeeded();
+          expect(await findVisibleTextClashes(page, selector)).toEqual([]);
+        }
+        await page.locator('.cb-tabs .tab').filter({ hasText: /^Vista cliente$/ }).click();
+        expect(await page.locator('.quote-doc .h-1').count()).toBeGreaterThan(0);
+        expect(await page.locator('.quote-doc .h-3').count()).toBeGreaterThan(0);
+      } finally { await page.close(); }
+    });
+  }
+
+  it('preserves summary and template typography exceptions across responsive sizes', async () => {
+    for (const width of [390, 810, 1080]) {
+      const page = await fixture(width, 1080, 'builder', true);
+      try {
+        const total = await page.locator('.cb-summary-total').evaluate((el) => ({
+          font: parseFloat(getComputedStyle(el).fontSize), line: parseFloat(getComputedStyle(el).lineHeight),
+        }));
+        expect(total.font).toBe(26);
+        expect(total.line / total.font).toBeCloseTo(1.15, 2);
+        await page.locator('.cb-tabs .tab').filter({ hasText: /^Plantillas$/ }).click();
+        const title = await page.locator('.template-name').first().evaluate((el) => ({
+          font: parseFloat(getComputedStyle(el).fontSize), line: parseFloat(getComputedStyle(el).lineHeight),
+        }));
+        expect(title.font).toBe(16);
+        expect(title.line).toBe(20);
+      } finally { await page.close(); }
+    }
   });
 
   it('audits both visible clipped text ranges and ignores opaque sticky occlusion', async () => {
