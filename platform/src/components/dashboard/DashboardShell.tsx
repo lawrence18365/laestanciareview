@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useCallback } from 'react';
+import { usePathname } from 'next/navigation';
 import DashboardNav from './DashboardNav';
 import OnboardingWizard from './OnboardingWizard';
 import FeatureAnnouncementBanner from './FeatureAnnouncementBanner';
@@ -41,6 +42,8 @@ export default function DashboardShell({
   children: React.ReactNode;
 }) {
   const [guideOpen, setGuideOpen] = useState(false);
+  const pathname = usePathname();
+  const quoteFocus = pathname.startsWith('/quotes');
 
   const openGuide = useCallback(() => setGuideOpen(true), []);
   const closeGuide = useCallback(() => setGuideOpen(false), []);
@@ -60,8 +63,8 @@ export default function DashboardShell({
         onOpenGuide={openGuide}
       />
       <UpgradeBanner upgrade={upgrade} />
-      <FeatureAnnouncementBanner slug={slug} />
-      <PushNotificationBanner accountKey={slug} />
+      {!quoteFocus && <FeatureAnnouncementBanner slug={slug} />}
+      {!quoteFocus && <PushNotificationBanner accountKey={slug} />}
       <ProductAnalytics slug={slug} role={role} />
       <main>{children}</main>
       <OnboardingWizard

@@ -110,7 +110,9 @@ export default function DashboardNav({
         alignItems: 'center',
         justifyContent: 'space-between',
         padding: '0 1.25rem',
-        height: 56,
+        paddingTop: 'var(--safe-top)',
+        height: 'var(--app-nav-h)',
+        boxSizing: 'border-box',
         background: 'var(--panel-bg)',
         borderBottom: '2px solid var(--border-dark)',
         position: 'sticky',
@@ -122,6 +124,8 @@ export default function DashboardNav({
           href={isOwner ? '/overview' : '/dashboard'}
           style={{
             display: 'flex',
+            minWidth: 200,
+            flexShrink: 0,
             alignItems: 'center',
             gap: '0.75rem',
             textDecoration: 'none',
@@ -131,7 +135,7 @@ export default function DashboardNav({
           <img
             src="/logos/ratetap_logo_transparent_background.png"
             alt="RateTap"
-            style={{ height: 56, objectFit: 'contain', flexShrink: 0 }}
+            style={{ height: 44, objectFit: 'contain', flexShrink: 0 }}
           />
           <p style={{
             margin: 0,
@@ -140,13 +144,17 @@ export default function DashboardNav({
             color: 'var(--text-dim)',
             letterSpacing: '0.08em',
             textTransform: 'uppercase',
+            whiteSpace: 'nowrap',
+            maxWidth: 'clamp(72px, 13vw, 150px)',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
           }}>
             {restaurantName}
           </p>
         </a>
 
         {/* Center: Desktop nav links */}
-        <div className="nav-links" style={{ alignItems: 'center' }}>
+        <div className="nav-links" style={{ alignItems: 'center', minWidth: 0, flex: '1 1 auto', overflowX: 'auto', overflowY: 'hidden', scrollbarWidth: 'none' }}>
           {navLinks.map((link) => {
             const active = pathname === link.href;
             const badgeCount = 'badge' in link && link.badge ? (newFeedbackCount ?? 0) : 0;
@@ -155,7 +163,8 @@ export default function DashboardNav({
                 key={link.href}
                 href={link.href}
                 style={{
-                  padding: '0.35rem 0.875rem',
+                  padding: '0.35rem 0.75rem',
+                  minHeight: 44,
                   fontSize: '0.7rem',
                   fontWeight: active ? 700 : 500,
                   color: active ? 'var(--panel-bg)' : 'var(--text-muted)',
@@ -165,6 +174,8 @@ export default function DashboardNav({
                   position: 'relative',
                   letterSpacing: '0.06em',
                   textTransform: 'uppercase',
+                  whiteSpace: 'nowrap',
+                  flexShrink: 0,
                 }}
               >
                 {link.label}
@@ -194,13 +205,14 @@ export default function DashboardNav({
         </div>
 
         {/* Right: Guide + Sign out */}
-        <div className="nav-links" style={{ alignItems: 'center', gap: '0.5rem' }}>
+        <div className="nav-links" style={{ alignItems: 'center', gap: '0.5rem', flexShrink: 0, whiteSpace: 'nowrap' }}>
           {onOpenGuide && (
             <button
               onClick={onOpenGuide}
               style={{
                 fontSize: '0.65rem',
                 padding: '0.3rem 0.75rem',
+                minHeight: 44,
                 fontWeight: 600,
                 letterSpacing: '0.06em',
                 textTransform: 'uppercase',
@@ -230,6 +242,7 @@ export default function DashboardNav({
             style={{
               fontSize: '0.65rem',
               padding: '0.3rem 0.75rem',
+              minHeight: 44,
               fontWeight: 600,
               letterSpacing: '0.06em',
               textTransform: 'uppercase',

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useCallback, useRef } from 'react';
+import { useState, useMemo, useCallback, useRef, type PointerEvent as ReactPointerEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   ADDON_PRESETS,
@@ -14,7 +14,6 @@ import {
   dishById,
   eligibleIncludedSides,
   emptyConfig,
-  extraSectionsPP,
   fmtMXN,
   isParrilla,
   newExtraSectionId,
@@ -83,6 +82,7 @@ export default function QuoteBuilderV2({
   const [categoriaActiva, setCategoriaActiva] = useState<QuoteCategoria>('Parrilla');
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [stampRun, setStampRun] = useState(0);
   const [error, setError] = useState('');
   const [copied, setCopied] = useState(false);
   const [sidePicker, setSidePicker] = useState<{
@@ -194,12 +194,32 @@ export default function QuoteBuilderV2({
     if (templateId === 'carta-libre') {
       setConfig((c) => ({ ...c, modo: 'carta', templateId: 'carta-libre' }));
       setTab('constructor');
+      setStampRun((n) => n + 1);
       return;
     }
     const t = TEMPLATES.find((x) => x.id === templateId);
     if (!t) return;
     applyTemplate(t);
     setTab('constructor');
+  }
+
+  function tiltTemplateCard(event: ReactPointerEvent<HTMLButtonElement>) {
+    const finePointer = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (!finePointer || reducedMotion) return;
+
+    const rect = event.currentTarget.getBoundingClientRect();
+    const x = (event.clientX - rect.left) / rect.width - 0.5;
+    const y = (event.clientY - rect.top) / rect.height - 0.5;
+    const tiltX = Math.max(-3, Math.min(3, y * -6));
+    const tiltY = Math.max(-3, Math.min(3, x * 6));
+    event.currentTarget.style.setProperty('--tilt-x', `${tiltX}deg`);
+    event.currentTarget.style.setProperty('--tilt-y', `${tiltY}deg`);
+  }
+
+  function resetTemplateCard(event: ReactPointerEvent<HTMLButtonElement>) {
+    event.currentTarget.style.setProperty('--tilt-x', '0deg');
+    event.currentTarget.style.setProperty('--tilt-y', '0deg');
   }
 
   function applyTemplate(t: QuoteTemplate) {
@@ -257,6 +277,7 @@ export default function QuoteBuilderV2({
       return next;
     });
     setSaved(false);
+    setStampRun((n) => n + 1);
   }
 
   function setAsadoCantidad(id: string, qty: number) {
@@ -391,6 +412,7 @@ export default function QuoteBuilderV2({
         });
         if (!res.ok) throw new Error('Error al guardar');
         setSaved(true);
+        setStampRun((n) => n + 1);
       } else {
         const res = await fetch('/api/quotes', {
           method: 'POST',
@@ -399,6 +421,7 @@ export default function QuoteBuilderV2({
         });
         if (!res.ok) throw new Error('Error al guardar');
         const data = await res.json();
+        setStampRun((n) => n + 1);
         router.replace(`/quotes/${data.id}`);
       }
     } catch (e) {
@@ -514,18 +537,29 @@ export default function QuoteBuilderV2({
       <style>{CSS}</style>
 
       {/* Breadcrumb / title row */}
-      <header className="cb-header">
+      <header className="cb-header operator-chrome">
         <div className="cb-header-inner">
           <div className="cb-row" style={{ paddingTop: 20, paddingBottom: 20 }}>
-            <p className="mini" style={{ marginBottom: 4 }}>
-              {quoteId ? 'Editar cotización' : 'Nueva cotización'} · {restaurantName}
-            </p>
             <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
               <h1 className="h-display">
                 {config.evento.cliente || 'Cotización sin cliente'}
               </h1>
               <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                 <p className="text-2 num" style={{ fontSize: 14 }}>{folio}</p>
+                <span key={stampRun} className={`ratetap-stamp${stampRun ? ' animate' : ''}`} aria-hidden="true">
+                  {Array.from({ length: 5 }, (_, i) => (
+                    <svg
+                      key={i}
+                      width={12}
+                      height={12}
+                      viewBox="0 0 24 24"
+                      className="ratetap-star"
+                      style={{ animationDelay: `${i * 40}ms` }}
+                    >
+                      <path d="m12 2 2.9 6 6.6.9-4.8 4.7 1.1 6.6-5.8-3.1-5.8 3.1 1.1-6.6-4.8-4.7 6.6-.9z" fill="currentColor" />
+                    </svg>
+                  ))}
+                </span>
                 <button
                   onClick={save}
                   disabled={saving}
@@ -553,7 +587,7 @@ export default function QuoteBuilderV2({
 
       {error && (
         <div style={{ maxWidth: 1120, margin: '16px auto 0', padding: '0 20px' }}>
-          <div style={{ background: '#FEE2E2', border: '1px solid #DC2626', color: '#991B1B', padding: 12, borderRadius: 6, fontSize: 13 }}>
+          <div style={{ background: '#FEE2E2', border: '1px solid #DC2626', color: '#991B1B', padding: 12, borderRadius: 0, fontSize: 13 }}>
             {error}
           </div>
         </div>
@@ -561,38 +595,19 @@ export default function QuoteBuilderV2({
 
       {/* TAB: Plantillas */}
       {tab === 'plantillas' && (
-        <main className="cb-main" style={{ maxWidth: 1120 }}>
+        <main className="cb-main operator-main operator-chrome" style={{ maxWidth: 1120 }}>
           {/* Datos del evento */}
-          <div style={{ marginBottom: 40 }}>
-            <p className="mini" style={{ marginBottom: 6 }}>Paso 01 · Cliente y logística</p>
-            <h2 className="h-1" style={{ marginBottom: 20 }}>¿Para quién es la cotización?</h2>
-            <div className="card" style={{ padding: 24 }}>
-              <div className="grid-4">
+          <div className="client-section">
+            <h2 className="h-1 section-heading">Cliente</h2>
+            <div className="card client-fields" style={{ padding: 16 }}>
+              <div className="client-primary-row">
                 <Field label="Cliente">
                   <input type="text" value={config.evento.cliente} onChange={(e) => patchEvento({ cliente: e.target.value })} placeholder="Nombre" />
                 </Field>
                 <Field label="Teléfono">
                   <input type="tel" value={config.evento.telefono} onChange={(e) => patchEvento({ telefono: e.target.value })} placeholder="33 1234 5678" />
                 </Field>
-                <Field label="Fecha">
-                  <input type="date" value={config.evento.fecha} onChange={(e) => patchEvento({ fecha: e.target.value })} />
-                </Field>
-                <Field label="Hora">
-                  <input type="text" value={config.evento.hora} onChange={(e) => patchEvento({ hora: e.target.value })} placeholder="14:00 hrs" />
-                </Field>
-                <Field label="Tipo">
-                  <select value={config.evento.tipo} onChange={(e) => patchEvento({ tipo: e.target.value })}>
-                    {['Boda', 'Empresarial', 'Cumpleaños', 'Reunión amigos', 'Cena privada', 'Brindis', 'Otro'].map((t) => (
-                      <option key={t}>{t}</option>
-                    ))}
-                  </select>
-                </Field>
                 <Field label="Personas">
-                  {/* type=text + inputMode=numeric forces the iOS numpad without
-                      the up/down spinner that traps the cursor when min is set.
-                      Empty input is stored as 0 (treated as "unset") so the
-                      hostess can clear and retype; pricing math already guards
-                      with Math.max(1, personas) downstream. */}
                   <input
                     type="text"
                     inputMode="numeric"
@@ -607,6 +622,21 @@ export default function QuoteBuilderV2({
                     autoCorrect="off"
                     spellCheck={false}
                   />
+                </Field>
+                <Field label="Fecha">
+                  <input type="date" value={config.evento.fecha} onChange={(e) => patchEvento({ fecha: e.target.value })} />
+                </Field>
+              </div>
+              <div className="client-secondary-row">
+                <Field label="Hora">
+                  <input type="text" value={config.evento.hora} onChange={(e) => patchEvento({ hora: e.target.value })} placeholder="14:00 hrs" />
+                </Field>
+                <Field label="Tipo">
+                  <select value={config.evento.tipo} onChange={(e) => patchEvento({ tipo: e.target.value })}>
+                    {['Boda', 'Empresarial', 'Cumpleaños', 'Reunión amigos', 'Cena privada', 'Brindis', 'Otro'].map((t) => (
+                      <option key={t}>{t}</option>
+                    ))}
+                  </select>
                 </Field>
                 <Field label="Presupuesto/pp">
                   <input
@@ -656,58 +686,78 @@ export default function QuoteBuilderV2({
           </div>
 
           {/* Plantillas */}
-          <div style={{ marginBottom: 24 }}>
-            <p className="mini" style={{ marginBottom: 6 }}>Paso 02 · Plantilla</p>
-            <h2 className="h-1" style={{ marginBottom: 12 }}>Elige un formato de cotización</h2>
-            <p className="body text-2" style={{ maxWidth: 560 }}>Basadas en los menús que ya tienes armados. Después puedes ajustar todo.</p>
-          </div>
-
-          <div className="grid-2">
-            {TEMPLATES.map((t, idx) => (
-              <div key={t.id} className="template-card" onClick={() => cargarPlantilla(t.id)}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 20 }}>
-                  <span className="num text-2" style={{ fontSize: 12, fontWeight: 600 }}>{String(idx + 1).padStart(2, '0')}</span>
-                  <p className="mini">{t.precioLabel}</p>
-                </div>
-                <h3 className="h-2" style={{ marginBottom: 8 }}>{t.nombre}</h3>
-                <p className="small text-2" style={{ marginBottom: 16 }}>{t.subtitulo}</p>
-                <p className="small text-2" style={{ marginBottom: 20, flex: 1, lineHeight: 1.6 }}>{t.descripcion}</p>
-                <div style={{ paddingTop: 16, borderTop: '1px solid var(--cb-border)' }}>
-                  <p className="mini" style={{ marginBottom: 4 }}>Ideal para</p>
-                  <p className="small">{t.idealPara}</p>
-                </div>
-                <button className="btn btn-primary" style={{ marginTop: 20, width: '100%' }}>Usar esta plantilla</button>
-              </div>
-            ))}
-
-            {/* A la carta card */}
-            <div className="template-card" onClick={() => cargarPlantilla('carta-libre')}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 20 }}>
-                <span className="num text-2" style={{ fontSize: 12, fontWeight: 600 }}>05</span>
-                <p className="mini">A calcular</p>
-              </div>
-              <h3 className="h-2" style={{ marginBottom: 8 }}>Construir desde cero</h3>
-              <p className="small text-2" style={{ marginBottom: 16 }}>A la carta</p>
-              <p className="small text-2" style={{ marginBottom: 20, flex: 1, lineHeight: 1.6 }}>Arma el menú platillo por platillo desde toda la carta. Ideal cuando el cliente sabe exactamente qué quiere o tiene restricciones específicas.</p>
-              <div style={{ paddingTop: 16, borderTop: '1px solid var(--cb-border)' }}>
-                <p className="mini" style={{ marginBottom: 4 }}>Ideal para</p>
-                <p className="small">Cenas a medida, dietas especiales, pedidos muy específicos</p>
-              </div>
-              <button className="btn btn-secondary" style={{ marginTop: 20, width: '100%' }}>Construir</button>
+          <section className="template-group holiday-group">
+            <h2 className="h-1 section-heading">Menú</h2>
+            <h3 className="template-group-title">Fiestas de fin de año</h3>
+            <p className="body text-2 group-note">Precio por persona, IVA incluido.</p>
+            <div className="holiday-grid">
+              {TEMPLATES.filter((t) => t.campaignTag).map((t) => (
+                <button
+                  key={t.id}
+                  type="button"
+                  className={`template-card holiday-card${config.templateId === t.id ? ' selected' : ''}`}
+                  onClick={() => cargarPlantilla(t.id)}
+                  onPointerMove={tiltTemplateCard}
+                  onPointerLeave={resetTemplateCard}
+                >
+                  <h3 className="h-2 template-name">{t.nombre}</h3>
+                  <span className="template-price">{fmtMXN(t.precioPP ?? 0)}</span>
+                  <span className="dish-list">
+                    {(t.config.platos ?? []).map((id) => {
+                      const dish = dishById(id);
+                      return dish ? (
+                        <span key={id}>
+                          {dish.nombre}{dish.peso ? ` · ${dish.peso}` : ''}
+                        </span>
+                      ) : null;
+                    })}
+                  </span>
+                </button>
+              ))}
             </div>
-          </div>
+          </section>
+          <section className="template-group other-group">
+            <h3 className="template-group-title">Otros formatos</h3>
+            <div className="other-grid">
+              {TEMPLATES.filter((t) => !t.campaignTag).map((t) => (
+                <button
+                  key={t.id}
+                  type="button"
+                  className={`template-card other-card${config.templateId === t.id ? ' selected' : ''}`}
+                  onClick={() => cargarPlantilla(t.id)}
+                  onPointerMove={tiltTemplateCard}
+                  onPointerLeave={resetTemplateCard}
+                >
+                  <h3 className="h-2 template-name">{t.nombre}</h3>
+                  <p className="other-price">{t.precioLabel}</p>
+                  <p className="small other-description">{t.descripcion}</p>
+                </button>
+              ))}
+              <button
+                type="button"
+                className={`template-card other-card${config.templateId === 'carta-libre' ? ' selected' : ''}`}
+                onClick={() => cargarPlantilla('carta-libre')}
+                onPointerMove={tiltTemplateCard}
+                onPointerLeave={resetTemplateCard}
+              >
+                <h3 className="h-2 template-name">Construir desde cero</h3>
+                <p className="other-price">A calcular</p>
+                <p className="small other-description">Arma el menú platillo por platillo desde toda la carta.</p>
+              </button>
+            </div>
+          </section>
         </main>
       )}
 
       {/* TAB: Constructor */}
       {tab === 'constructor' && (
-        <main className="cb-main" style={{ maxWidth: 1280 }}>
+        <main className="cb-main operator-main operator-chrome" style={{ maxWidth: 1280 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24, paddingBottom: 20, borderBottom: '1px solid var(--cb-border)' }}>
             <div>
-              <p className="mini" style={{ marginBottom: 4 }}>{modoLabel}</p>
               <p className="h-3">
                 {config.evento.cliente || 'Sin cliente'} · <span className="num">{config.evento.personas}</span> pax
               </p>
+              <p className="body text-2" style={{ marginTop: 4 }}>{modoLabel}</p>
             </div>
             <button onClick={() => setTab('plantillas')} className="btn btn-secondary">← Cambiar plantilla</button>
           </div>
@@ -800,7 +850,7 @@ export default function QuoteBuilderV2({
                     </div>
                   </div>
                   {isAdmin && (
-                    <div style={{ marginTop: 16, padding: 16, borderRadius: 6, background: 'var(--cb-surface-2)' }}>
+                    <div style={{ marginTop: 16, padding: 16, borderRadius: 0, background: 'var(--cb-surface-2)' }}>
                       <p className="mini" style={{ marginBottom: 8 }}>Ganancia interna</p>
                       <SummaryRow label="Margen bruto" value={fmtMXN(pricing.gananciaBruta)} strong />
                       <SummaryRow label="% Margen" value={`${pricing.margenPct}%`} strong />
@@ -818,9 +868,8 @@ export default function QuoteBuilderV2({
 
       {/* TAB: Carta completa */}
       {tab === 'carta' && (
-        <main className="cb-main" style={{ maxWidth: 960 }}>
+        <main className="cb-main operator-main operator-chrome" style={{ maxWidth: 960 }}>
           <div style={{ textAlign: 'center', marginBottom: 40 }}>
-            <p className="mini" style={{ marginBottom: 6 }}>Referencia</p>
             <h1 className="h-display">La Carta</h1>
           </div>
           {CATEGORIAS.map((cat) => (
@@ -848,7 +897,7 @@ export default function QuoteBuilderV2({
       {/* TAB: Vista cliente */}
       {tab === 'preview' && (
         <main className="cb-main" style={{ maxWidth: 780 }}>
-          <div className="no-print" style={{ marginBottom: 20, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+          <div className="no-print operator-chrome" style={{ marginBottom: 20, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
             <button onClick={() => setTab('constructor')} className="btn btn-secondary">← Editar</button>
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
               <button
@@ -884,12 +933,14 @@ export default function QuoteBuilderV2({
       )}
 
       {sidePicker && (
-        <SidePickerModal
-          parrillaName={dishById(sidePicker.parrillaId)?.nombre ?? ''}
-          currentSideId={config.carta.parrillaSides[sidePicker.parrillaId]}
-          onPick={pickParrillaSide}
-          onClose={() => setSidePicker(null)}
-        />
+        <div className="operator-chrome">
+          <SidePickerModal
+            parrillaName={dishById(sidePicker.parrillaId)?.nombre ?? ''}
+            currentSideId={config.carta.parrillaSides[sidePicker.parrillaId]}
+            onPick={pickParrillaSide}
+            onClose={() => setSidePicker(null)}
+          />
+        </div>
       )}
     </div>
   );
@@ -899,8 +950,8 @@ export default function QuoteBuilderV2({
 
 function Field({ label, children }: { label: React.ReactNode; children: React.ReactNode }) {
   return (
-    <div>
-      <label className="mini" style={{ display: 'block', marginBottom: 8 }}>{label}</label>
+    <div className="field-wrap">
+      <label className="mini field-label" style={{ display: 'block', marginBottom: 8 }}>{label}</label>
       {children}
     </div>
   );
@@ -926,7 +977,7 @@ function CostoInternoLabel() {
           justifyContent: 'center',
           width: 14,
           height: 14,
-          borderRadius: '50%',
+          borderRadius: 0,
           border: '1px solid var(--cb-border-strong)',
           color: 'var(--cb-text-2)',
           fontSize: 9,
@@ -1384,7 +1435,8 @@ function CartaMode({
               padding: '6px 12px',
               fontSize: 12,
               fontWeight: 500,
-              borderRadius: 6,
+              borderRadius: 0,
+              minHeight: 44,
               border: '1px solid var(--cb-border)',
               cursor: 'pointer',
               background: categoriaActiva === cat ? 'var(--cb-text)' : '#fff',
@@ -1766,13 +1818,13 @@ const CSS = `
   --cb-text: #0A0A0A;
   --cb-text-2: #525252;
   --cb-text-3: #A3A3A3;
-  background: var(--cb-bg);
+  background: #F9F9F8;
   color: var(--cb-text);
   font-family: 'Manrope', system-ui, sans-serif;
   letter-spacing: -0.011em;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
-  min-height: calc(100vh - 56px);
+  min-height: calc(100vh - var(--app-nav-h));
 }
 .cotizador-root .serif { font-family: 'Playfair Display', Georgia, serif; }
 .cotizador-root .num { font-feature-settings: 'tnum'; font-variant-numeric: tabular-nums; }
@@ -1792,17 +1844,42 @@ const CSS = `
 }
 .cotizador-root .text-2 { color: var(--cb-text-2); }
 .cotizador-root .text-3 { color: var(--cb-text-3); }
+.cotizador-root .operator-chrome {
+  --cb-bg: #F9F9F8;
+  --cb-surface: #FFFFFF;
+  --cb-surface-2: #F9F9F8;
+  --cb-border: #111111;
+  --cb-border-strong: #111111;
+  --cb-text: #111111;
+  --cb-text-2: #666666;
+  --cb-text-3: #666666;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  color: var(--cb-text);
+  letter-spacing: 0;
+}
+.cotizador-root .operator-main {
+  background: var(--cb-bg);
+  color: var(--cb-text);
+}
+.cotizador-root .operator-main .field-wrap { min-width: 0; }
+.cotizador-root .operator-chrome .h-display,
+.cotizador-root .operator-chrome .h-1,
+.cotizador-root .operator-chrome .h-2,
+.cotizador-root .operator-chrome .h-3 { line-height: 1.2; }
+.cotizador-root .operator-chrome .section-heading { margin: 0 0 10px; }
+.cotizador-root .operator-chrome .template-group-title { margin: 0; font: 600 17px/1.25 'Inter', sans-serif; }
 
-.cotizador-root input[type="text"],
-.cotizador-root input[type="number"],
-.cotizador-root input[type="date"],
-.cotizador-root input[type="email"],
-.cotizador-root input[type="tel"],
-.cotizador-root select,
-.cotizador-root textarea {
+.cotizador-root .operator-chrome input[type="text"],
+.cotizador-root .operator-chrome input[type="number"],
+.cotizador-root .operator-chrome input[type="date"],
+.cotizador-root .operator-chrome input[type="email"],
+.cotizador-root .operator-chrome input[type="tel"],
+.cotizador-root .operator-chrome select,
+.cotizador-root .operator-chrome textarea {
   background: #fff;
   border: 1px solid var(--cb-border);
-  border-radius: 6px;
+  border-radius: 0;
+  min-height: 44px;
   padding: 10px 12px;
   font-family: inherit;
   font-size: 14px;
@@ -1811,49 +1888,57 @@ const CSS = `
   transition: border-color 0.15s ease;
   box-sizing: border-box;
 }
-.cotizador-root input:focus,
-.cotizador-root select:focus,
-.cotizador-root textarea:focus {
+.cotizador-root .operator-chrome input:focus,
+.cotizador-root .operator-chrome select:focus,
+.cotizador-root .operator-chrome textarea:focus {
   outline: none;
   border-color: var(--cb-text);
 }
-.cotizador-root input[type="checkbox"],
-.cotizador-root input[type="radio"] { accent-color: var(--cb-text); width: 16px; height: 16px; }
-.cotizador-root input[type="range"] { accent-color: var(--cb-text); }
+.cotizador-root .operator-chrome input:focus-visible,
+.cotizador-root .operator-chrome select:focus-visible,
+.cotizador-root .operator-chrome textarea:focus-visible {
+  outline: 2px solid var(--cb-text);
+  outline-offset: 2px;
+}
+.cotizador-root .operator-chrome input[type="checkbox"],
+.cotizador-root .operator-chrome input[type="radio"] { accent-color: var(--cb-text); width: 16px; height: 16px; }
+.cotizador-root .operator-chrome input[type="range"] { accent-color: var(--cb-text); }
 
-.cotizador-root .btn {
+.cotizador-root .operator-chrome .btn {
   font-family: inherit;
   font-size: 13px;
   font-weight: 500;
   padding: 10px 18px;
-  border-radius: 6px;
+  border-radius: 0;
   transition: all 0.15s ease;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 6px;
   cursor: pointer;
-  line-height: 1;
-  border: 1px solid transparent;
+  line-height: 1.2;
+  min-height: 44px;
+  min-width: 44px;
+  border: 1px solid var(--cb-text);
   letter-spacing: 0.01em;
   text-transform: uppercase;
   white-space: nowrap;
 }
-.cotizador-root .btn:disabled { opacity: 0.6; cursor: wait; }
-.cotizador-root .btn-primary { background: var(--cb-text); color: #fff; border-color: var(--cb-text); }
-.cotizador-root .btn-primary:hover { background: #1f1f1f; }
-.cotizador-root .btn-secondary { background: #fff; color: var(--cb-text); border-color: var(--cb-border-strong); }
-.cotizador-root .btn-secondary:hover { border-color: var(--cb-text); }
-.cotizador-root .btn-wa { background: #25D366; color: #fff; border-color: #1ebe5a; text-transform: none; }
-.cotizador-root .btn-wa:hover { background: #20bf5b; }
+.cotizador-root .operator-chrome .btn:disabled { opacity: 0.6; cursor: wait; }
+.cotizador-root .operator-chrome .btn-primary { background: var(--cb-text); color: #fff; border-color: var(--cb-text); }
+.cotizador-root .operator-chrome .btn-primary:hover { background: #1f1f1f; }
+.cotizador-root .operator-chrome .btn-secondary { background: #fff; color: var(--cb-text); border-color: var(--cb-border-strong); }
+.cotizador-root .operator-chrome .btn-secondary:hover { border-color: var(--cb-text); }
+.cotizador-root .operator-chrome .btn-wa { background: #25D366; color: #fff; border-color: #1ebe5a; text-transform: none; }
+.cotizador-root .operator-chrome .btn-wa:hover { background: #20bf5b; }
 
-.cotizador-root .card { background: #fff; border: 1px solid var(--cb-border); border-radius: 8px; }
+.cotizador-root .operator-chrome .card { background: #fff; border: 1px solid var(--cb-border); border-radius: 0; box-shadow: 4px 4px 0 rgba(0,0,0,.06); }
 
 .cotizador-root .cb-header {
   background: #fff;
   border-bottom: 1px solid var(--cb-border);
   position: sticky;
-  top: 56px;
+  top: var(--app-nav-h);
   z-index: 20;
 }
 .cotizador-root .cb-header-inner {
@@ -1862,13 +1947,15 @@ const CSS = `
   padding: 0 20px;
 }
 .cotizador-root .cb-row { padding: 20px 0; }
-.cotizador-root .cb-tabs {
+.cotizador-root .cb-header .cb-tabs {
   display: flex;
   overflow-x: auto;
+  scrollbar-width: none;
   border-top: 1px solid var(--cb-border);
 }
-.cotizador-root .tab {
-  padding: 16px 0;
+.cotizador-root .cb-header .tab {
+  padding: 14px 0;
+  min-height: 44px;
   margin-right: 28px;
   font-size: 12px;
   font-weight: 600;
@@ -1884,13 +1971,20 @@ const CSS = `
   transition: color 0.15s, border-color 0.15s;
   white-space: nowrap;
 }
-.cotizador-root .tab.active { color: var(--cb-text); border-bottom-color: var(--cb-text); }
-.cotizador-root .tab:hover { color: var(--cb-text-2); }
+.cotizador-root .cb-header .tab.active { color: var(--cb-text); border-bottom-color: var(--cb-text); }
+.cotizador-root .cb-header .tab:hover { color: var(--cb-text-2); }
 
 .cotizador-root .cb-main {
   margin: 0 auto;
   padding: 40px 20px;
 }
+.cotizador-root .operator-main { padding: 18px 20px; }
+.cotizador-root .client-section { margin-bottom: 18px; }
+.cotizador-root .operator-chrome .client-fields { padding: 12px !important; }
+.cotizador-root .operator-main .client-primary-row { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+.cotizador-root .operator-main .client-secondary-row { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; margin-top: 10px; }
+.cotizador-root .operator-chrome .field-label { margin-bottom: 4px !important; }
+.cotizador-root .operator-chrome .field-label { font-size: 10px !important; letter-spacing: .06em; }
 
 .cotizador-root .grid-4 {
   display: grid;
@@ -1937,53 +2031,53 @@ const CSS = `
   gap: 24px;
 }
 @media (min-width: 1024px) {
-  .cotizador-root .grid-12 { grid-template-columns: 2fr 1fr; }
+  .cotizador-root .operator-main .grid-12 { grid-template-columns: 2fr 1fr; }
 }
 
-.cotizador-root .col-summary { min-width: 0; }
-.cotizador-root .col-builder { min-width: 0; }
-.cotizador-root .cb-summary-sticky { position: sticky; top: 200px; display: flex; flex-direction: column; gap: 12px; }
+.cotizador-root .operator-main .col-summary { min-width: 0; }
+.cotizador-root .operator-main .col-builder { min-width: 0; }
+.cotizador-root .operator-chrome .cb-summary-sticky { position: static; top: auto; display: flex; flex-direction: column; gap: 12px; }
 
-.cotizador-root .item-row {
+.cotizador-root .operator-chrome .item-row {
   padding: 12px 14px;
-  border-radius: 6px;
+  border-radius: 0;
   border: 1px solid transparent;
   transition: background 0.15s, border-color 0.15s;
   cursor: pointer;
   display: flex;
   margin: 0;
 }
-.cotizador-root .item-row:hover { background: var(--cb-surface-2); }
-.cotizador-root .item-row.selected { background: var(--cb-surface-2); border-color: var(--cb-border); }
+.cotizador-root .operator-chrome .item-row:hover { background: var(--cb-surface-2); }
+.cotizador-root .operator-chrome .item-row.selected { background: var(--cb-surface-2); border-color: var(--cb-border); }
 
-.cotizador-root .tier-card {
+.cotizador-root .operator-chrome .tier-card {
   background: var(--cb-surface-2);
   border: 1px solid var(--cb-border);
-  border-radius: 6px;
+  border-radius: 0;
   padding: 16px;
   margin-bottom: 12px;
 }
-.cotizador-root .tier-letter {
+.cotizador-root .operator-chrome .tier-letter {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 28px; height: 28px;
+  width: 44px; height: 44px;
   background: var(--cb-text);
   color: #fff;
-  border-radius: 50%;
+  border-radius: 0;
   font-family: 'Playfair Display', serif;
   font-size: 14px;
   font-weight: 700;
 }
 
-.cotizador-root .extra-sec-card {
+.cotizador-root .operator-chrome .extra-sec-card {
   background: var(--cb-surface-2);
   border: 1px solid var(--cb-border);
-  border-radius: 6px;
+  border-radius: 0;
   padding: 16px;
   margin-bottom: 12px;
 }
-.cotizador-root .extra-sec-remove {
+.cotizador-root .operator-chrome .extra-sec-remove {
   background: transparent;
   border: 1px solid var(--cb-border);
   color: var(--cb-text-2);
@@ -1992,34 +2086,77 @@ const CSS = `
   font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  border-radius: 4px;
+  border-radius: 0;
+  min-height: 44px;
   cursor: pointer;
   transition: all 0.15s ease;
 }
-.cotizador-root .extra-sec-remove:hover {
+.cotizador-root .operator-chrome .extra-sec-remove:hover {
   border-color: #DC2626;
   color: #DC2626;
 }
 
-.cotizador-root .template-card {
+.cotizador-root .operator-chrome .template-card {
   background: #fff;
-  border: 1px solid var(--cb-border);
-  border-radius: 8px;
-  padding: 28px;
+  border: 1px solid #111;
+  border-radius: 0;
+  padding: 14px;
   cursor: pointer;
-  transition: border-color 0.2s ease, transform 0.2s ease;
   display: flex;
   flex-direction: column;
   height: 100%;
+  text-align: left;
+  color: var(--cb-text);
+  font: inherit;
+  box-shadow: 4px 4px 0 rgba(0,0,0,.06);
+  position: relative;
+  transform-style: preserve-3d;
 }
-.cotizador-root .template-card:hover {
-  border-color: var(--cb-text);
-  transform: translateY(-1px);
+.cotizador-root .operator-chrome .template-card.selected { border: 2px solid #111; }
+.cotizador-root .operator-chrome .template-card.selected::before { content: ''; height: 5px; background: #D97706; position: absolute; inset: 0 0 auto; }
+.cotizador-root .operator-chrome .template-group { margin-bottom: 18px; }
+.cotizador-root .operator-chrome .group-note { margin: 2px 0 9px; font-size: 12px; }
+.cotizador-root .operator-main .holiday-grid,
+.cotizador-root .operator-main .other-grid { perspective: 900px; }
+.cotizador-root .operator-main .holiday-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+.cotizador-root .operator-chrome .holiday-card { min-height: 143px; }
+.cotizador-root .operator-chrome .template-card:active { transform: translate(2px, 2px); box-shadow: 2px 2px 0 rgba(0,0,0,.06); }
+.cotizador-root .operator-chrome .template-name { display: block; font-size: 16px; line-height: 1.25; margin: 0 0 3px; }
+.cotizador-root .operator-chrome .template-price { display: block; font-size: 26px; font-weight: 700; line-height: 1.1; color: #111; font-variant-numeric: tabular-nums; margin: 0 0 8px; }
+.cotizador-root .operator-chrome .dish-list { display: flex; flex-direction: column; gap: 2px; color: #333; font-size: 11px; line-height: 1.25; }
+.cotizador-root .operator-main .other-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.cotizador-root .operator-chrome .other-card { min-height: 120px; padding: 14px; }
+.cotizador-root .operator-chrome .other-price { color: #111; font-size: 22px; font-weight: 700; margin: 2px 0 5px; }
+.cotizador-root .operator-chrome .other-description { color: #555; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; margin: 0; }
+.cotizador-root .operator-chrome .ratetap-stamp { display: inline-flex; align-items: center; gap: 1px; color: #D97706; perspective: 400px; pointer-events: none; }
+.cotizador-root .operator-chrome .ratetap-star { width: 12px; height: 12px; }
+.cotizador-root .operator-chrome .ratetap-stamp.animate .ratetap-star { transform: rotateY(-90deg); animation: ratetap-star-flip .22s ease-out forwards; }
+@keyframes ratetap-star-flip { to { transform: rotateY(0); } }
+@media (hover: hover) and (pointer: fine) {
+  .cotizador-root .operator-chrome .template-card {
+    transition: transform .18s ease;
+  }
+  .cotizador-root .operator-chrome .template-card:hover {
+    transform: rotateX(var(--tilt-x, 0deg)) rotateY(var(--tilt-y, 0deg)) translateZ(8px);
+    box-shadow: 8px 8px 0 rgba(0,0,0,.08);
+  }
+}
+.cotizador-root .operator-chrome .template-card:active,
+.cotizador-root .operator-chrome .holiday-card:active,
+.cotizador-root .operator-chrome .other-card:active {
+  transform: translate(2px, 2px);
+  box-shadow: 2px 2px 0 rgba(0,0,0,.06);
+}
+@media (prefers-reduced-motion: reduce) {
+  .cotizador-root .operator-chrome .template-card,
+  .cotizador-root .operator-chrome .template-card:hover,
+  .cotizador-root .operator-chrome .template-card:active { transform: none; transition: none; }
+  .cotizador-root .operator-chrome .ratetap-stamp.animate .ratetap-star { animation: none; transform: none; }
 }
 
-.cotizador-root .qty-btn {
-  width: 30px; height: 30px;
-  border-radius: 5px;
+.cotizador-root .operator-chrome .qty-btn {
+  width: 44px; height: 44px;
+  border-radius: 0;
   background: #fff;
   border: 1px solid var(--cb-border);
   display: inline-flex; align-items: center; justify-content: center;
@@ -2030,21 +2167,23 @@ const CSS = `
   font-size: 14px;
   user-select: none;
 }
-.cotizador-root .qty-btn:hover { border-color: var(--cb-text); }
-.cotizador-root .qty-input {
+.cotizador-root .operator-chrome .qty-btn:hover { border-color: var(--cb-text); }
+.cotizador-root .operator-chrome .qty-input {
   width: 44px !important;
+  min-width: 44px;
   text-align: center;
   padding: 4px !important;
   font-size: 13px !important;
   font-weight: 500;
 }
 
-.cotizador-root .scroll-thin::-webkit-scrollbar { width: 5px; height: 5px; }
-.cotizador-root .scroll-thin::-webkit-scrollbar-track { background: transparent; }
-.cotizador-root .scroll-thin::-webkit-scrollbar-thumb { background: var(--cb-border-strong); border-radius: 2px; }
+.cotizador-root .operator-chrome .scroll-thin::-webkit-scrollbar { width: 5px; height: 5px; }
+.cotizador-root .operator-chrome .scroll-thin::-webkit-scrollbar-track { background: transparent; }
+.cotizador-root .operator-chrome .scroll-thin::-webkit-scrollbar-thumb { background: var(--cb-border-strong); border-radius: 0; }
 
 /* Included-side affordance under each Parrilla row */
-.cotizador-root .parrilla-side-link {
+.cotizador-root .operator-chrome .parrilla-side-link {
+  min-height: 44px;
   display: flex;
   align-items: center;
   justify-content: flex-start;
@@ -2053,7 +2192,7 @@ const CSS = `
   margin: 0;
   padding: 6px 10px;
   border: 1px dashed var(--cb-border-strong);
-  border-radius: 5px;
+  border-radius: 0;
   background: #fff;
   cursor: pointer;
   font-family: inherit;
@@ -2062,11 +2201,11 @@ const CSS = `
   text-align: left;
   transition: border-color 0.15s, background 0.15s;
 }
-.cotizador-root .parrilla-side-link:hover { border-color: var(--cb-text); background: var(--cb-surface-2); }
-.cotizador-root .parrilla-side-arrow { color: var(--cb-text-3); }
-.cotizador-root .parrilla-side-text { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.cotizador-root .parrilla-side-text strong { color: var(--cb-text); font-weight: 600; }
-.cotizador-root .parrilla-side-change {
+.cotizador-root .operator-chrome .parrilla-side-link:hover { border-color: var(--cb-text); background: var(--cb-surface-2); }
+.cotizador-root .operator-chrome .parrilla-side-arrow { color: var(--cb-text-3); }
+.cotizador-root .operator-chrome .parrilla-side-text { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cotizador-root .operator-chrome .parrilla-side-text strong { color: var(--cb-text); font-weight: 600; }
+.cotizador-root .operator-chrome .parrilla-side-change {
   font-size: 10px;
   font-weight: 600;
   letter-spacing: 0.06em;
@@ -2076,17 +2215,17 @@ const CSS = `
 }
 
 /* Variant chip multi-selector under dishes with fillings/sauces */
-.cotizador-root .variant-chip-row {
+.cotizador-root .operator-chrome .variant-chip-row {
   display: flex;
   align-items: flex-start;
   gap: 8px;
   padding: 6px 10px;
   border: 1px dashed var(--cb-border-strong);
-  border-radius: 5px;
+  border-radius: 0;
   background: #fff;
   flex-wrap: wrap;
 }
-.cotizador-root .variant-chip-label {
+.cotizador-root .operator-chrome .variant-chip-label {
   font-size: 10px;
   font-weight: 600;
   letter-spacing: 0.06em;
@@ -2095,18 +2234,19 @@ const CSS = `
   padding: 4px 0;
   flex-shrink: 0;
 }
-.cotizador-root .variant-chip-list {
+.cotizador-root .operator-chrome .variant-chip-list {
   display: flex;
   flex-wrap: wrap;
   gap: 4px;
   flex: 1;
   min-width: 0;
 }
-.cotizador-root .variant-chip {
+.cotizador-root .operator-chrome .variant-chip {
   padding: 4px 10px;
   font-size: 12px;
   font-family: inherit;
-  border-radius: 999px;
+  border-radius: 0;
+  min-height: 44px;
   border: 1px solid var(--cb-border-strong);
   background: #fff;
   color: var(--cb-text-2);
@@ -2114,15 +2254,15 @@ const CSS = `
   transition: background 0.12s, border-color 0.12s, color 0.12s;
   white-space: nowrap;
 }
-.cotizador-root .variant-chip:hover { border-color: var(--cb-text); color: var(--cb-text); }
-.cotizador-root .variant-chip.selected {
+.cotizador-root .operator-chrome .variant-chip:hover { border-color: var(--cb-text); color: var(--cb-text); }
+.cotizador-root .operator-chrome .variant-chip.selected {
   background: var(--cb-text);
   color: #fff;
   border-color: var(--cb-text);
 }
 
 /* Side-picker modal — bottom sheet on phone, centered card otherwise */
-.cotizador-root .side-picker-backdrop {
+.cotizador-root .operator-chrome .side-picker-backdrop {
   position: fixed;
   inset: 0;
   background: rgba(10, 10, 10, 0.45);
@@ -2132,11 +2272,11 @@ const CSS = `
   z-index: 100;
   padding: 20px;
 }
-.cotizador-root .side-picker-sheet {
+.cotizador-root .operator-chrome .side-picker-sheet {
   background: #fff;
-  border-radius: 12px;
+  border-radius: 0;
   border: 1px solid var(--cb-border);
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.18);
+  box-shadow: 8px 8px 0 rgba(0, 0, 0, 0.08);
   width: 100%;
   max-width: 440px;
   max-height: min(80vh, 640px);
@@ -2144,7 +2284,7 @@ const CSS = `
   flex-direction: column;
   overflow: hidden;
 }
-.cotizador-root .side-picker-header {
+.cotizador-root .operator-chrome .side-picker-header {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
@@ -2152,9 +2292,10 @@ const CSS = `
   padding: 20px 20px 16px;
   border-bottom: 1px solid var(--cb-border);
 }
-.cotizador-root .side-picker-close {
-  width: 32px; height: 32px;
-  border-radius: 6px;
+.cotizador-root .operator-chrome .side-picker-close {
+  width: 44px; height: 44px;
+  min-width: 44px;
+  border-radius: 0;
   border: 1px solid var(--cb-border);
   background: #fff;
   color: var(--cb-text-2);
@@ -2163,22 +2304,23 @@ const CSS = `
   cursor: pointer;
   display: inline-flex; align-items: center; justify-content: center;
 }
-.cotizador-root .side-picker-close:hover { border-color: var(--cb-text); color: var(--cb-text); }
-.cotizador-root .side-picker-list {
+.cotizador-root .operator-chrome .side-picker-close:hover { border-color: var(--cb-text); color: var(--cb-text); }
+.cotizador-root .operator-chrome .side-picker-list {
   display: flex;
   flex-direction: column;
   padding: 8px;
   overflow-y: auto;
   gap: 4px;
 }
-.cotizador-root .side-picker-option {
+.cotizador-root .operator-chrome .side-picker-option {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
   padding: 12px 14px;
   border: 1px solid transparent;
-  border-radius: 6px;
+  border-radius: 0;
+  min-height: 44px;
   background: #fff;
   cursor: pointer;
   font-family: inherit;
@@ -2186,13 +2328,13 @@ const CSS = `
   color: var(--cb-text);
   transition: background 0.12s, border-color 0.12s;
 }
-.cotizador-root .side-picker-option:hover { background: var(--cb-surface-2); }
-.cotizador-root .side-picker-option.selected { background: var(--cb-surface-2); border-color: var(--cb-border-strong); }
+.cotizador-root .operator-chrome .side-picker-option:hover { background: var(--cb-surface-2); }
+.cotizador-root .operator-chrome .side-picker-option.selected { background: var(--cb-surface-2); border-color: var(--cb-border-strong); }
 
 @media (max-width: 640px) {
-  .cotizador-root .side-picker-backdrop { align-items: flex-end; padding: 0; }
-  .cotizador-root .side-picker-sheet {
-    border-radius: 16px 16px 0 0;
+  .cotizador-root .operator-chrome .side-picker-backdrop { align-items: flex-end; padding: 0; }
+  .cotizador-root .operator-chrome .side-picker-sheet {
+    border-radius: 0;
     max-width: 100%;
     max-height: 85vh;
   }
@@ -2209,45 +2351,48 @@ const CSS = `
 @media (max-width: 1024px) {
   .cotizador-root .cb-header-inner { padding: 0 16px; }
   .cotizador-root .cb-main { padding: 28px 16px; }
+  .cotizador-root .operator-main { padding: 12px 16px; }
   .cotizador-root .h-display { font-size: 26px; }
   .cotizador-root .h-1 { font-size: 22px; }
-  .cotizador-root .cb-summary-sticky { position: static; top: auto; }
-  .cotizador-root .template-card { padding: 22px; }
+  .cotizador-root .operator-chrome .template-card { padding: 12px; }
+  .cotizador-root .operator-main .holiday-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
 /* Phone */
 @media (max-width: 640px) {
-  .cotizador-root { min-height: calc(100vh - 56px); }
-  .cotizador-root .cb-header { top: 56px; }
+  .cotizador-root { min-height: calc(100vh - var(--app-nav-h)); }
+  .cotizador-root .cb-header { top: var(--app-nav-h); }
   .cotizador-root .cb-header-inner { padding: 0 14px; }
   .cotizador-root .cb-row { padding: 14px 0 !important; }
   /* Playfair ascenders/descenders extend past the line-box; pin a roomier
      line-height + bottom padding on phones so the next paragraph (subtitle,
      card subtitle) doesn't visually crash into the heading glyphs. */
+  .cotizador-root .cb-header .h-display,
   .cotizador-root .h-display { font-size: 22px; line-height: 1.25; padding-bottom: 2px; }
   .cotizador-root .h-1 { font-size: 19px; line-height: 1.3; padding-bottom: 2px; }
   .cotizador-root .h-2 { font-size: 16px; line-height: 1.4; padding-bottom: 2px; }
-  .cotizador-root .cb-main { padding: 20px 14px; }
+  .cotizador-root .operator-main { padding: 12px 14px; }
 
   /* Prevent iOS auto-zoom on focus */
-  .cotizador-root input[type="text"],
-  .cotizador-root input[type="number"],
-  .cotizador-root input[type="date"],
-  .cotizador-root input[type="email"],
-  .cotizador-root input[type="tel"],
-  .cotizador-root select,
-  .cotizador-root textarea { font-size: 16px; padding: 11px 12px; }
+  .cotizador-root .operator-chrome input[type="text"],
+  .cotizador-root .operator-chrome input[type="number"],
+  .cotizador-root .operator-chrome input[type="date"],
+  .cotizador-root .operator-chrome input[type="email"],
+  .cotizador-root .operator-chrome input[type="tel"],
+  .cotizador-root .operator-chrome select,
+  .cotizador-root .operator-chrome textarea { font-size: 16px; padding: 11px 12px; }
 
-  .cotizador-root .tab { font-size: 11px; margin-right: 18px; padding: 14px 0; }
-  .cotizador-root .btn { padding: 11px 16px; font-size: 13px; }
-  .cotizador-root .btn-primary,
-  .cotizador-root .btn-secondary { width: auto; }
+  .cotizador-root .cb-header .tab { font-size: 11px; margin-right: 18px; padding: 14px 0; min-height: 44px; min-width: 44px; }
+  .cotizador-root .operator-chrome .btn { padding: 11px 16px; font-size: 13px; }
+  .cotizador-root .operator-chrome .btn-primary,
+  .cotizador-root .operator-chrome .btn-secondary { width: auto; }
 
-  .cotizador-root .card { border-radius: 6px; }
-  .cotizador-root .template-card { padding: 18px; }
-  .cotizador-root .item-row { padding: 12px 12px; }
-  .cotizador-root .qty-btn { width: 34px; height: 34px; font-size: 15px; }
-  .cotizador-root .qty-input { width: 40px !important; font-size: 14px !important; }
+  .cotizador-root .operator-main .client-primary-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .cotizador-root .operator-main .client-secondary-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .cotizador-root .operator-chrome .template-card { padding: 10px; }
+  .cotizador-root .operator-chrome .item-row { padding: 12px 12px; }
+  .cotizador-root .operator-chrome .qty-btn { width: 44px; height: 44px; font-size: 15px; }
+  .cotizador-root .operator-chrome .qty-input { width: 44px !important; min-width: 44px; font-size: 14px !important; }
 
   /* Title + folio/save row stacks cleaner */
   .cotizador-root .cb-row > div[style*="space-between"] { gap: 10px !important; }
