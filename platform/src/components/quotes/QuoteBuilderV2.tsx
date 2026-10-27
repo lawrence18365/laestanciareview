@@ -1991,8 +1991,8 @@ const CSS = `
 .cotizador-root .operator-chrome .btn-primary:hover { background: #1f1f1f; }
 .cotizador-root .operator-chrome .btn-secondary { background: #fff; color: var(--cb-text); border-color: var(--cb-border-strong); }
 .cotizador-root .operator-chrome .btn-secondary:hover { border-color: var(--cb-text); }
-.cotizador-root .operator-chrome .btn-wa { background: #25D366; color: #fff; border-color: #1ebe5a; text-transform: none; }
-.cotizador-root .operator-chrome .btn-wa:hover { background: #20bf5b; }
+.cotizador-root .operator-chrome .btn-wa { background: var(--cb-text); color: #fff; border-color: var(--cb-text); text-transform: none; }
+.cotizador-root .operator-chrome .btn-wa:hover { background: #1f1f1f; }
 .cotizador-root .operator-chrome.cb-vista-toolbar { gap: 12px; }
 .cotizador-root .operator-chrome .cb-vista-actions { display: flex; flex-wrap: wrap; gap: 12px; }
 
