@@ -103,6 +103,26 @@ const OFFICIAL_2026_PRICES: Record<string, number> = {
   g12: 90,
   g13: 60,
   g14: 90,
+
+  // Postres: official year-round dessert list (Oct 2026)
+  po1: 140,
+  po19: 145,
+  po3: 160,
+  po20: 170,
+  po21: 135,
+  po22: 160,
+  po7: 20,
+  po8: 190,
+  po9: 190,
+  po10: 190,
+  po11: 160,
+  po12: 135,
+  po13: 170,
+  po14: 190,
+  po15: 180,
+  po16: 180,
+  po17: 190,
+  po18: 190,
 };
 
 describe('official La Estancia Argentina 2026 menu', () => {

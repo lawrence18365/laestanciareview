@@ -110,7 +110,9 @@ export default function DashboardNav({
         alignItems: 'center',
         justifyContent: 'space-between',
         padding: '0 1.25rem',
-        height: 56,
+        paddingTop: 'var(--safe-top)',
+        height: 'var(--app-nav-h)',
+        boxSizing: 'border-box',
         background: 'var(--panel-bg)',
         borderBottom: '2px solid var(--border-dark)',
         position: 'sticky',
@@ -122,6 +124,8 @@ export default function DashboardNav({
           href={isOwner ? '/overview' : '/dashboard'}
           style={{
             display: 'flex',
+            minWidth: 0,
+            flexShrink: 1,
             alignItems: 'center',
             gap: '0.75rem',
             textDecoration: 'none',
@@ -131,22 +135,28 @@ export default function DashboardNav({
           <img
             src="/logos/ratetap_logo_transparent_background.png"
             alt="RateTap"
-            style={{ height: 56, objectFit: 'contain', flexShrink: 0 }}
+            style={{ height: 44, objectFit: 'contain', flexShrink: 0 }}
           />
           <p style={{
             margin: 0,
-            fontSize: '0.6rem',
+            fontSize: '12px',
             fontWeight: 600,
-            color: 'var(--text-dim)',
+            color: 'var(--text-muted)',
             letterSpacing: '0.08em',
             textTransform: 'uppercase',
+            whiteSpace: 'nowrap',
+            maxWidth: 'clamp(72px, 13vw, 150px)',
+            minWidth: 0,
+            flexShrink: 1,
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
           }}>
             {restaurantName}
           </p>
         </a>
 
         {/* Center: Desktop nav links */}
-        <div className="nav-links" style={{ alignItems: 'center' }}>
+        <div className="nav-links" style={{ alignItems: 'center', minWidth: 0, flex: '1 1 0%', margin: '0 12px', overflowX: 'auto', overflowY: 'hidden', overscrollBehaviorX: 'contain', scrollbarWidth: 'none' }}>
           {navLinks.map((link) => {
             const active = pathname === link.href;
             const badgeCount = 'badge' in link && link.badge ? (newFeedbackCount ?? 0) : 0;
@@ -155,8 +165,9 @@ export default function DashboardNav({
                 key={link.href}
                 href={link.href}
                 style={{
-                  padding: '0.35rem 0.875rem',
-                  fontSize: '0.7rem',
+                  padding: '0.35rem 0.75rem',
+                  minHeight: 44,
+                  fontSize: '12px',
                   fontWeight: active ? 700 : 500,
                   color: active ? 'var(--panel-bg)' : 'var(--text-muted)',
                   textDecoration: 'none',
@@ -165,6 +176,8 @@ export default function DashboardNav({
                   position: 'relative',
                   letterSpacing: '0.06em',
                   textTransform: 'uppercase',
+                  whiteSpace: 'nowrap',
+                  flexShrink: 0,
                 }}
               >
                 {link.label}
@@ -194,19 +207,20 @@ export default function DashboardNav({
         </div>
 
         {/* Right: Guide + Sign out */}
-        <div className="nav-links" style={{ alignItems: 'center', gap: '0.5rem' }}>
+        <div className="nav-links" style={{ alignItems: 'center', gap: '0.5rem', flexShrink: 0, whiteSpace: 'nowrap' }}>
           {onOpenGuide && (
             <button
               onClick={onOpenGuide}
               style={{
-                fontSize: '0.65rem',
+                fontSize: '12px',
                 padding: '0.3rem 0.75rem',
+                minHeight: 44,
                 fontWeight: 600,
                 letterSpacing: '0.06em',
                 textTransform: 'uppercase',
                 background: 'var(--panel-bg)',
-                color: 'var(--gold)',
-                border: '1px solid var(--gold)',
+                color: 'var(--text-main)',
+                border: '1px solid var(--text-main)',
                 cursor: 'pointer',
                 transition: 'all 0.15s ease',
                 display: 'flex',
@@ -214,12 +228,12 @@ export default function DashboardNav({
                 gap: '0.35rem',
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.background = 'var(--gold)';
+                e.currentTarget.style.background = 'var(--text-main)';
                 e.currentTarget.style.color = '#fff';
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.background = 'var(--panel-bg)';
-                e.currentTarget.style.color = 'var(--gold)';
+                e.currentTarget.style.color = 'var(--text-main)';
               }}
             >
               ?&ensp;{t.onboarding.helpButton}
@@ -228,8 +242,9 @@ export default function DashboardNav({
           <button
             onClick={handleLogout}
             style={{
-              fontSize: '0.65rem',
+              fontSize: '12px',
               padding: '0.3rem 0.75rem',
+              minHeight: 44,
               fontWeight: 600,
               letterSpacing: '0.06em',
               textTransform: 'uppercase',
@@ -262,9 +277,17 @@ export default function DashboardNav({
             background: 'none',
             border: 'none',
             cursor: 'pointer',
-            padding: '0.5rem',
+            width: 44,
+            height: 44,
+            minWidth: 44,
+            minHeight: 44,
+            padding: 0,
             display: 'flex',
             flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexShrink: 0,
+            boxSizing: 'border-box',
             gap: '4px',
           }}
           aria-label="Menu"
@@ -298,6 +321,8 @@ export default function DashboardNav({
                 key={link.href}
                 href={link.href}
                 style={{
+                  minHeight: 44,
+                  boxSizing: 'border-box',
                   padding: '0.6rem 1.25rem',
                   fontSize: '0.75rem',
                   fontWeight: active ? 700 : 500,
@@ -333,16 +358,20 @@ export default function DashboardNav({
               onClick={() => { setMobileOpen(false); onOpenGuide(); }}
               style={{
                 margin: '0.5rem 1.25rem 0',
+                minHeight: 44,
+                boxSizing: 'border-box',
                 padding: '0.5rem 0.75rem',
-                fontSize: '0.7rem',
+                fontSize: '12px',
                 fontWeight: 600,
-                color: 'var(--gold)',
+                color: 'var(--text-main)',
                 background: 'none',
-                border: '1px solid var(--gold)',
+                border: '1px solid var(--text-main)',
                 textAlign: 'left',
                 cursor: 'pointer',
                 letterSpacing: '0.06em',
                 textTransform: 'uppercase',
+                display: 'flex',
+                alignItems: 'center',
               }}
             >
               ? {t.onboarding.helpButton}
@@ -353,8 +382,10 @@ export default function DashboardNav({
             className="nav-signout-mobile"
             style={{
               margin: '0.5rem 1.25rem',
+              minHeight: 44,
+              boxSizing: 'border-box',
               padding: '0.5rem 0.75rem',
-              fontSize: '0.7rem',
+              fontSize: '12px',
               fontWeight: 600,
               color: 'var(--red)',
               background: 'none',
@@ -363,6 +394,8 @@ export default function DashboardNav({
               cursor: 'pointer',
               letterSpacing: '0.06em',
               textTransform: 'uppercase',
+              display: 'flex',
+              alignItems: 'center',
             }}
           >
             {t.nav.signOut}

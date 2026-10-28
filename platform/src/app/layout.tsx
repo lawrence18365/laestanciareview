@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Script from "next/script";
 import "./globals.css";
 import ServiceWorkerRegistrar from "@/components/ServiceWorkerRegistrar";
+import type { Viewport } from "next";
 
 const GTM_ID = "GTM-P4DTRR6W";
 // Kill switch: set NEXT_PUBLIC_DISABLE_GTM=1 in Vercel env to stop GTM from
@@ -12,6 +13,12 @@ const GTM_DISABLED = process.env.NEXT_PUBLIC_DISABLE_GTM === '1';
 export const metadata: Metadata = {
   title: "RateTap",
   description: "Plataforma de gestión de reseñas para restaurantes",
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
 };
 
 export default function RootLayout({

@@ -26,6 +26,13 @@
   --font-serif: 'Playfair Display', Georgia, serif;
   --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   --font-mono: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  --safe-top: env(safe-area-inset-top, 0px);
+  --app-nav-h: calc(56px + var(--safe-top));
+}
+
+html {
+  padding-left: env(safe-area-inset-left, 0px);
+  padding-right: env(safe-area-inset-right, 0px);
 }
 
 @theme inline {
@@ -180,8 +187,9 @@ h1, h2, h3, h4, h5, h6, .font-serif {
 /* -- Navbar ------------------------------------------- */
 
 .nav-links { display: none; }
+.nav-links::-webkit-scrollbar { display: none; }
 
-@media (min-width: 1024px) {
+@media (min-width: 1280px) {
   .nav-links { display: flex; gap: 0; }
   .nav-mobile-toggle { display: none !important; }
   .nav-signout-mobile { display: none !important; }
@@ -197,7 +205,7 @@ h1, h2, h3, h4, h5, h6, .font-serif {
   animation: fadeIn 0.15s ease;
 }
 
-@media (min-width: 1024px) {
+@media (min-width: 1280px) {
   .nav-mobile-menu { display: none !important; }
 }
 
