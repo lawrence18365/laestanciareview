@@ -172,25 +172,31 @@ export const MENU: QuoteDish[] = [
   { id: 'g13', categoria: 'Guarniciones', nombre: 'Betabel Rostizado', precio: 60 },
   { id: 'g14', categoria: 'Guarniciones', nombre: 'Tuétano a la Parrilla', precio: 90, includedEligible: false },
 
-  // Postres — official year-round dessert list from La Estancia (Oct 2026).
-  // po1 is not on the carta; kept only so saved quotes still render it.
+  // Historical dessert IDs retain their original records and prices so saved
+  // quotes keep their recorded meaning. Retired IDs remain resolvable only.
   { id: 'po1', categoria: 'Postres', nombre: 'Cookie Skillet con Helado', precio: 140, retired: true },
+  { id: 'po2', categoria: 'Postres', nombre: 'Flan Napolitano', precio: 120, retired: true },
+  { id: 'po4', categoria: 'Postres', nombre: 'Pastel de Kiwi y Plátano', precio: 160, retired: true },
+  { id: 'po5', categoria: 'Postres', nombre: 'Alfajores Argentinos', precio: 120, desc: '3 piezas', retired: true },
+  { id: 'po6', categoria: 'Postres', nombre: 'Crème Brulée', precio: 140, retired: true },
+
+  // Postres: official year-round dessert list from La Estancia (Oct 2026).
   { id: 'po8', categoria: 'Postres', nombre: 'Banoffee', precio: 190 },
   { id: 'po9', categoria: 'Postres', nombre: 'Cannolis de mascarpone con pistache', precio: 190 },
   { id: 'po10', categoria: 'Postres', nombre: 'Cheesecake de Lotus', precio: 190 },
   { id: 'po11', categoria: 'Postres', nombre: 'Crepas de Nutella', precio: 160 },
-  { id: 'po6', categoria: 'Postres', nombre: 'Crème brûlée', precio: 160 },
-  { id: 'po2', categoria: 'Postres', nombre: 'Flan Napolitano', precio: 145 },
+  { id: 'po22', categoria: 'Postres', nombre: 'Crème brûlée', precio: 160 },
+  { id: 'po19', categoria: 'Postres', nombre: 'Flan Napolitano', precio: 145 },
   { id: 'po12', categoria: 'Postres', nombre: 'Gelatina de guanábana', precio: 135 },
   { id: 'po13', categoria: 'Postres', nombre: 'Mousse de chocolate amargo', precio: 170 },
   // Halloween + Día de Muertos.
   { id: 'po17', categoria: 'Postres', nombre: 'Panna cotta de naranja', precio: 190, season: { months: [10, 11] } },
   { id: 'po14', categoria: 'Postres', nombre: 'Pasta filo con ate, queso y salsa de dulce de leche', precio: 190 },
   { id: 'po15', categoria: 'Postres', nombre: 'Pastel de chocolate alemán', precio: 180 },
-  { id: 'po4', categoria: 'Postres', nombre: 'Pastel de plátano kiwi', precio: 170 },
+  { id: 'po20', categoria: 'Postres', nombre: 'Pastel de plátano kiwi', precio: 170 },
   { id: 'po3', categoria: 'Postres', nombre: 'Pastel Estancia (rebanada)', precio: 160 },
   { id: 'po7', categoria: 'Postres', nombre: 'Pastel Personalizado', precio: 20, desc: 'Mensaje a elegir, ideal para brindis · $20 por persona', perPerson: true },
-  { id: 'po5', categoria: 'Postres', nombre: 'Trilogía de alfajores', precio: 135 },
+  { id: 'po21', categoria: 'Postres', nombre: 'Trilogía de alfajores', precio: 135 },
   // Halloween + Día de Muertos.
   { id: 'po18', categoria: 'Postres', nombre: 'Tarta de calabaza', precio: 190, season: { months: [10, 11] } },
   { id: 'po16', categoria: 'Postres', nombre: 'Vesubio de chocolate', precio: 180 },
@@ -528,7 +534,7 @@ export const TEMPLATES: QuoteTemplate[] = [
         { letra: 'B', precio: 1250, platos: 'New York 300g / Verduras a la Parrilla\nMedallones de Filete\nSalmón a la Parrilla / Ensalada de la Casa' },
         { letra: 'C', precio: 1400, platos: 'Rib-Eye Añejo 300g / Papa al Horno\nTapa de Rib-Eye 300g / Espárragos al Grill\nChilean Sea Bass Estilo Porteño' },
       ],
-      postres: ['po2', 'po3', 'po4'],
+      postres: ['po19', 'po3', 'po20'],
       bebidas: 'basico',
       incluyeIVA: true,
       incluyeServicio: false,
@@ -546,7 +552,7 @@ export const TEMPLATES: QuoteTemplate[] = [
     config: {
       sopas: ['s6', 's7'],
       platos: ['pa19', 'm1'],
-      postres: ['po2', 'po5'],
+      postres: ['po19', 'po21'],
       bebidas: 'barra-libre-sin-alcohol',
       precioPP: 1000,
       costoPP: 420,
@@ -592,7 +598,7 @@ export const TEMPLATES: QuoteTemplate[] = [
     config: {
       sopas: ['s8'],
       platos: ['pa29', 'pa4', 'm5'],
-      postres: ['po3', 'po6'],
+      postres: ['po3', 'po22'],
       bebidas: 'premium',
       precioPP: 1800,
       costoPP: 780,

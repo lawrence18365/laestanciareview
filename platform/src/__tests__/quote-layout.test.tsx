@@ -12,7 +12,8 @@ import { findVisibleTextClashes } from '../../scripts/qa-quotes-layout.mjs';
 // font; Inter and Manrope use explicit system fallbacks. Network is blocked.
 declare global {
   interface Window {
-    __quoteLayout: { render: (surface: string, saved?: boolean, mode?: string) => void };
+    __quoteLayout: { render: (surface: string, saved?: boolean, mode?: string, holidaySaved?: boolean) => void };
+    __quoteSaveRequests: Array<{ url: string; method?: string; configJson: { indiv: { postres: string[] } } }>;
   }
 }
 
@@ -38,18 +39,22 @@ beforeAll(async () => {
         import List from '@/app/(app)/quotes/QuoteList';
         import { emptyConfig } from '@/lib/quote-data';
         const root = createRoot(document.getElementById('root'));
-        window.__quoteLayout = { render: (surface, saved = false, mode = 'individual') => {
+        window.__quoteLayout = { render: (surface, saved = false, mode = 'individual', holidaySaved = false) => {
           const config = emptyConfig();
           config.evento.cliente = 'Coordinación de Celebraciones y Eventos de Prueba del Bajío';
           config.evento.personas = 80;
           config.modo = mode;
+          if (holidaySaved) {
+            config.templateId = 'fiestas-menu-1';
+            config.indiv = { ...config.indiv, postres: ['po1'], bebidas: 'a-la-carta', precioPP: 950, costoPP: 399 };
+          }
           root.render(<>
             <Nav restaurantName="Restaurante de prueba con nombre largo" logoSrc="" logoDarkBg={false} showEventsQuotes isStaff onOpenGuide={() => {}} />
             {surface === 'list' ? <List restaurantName="Restaurante de prueba" conversion={{sent: 4, won: 2, pesosCollected: 10000, open: 2}} quotes={[{
               id: 1, quoteNumber: 'Q-TEST', status: 'draft', clientName: config.evento.cliente,
               clientCompany: 'Empresa de prueba', eventDate: '2026-12-10', eventType: 'Empresarial',
               guestCount: 80, pricePerPerson: '1000', createdAt: '2026-10-01', campaignTag: 'campaign:posadas-2026'
-            }]} /> : <Builder key={mode + saved} initialConfig={config} quoteId={saved ? 1 : undefined} quoteNumber="Q-TEST" isAdmin campaignTagOptions={['campaign:posadas-2026']} />}
+            }]} /> : <Builder key={mode + saved + holidaySaved} initialConfig={config} quoteId={saved ? 1 : undefined} quoteNumber="Q-TEST" isAdmin campaignTagOptions={['campaign:posadas-2026']} />}
           </>);
         }};
       `,
@@ -74,7 +79,7 @@ beforeAll(async () => {
 
 afterAll(async () => { await browser?.close(); });
 
-async function fixture(width: number, height: number, surface = 'builder', saved = false, mode = 'individual') {
+async function fixture(width: number, height: number, surface = 'builder', saved = false, mode = 'individual', holidaySaved = false) {
   const page = await browser.newPage({ viewport: { width, height }, reducedMotion: 'reduce' });
   await page.route('**/*', (route) => route.abort());
   await page.setContent(`<style>${sharedCSS}\n${fixtureFonts}\nhtml,body{margin:0} nav img{width:96px}</style><div id="root"></div>`);
@@ -82,7 +87,7 @@ async function fixture(width: number, height: number, surface = 'builder', saved
   page.on('pageerror', (error) => errors.push(error.message));
   await page.addScriptTag({ content: bundle });
   if (errors.length) throw new Error(errors.join('\n'));
-  await page.evaluate(([view, existing, kind]) => window.__quoteLayout.render(String(view), Boolean(existing), String(kind)), [surface, saved, mode]);
+  await page.evaluate(([view, existing, kind, holiday]) => window.__quoteLayout.render(String(view), Boolean(existing), String(kind), Boolean(holiday)), [surface, saved, mode, holidaySaved]);
   await page.locator(surface === 'list' ? '.ql-root' : '.cb-header').waitFor();
   expect(await page.evaluate(async () => {
     await document.fonts.ready;
@@ -226,6 +231,57 @@ describe('quote layout in WebKit', () => {
     }
   });
 
+  it('keeps a saved holiday dessert visible and removable while limiting new choices to its trio', async () => {
+    const page = await fixture(1080, 810, 'builder', true, 'individual', true);
+    await page.evaluate(() => {
+      window.__quoteSaveRequests = [];
+      window.fetch = async (input, init) => {
+        const payload = JSON.parse(String(init?.body ?? '{}'));
+        window.__quoteSaveRequests.push({ url: String(input), method: init?.method, configJson: payload.configJson });
+        return new Response('{}', { status: 200, headers: { 'Content-Type': 'application/json' } });
+      };
+    });
+    try {
+      const cookie = page.locator('label.item-row').filter({ hasText: 'Cookie Skillet con Helado' });
+      expect(await cookie.count()).toBe(1);
+      expect(await cookie.locator('input').isChecked()).toBe(true);
+      const totalBefore = await page.locator('.cb-summary-total').textContent();
+
+      const banoffee = page.locator('label.item-row').filter({ hasText: 'Banoffee' });
+      expect(await banoffee.count()).toBe(1);
+      await banoffee.locator('input').check();
+      expect(await cookie.count()).toBe(1);
+      expect(await cookie.locator('input').isChecked()).toBe(true);
+      expect(await page.locator('.cb-summary-total').textContent()).toBe(totalBefore);
+      await page.locator('.cb-save-btn').click();
+      await expect.poll(() => page.evaluate(() => window.__quoteSaveRequests.length)).toBe(1);
+      expect(await page.evaluate(() => window.__quoteSaveRequests[0])).toMatchObject({
+        url: '/api/quotes/1', method: 'PUT', configJson: { indiv: { postres: ['po1', 'po8'] } },
+      });
+      await expect.poll(() => page.locator('.cb-save-btn').textContent()).toBe('✓ Guardado');
+
+      await cookie.click();
+      expect(await cookie.count()).toBe(0);
+      await page.locator('.cb-save-btn').click();
+      await expect.poll(() => page.evaluate(() => window.__quoteSaveRequests.length)).toBe(2);
+      expect(await page.evaluate(() => window.__quoteSaveRequests[1])).toMatchObject({
+        url: '/api/quotes/1', method: 'PUT', configJson: { indiv: { postres: ['po8'] } },
+      });
+
+      const dessertSection = page.locator('.cb-heading-sm').filter({ hasText: '3° Tiempo · Postre' }).locator('xpath=../..');
+      const visibleDesserts = await dessertSection.locator('label.item-row').evaluateAll((labels) =>
+        labels.filter((label) => label.querySelector('input[type="checkbox"]'))
+          .map((label) => label.textContent?.trim()),
+      );
+      expect(visibleDesserts).toEqual([
+        'Banoffee',
+        'Pasta filo con ate, queso y salsa de dulce de leche',
+        'Pastel Estancia (rebanada)',
+      ]);
+      expect(await page.locator('label.item-row').filter({ hasText: 'Cookie Skillet con Helado' }).count()).toBe(0);
+    } finally { await page.close(); }
+  });
+
   it('keeps Vista document inheritance stable and toolbar targets usable', async () => {
     const page = await fixture(810, 1080);
     try {
@@ -244,6 +300,28 @@ describe('quote layout in WebKit', () => {
       const targets = await page.locator('main .operator-chrome button').evaluateAll((els) => els.map((el) => el.getBoundingClientRect().height));
       expect(targets.every((height) => height >= 44)).toBe(true);
       expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(811);
+    } finally { await page.close(); }
+  });
+
+  it('restores the frozen phone Vista Cliente main padding and content width', async () => {
+    // WebKit reserves 4px for its scrollbar, so 394px outer yields a 390px CSS viewport.
+    const page = await fixture(394, 844);
+    try {
+      await page.locator('.cb-tabs .tab').filter({ hasText: /^Vista cliente$/ }).click();
+      const metrics = await page.locator('main.cb-main').evaluate((el) => {
+        const css = getComputedStyle(el);
+        const box = el.getBoundingClientRect();
+        return {
+          padding: css.padding,
+          width: box.width,
+          contentWidth: box.width - parseFloat(css.paddingLeft) - parseFloat(css.paddingRight),
+          viewportWidth: document.documentElement.clientWidth,
+        };
+      });
+      expect(metrics.padding).toBe('20px 14px');
+      expect(metrics.viewportWidth).toBe(390);
+      expect(metrics.width).toBe(390);
+      expect(metrics.contentWidth).toBe(362);
     } finally { await page.close(); }
   });
 

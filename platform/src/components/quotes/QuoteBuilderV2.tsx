@@ -1094,10 +1094,11 @@ function IndividualMode({
   isAdmin: boolean;
 }) {
   const { indiv } = config;
-  // Promo menus (e.g. Posadas) ship a fixed dessert trio; offer only those.
+  // Promo menus offer their fixed trio plus any already-selected legacy items.
   const plantilla = TEMPLATES.find((t) => t.id === config.templateId);
+  const postresDePlantilla = plantilla?.config.postres ?? [];
   const postresFijos = plantilla?.postresFijos
-    ? (plantilla.config.postres ?? []).flatMap((id) => {
+    ? [...postresDePlantilla, ...indiv.postres.filter((id) => !postresDePlantilla.includes(id))].flatMap((id) => {
         const dish = dishById(id);
         return dish ? [dish] : [];
       })
@@ -2548,6 +2549,7 @@ const CSS = `
   .cotizador-root .h-2 { font-size: 16px; line-height: 1.4; padding-bottom: 2px; }
   .cotizador-root :where(.operator-chrome) .cb-heading-md { font-size: 16px; line-height: 1.4; padding-bottom: 2px; }
   .cotizador-root .operator-main { padding: 12px 14px; }
+  .cotizador-root main.cb-main:not(.operator-main) { padding: 20px 14px; }
 
   /* Prevent iOS auto-zoom on focus */
   .cotizador-root .operator-chrome input[type="text"],

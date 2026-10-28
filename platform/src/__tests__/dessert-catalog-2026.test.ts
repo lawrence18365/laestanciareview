@@ -6,16 +6,17 @@ import {
   dishById,
   emptyConfig,
   isDishOffered,
+  migrateConfig,
 } from '@/lib/quote-data';
 
 // Official year-round dessert list from La Estancia (Oct 2026). po7 keeps its
 // per-person cake price; po17 is seasonal, so it is checked separately below.
 const YEAR_ROUND_DESSERTS: Record<string, { nombre: string; precio: number }> = {
-  po2: { nombre: 'Flan Napolitano', precio: 145 },
+  po19: { nombre: 'Flan Napolitano', precio: 145 },
   po3: { nombre: 'Pastel Estancia (rebanada)', precio: 160 },
-  po4: { nombre: 'Pastel de plátano kiwi', precio: 170 },
-  po5: { nombre: 'Trilogía de alfajores', precio: 135 },
-  po6: { nombre: 'Crème brûlée', precio: 160 },
+  po20: { nombre: 'Pastel de plátano kiwi', precio: 170 },
+  po21: { nombre: 'Trilogía de alfajores', precio: 135 },
+  po22: { nombre: 'Crème brûlée', precio: 160 },
   po7: { nombre: 'Pastel Personalizado', precio: 20 },
   po8: { nombre: 'Banoffee', precio: 190 },
   po9: { nombre: 'Cannolis de mascarpone con pistache', precio: 190 },
@@ -89,6 +90,35 @@ describe('2026 dessert catalog', () => {
       precio: 140,
       retired: true,
     });
+    expect(dishById('po2')).toMatchObject({ nombre: 'Flan Napolitano', precio: 120, retired: true });
+    expect(dishById('po4')).toMatchObject({ nombre: 'Pastel de Kiwi y Plátano', precio: 160, retired: true });
+    expect(dishById('po5')).toMatchObject({ nombre: 'Alfajores Argentinos', precio: 120, desc: '3 piezas', retired: true });
+    expect(dishById('po6')).toMatchObject({ nombre: 'Crème Brulée', precio: 140, retired: true });
+  });
+
+  it.each(['carta', 'asado'] as const)('preserves historical %s dessert prices and IDs', (modo) => {
+    const expectedById = { po2: 1680, po4: 2240, po5: 1680, po6: 1960 };
+    const originalUnitPrices = { po2: 120, po4: 160, po5: 120, po6: 140 };
+    for (const [id, total] of Object.entries(expectedById)) {
+      const config = emptyConfig(modo);
+      config.evento.personas = 10;
+      const serializedIds = JSON.stringify({ [id]: 10 });
+      if (modo === 'carta') config.carta.cantidades = JSON.parse(serializedIds);
+      else {
+        config.asado.cantidades = JSON.parse(serializedIds);
+        config.asado.bebidas = 'a-la-carta';
+      }
+      const original = JSON.stringify(config);
+      const restored = migrateConfig(JSON.parse(original));
+      const quantities = modo === 'carta' ? restored.carta.cantidades : restored.asado.cantidades;
+      const unitPrice = dishById(id)!.precio;
+      expect(unitPrice).toBe(originalUnitPrices[id as keyof typeof originalUnitPrices]);
+      expect(quantities).toEqual({ [id]: 10 });
+      const linePrice = unitPrice * quantities[id];
+      expect(linePrice).toBe(originalUnitPrices[id as keyof typeof originalUnitPrices] * 10);
+      expect(computePricing(restored).precioTotalFinal).toBe(total);
+      expect(JSON.stringify(restored)).toBe(original);
+    }
   });
 });
 
@@ -102,8 +132,15 @@ describe('2026 dessert templates', () => {
 
   it('drops the retired dessert from the 3-options menu', () => {
     const template = TEMPLATES.find((t) => t.id === 'tres-tiempos-opciones');
-    expect(template?.config.postres).toEqual(['po2', 'po3', 'po4']);
+    expect(template?.config.postres).toEqual(['po19', 'po3', 'po20']);
     expect(template?.config.postres).not.toContain('po1');
+  });
+
+  it('keeps retired dessert IDs out of every new template default', () => {
+    const retired = new Set(MENU.filter((dish) => dish.categoria === 'Postres' && dish.retired).map((dish) => dish.id));
+    for (const template of TEMPLATES) {
+      expect((template.config.postres ?? []).filter((id) => retired.has(id))).toEqual([]);
+    }
   });
 
   it('prices Menú 1 at $950/pp with the desserts included', () => {

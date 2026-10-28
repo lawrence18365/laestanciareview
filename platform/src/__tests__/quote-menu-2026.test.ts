@@ -104,13 +104,13 @@ const OFFICIAL_2026_PRICES: Record<string, number> = {
   g13: 60,
   g14: 90,
 
-  // Postres — official year-round dessert list (Oct 2026)
+  // Postres: official year-round dessert list (Oct 2026)
   po1: 140,
-  po2: 145,
+  po19: 145,
   po3: 160,
-  po4: 170,
-  po5: 135,
-  po6: 160,
+  po20: 170,
+  po21: 135,
+  po22: 160,
   po7: 20,
   po8: 190,
   po9: 190,
