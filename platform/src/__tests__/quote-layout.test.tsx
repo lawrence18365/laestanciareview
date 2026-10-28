@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { readFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import * as esbuild from 'esbuild';
 import postcss from 'postcss';
@@ -22,6 +22,8 @@ let bundle: string;
 let sharedCSS: string;
 const playfair = readFileSync(path.resolve('src/__tests__/quote-playfair-display-latin.woff2')).toString('base64');
 const fixtureFonts = `@font-face { font-family: 'Playfair Display'; font-style: normal; font-weight: 600; font-display: block; src: url(data:font/woff2;base64,${playfair}) format('woff2'); }`;
+const brandAssetURL = '/brand/3d/ratetap-star-signal.webp';
+const brandAsset = readFileSync(path.resolve('public/brand/3d/ratetap-star-signal.webp'));
 
 beforeAll(async () => {
   const from = path.resolve('src/app/globals.css');
@@ -81,8 +83,16 @@ afterAll(async () => { await browser?.close(); });
 
 async function fixture(width: number, height: number, surface = 'builder', saved = false, mode = 'individual', holidaySaved = false) {
   const page = await browser.newPage({ viewport: { width, height }, reducedMotion: 'reduce' });
-  await page.route('**/*', (route) => route.abort());
-  await page.setContent(`<style>${sharedCSS}\n${fixtureFonts}\nhtml,body{margin:0} nav img{width:96px}</style><div id="root"></div>`);
+  await page.route('**/*', (route) => {
+    if (route.request().url() === 'http://quote-layout.test/') {
+      return route.fulfill({ contentType: 'text/html', body: `<style>${sharedCSS}\n${fixtureFonts}\nhtml,body{margin:0} nav img{width:96px}</style><div id="root"></div>` });
+    }
+    if (route.request().url() === `http://quote-layout.test${brandAssetURL}`) {
+      return route.fulfill({ contentType: 'image/webp', body: brandAsset });
+    }
+    return route.abort();
+  });
+  await page.goto('http://quote-layout.test/');
   const errors: string[] = [];
   page.on('pageerror', (error) => errors.push(error.message));
   await page.addScriptTag({ content: bundle });
@@ -104,6 +114,95 @@ async function rect(page: Page, selector: string) {
 }
 
 describe('quote layout in WebKit', () => {
+  for (const [width, height] of [[390, 844], [810, 1080], [1080, 810]]) {
+    it(`loads the approved decoration only in templates without overflow at ${width}x${height}`, async () => {
+      const page = await fixture(width, height);
+      try {
+        const image = page.locator(`img[src="${brandAssetURL}"]`);
+        expect(await image.count()).toBe(1);
+        const imageMetrics = await image.evaluate(async (el: HTMLImageElement) => {
+          await el.decode();
+          const css = getComputedStyle(el);
+          const box = el.getBoundingClientRect();
+          return {
+            loaded: el.complete && el.naturalWidth === 1024 && el.naturalHeight === 1024,
+            alt: el.getAttribute('alt'), width: el.getAttribute('width'), height: el.getAttribute('height'),
+            ariaHidden: el.parentElement!.getAttribute('aria-hidden'),
+            pointerEvents: css.pointerEvents, animation: css.animationName,
+            transition: css.transitionDuration, transform: css.transform,
+            size: box.width, left: box.left, right: box.right,
+          };
+        });
+        expect(imageMetrics).toMatchObject({
+          loaded: true, alt: '', width: '1024', height: '1024', ariaHidden: 'true',
+          pointerEvents: 'none', animation: 'none', transition: '0s', transform: 'none',
+          size: width <= 640 ? 88 : 128,
+        });
+        expect(imageMetrics.left).toBeGreaterThanOrEqual(0);
+        expect(imageMetrics.right).toBeLessThanOrEqual(width);
+        expect(await page.locator('.cb-header img[src="' + brandAssetURL + '"]').count()).toBe(0);
+        const copy = await rect(page, '.template-intro-copy');
+        const artwork = await rect(page, '.ratetap-stamp');
+        expect(artwork.x - copy.right).toBeGreaterThanOrEqual(width <= 640 ? 16 : 24);
+        const title = await rect(page, '.holiday-group .template-group-title');
+        const helper = await rect(page, '.holiday-group .group-note');
+        expect(helper.y - title.bottom).toBeGreaterThanOrEqual(12);
+        expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(width);
+        expect(await findVisibleTextClashes(page, '.template-intro')).toEqual([]);
+
+        for (const tab of ['Constructor', 'Carta', 'Vista cliente']) {
+          await page.locator('.cb-tabs .tab').filter({ hasText: new RegExp(`^${tab}$`) }).click();
+          expect(await image.count()).toBe(0);
+          expect(await page.locator('.quote-doc img[src="' + brandAssetURL + '"]').count()).toBe(0);
+          expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(width);
+        }
+
+        if (width === 1080 && process.env.QUOTE_LAYOUT_SCREENSHOT) {
+          await page.locator('.cb-tabs .tab').filter({ hasText: /^Plantillas$/ }).click();
+          await image.evaluate((el: HTMLImageElement) => el.decode());
+          await page.evaluate(() => {
+            const intro = document.querySelector('.template-intro')!.getBoundingClientRect();
+            const navHeight = document.querySelector('nav')!.getBoundingClientRect().height;
+            window.scrollTo(0, window.scrollY + intro.top - navHeight - 24);
+          });
+          const capture = path.resolve(process.env.QUOTE_LAYOUT_SCREENSHOT);
+          mkdirSync(path.dirname(capture), { recursive: true });
+          await page.screenshot({ path: capture, animations: 'disabled' });
+          writeFileSync(`${capture}.json`, JSON.stringify({ viewport: { width, height }, imageMetrics,
+            intro: await rect(page, '.template-intro'), artwork: await rect(page, '.ratetap-stamp'),
+            horizontalOverflow: await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth),
+          }, null, 2) + '\n');
+        }
+      } finally { await page.close(); }
+    });
+  }
+
+  it('limits the emblem entrance to transform and opacity and makes reduced motion static', async () => {
+    const page = await fixture(1080, 810);
+    try {
+      const image = page.locator(`img[src="${brandAssetURL}"]`);
+      await image.evaluate((el: HTMLImageElement) => el.decode());
+      await page.emulateMedia({ reducedMotion: 'no-preference' });
+      const motion = await image.evaluate((el) => {
+        const css = getComputedStyle(el);
+        const keyframes = Array.from(document.styleSheets).flatMap((sheet) => Array.from(sheet.cssRules))
+          .find((rule): rule is CSSKeyframesRule => rule instanceof CSSKeyframesRule && rule.name === css.animationName);
+        return { name: css.animationName, duration: parseFloat(css.animationDuration), iterations: css.animationIterationCount,
+          properties: keyframes ? Array.from(keyframes.cssRules).flatMap((rule) => Array.from((rule as CSSKeyframeRule).style)) : [] };
+      });
+      expect(motion.name).toBe('ratetap-emblem-enter');
+      expect(motion.duration).toBeGreaterThan(0);
+      expect(motion.duration).toBeLessThanOrEqual(0.4);
+      expect(motion.iterations).toBe('1');
+      expect(new Set(motion.properties)).toEqual(new Set(['opacity', 'transform']));
+      await page.emulateMedia({ reducedMotion: 'reduce' });
+      expect(await image.evaluate((el) => {
+        const css = getComputedStyle(el);
+        return { animation: css.animationName, transition: css.transitionDuration, transform: css.transform };
+      })).toEqual({ animation: 'none', transition: '0s', transform: 'none' });
+    } finally { await page.close(); }
+  });
+
   for (const [width, height] of [[1180, 820], [1080, 810], [810, 1080], [820, 1080], [1279, 820], [1280, 820], [1284, 820]]) {
     it(`wraps header, reserves navigation utilities and contains content at ${width}x${height}`, async () => {
       const page = await fixture(width, height, 'builder', true);
@@ -184,7 +283,7 @@ describe('quote layout in WebKit', () => {
         }));
         expect(gaps.every((g) => g.title >= 8 && g.dishes >= 16 && g.bodyLine >= 1.45)).toBe(true);
         await page.locator('.holiday-group').scrollIntoViewIfNeeded();
-        expect(await findVisibleTextClashes(page, '.template-card, .holiday-group > h3, .group-note')).toEqual([]);
+        expect(await findVisibleTextClashes(page, '.template-card, .holiday-group .template-group-title, .group-note')).toEqual([]);
       } finally { await page.close(); }
     });
 

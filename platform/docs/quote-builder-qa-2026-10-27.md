@@ -1,6 +1,6 @@
 # Quote builder QA — 27 October 2026
 
-**Status: local candidate only. Not deployed. Visual sign-off pending.**
+**QA record for the combined release approved on 28 October 2026. The human-approved 3D asset passed factual integration review. This document records local QA; production rollout is verified separately.**
 
 ## Fixed
 
@@ -32,7 +32,7 @@ Fresh dev output was required: a stale development stylesheet still used the old
 
 DeepSeek Flash's final scores remain **7/10 overall**, approximately **8/10 brand fidelity**. The physical layout defects are fixed, but the design loop has **not** met its 9/10 target. Remaining taste concerns include field hierarchy, secondary metadata and course-group emphasis. Some suggestions conflict with useful product behavior: status belongs on individual quotes, and catalogue prices need not dominate dish choices. Do not blindly apply every vision finding.
 
-Three successive flat scores ended the automatic loop for human review. No generated 3D draft met the brand bar; none is included in the candidate.
+Three successive flat scores ended the automatic loop for human review. No generated 3D draft met the automated brand bar in that pass. The subsequent human exception and current integration are recorded below.
 
 ## Previews
 
@@ -79,3 +79,15 @@ The deterministic star extraction did not pass the asset gate and was not integr
 The local QA derivative is `.qa/ratetap-matte-gold-star.webp`, 33,298 bytes, 768 x 768 WebP with alpha range 0 to 255 and transparent corners. It is unaccepted and was not copied into `public/brand/3d/`. The reproducible processing script is `.qa/ratetap-isolate-gold-star.py`; source and intermediate PNGs were preserved.
 
 Validation passed: the focused suite ran 49 tests across `quote-layout.test.tsx`, `dessert-catalog-2026.test.ts`, `quote-menu-2026.test.ts`, and `holiday-quote-templates.test.ts`; `npx tsc --noEmit` passed; all 10 frozen source hashes in `.qa/3d-release-baseline-2026-10-27.json` match. No deployment occurred.
+
+## Human-approved 3D integration, 28 October 2026
+
+The human explicitly selected "Use the opened 3D asset" after disclosure of its 7/10 score, approving an exception to the automated 9/10 target. The approved source is `.qa/ratetap-matte-star-signal-round1.png`, SHA-256 `c3edb76616a0197254efcff2445f10edb9915ef15a22c3c80b75d0db65e49271`. That exact star-and-signal composition was uniformly resized and encoded with cwebp, without cropping, recoloring, or image generation.
+
+The current asset is `public/brand/3d/ratetap-star-signal.webp`: 73,990 bytes, 1024 x 1024, RGBA, alpha range 0 to 255, all four corner alpha values 0. One decorative image replaces the five inline stars beside the existing holiday-template introduction. It reserves a 128 x 128 CSS px slot, shrinking to 88 x 88 on phones, with empty alt text, an aria-hidden wrapper, and no pointer events. Its single 280ms entrance uses transform and opacity; reduced motion disables animation, transition, and transform. Header, Save, Constructor, Carta, Vista Cliente, public quote, and print views do not receive the image.
+
+The required four-file focused suite passed all 53 tests, including real WebP loading through local interception, template-only presence, absence in other tabs, no overflow at 390/810/1080 outer viewport widths, spacing, reserved dimensions, and reduced-motion behavior. The 390 CSS px phone-padding regression and historical-price/holiday-selection tests remain passing. `npx tsc --noEmit` exited 0. Full suite and build remain lead-owned release gates.
+
+One actual image-loaded synthetic 1080 x 810 WebKit chooser screenshot was captured at `.qa/ratetap-star-signal-chooser-2026-10-28.png`. Its sole official `deepseek-flash` review used the complete `DESIGN.md` block and returned factual PASS for artwork visibility, cutoff, overlap, and gaps. This was a factual integration review, not a new taste gate or overall page score. The reviewer could not determine safe-area clearance from the screenshot alone. Original text is `.qa/ratetap-approved-integration-review-2026-10-28.txt`; request metadata is `.qa/ratetap-approved-integration-review-2026-10-28.json`.
+
+The source base for this integration was lead commit `1eb08e6`. All three correctness repairs and all 10 frozen customer-view source hashes remained unchanged. Exact paths, asset hashes, command exits, and evidence were recorded in `.qa/ratetap-approved-integration-verification-2026-10-28.json`. The integration worker performed no production, database, customer-data, or environment/configuration operations; final release gates and deployment belong to the lead.

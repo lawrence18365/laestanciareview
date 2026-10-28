@@ -697,24 +697,22 @@ export default function QuoteBuilderV2({
 
           {/* Plantillas */}
           <section className="template-group holiday-group">
-            <h3 className="template-group-title template-group-with-stamp">
-              <span>Fiestas de fin de año</span>
-              <span key={stampRun} className={`ratetap-stamp${stampRun ? ' animate' : ''}`} aria-hidden="true">
-                {Array.from({ length: 5 }, (_, i) => (
-                  <svg
-                    key={i}
-                    width={12}
-                    height={12}
-                    viewBox="0 0 24 24"
-                    className="ratetap-star"
-                    style={{ animationDelay: `${i * 40}ms` }}
-                  >
-                    <path d="m12 2 2.9 6 6.6.9-4.8 4.7 1.1 6.6-5.8-3.1-5.8 3.1 1.1-6.6-4.8-4.7 6.6-.9z" fill="currentColor" />
-                  </svg>
-                ))}
+            <div className="template-intro">
+              <div className="template-intro-copy">
+                <h3 className="template-group-title">Fiestas de fin de año</h3>
+                <p className="body text-2 group-note">Precio por persona, IVA incluido.</p>
+              </div>
+              <span key={stampRun} className="ratetap-stamp" aria-hidden="true">
+                <img
+                  src="/brand/3d/ratetap-star-signal.webp"
+                  alt=""
+                  width={1024}
+                  height={1024}
+                  decoding="async"
+                  draggable={false}
+                />
               </span>
-            </h3>
-            <p className="body text-2 group-note">Precio por persona, IVA incluido.</p>
+            </div>
             <div className="holiday-grid">
               {TEMPLATES.filter((t) => t.campaignTag).map((t) => (
                 <button
@@ -1915,14 +1913,14 @@ const CSS = `
 .cotizador-root .operator-chrome .mini { font-size: 12px; }
 .cotizador-root .operator-chrome .section-heading { margin: 0 0 12px; }
 .cotizador-root .operator-chrome .template-group-title { margin: 0 0 12px; font: 600 17px/1.25 'Inter', sans-serif; }
-.cotizador-root .operator-chrome .template-group-with-stamp {
+.cotizador-root .operator-chrome .template-intro {
   display: flex;
-  width: fit-content;
   align-items: center;
-  flex-wrap: wrap;
-  gap: 12px;
-  max-width: 100%;
+  gap: 24px;
+  margin-bottom: 16px;
 }
+.cotizador-root .operator-chrome .template-intro-copy { min-width: 0; }
+.cotizador-root .operator-chrome .template-intro .group-note { margin-bottom: 0; }
 
 .cotizador-root .operator-chrome input[type="text"],
 .cotizador-root .operator-chrome input[type="number"],
@@ -2302,10 +2300,16 @@ const CSS = `
   .cotizador-root .operator-main .holiday-grid,
   .cotizador-root .operator-main .other-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
-.cotizador-root .operator-chrome .ratetap-stamp { display: inline-flex; align-items: center; gap: 1px; color: #D97706; perspective: 400px; pointer-events: none; }
-.cotizador-root .operator-chrome .ratetap-star { width: 12px; height: 12px; }
-.cotizador-root .operator-chrome .ratetap-stamp.animate .ratetap-star { transform: rotateY(-90deg); animation: ratetap-star-flip .22s ease-out forwards; }
-@keyframes ratetap-star-flip { to { transform: rotateY(0); } }
+.cotizador-root .operator-chrome .ratetap-stamp { display: block; flex: 0 0 128px; width: 128px; height: 128px; perspective: 600px; pointer-events: none; }
+.cotizador-root .operator-chrome .ratetap-stamp img { display: block; width: 100%; height: 100%; object-fit: contain; pointer-events: none; animation: ratetap-emblem-enter .28s ease-out; }
+@keyframes ratetap-emblem-enter {
+  from { opacity: 0; transform: rotateY(-12deg); }
+  to { opacity: 1; transform: none; }
+}
+@media (max-width: 640px) {
+  .cotizador-root .operator-chrome .template-intro { gap: 16px; }
+  .cotizador-root .operator-chrome .ratetap-stamp { flex-basis: 88px; width: 88px; height: 88px; }
+}
 @media (hover: hover) and (pointer: fine) {
   .cotizador-root .operator-chrome .template-card {
     transition: transform .18s ease;
@@ -2325,7 +2329,8 @@ const CSS = `
   .cotizador-root .operator-chrome .template-card,
   .cotizador-root .operator-chrome .template-card:hover,
   .cotizador-root .operator-chrome .template-card:active { transform: none; transition: none; }
-  .cotizador-root .operator-chrome .ratetap-stamp.animate .ratetap-star { animation: none; transform: none; }
+  .cotizador-root .operator-chrome .ratetap-stamp,
+  .cotizador-root .operator-chrome .ratetap-stamp img { animation: none; transition: none; transform: none; }
 }
 
 .cotizador-root .operator-chrome .qty-btn {
